@@ -23,14 +23,23 @@ val launcherVersionCode = (project.findProperty("launcher_version_code") as? Str
 val launcherVersionName = project.findProperty("launcher_version_name") as? String ?: error("The \"launcher_version_name\" property is not set in gradle.properties.")
 
 val defaultOAuthClientID = project.findProperty("oauth_client_id") as? String
-val defaultStorePassword = project.findProperty("default_store_password") as? String ?: error("The \"default_store_password\" property is not set in gradle.properties.")
-val defaultKeyPassword = project.findProperty("default_key_password") as? String ?: error("The \"default_key_password\" property is not set in gradle.properties.")
+
+// FIX: These are optional because GitHub Actions supplies the passwords
+// through environment variables.
+val defaultStorePassword = project.findProperty("default_store_password") as? String
+val defaultKeyPassword = project.findProperty("default_key_password") as? String
+
 val defaultCurseForgeApiKey = project.findProperty("curseforge_api_key") as? String
 
 val projectArch: String = System.getProperty("arch", "all")
 
-fun getKeyFromLocal(envKey: String, fileName: String? = null, default: String? = null): String {
+fun getKeyFromLocal(
+    envKey: String,
+    fileName: String? = null,
+    default: String? = null
+): String {
     val key = System.getenv(envKey)
+
     return key ?: fileName?.let {
         val file = File(rootDir, fileName)
         if (file.canRead() && file.isFile) file.readText() else null
@@ -42,6 +51,7 @@ fun getKeyFromLocal(envKey: String, fileName: String? = null, default: String? =
 
 android {
     namespace = zalithPackageName
+
     compileSdk {
         version = release(37) {
             minorApiLevel = 2
@@ -51,15 +61,34 @@ android {
     signingConfigs {
         create("releaseBuild") {
             storeFile = file("zalith_launcher.jks")
-            storePassword = getKeyFromLocal("STORE_PASSWORD", ".store_password.txt")
+            storePassword = getKeyFromLocal(
+                "STORE_PASSWORD",
+                ".store_password.txt"
+            )
             keyAlias = "movtery_zalith"
-            keyPassword = getKeyFromLocal("KEY_PASSWORD", ".key_password.txt")
+            keyPassword = getKeyFromLocal(
+                "KEY_PASSWORD",
+                ".key_password.txt"
+            )
         }
+
+        // FIXED DEBUG SIGNING
         create("debugBuild") {
             storeFile = file("zalith_launcher_debug.jks")
-            storePassword = defaultStorePassword
+
+            storePassword = getKeyFromLocal(
+                "STORE_PASSWORD",
+                ".store_password.txt",
+                defaultStorePassword
+            )
+
             keyAlias = "movtery_zalith_debug"
-            keyPassword = defaultKeyPassword
+
+            keyPassword = getKeyFromLocal(
+                "KEY_PASSWORD",
+                ".key_password.txt",
+                defaultKeyPassword
+            )
         }
     }
 
@@ -77,25 +106,31 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
+
             signingConfig = signingConfigs.getByName("releaseBuild")
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
+
         debug {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+
             signingConfig = signingConfigs.getByName("debugBuild")
         }
     }
 
     splits {
         val arch = projectArch.takeIf { it != "all" } ?: return@splits
+
         abi {
             isEnable = true
             reset()
+
             when (arch) {
                 "arm" -> include("armeabi-v7a")
                 "arm64" -> include("arm64-v8a")
@@ -126,15 +161,18 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
     buildFeatures {
         compose = true
         buildConfig = true
         prefab = true
     }
+
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
-            //让 android.util.Log 等框架方法在本地单测中返回默认值而非抛出异常
+
+            // 让 android.util.Log 等框架方法在本地单测中返回默认值而非抛出异常
             isReturnDefaultValues = true
         }
     }
@@ -142,28 +180,73 @@ android {
 
 androidComponents {
     onVariants { variant ->
+
         variant.outputs.forEach { output ->
+
             if (output is VariantOutputImpl) {
-                val variantName = variant.name.replaceFirstChar { it.uppercaseChar() }
+
+                val variantName =
+                    variant.name.replaceFirstChar { it.uppercaseChar() }
+
                 afterEvaluate {
-                    val task = tasks.named("merge${variantName}Assets").get() as MergeSourceSetFolders
-                    task.inputs.property("lwjglArch", projectArch)
+
+                    val task =
+                        tasks.named("merge${variantName}Assets").get()
+                            as MergeSourceSetFolders
+
+                    task.inputs.property(
+                        "lwjglArch",
+                        projectArch
+                    )
+
                     task.doLast {
-                        val assetsDir = task.outputDir.get().asFile
+
+                        val assetsDir =
+                            task.outputDir.get().asFile
+
                         val tag = "JREAssetsCleanup"
-                        logger.lifecycle("[$tag] arch: $projectArch")
-                        val jreList = listOf("jre-8", "jre-17", "jre-21", "jre-25")
+
+                        logger.lifecycle(
+                            "[$tag] arch: $projectArch"
+                        )
+
+                        val jreList = listOf(
+                            "jre-8",
+                            "jre-17",
+                            "jre-21",
+                            "jre-25"
+                        )
+
                         jreList.forEach { jreVersion ->
-                            val runtimeDir = File("$assetsDir/runtimes/$jreVersion")
-                            logger.lifecycle("[$tag] runtimeDir: ${runtimeDir.absolutePath}")
+
+                            val runtimeDir =
+                                File(
+                                    "$assetsDir/runtimes/$jreVersion"
+                                )
+
+                            logger.lifecycle(
+                                "[$tag] runtimeDir: ${runtimeDir.absolutePath}"
+                            )
+
                             runtimeDir.listFiles()?.forEach {
-                                if (projectArch != "all" && it.name != "version" && !it.name.contains("universal") && it.name != "bin-$projectArch.tar.xz") {
-                                    logger.lifecycle("[$tag] delete: $it : ${it.delete()}")
+
+                                if (
+                                    projectArch != "all" &&
+                                    it.name != "version" &&
+                                    !it.name.contains("universal") &&
+                                    it.name != "bin-$projectArch.tar.xz"
+                                ) {
+                                    logger.lifecycle(
+                                        "[$tag] delete: $it : ${it.delete()}"
+                                    )
                                 }
                             }
                         }
 
-                        if (projectArch == "all") return@doLast
+                        if (projectArch == "all") {
+                            return@doLast
+                        }
+
                         val abi = when (projectArch) {
                             "arm" -> "armeabi-v7a"
                             "arm64" -> "arm64-v8a"
@@ -171,17 +254,47 @@ androidComponents {
                             "x86_64" -> "x86_64"
                             else -> return@doLast
                         }
-                        val lwjglVersions = file("libs").listFiles { f ->
-                            f.name.matches(Regex("lwjgl-\\d+\\.\\d+\\.\\d+-natives-release\\.aar"))
-                        }
-                            ?.map { Regex("lwjgl-(\\d+\\.\\d+\\.\\d+)-natives-release\\.aar").find(it.name)!!.groupValues[1] }
-                            ?: emptyList()
+
+                        val lwjglVersions =
+                            file("libs").listFiles { f ->
+
+                                f.name.matches(
+                                    Regex(
+                                        "lwjgl-\\d+\\.\\d+\\.\\d+-natives-release\\.aar"
+                                    )
+                                )
+
+                            }
+                                ?.map {
+                                    Regex(
+                                        "lwjgl-(\\d+\\.\\d+\\.\\d+)-natives-release\\.aar"
+                                    )
+                                        .find(it.name)!!
+                                        .groupValues[1]
+                                }
+                                ?: emptyList()
+
                         lwjglVersions.forEach { version ->
-                            val nativesDir = File(assetsDir, "app_runtime/lwjgl/$version/natives")
+
+                            val nativesDir =
+                                File(
+                                    assetsDir,
+                                    "app_runtime/lwjgl/$version/natives"
+                                )
+
                             if (nativesDir.isDirectory) {
+
                                 nativesDir.listFiles()?.forEach { dir ->
-                                    if (dir.isDirectory && dir.name != abi) {
-                                        logger.lifecycle("Removing non-target-arch natives: $dir")
+
+                                    if (
+                                        dir.isDirectory &&
+                                        dir.name != abi
+                                    ) {
+
+                                        logger.lifecycle(
+                                            "Removing non-target-arch natives: $dir"
+                                        )
+
                                         dir.deleteRecursively()
                                     }
                                 }
@@ -191,18 +304,26 @@ androidComponents {
                 }
 
                 (output.getFilter(ABI)?.identifier ?: "all").let { abi ->
-                    val baseName = "$launcherName-${if (variant.buildType == "release") launcherVersionName else "Debug-$launcherVersionName"}"
-                    output.outputFileName = if (abi == "all") "$baseName.apk" else "$baseName-$abi.apk"
+
+                    val baseName =
+                        "$launcherName-${if (variant.buildType == "release") launcherVersionName else "Debug-$launcherVersionName"}"
+
+                    output.outputFileName =
+                        if (abi == "all") {
+                            "$baseName.apk"
+                        } else {
+                            "$baseName-$abi.apk"
+                        }
                 }
             }
         }
     }
 }
 
-
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
         )
@@ -210,102 +331,103 @@ kotlin {
 }
 
 buildKeys {
-    string("OAUTH_CLIENT_ID", getKeyFromLocal("OAUTH_CLIENT_ID", ".oauth_client_id.txt", defaultOAuthClientID), true)
-    string("LAUNCHER_NAME", launcherAPPName, true)
-    string("LAUNCHER_IDENTIFIER", launcherName, true)
-    string("LAUNCHER_SHORT_NAME", launcherShortName, true)
-    string("URL_HOME", launcherUrl, true)
-    string("CURSEFORGE_API", getKeyFromLocal("CURSEFORGE_API_KEY", ".curseforge_api.txt", defaultCurseForgeApiKey), true)
-    string("BUILD_ARCH", projectArch)
+    string(
+        "OAUTH_CLIENT_ID",
+        getKeyFromLocal(
+            "OAUTH_CLIENT_ID",
+            ".oauth_client_id.txt",
+            defaultOAuthClientID
+        ),
+        true
+    )
+
+    string(
+        "LAUNCHER_NAME",
+        launcherAPPName,
+        true
+    )
+
+    string(
+        "LAUNCHER_IDENTIFIER",
+        launcherName,
+        true
+    )
+
+    string(
+        "LAUNCHER_SHORT_NAME",
+        launcherShortName,
+        true
+    )
+
+    string(
+        "URL_HOME",
+        launcherUrl,
+        true
+    )
+
+    string(
+        "CURSEFORGE_API",
+        getKeyFromLocal(
+            "CURSEFORGE_API_KEY",
+            ".curseforge_api.txt",
+            defaultCurseForgeApiKey
+        ),
+        true
+    )
+
+    string(
+        "BUILD_ARCH",
+        projectArch
+    )
 }
 
 dependencies {
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.nav3)
+
     implementation(libs.androidx.activity.compose)
+
     implementation(platform(libs.androidx.compose.bom))
+
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+
     debugImplementation(libs.androidx.ui.tooling)
+
     implementation(libs.androidx.material3)
     implementation(libs.androidx.constraintlayout.compose)
+
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.webkit)
+
     implementation(libs.documentfile)
+
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.coil.svg)
     implementation(libs.coil.network.ktor3)
+
     implementation(libs.kotlinx.coroutines.android)
+
     implementation(libs.material)
     implementation(libs.material.color.utilities)
     implementation(libs.materialKolor)
+
     implementation(libs.reorderable)
+
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
-    implementation(libs.richtext.ui.material3)
-    implementation(platform(libs.editor.bom))
-    implementation(libs.editor)
-    implementation(libs.editor.language.textmate)
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(libs.dev.haze)
-    implementation(libs.dev.haze.blur)
-    //Project
-    implementation(project(":LayerController"))
-    implementation(project(":ColorPicker"))
-    implementation(project(":Terracotta"))
-    implementation(project(":InputMap"))
-    //Utils
-    implementation(libs.bytehook)
-    implementation(libs.gson)
-    implementation(libs.commons.io)
-    implementation(libs.commons.codec)
-    implementation(libs.commons.compress)
-    implementation(libs.xz)
-    implementation(libs.zip4j)
-    implementation(libs.okio)
-    implementation(libs.okhttp)
-    implementation(libs.ktor.http)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.client.okhttp)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.server.core)
-    implementation(libs.ktor.server.cio)
-    implementation(libs.ktor.server.content.negotiation)
-    implementation(libs.ktor.serialization.kotlinx.json)
-    implementation(libs.minidns.hla)
-    implementation(libs.toml4j)
-    implementation(libs.maven.artifact)
-    implementation(libs.mmkv)
-    implementation(libs.fishnet)
-    implementation(libs.process.phoenix)
-    implementation(libs.lunarcalendar)
-    implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
-    //Safe
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.sqlcipher.android)
-    ksp(libs.androidx.room.compiler)
-    //Support
-    implementation(libs.proxy.client.android)
-    //Hilt
-    implementation(libs.dagger.hilt.android)
-    ksp(libs.dagger.hilt.android.compiler)
-    implementation(libs.androidx.hilt.navigation.compose)
-    //Test
-    testImplementation(libs.junit)
-    testImplementation(libs.mockwebserver3)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-}
+    implementation(libs.rich
