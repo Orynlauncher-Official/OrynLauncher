@@ -434,5 +434,6 @@ dependencies {
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
     implementation(libs.richtext.ui.material3)
-    implementation("com.google.dagger:hilt-android:2.56.2")
+    implementation(libs.dagger.hilt.android)
+    ksp(libs.dagger.hilt.android.compiler)
 }
