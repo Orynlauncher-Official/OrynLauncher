@@ -1,4 +1,4 @@
-    import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
+import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
 import com.android.build.api.variant.impl.VariantOutputImpl
 import com.android.build.gradle.tasks.MergeSourceSetFolders
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -434,4 +434,5 @@ dependencies {
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
     implementation(libs.richtext.ui.material3)
+    implementation(libs.hilt.android)
 }
