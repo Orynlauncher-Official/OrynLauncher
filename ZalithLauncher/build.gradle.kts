@@ -389,38 +389,59 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
+
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.nav3)
+
     implementation(libs.androidx.activity.compose)
+
     implementation(platform(libs.androidx.compose.bom))
+
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
+
     debugImplementation(libs.androidx.ui.tooling)
+
     implementation(libs.androidx.material3)
     implementation(libs.androidx.constraintlayout.compose)
+
     implementation(libs.material)
     implementation(libs.material.color.utilities)
     implementation(libs.materialKolor)
+
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.navigation3.ui)
+
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
+
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.webkit)
+
     implementation(libs.documentfile)
+
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
     implementation(libs.coil.svg)
     implementation(libs.coil.network.ktor3)
+
     implementation(libs.kotlinx.coroutines.android)
+
     implementation(libs.reorderable)
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
     implementation(libs.richtext.ui.material3)
+
+    // ByteHook
+    implementation(libs.bytehook)
+
+    // Hilt
     implementation(libs.dagger.hilt.android)
     ksp(libs.dagger.hilt.android.compiler)
+
+    // Core library desugaring
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }
