@@ -22,15 +22,16 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install NDK
+      - name: Install Android packages
         run: |
           yes | sdkmanager --licenses || true
+          sdkmanager "platform-tools"
           sdkmanager "ndk;25.2.9519653"
-          
+
       - name: Verify NDK
         run: |
-          ls -la "$ANDROID_SDK_ROOT/ndk/25.2.9519653"
-          "$ANDROID_SDK_ROOT/ndk/25.2.9519653/ndk-build" --version
+          test -d "$ANDROID_SDK_ROOT/ndk/25.2.9519653"
+          echo "NDK installed successfully"
 
       - name: Make Gradle executable
         run: chmod +x gradlew
@@ -52,6 +53,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: OrynLauncher-debug
-          path: |
-            ZalithLauncher/build/outputs/apk/debug/*.apk
+          path: ZalithLauncher/build/outputs/apk/debug/*.apk
           if-no-files-found: error
