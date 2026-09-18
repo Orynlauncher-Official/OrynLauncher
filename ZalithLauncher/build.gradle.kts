@@ -1,4 +1,4 @@
-import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
+    import com.android.build.api.variant.FilterConfiguration.FilterType.ABI
 import com.android.build.api.variant.impl.VariantOutputImpl
 import com.android.build.gradle.tasks.MergeSourceSetFolders
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -14,22 +14,30 @@ plugins {
 }
 
 val zalithPackageName = "com.movtery.zalithlauncher"
-val launcherAPPName = project.findProperty("launcher_app_name") as? String ?: error("The \"launcher_app_name\" property is not set in gradle.properties.")
-val launcherName = project.findProperty("launcher_name") as? String ?: error("The \"launcher_name\" property is not set in gradle.properties.")
-val launcherShortName = project.findProperty("launcher_short_name") as? String ?: error("The \"launcher_short_name\" property is not set in gradle.properties.")
-val launcherUrl = project.findProperty("url_home") as? String ?: error("The \"url_home\" property is not set in gradle.properties.")
+val launcherAPPName = project.findProperty("launcher_app_name") as? String
+    ?: error("The \"launcher_app_name\" property is not set in gradle.properties.")
+val launcherName = project.findProperty("launcher_name") as? String
+    ?: error("The \"launcher_name\" property is not set in gradle.properties.")
+val launcherShortName = project.findProperty("launcher_short_name") as? String
+    ?: error("The \"launcher_short_name\" property is not set in gradle.properties.")
+val launcherUrl = project.findProperty("url_home") as? String
+    ?: error("The \"url_home\" property is not set in gradle.properties.")
 
-val launcherVersionCode = (project.findProperty("launcher_version_code") as? String)?.toIntOrNull() ?: error("The \"launcher_version_code\" property is not set as an integer in gradle.properties.")
-val launcherVersionName = project.findProperty("launcher_version_name") as? String ?: error("The \"launcher_version_name\" property is not set in gradle.properties.")
+val launcherVersionCode =
+    (project.findProperty("launcher_version_code") as? String)?.toIntOrNull()
+        ?: error("The \"launcher_version_code\" property is not set as an integer in gradle.properties.")
+val launcherVersionName = project.findProperty("launcher_version_name") as? String
+    ?: error("The \"launcher_version_name\" property is not set in gradle.properties.")
 
 val defaultOAuthClientID = project.findProperty("oauth_client_id") as? String
 
-// FIX: These are optional because GitHub Actions supplies the passwords
-// through environment variables.
-val defaultStorePassword = project.findProperty("default_store_password") as? String
-val defaultKeyPassword = project.findProperty("default_key_password") as? String
+val defaultStorePassword =
+    project.findProperty("default_store_password") as? String
+val defaultKeyPassword =
+    project.findProperty("default_key_password") as? String
 
-val defaultCurseForgeApiKey = project.findProperty("curseforge_api_key") as? String
+val defaultCurseForgeApiKey =
+    project.findProperty("curseforge_api_key") as? String
 
 val projectArch: String = System.getProperty("arch", "all")
 
@@ -72,7 +80,6 @@ android {
             )
         }
 
-        // FIXED DEBUG SIGNING
         create("debugBuild") {
             storeFile = file("zalith_launcher_debug.jks")
 
@@ -156,7 +163,6 @@ android {
     }
 
     compileOptions {
-        // sora-editor language-textmate
         isCoreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -171,8 +177,6 @@ android {
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
-
-            // 让 android.util.Log 等框架方法在本地单测中返回默认值而非抛出异常
             isReturnDefaultValues = true
         }
     }
@@ -430,3 +434,4 @@ dependencies {
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
     implementation(libs.richtext.ui.material3)
+}
