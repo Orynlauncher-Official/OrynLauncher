@@ -427,7 +427,6 @@ dependencies {
     implementation(libs.materialKolor)
 
     implementation(libs.reorderable)
-
     implementation(libs.richtext.commonmark)
     implementation(libs.richtext.ui)
-    implementation(libs.rich
+    implementation(libs.richtext.ui.material3)
