@@ -176,6 +176,27 @@ android {
     }
 }
 
+// AndroidX graphics-path 1.1.x can expose its native .so under a non-ABI
+// directory ("jni/out"). Remove that malformed entry before MergeNativeLibs consumes it.
+tasks.configureEach { task ->
+    if (task.name.startsWith("merge") && task.name.endsWith("NativeLibs")) {
+        task.doFirst {
+            String variant = task.name.substring("merge".length(), task.name.length() - "NativeLibs".length())
+            String variantDir = variant.substring(0, 1).toLowerCase() + variant.substring(1)
+            File mergedJniDir = new File(project.buildDir,
+                    "intermediates/merged_jni_libs/" + variantDir + "/merge" + variant + "JniLibFolders/out")
+            File malformedLib = new File(mergedJniDir, "libandroidx.graphics.path.so")
+            if (malformedLib.isFile()) {
+                logger.lifecycle("Removing malformed AndroidX graphics-path native library: " + malformedLib)
+                malformedLib.delete()
+            }
+            if (mergedJniDir.isDirectory() && mergedJniDir.listFiles()?.length == 0) {
+                mergedJniDir.delete()
+            }
+        }
+    }
+}
+
 class AssetTaskRegistrar {
     private Project project
     private Task mergeAssetsTask
