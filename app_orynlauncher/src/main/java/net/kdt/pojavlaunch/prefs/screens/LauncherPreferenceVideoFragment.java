@@ -29,6 +29,12 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
     @Override
     public void onCreatePreferences(Bundle b, String str) {
         addPreferencesFromResource(R.xml.pref_video);
+        requirePreference("renderer").setTitle("Global Renderer");
+        requirePreference("renderer").setSummary("The global default renderer uses a dynamic library translation layer");
+        requirePreference("resolutionRatio").setTitle("Resolution Scale");
+        requirePreference("resolutionRatio").setSummary("Change the resolution scale of the game");
+        requirePreference("zinkPreferSystemDriver").setTitle("Vulkan Driver");
+        requirePreference("zinkPreferSystemDriver").setSummary("Use the system Vulkan driver when supported");
         int resolution = (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100);
 
         CustomSeekBarPreference resolutionSeekbar = requirePreference("resolutionRatio",
