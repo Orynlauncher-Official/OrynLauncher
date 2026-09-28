@@ -7,10 +7,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
-import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import androidx.annotation.NonNull;
@@ -32,16 +28,30 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        // Keep the five existing preference categories visible as ordinary rows,
-        // matching the reference settings screen rather than the oversized card UI.
-        final int background = Color.rgb(29, 29, 29);
-        view.setBackgroundColor(background);
+        // Match the home screen's charcoal background and rounded sidebar/pill surfaces.
+        view.setBackgroundResource(R.drawable.oryn_home_bg);
         RecyclerView list = getListView();
         if (list == null) return;
-        list.setBackgroundColor(background);
+        list.setBackgroundResource(R.drawable.oryn_home_bg);
         list.setClipToPadding(false);
-        list.setPadding(dp(16), dp(8), dp(16), dp(16));
+        list.setPadding(dp(24), dp(16), dp(24), dp(24));
         list.setItemAnimator(null);
+        list.addItemDecoration(new RecyclerView.ItemDecoration() {
+            @Override
+            public void getItemOffsets(@NonNull android.graphics.Rect outRect,
+                    @NonNull View child, @NonNull RecyclerView parent,
+                    @NonNull RecyclerView.State state) {
+                outRect.bottom = dp(8);
+            }
+        });
+        list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override public void onChildViewAttachedToWindow(@NonNull View child) {
+                child.setBackgroundResource(R.drawable.oryn_pill);
+                child.setMinimumHeight(dp(64));
+                child.setPadding(dp(12), child.getPaddingTop(), dp(12), child.getPaddingBottom());
+            }
+            @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
+        });
     }
 
     @Override
