@@ -57,6 +57,8 @@ public class LauncherActivity extends BaseActivity {
 
     private FragmentContainerView mFragmentView;
     private ImageButton mSettingsButton;
+    private View mOrynBrand;
+    private View mAccountHeader;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private NotificationManager mNotificationManager;
@@ -66,8 +68,11 @@ public class LauncherActivity extends BaseActivity {
     private final FragmentManager.FragmentLifecycleCallbacks mFragmentCallbackListener = new FragmentManager.FragmentLifecycleCallbacks() {
         @Override
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
-            mSettingsButton.setImageDrawable(ContextCompat.getDrawable(getBaseContext(), f instanceof MainMenuFragment
-                    ? R.drawable.ic_px_sliders : R.drawable.ic_px_home));
+            boolean isHome = f instanceof MainMenuFragment;
+            mSettingsButton.setVisibility(isHome ? View.GONE : View.VISIBLE);
+            mSettingsButton.setImageResource(R.drawable.oryn_nav_home);
+            if (mOrynBrand != null) mOrynBrand.setVisibility(isHome ? View.VISIBLE : View.GONE);
+            if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
         }
     };
 
@@ -335,6 +340,8 @@ public class LauncherActivity extends BaseActivity {
     private void bindViews(){
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
+        mOrynBrand = findViewById(R.id.oryn_brand);
+        mAccountHeader = findViewById(R.id.oryn_account_header);
         mProgressLayout = findViewById(R.id.progress_layout);
     }
 }
