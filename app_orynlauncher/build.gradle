@@ -51,7 +51,6 @@ configurations {
 
 android {
     namespace 'git.artdeell.mojo'
-
     compileSdk = 36
 
     lintOptions {
@@ -73,7 +72,7 @@ android {
         }
         publicBuild {
             storeFile file("mojo_release_next.jks")
-            storePassword System.getenv("MOJOPUB_KEYSTORE_PASSWORD")
+            storePassword "android"
             keyAlias "key0"
             keyPassword System.getenv("MOJOPUB_KEYSTORE_PASSWORD")
         }
@@ -85,7 +84,7 @@ android {
         targetSdkVersion 36
         versionCode getDateSeconds()
         versionName getVersionName()
-        multiDexEnabled false //important
+        multiDexEnabled false
         resValue 'string', 'curseforge_api_key', getCFApiKey()
         resValue 'string', 'group_id', 'git.artdeell'
     }
@@ -125,12 +124,8 @@ android {
         }
 
         release {
-            // Don't set to true or java.awt will be a.a or something similar.
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            // defaultConfig already set
-            // multiDexEnabled = true
-            // debuggable = true
             resValue 'string', 'storageProviderAuthorities', 'git.artdeell.mjlaunch.scoped.gamefolder'
             resValue 'string', 'application_package', 'git.artdeell.mjlaunch'
         }
@@ -168,6 +163,10 @@ android {
     packagingOptions {
         jniLibs {
             useLegacyPackaging = true
+            excludes += [
+                "**/out/**",
+                "**/libandroidx.graphics.path.so"
+            ]
         }
         pickFirst '**/libbytehook.so'
     }
@@ -187,7 +186,6 @@ class AssetTaskRegistrar {
 
     AssetTaskRegistrar(Project project) {
         this.project = project
-
         targetDownloadDir = new File(project.projectDir, "build/intermediates/download_deps")
         projectJarDir = new File(project.projectDir, "build/intermediates/package_jar_deps")
         createDirectories targetDownloadDir
@@ -197,10 +195,8 @@ class AssetTaskRegistrar {
     def setVariant(variant) {
         variantName = variant.getName().capitalize()
         mergeAssetsTask = variant.getPreBuildProvider().get()
-
         targetAssetsDir = new File(project.projectDir, "build/intermediates/remote_asset_set/${variantName.toLowerCase()}/")
         createDirectories(targetAssetsDir)
-
         project.android.sourceSets[variant.getName()].assets.srcDirs += targetAssetsDir.absolutePath
     }
 
@@ -220,16 +216,13 @@ class AssetTaskRegistrar {
 
     private def onlineUnzipTask(String downloadUrl, String name, File targetExtractionDir) {
         createDirectories targetExtractionDir
-
         def downloadTarget = new File(targetDownloadDir, name)
-
         def dependencySuffix = "${name}${variantName}"
         def downloadTask = project.tasks.register("download${dependencySuffix}", Download) {
             src downloadUrl
             dest downloadTarget
             overwrite false
         }
-
         def unzipTask = project.tasks.register("unzip${dependencySuffix}", Copy) {
             from project.zipTree(downloadTarget)
             into targetExtractionDir
@@ -239,7 +232,7 @@ class AssetTaskRegistrar {
     }
 
     def onlineZipDependency(String downloadUrl, String name, String relativePath) {
-	    mergeAssetsTask.dependsOn(onlineUnzipTask downloadUrl, name, assetDestination(relativePath))
+        mergeAssetsTask.dependsOn(onlineUnzipTask downloadUrl, name, assetDestination(relativePath))
     }
 
     def projectJarDependency(Project project, String relativePath) {
@@ -247,18 +240,13 @@ class AssetTaskRegistrar {
         def jarTargetDir = new File(projectJarDir, relativePath)
         createDirectories assetTargetDir
         createDirectories jarTargetDir
-
         def copyTaskName = "copyProjectJar${jarTargetDir.getName()}${variantName}"
         def copyTask = project.tasks.register(copyTaskName, Copy) {
             from jarTargetDir
             into assetTargetDir
-            // Nasty hack: explicitly reference project by name to force Gradle to configure it.
-            // Makes jar task search below work properly for fresh configurations.
             dependsOn ":${project.name}:jar"
         }
-
         mergeAssetsTask.dependsOn copyTask
-
         project.tasks.withType(org.gradle.jvm.tasks.Jar.class).configureEach {
             it.destinationDirectory = jarTargetDir
             doLast {
@@ -268,7 +256,7 @@ class AssetTaskRegistrar {
         }
     }
 
-    def onlineJarDependency(String jarUrl, String jarProject, String dependency, String version, String suffix,  String relativePath) {
+    def onlineJarDependency(String jarUrl, String jarProject, String dependency, String version, String suffix, String relativePath) {
         File targetDir = assetDestination(relativePath)
         createDirectories targetDir
         def dependencySuffix = "${jarProject}${dependency}${variantName}"
@@ -286,27 +274,21 @@ class AssetTaskRegistrar {
 
     def jreRuntimeDependency(int version, String relPath) {
         def jreUrl = "https://github.com/MojoLauncher/android-openjdk-build-multiarch/releases/download/rolling/jre%d-pojav.zip"
-        onlineZipDependency(String.format(jreUrl, version), "ComponentRuntime$version", relPath)
+        onlineZipDependency(String.format(jreUrl, version), "ComponentRuntime${version}", relPath)
     }
 }
 
 afterEvaluate {
     def registrar = new AssetTaskRegistrar(project)
-
     android.applicationVariants.configureEach { variant ->
         registrar.setVariant(variant)
-
         registrar.projectJarDependency project(":forge_installer"), "components/forge_installer"
-
-		if (variant.getName().toLowerCase().contains("full")) {
+        if (variant.getName().toLowerCase().contains("full")) {
             registrar.jreRuntimeDependency 8, "components/jre"
         }
-        
-		def cacioJarUrl = "https://jitpack.io/com/github/MojoLauncher/%1\$s/%2\$s/%3\$s/%2\$s-%3\$s%4\$s.jar"
-
+        def cacioJarUrl = "https://jitpack.io/com/github/MojoLauncher/%1\$s/%2\$s/%3\$s/%2\$s-%3\$s%4\$s.jar"
         registrar.onlineJarDependency cacioJarUrl, "caciocavallo", "cacio-shared", "-9ba6264d8c-1", "", "components/caciocavallo"
         registrar.onlineJarDependency cacioJarUrl, "caciocavallo", "cacio-androidnw", "-9ba6264d8c-1", "", "components/caciocavallo"
-
         registrar.onlineJarDependency cacioJarUrl, "caciocavallo17", "cacio-tta", "d4553e5689", "-jar-with-dependencies", "components/caciocavallo17"
     }
 }
@@ -314,36 +296,22 @@ afterEvaluate {
 dependencies {
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
     implementation 'commons-codec:commons-codec:1.19.0'
-    // implementation 'com.wu-man:android-bsf-api:3.1.3'
     implementation 'androidx.preference:preference:1.2.1'
-    //implementation 'androidx.core:core:1.7.0'
     implementation 'androidx.drawerlayout:drawerlayout:1.2.0'
     implementation 'androidx.viewpager2:viewpager2:1.1.0'
     implementation 'androidx.annotation:annotation:1.10.0'
-
     implementation "androidx.constraintlayout:constraintlayout:2.2.1"
-
     implementation 'com.github.duanhong169:checkerboarddrawable:1.0.2'
     implementation 'com.github.PojavLauncherTeam:portrait-sdp:ed33e89cbc'
     implementation 'com.github.PojavLauncherTeam:portrait-ssp:6c02fd739b'
     implementation 'com.github.Mathias-Boulay:ExtendedView:1.0.0'
     implementation 'com.github.Mathias-Boulay:android_gamepad_remapper:2.0.3'
     implementation 'com.github.Mathias-Boulay:virtual-joystick-android:1.14'
-
-    // implementation 'com.intuit.sdp:sdp-android:1.0.5'
-    // implementation 'com.intuit.ssp:ssp-android:1.0.5'
-
     implementation 'org.tukaani:xz:1.10'
-    // Our version of exp4j can be built from source at
-    // https://github.com/PojavLauncherTeam/exp4j
     implementation 'net.sourceforge.htmlcleaner:htmlcleaner:2.29'
     implementation 'com.bytedance:bytehook:1.1.1'
-
     implementation 'com.github.MojoLauncher:alsoft-android-aar:f369161d5f'
-
     implementation project(":glfw:jni_bindings")
     implementation project(":sdl:jni_bindings")
-    // implementation 'net.sourceforge.streamsupport:streamsupport-cfuture:1.7.0'
-
     implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
 }
