@@ -91,6 +91,10 @@ public class LauncherActivity extends BaseActivity {
 
             if (mOrynBrand != null) mOrynBrand.setVisibility(isHome ? View.VISIBLE : View.GONE);
             if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
+
+            // Re-apply the selected Oryn theme whenever a fragment becomes active.
+            // This is required because fragment views are created after LauncherActivity.onCreate().
+            OrynThemeManager.apply(LauncherActivity.this);
         }
     };
 
@@ -254,6 +258,8 @@ public class LauncherActivity extends BaseActivity {
     protected void onStart() {
         super.onStart();
         getSupportFragmentManager().registerFragmentLifecycleCallbacks(mFragmentCallbackListener, true);
+        // Also handle the fragment that was already restored before the callback was registered.
+        OrynThemeManager.apply(this);
     }
 
     @Override
