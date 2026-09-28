@@ -22,6 +22,14 @@ public final class OrynThemeManager {
         return prefs.getInt(PREF_KEY, DEFAULT_COLOR);
     }
 
+    // Kept for LauncherPreferenceFragment compatibility.
+    // Theme changes must not replace preference/button backgrounds.
+    public static void stylePreferenceItem(Context context, View view) {
+        if (view instanceof TextView) {
+            ((TextView) view).setTextColor(getColor(context));
+        }
+    }
+
     public static void setColor(Context context, int color) {
         context.getSharedPreferences("oryn_theme", Context.MODE_PRIVATE)
                 .edit().putInt(PREF_KEY, color).apply();
@@ -41,8 +49,7 @@ public final class OrynThemeManager {
     private static void applyView(View view, int color) {
         int id = view.getId();
 
-        // Keep every existing launcher/button background unchanged.
-        // Only the home-screen Launch button gets the selected theme color.
+        // Only the home-screen Launch button gets the selected theme background.
         if (id == R.id.play_button) {
             GradientDrawable drawable = new GradientDrawable();
             drawable.setColor(color);
@@ -50,7 +57,7 @@ public final class OrynThemeManager {
             view.setBackground(drawable);
         }
 
-        // Change text color only. Do not recolor icons or other backgrounds.
+        // Theme color changes text only everywhere else.
         if (view instanceof TextView) {
             ((TextView) view).setTextColor(color);
         }
