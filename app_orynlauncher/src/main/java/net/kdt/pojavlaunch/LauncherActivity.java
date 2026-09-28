@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.system.Os;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
@@ -72,6 +73,21 @@ public class LauncherActivity extends BaseActivity {
             boolean isAddAccount = f instanceof SelectAuthFragment;
             mSettingsButton.setVisibility(isAddAccount ? View.VISIBLE : View.GONE);
             if (isAddAccount) mSettingsButton.setImageResource(R.drawable.oryn_nav_home);
+
+            // Smooth Oryn page entrance animation.
+            View page = f.getView();
+            if(page != null) {
+                page.animate().cancel();
+                page.setAlpha(0f);
+                page.setTranslationY(18f);
+                page.animate()
+                        .alpha(1f)
+                        .translationY(0f)
+                        .setDuration(260L)
+                        .setInterpolator(new DecelerateInterpolator())
+                        .start();
+            }
+
             if (mOrynBrand != null) mOrynBrand.setVisibility(isHome ? View.VISIBLE : View.GONE);
             if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
         }
