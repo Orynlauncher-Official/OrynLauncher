@@ -88,7 +88,7 @@ public final class OrynThemeManager {
             if (view instanceof ImageView) ((ImageView) view).setColorFilter(color);
         }
 
-        if (view instanceof ViewGroup) {
+        if (id == R.id.mc_version_spinner) {\n            view.setBackgroundColor(Color.TRANSPARENT);\n        }\n\n        if (view instanceof ViewGroup) {
             ViewGroup group = (ViewGroup) view;
             for (int i = 0; i < group.getChildCount(); i++) {
                 applyView(group.getChildAt(i), color);
