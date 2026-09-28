@@ -63,6 +63,29 @@ public abstract class GLESRenderSpec implements RenderSpec {
         }
     }
 
+    /** MobileGlues: desktop OpenGL 4.x over the device's GLES driver. */
+    public static class MobileGluesRenderSpec extends GLESRenderSpec {
+        public boolean compatibleDevice(Context context) {
+            return JREUtils.getDetectedVersion() >= 3
+                    && new File(Tools.NATIVE_LIB_DIR, library()).exists();
+        }
+        public String name() { return "MobileGlues"; }
+        public int displayName() { return R.string.mcl_setting_renderer_mobileglues; }
+        public String tag() { return Renderers.MOBILEGLUES_RENDERER; }
+        public String library() { return "libmobileglues.so"; }
+        protected int glesVersion() { return 3; }
+        @Override
+        public void setupEnvironment(Context context, Map<String, String> envMap) {
+            super.setupEnvironment(context, envMap);
+            String mgDir = new File(Tools.DIR_DATA, "MG").getAbsolutePath();
+            envMap.put("MG_PLUGIN_STATUS", "1");
+            envMap.put("MG_DIR_PATH", mgDir);
+            envMap.put("LIBGL_GLES", new File(Tools.NATIVE_LIB_DIR, library()).getAbsolutePath());
+            envMap.put("POJAVEXEC_EGL", library());
+            envMap.put("MG_ANGLE_DIR", "");
+        }
+    }
+
     public static class GL4ESRenderSpec extends GLESRenderSpec {
         public boolean compatibleDevice(Context context) {
             return true;

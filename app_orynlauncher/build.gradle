@@ -184,6 +184,7 @@ class AssetTaskRegistrar {
     private String variantName
     private File targetDownloadDir
     private File projectJarDir
+    private File targetMobileGluesDir
 
     AssetTaskRegistrar(Project project) {
         this.project = project
@@ -199,9 +200,12 @@ class AssetTaskRegistrar {
         mergeAssetsTask = variant.getPreBuildProvider().get()
 
         targetAssetsDir = new File(project.projectDir, "build/intermediates/remote_asset_set/${variantName.toLowerCase()}/")
+        targetMobileGluesDir = new File(project.projectDir, "build/intermediates/mobileglues/${variantName.toLowerCase()}/lib")
         createDirectories(targetAssetsDir)
+        createDirectories(targetMobileGluesDir)
 
         project.android.sourceSets[variant.getName()].assets.srcDirs += targetAssetsDir.absolutePath
+        project.android.sourceSets[variant.getName()].jniLibs.srcDirs += targetMobileGluesDir.absolutePath
     }
 
     static def createDirectories(File location) {
@@ -282,6 +286,25 @@ class AssetTaskRegistrar {
             }
         }
         mergeAssetsTask.dependsOn(downloadTask)
+    }
+
+    def mobileGluesDependency(String version) {
+        def apkUrl = "https://github.com/MobileGL-Dev/MobileGlues-release/releases/download/V${version}/MobileGlues_${version}.apk"
+        def dependencySuffix = "MobileGlues${version}${variantName}"
+        def mobileGluesTargetDir = new File(project.projectDir, "build/intermediates/mobileglues/${variantName.toLowerCase()}/lib")
+        def downloadTarget = new File(targetDownloadDir, "MobileGlues_${version}.apk")
+        def downloadTask = project.tasks.register("download${dependencySuffix}", Download) {
+            src apkUrl
+            dest downloadTarget
+            overwrite false
+        }
+        def extractTask = project.tasks.register("extract${dependencySuffix}", Copy) {
+            from project.zipTree(downloadTarget)
+            include "lib/**/libmobileglues.so"
+            into mobileGluesTargetDir.parentFile
+            dependsOn downloadTask
+        }
+        mergeAssetsTask.dependsOn extractTask
     }
 
     def jreRuntimeDependency(int version, String relPath) {

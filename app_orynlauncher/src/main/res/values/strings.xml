@@ -65,6 +65,7 @@
     <string name="mcl_setting_category_renderer">Renderer</string>
     <string name="mcl_setting_renderer_gles2_4">GL4ES (OpenGL ES 2) - 1.21.4 and lower, fast</string>
     <string name="mcl_setting_renderer_ltw">LTW (OpenGL ES 3) - 1.17+ only, fast</string>
+    <string name="mcl_setting_renderer_mobileglues">MobileGlues (OpenGL 4.0) - 1.17+ only</string>
     <string name="mcl_setting_renderer_vulkan_zink">Zink (Vulkan) - all versions, mid</string>
     <string name="mcl_setting_renderer_vulkan_lzink">Legacy Zink (Vulkan) - all versions, mid</string>
     <string name="mcl_setting_renderer_freedreno_kgsl">Freedreno (KGSL) - all versions, fast</string>
