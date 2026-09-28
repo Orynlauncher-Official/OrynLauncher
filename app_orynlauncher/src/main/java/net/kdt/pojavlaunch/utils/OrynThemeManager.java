@@ -22,8 +22,6 @@ public final class OrynThemeManager {
         return prefs.getInt(PREF_KEY, DEFAULT_COLOR);
     }
 
-    // Kept for LauncherPreferenceFragment compatibility.
-    // Theme changes must not replace preference/button backgrounds.
     public static void stylePreferenceItem(Context context, View view) {
         if (view instanceof TextView) {
             ((TextView) view).setTextColor(getColor(context));
@@ -49,16 +47,22 @@ public final class OrynThemeManager {
     private static void applyView(View view, int color) {
         int id = view.getId();
 
-        // Only the home-screen Launch button gets the selected theme background.
+        // Home screen: only the Launch button background changes.
         if (id == R.id.play_button) {
-            GradientDrawable drawable = new GradientDrawable();
-            drawable.setColor(color);
-            drawable.setCornerRadius(40f * view.getResources().getDisplayMetrics().density);
-            view.setBackground(drawable);
+            setThemeButtonBackground(view, color);
+            if (view instanceof TextView) {
+                ((TextView) view).setTextColor(Color.WHITE);
+            }
         }
-
-        // Theme color changes text only everywhere else.
-        if (view instanceof TextView) {
+        // Instance creation buttons: use the exact same theme color as Launch.
+        else if (view instanceof com.kdt.mcgui.MineButton) {
+            setThemeButtonBackground(view, color);
+            if (view instanceof TextView) {
+                ((TextView) view).setTextColor(Color.WHITE);
+            }
+        }
+        // Everything else: text color only. Existing backgrounds stay untouched.
+        else if (view instanceof TextView) {
             ((TextView) view).setTextColor(color);
         }
 
@@ -68,5 +72,12 @@ public final class OrynThemeManager {
                 applyView(group.getChildAt(i), color);
             }
         }
+    }
+
+    private static void setThemeButtonBackground(View view, int color) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(40f * view.getResources().getDisplayMetrics().density);
+        view.setBackground(drawable);
     }
 }
