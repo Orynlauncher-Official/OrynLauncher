@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
-import net.kdt.pojavlaunch.LauncherActivity;
+import net.kdt.pojavlaunch.LauncherActivity;\nimport net.kdt.pojavlaunch.utils.OrynColorPickerDialog;\nimport net.kdt.pojavlaunch.utils.OrynThemeManager;
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
@@ -46,7 +46,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         });
         list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
             @Override public void onChildViewAttachedToWindow(@NonNull View child) {
-                child.setBackgroundResource(R.drawable.oryn_pill);
+                child.setBackgroundResource(R.drawable.oryn_pill);\n                OrynThemeManager.stylePreferenceItem(requireContext(), child);
                 child.setMinimumHeight(dp(64));
                 child.setPadding(dp(12), child.getPaddingTop(), dp(12), child.getPaddingBottom());
             }
@@ -58,7 +58,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     public void onCreatePreferences(Bundle b, String str) {
         mVisibilityUpdater = this::updateVisibility;
         addPreferencesFromResource(R.xml.pref_main);
-        setupNotificationRequestPreference();
+        setupNotificationRequestPreference();\n        setupThemePreference();
     }
 
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
@@ -67,7 +67,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         requirePreference("notification_permission_request").setVisible(!getLauncherActivity().checkForPermission(33, Manifest.permission.POST_NOTIFICATIONS));
     }
 
-    private void setupNotificationRequestPreference() {
+    private void setupThemePreference() {\n        Preference preference = requirePreference("theme_color");\n        preference.setOnPreferenceClickListener(p -> {\n            OrynColorPickerDialog.show(requireContext());\n            return true;\n        });\n    }\n\n    private void setupNotificationRequestPreference() {
         Preference mRequestNotificationPermissionPreference = requirePreference("notification_permission_request");
         Activity activity = getActivity();
         if(activity instanceof LauncherActivity) {
@@ -86,7 +86,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         super.onResume();
         SharedPreferences sharedPreferences = getPreferenceManager().getSharedPreferences();
         if(sharedPreferences != null) sharedPreferences.registerOnSharedPreferenceChangeListener(this);
-        mVisibilityUpdater.run();
+        mVisibilityUpdater.run();\n        if (getActivity() != null) OrynThemeManager.apply(getActivity());
     }
 
     @Override
