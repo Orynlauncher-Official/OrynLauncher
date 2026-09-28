@@ -69,8 +69,9 @@ public class LauncherActivity extends BaseActivity {
         @Override
         public void onFragmentResumed(@NonNull FragmentManager fm, @NonNull Fragment f) {
             boolean isHome = f instanceof MainMenuFragment;
-            mSettingsButton.setVisibility(isHome ? View.GONE : View.VISIBLE);
-            mSettingsButton.setImageResource(R.drawable.oryn_nav_home);
+            boolean isAddAccount = f instanceof SelectAuthFragment;
+            mSettingsButton.setVisibility(isAddAccount ? View.VISIBLE : View.GONE);
+            if (isAddAccount) mSettingsButton.setImageResource(R.drawable.oryn_nav_home);
             if (mOrynBrand != null) mOrynBrand.setVisibility(isHome ? View.VISIBLE : View.GONE);
             if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
         }
