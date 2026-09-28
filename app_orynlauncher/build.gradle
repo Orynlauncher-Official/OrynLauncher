@@ -72,7 +72,7 @@ android {
         }
         publicBuild {
             storeFile file("mojo_release_next.jks")
-            storePassword "android"
+            storePassword System.getenv("MOJOPUB_KEYSTORE_PASSWORD")
             keyAlias "key0"
             keyPassword System.getenv("MOJOPUB_KEYSTORE_PASSWORD")
         }
