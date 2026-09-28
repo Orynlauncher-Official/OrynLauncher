@@ -30,7 +30,7 @@ jobs:
           path: app_orynlauncher/libs
 
       - name: Get Mesa
-        uses: dawidd6/action-download-artifact@v6  
+        uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
         with:
           github_token: ${{ secrets.MESA_ACTIONS }}
@@ -40,6 +40,22 @@ jobs:
           branch: mojo/26.2
           name: mesa-aar
           path: app_orynlauncher/libs
+
+      - name: Sanitize downloaded AAR native libraries
+        run: |
+          set -e
+          shopt -s nullglob
+          for aar in app_orynlauncher/libs/*.aar; do
+            if unzip -l "$aar" | grep -q 'jni/out/libandroidx.graphics.path.so'; then
+              echo "Removing malformed jni/out/libandroidx.graphics.path.so from $aar"
+              tmpdir="$(mktemp -d)"
+              unzip -q "$aar" -d "$tmpdir"
+              rm -f "$tmpdir/jni/out/libandroidx.graphics.path.so"
+              rm -rf "$tmpdir/jni/out" 2>/dev/null || true
+              (cd "$tmpdir" && zip -qr "$OLDPWD/$(basename "$aar")" .)
+              rm -rf "$tmpdir"
+            fi
+          done
 
       - uses: gradle/actions/setup-gradle@v4
         with:
