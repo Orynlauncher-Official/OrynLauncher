@@ -32,52 +32,38 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        final int background = Color.rgb(19, 23, 31);
+        // Keep the settings screen immersive in landscape, including sub-screens.
+        requireActivity().getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        final int background = Color.rgb(27, 27, 27);
         view.setBackgroundColor(background);
         RecyclerView list = getListView();
         if (list == null) return;
-        list.setClipToPadding(false);
-        list.setPadding(dp(20), dp(94), dp(20), dp(24));
         list.setBackgroundColor(background);
-        list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
-            @Override public void onChildViewAttachedToWindow(@NonNull View child) {
-                int position = list.getChildAdapterPosition(child);
-                if (position == RecyclerView.NO_POSITION) return;
-                GradientDrawable card = new GradientDrawable();
-                card.setColor(Color.rgb(35, 40, 51));
-                card.setCornerRadius(dp(16));
-                child.setBackground(card);
-                child.setMinimumHeight(dp(74));
-                RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
-                lp.bottomMargin = dp(8);
-                child.setLayoutParams(lp);
-            }
-            @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
-        });
-        ViewGroup parent = (ViewGroup) list.getParent();
-        if (parent instanceof android.widget.FrameLayout) {
-            android.widget.FrameLayout frame = (android.widget.FrameLayout) parent;
-            LinearLayout header = new LinearLayout(requireContext());
-            header.setOrientation(LinearLayout.VERTICAL);
-            header.setPadding(dp(12), dp(10), dp(12), dp(10));
-            GradientDrawable headerBg = new GradientDrawable(
-                    GradientDrawable.Orientation.TL_BR,
-                    new int[]{Color.rgb(37, 42, 54), Color.rgb(20, 24, 32)});
-            header.setBackground(headerBg);
-            TextView title = new TextView(requireContext());
-            title.setText("Oryn Settings");
-            title.setTextSize(24);
-            title.setTypeface(null, android.graphics.Typeface.BOLD);
-            title.setTextColor(Color.rgb(244, 245, 249));
-            header.addView(title);
-            TextView subtitle = new TextView(requireContext());
-            subtitle.setText("Oryn Launcher V2  •  Monochrome Theme");
-            subtitle.setTextSize(12);
-            subtitle.setTextColor(Color.rgb(164, 170, 184));
-            header.addView(subtitle);
-            android.widget.FrameLayout.LayoutParams hp =
-                    new android.widget.FrameLayout.LayoutParams(-1, dp(78));
-            frame.addView(header, hp);
+        list.setClipToPadding(false);
+        // The category overview matches the supplied screenshot; sub-pages retain
+        // their own scrolling preference layout without a duplicate home header.
+        boolean overview = getClass() == LauncherPreferenceFragment.class;
+        list.setPadding(dp(overview ? 32 : 20), dp(overview ? 18 : 20),
+                dp(overview ? 32 : 20), dp(20));
+        if (overview) {
+            list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+                @Override public void onChildViewAttachedToWindow(@NonNull View child) {
+                    int position = list.getChildAdapterPosition(child);
+                    if (position == RecyclerView.NO_POSITION) return;
+                    child.setBackgroundColor(Color.TRANSPARENT);
+                    child.setMinimumHeight(dp(68));
+                    RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
+                    lp.bottomMargin = dp(4);
+                    child.setLayoutParams(lp);
+                }
+                @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
+            });
         }
     }
 
