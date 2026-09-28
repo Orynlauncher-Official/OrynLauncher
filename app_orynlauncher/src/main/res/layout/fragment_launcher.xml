@@ -11,10 +11,6 @@
  <LinearLayout android:id="@+id/oryn_launch_group" android:layout_width="260dp" android:layout_height="76dp" android:gravity="center" android:background="@drawable/oryn_pill" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
   <Button android:id="@+id/play_button" android:layout_width="match_parent" android:layout_height="match_parent" android:text="▶  │  Launch" android:textAllCaps="false" android:textSize="22sp" android:textColor="#F7F7F8" android:background="@android:color/transparent"/>
  </LinearLayout>
- <LinearLayout android:id="@+id/oryn_bottom" android:layout_width="230dp" android:layout_height="52dp" android:orientation="horizontal" android:gravity="center_vertical" android:paddingHorizontal="12dp" android:layout_marginEnd="26dp" android:layout_marginBottom="20dp" android:background="@drawable/oryn_pill" app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
-  <com.kdt.mcgui.mcVersionSpinner xmlns:app="http://schemas.android.com/apk/res-auto" android:id="@+id/mc_version_spinner" app:drawableStartSize="24dp" app:drawableStartIntegerScaling="false" android:singleLine="true" android:ellipsize="end" android:textColor="#F5F5F7" android:layout_width="170dp" android:layout_height="48dp" android:drawableEnd="@drawable/spinner_arrow" android:background="@android:color/transparent"/>
-  <ImageButton android:id="@+id/edit_profile_button" android:layout_width="40dp" android:layout_height="40dp" android:src="@drawable/ic_px_edit" android:contentDescription="Edit profile" android:background="@android:color/transparent"/>
- </LinearLayout>
  <LinearLayout android:layout_width="2dp" android:layout_height="2dp" android:orientation="horizontal" android:visibility="gone" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
   <Button android:id="@+id/social_media_button" android:layout_width="1dp" android:layout_height="1dp"/>
   <Button android:id="@+id/share_logs_button" android:layout_width="1dp" android:layout_height="1dp"/>
