@@ -8,6 +8,7 @@ import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
@@ -60,14 +61,24 @@ public final class OrynColorPickerDialog {
             if (!focused) applyHex(context, hex, rgb, preview);
         });
 
+        ScrollView scrollView = new ScrollView(context);
+        scrollView.setFillViewport(false);
+        scrollView.setVerticalScrollBarEnabled(true);
+        scrollView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        scrollView.addView(root, new ScrollView.LayoutParams(
+                ScrollView.LayoutParams.MATCH_PARENT,
+                ScrollView.LayoutParams.WRAP_CONTENT
+        ));
+
         AlertDialog dialog = new AlertDialog.Builder(context)
                 .setTitle("Theme Color")
-                .setView(root)
+                .setView(scrollView)
                 .setPositiveButton("Done", null)
                 .setNegativeButton("Reset", (d, w) -> {
                     OrynThemeManager.setColor(context, Color.rgb(80, 150, 255));
                 })
                 .create();
+
         dialog.setOnShowListener(d -> {
             if (dialog.getButton(AlertDialog.BUTTON_POSITIVE) != null) {
                 dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> dialog.dismiss());
@@ -99,6 +110,7 @@ public final class OrynColorPickerDialog {
             @Override public void onStartTrackingTouch(SeekBar seekBar) {}
             @Override public void onStopTrackingTouch(SeekBar seekBar) {}
         });
+
         int color = Color.rgb(rgb[0], rgb[1], rgb[2]);
         preview.setBackground(makePreview(color, context));
     }
