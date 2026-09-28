@@ -37,10 +37,10 @@ Head to **[GitHub Releases](https://github.com/Orynlauncher-Official/OrynLaunche
 Clone this repository and run:
 
 ```bash
-./gradlew :app_pojavlauncher:assembleDebug
+./gradlew :app_orynlauncher:assembleDebug
 ```
 
-On Windows, use `gradlew.bat` instead. Ensure `mojoexec`, `sdl` and `glfw` are symlinked into `app_pojavlauncher/src/main/jni/` as required by the project.
+On Windows, use `gradlew.bat` instead. Ensure `mojoexec`, `sdl` and `glfw` are symlinked into `app_orynlauncher/src/main/jni/` as required by the project.
 
 ## 🗺️ Roadmap
 

@@ -14,8 +14,8 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name='PojavLauncher'
-include ':app_pojavlauncher'
+rootProject.name='OrynLauncher'
+include ':app_orynlauncher'
 
 include ':forge_installer'
 include ':glfw:jni_bindings'
