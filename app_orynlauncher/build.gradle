@@ -170,7 +170,6 @@ android {
             useLegacyPackaging = true
         }
         pickFirst '**/libbytehook.so'
-        pickFirst '**/libc++_shared.so'
     }
 
     buildFeatures {
@@ -292,6 +291,7 @@ class AssetTaskRegistrar {
     def mobileGluesDependency(String version) {
         def apkUrl = "https://github.com/MobileGL-Dev/MobileGlues-release/releases/download/V${version}/MobileGlues_${version}.apk"
         def dependencySuffix = "MobileGlues${version}${variantName}"
+        def mobileGluesTargetDir = new File(project.projectDir, "build/intermediates/mobileglues/${variantName.toLowerCase()}/lib")
         def downloadTarget = new File(targetDownloadDir, "MobileGlues_${version}.apk")
         def downloadTask = project.tasks.register("download${dependencySuffix}", Download) {
             src apkUrl
@@ -301,7 +301,7 @@ class AssetTaskRegistrar {
         def extractTask = project.tasks.register("extract${dependencySuffix}", Copy) {
             from project.zipTree(downloadTarget)
             include "lib/**/libmobileglues.so"
-            into targetMobileGluesDir.parentFile
+            into mobileGluesTargetDir.parentFile
             dependsOn downloadTask
         }
         mergeAssetsTask.dependsOn extractTask
