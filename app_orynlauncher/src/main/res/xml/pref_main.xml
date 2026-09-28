@@ -42,7 +42,7 @@
             android:title="@string/preference_misc_title"
             android:summary="@string/preference_misc_description"
             android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceMiscellaneousFragment"
-            android:icon="@drawable/ic_px_alt_sliders"
+            android:icon="@drawable/ic_px_sliders"
             />
 
 
