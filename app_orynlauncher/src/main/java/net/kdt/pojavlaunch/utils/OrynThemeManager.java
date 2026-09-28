@@ -24,7 +24,15 @@ public final class OrynThemeManager {
         return prefs.getInt(PREF_KEY, DEFAULT_COLOR);
     }
 
-    public static int getSurfaceColor(Context context) {\n        return darken(getColor(context), 0.70f);\n    }\n\n    public static void stylePreferenceItem(Context context, View view) {\n        setRoundedBackground(view, getSurfaceColor(context), 40);\n    }\n\n    public static void setColor(Context context, int color) {
+    public static int getSurfaceColor(Context context) {
+        return darken(getColor(context), 0.70f);
+    }
+
+    public static void stylePreferenceItem(Context context, View view) {
+        setRoundedBackground(view, getSurfaceColor(context), 40);
+    }
+
+    public static void setColor(Context context, int color) {
         context.getSharedPreferences("oryn_theme", Context.MODE_PRIVATE)
                 .edit().putInt(PREF_KEY, color).apply();
         apply(context);
