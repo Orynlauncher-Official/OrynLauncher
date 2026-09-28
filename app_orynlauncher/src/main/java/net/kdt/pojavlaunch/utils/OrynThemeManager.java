@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.view.View;
 import android.view.ViewGroup;
+import androidx.recyclerview.widget.RecyclerView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -58,6 +59,10 @@ public final class OrynThemeManager {
 
     private static void applyView(View view, int color) {
         int id = view.getId();
+
+        if (view.getParent() instanceof RecyclerView) {
+            stylePreferenceItem(view.getContext(), view);
+        }
 
         if (id == R.id.fragment_menu_main || id == R.id.container_fragment) {
             view.setBackgroundColor(darken(color, 0.84f));
