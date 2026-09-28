@@ -1,4 +1,4 @@
-name: Android CI
+name: OrynLauncher APK
 
 on:
   push:
@@ -27,7 +27,7 @@ jobs:
           workflow: android.yml
           workflow_conclusion: success
           name: output-aar
-          path: app_pojavlauncher/libs
+          path: app_orynlauncher/libs
 
       - name: Get Mesa
         uses: dawidd6/action-download-artifact@v6  
@@ -39,7 +39,7 @@ jobs:
           workflow_conclusion: success
           branch: mojo/26.2
           name: mesa-aar
-          path: app_pojavlauncher/libs
+          path: app_orynlauncher/libs
 
       - uses: gradle/actions/setup-gradle@v4
         with:
@@ -55,24 +55,24 @@ jobs:
       - name: Build Publishing .aab
         if: github.repository_owner == 'MojoLauncher' && github.ref_name == 'v3_openjdk'
         run: |
-          gradle :app_pojavlauncher:bundleFullGplay
-          mv app_pojavlauncher/build/outputs/bundle/fullGplay/app_pojavlauncher-full-gplay.aab out/app-gplay.aab
+          gradle :app_orynlauncher:bundleFullGplay
+          mv app_orynlauncher/build/outputs/bundle/fullGplay/app_orynlauncher-full-gplay.aab out/app-gplay.aab
 
       - name: Build Debug .apk
         run: |
           # Build the launcher
-          gradle :app_pojavlauncher:assembleFullDebug
-          mv app_pojavlauncher/build/outputs/apk/full/debug/app_pojavlauncher-full-debug.apk out/app-debug-full.apk
+          gradle :app_orynlauncher:assembleFullDebug
+          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/app-debug-full.apk
 
       - name: Build Debug .apk (No runtime)
         run: |
-          gradle :app_pojavlauncher:assembleNoruntimeDebug
-          mv app_pojavlauncher/build/outputs/apk/noruntime/debug/app_pojavlauncher-noruntime-debug.apk out/app-debug-noruntime.apk
+          gradle :app_orynlauncher:assembleNoruntimeDebug
+          mv app_orynlauncher/build/outputs/apk/noruntime/debug/app_orynlauncher-noruntime-debug.apk out/app-debug-noruntime.apk
       - name: Build Nightly Release .apk
         if: github.repository_owner == 'MojoLauncher' && github.ref_name == 'v3_openjdk'
         run: |
-          gradle :app_pojavlauncher:assembleFullPubRelease
-          mv app_pojavlauncher/build/outputs/apk/full/pubRelease/app_pojavlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
+          gradle :app_orynlauncher:assembleFullPubRelease
+          mv app_orynlauncher/build/outputs/apk/full/pubRelease/app_orynlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
       - name: Gen md5sums
         run: |
           md5sum out/app-debug-full.apk > out/app-debug-full.md5
@@ -81,13 +81,13 @@ jobs:
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
+          name: OrynLauncher-debug
           path: out/app-debug-full.apk
 
       - name: Upload Debug APK (No runtime)
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-noruntime
+          name: OrynLauncher-noruntime
           path: out/app-debug-noruntime.apk
 
       - name: Release Nightly APK
