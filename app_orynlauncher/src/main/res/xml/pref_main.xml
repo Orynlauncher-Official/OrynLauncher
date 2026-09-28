@@ -9,6 +9,42 @@
 
     <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
 
+    <!-- Landscape settings dashboard: shortcuts open the existing functional video preferences. -->
+    <Preference
+        android:key="oryn_dashboard_0"
+        android:title="Global Renderer"
+        android:summary="Choose the graphics renderer used by Minecraft"
+        android:icon="@drawable/ic_px_image_renderer"
+        android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment" />
+
+    <Preference
+        android:key="oryn_dashboard_1"
+        android:title="Vulkan Driver"
+        android:summary="Choose the supported Vulkan driver"
+        android:icon="@drawable/ic_px_volcano"
+        android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment" />
+
+    <Preference
+        android:key="oryn_dashboard_2"
+        android:title="Graphics API"
+        android:summary="Configure the graphics API and rendering options"
+        android:icon="@drawable/ic_px_image_renderer"
+        android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment" />
+
+    <Preference
+        android:key="oryn_dashboard_3"
+        android:title="Resolution Rule"
+        android:summary="Choose how the game resolution is calculated"
+        android:icon="@drawable/ic_px_viewport_expand"
+        android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment" />
+
+    <Preference
+        android:key="oryn_dashboard_4"
+        android:title="Resolution Scale"
+        android:summary="Change the resolution scale of the game"
+        android:icon="@drawable/ic_px_resolution"
+        android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment" />
+
     <PreferenceCategory
         android:title="@string/preference_category_main_categories"
         >
