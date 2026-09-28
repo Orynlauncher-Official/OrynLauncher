@@ -1,6 +1,6 @@
 package net.kdt.pojavlaunch.fragments;
 
-import android.app.Activity;
+import androidx.fragment.app.FragmentActivity;
 import android.app.Dialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -25,11 +25,11 @@ import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
 public final class CompactAccountDialog {
     private CompactAccountDialog() {}
 
-    private static int dp(Activity activity, float value) {
+    private static int dp(FragmentActivity activity, float value) {
         return (int) (value * activity.getResources().getDisplayMetrics().density + .5f);
     }
 
-    private static GradientDrawable background(int color, int stroke, int radius, Activity activity) {
+    private static GradientDrawable background(int color, int stroke, int radius, FragmentActivity activity) {
         GradientDrawable shape = new GradientDrawable();
         shape.setColor(color);
         shape.setCornerRadius(dp(activity, radius));
@@ -37,7 +37,7 @@ public final class CompactAccountDialog {
         return shape;
     }
 
-    public static void show(Activity activity) {
+    public static void show(FragmentActivity activity) {
         Dialog dialog = new Dialog(activity);
         LinearLayout panel = new LinearLayout(activity);
         panel.setOrientation(LinearLayout.VERTICAL);
@@ -86,7 +86,7 @@ public final class CompactAccountDialog {
         }
     }
 
-    private static void addOption(Activity activity, Dialog dialog, LinearLayout panel,
+    private static void addOption(FragmentActivity activity, Dialog dialog, LinearLayout panel,
                                   int title, Class<? extends Fragment> target, String tag) {
         TextView button = new TextView(activity);
         button.setText(title);
