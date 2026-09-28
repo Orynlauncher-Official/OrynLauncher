@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Oryn logo mark, simplified for Android's monochrome small-notification icon. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M54,8 A46,46 0,1 0,54 100 A46,46 0,1 0,54 8 M54,28 A26,26 0,1 1,54 80 A26,26 0,1 1,54 28" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M45,50 L63,50 L91,78 L73,78 Z" />
+</vector>
