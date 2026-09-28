@@ -32,59 +32,52 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.setBackgroundColor(Color.rgb(20, 24, 30));
-        if (getListView() != null) {
-            RecyclerView list = getListView();
-            list.setClipToPadding(false);
-            list.setPadding(dp(132), dp(108), dp(20), dp(22));
-            list.setBackgroundColor(Color.rgb(20, 24, 30));
-            list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
-                @Override public void onChildViewAttachedToWindow(@NonNull View child) {
-                    int position = list.getChildAdapterPosition(child);
-                    if (position == RecyclerView.NO_POSITION) return;
-                    GradientDrawable bg = new GradientDrawable();
-                    bg.setColor(Color.rgb(26, 31, 38));
-                    bg.setCornerRadius(dp(19));
-                    bg.setStroke(dp(1), Color.rgb(52, 59, 69));
-                    child.setBackground(bg);
-                    child.setMinimumHeight(dp(position == 1 ? 76 : 74));
-                    RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
-                    lp.bottomMargin = dp(9);
-                    child.setLayoutParams(lp);
-                }
-                @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
-            });
-            ViewGroup parent = (ViewGroup) list.getParent();
-            if (parent instanceof android.widget.FrameLayout) {
-                android.widget.FrameLayout frame = (android.widget.FrameLayout) parent;
-                LinearLayout header = new LinearLayout(requireContext());
-                header.setOrientation(LinearLayout.VERTICAL);
-                header.setPadding(dp(22), dp(12), 0, 0);
-                TextView title = new TextView(requireContext());
-                title.setText("◉    Oryn Settings");
-                title.setTextSize(23);
-                title.setTextColor(Color.WHITE);
-                header.addView(title);
-                TextView subtitle = new TextView(requireContext());
-                subtitle.setText("Oryn Launcher V2  •  Monochrome Theme");
-                subtitle.setTextSize(12);
-                subtitle.setTextColor(Color.rgb(146, 152, 163));
-                header.addView(subtitle);
-                frame.addView(header, new android.widget.FrameLayout.LayoutParams(-1, dp(90)));
-                TextView sidebar = new TextView(requireContext());
-                sidebar.setText("━\n◇\n⚑\n♜\n▣\n┃\n\n◉");
-                sidebar.setTextSize(27);
-                sidebar.setGravity(android.view.Gravity.CENTER);
-                sidebar.setTextColor(Color.rgb(184, 193, 207));
-                GradientDrawable sideBg = new GradientDrawable();
-                sideBg.setColor(Color.rgb(26, 31, 38));
-                sideBg.setCornerRadius(dp(22));
-                sideBg.setStroke(dp(1), Color.rgb(52, 59, 69));
-                sidebar.setBackground(sideBg);
-                android.widget.FrameLayout.LayoutParams sp = new android.widget.FrameLayout.LayoutParams(dp(60), -1);
-                sp.leftMargin = dp(8); sp.topMargin = dp(80); sp.bottomMargin = dp(12);
-                frame.addView(sidebar, sp);
+        final int background = Color.rgb(19, 23, 31);
+        view.setBackgroundColor(background);
+        RecyclerView list = getListView();
+        if (list == null) return;
+        list.setClipToPadding(false);
+        list.setPadding(dp(20), dp(94), dp(20), dp(24));
+        list.setBackgroundColor(background);
+        list.addOnChildAttachStateChangeListener(new RecyclerView.OnChildAttachStateChangeListener() {
+            @Override public void onChildViewAttachedToWindow(@NonNull View child) {
+                int position = list.getChildAdapterPosition(child);
+                if (position == RecyclerView.NO_POSITION) return;
+                GradientDrawable card = new GradientDrawable();
+                card.setColor(Color.rgb(35, 40, 51));
+                card.setCornerRadius(dp(16));
+                child.setBackground(card);
+                child.setMinimumHeight(dp(74));
+                RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
+                lp.bottomMargin = dp(8);
+                child.setLayoutParams(lp);
             }
+            @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
+        });
+        ViewGroup parent = (ViewGroup) list.getParent();
+        if (parent instanceof android.widget.FrameLayout) {
+            android.widget.FrameLayout frame = (android.widget.FrameLayout) parent;
+            LinearLayout header = new LinearLayout(requireContext());
+            header.setOrientation(LinearLayout.VERTICAL);
+            header.setPadding(dp(12), dp(10), dp(12), dp(10));
+            GradientDrawable headerBg = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    new int[]{Color.rgb(37, 42, 54), Color.rgb(20, 24, 32)});
+            header.setBackground(headerBg);
+            TextView title = new TextView(requireContext());
+            title.setText("Oryn Settings");
+            title.setTextSize(24);
+            title.setTypeface(null, android.graphics.Typeface.BOLD);
+            title.setTextColor(Color.rgb(244, 245, 249));
+            header.addView(title);
+            TextView subtitle = new TextView(requireContext());
+            subtitle.setText("Oryn Launcher V2  •  Monochrome Theme");
+            subtitle.setTextSize(12);
+            subtitle.setTextColor(Color.rgb(164, 170, 184));
+            header.addView(subtitle);
+            android.widget.FrameLayout.LayoutParams hp =
+                    new android.widget.FrameLayout.LayoutParams(-1, dp(78));
+            frame.addView(header, hp);
         }
     }
 
