@@ -354,6 +354,7 @@ object GameRecorder {
                 }
 
                 outputUri = uri
+                rememberRecording(context, uri, values.getAsString(MediaStore.Video.Media.DISPLAY_NAME) ?: "OrynLauncher Recording.mp4")
                 Log.i(TAG, "OrynLauncher recording saved: $uri (${completedFile.length()} bytes)")
             } catch (e: Throwable) {
                 runCatching { context.contentResolver.delete(uri, null, null) }
@@ -366,6 +367,19 @@ object GameRecorder {
         } finally {
             cleanup(deleteOutput = false)
         }
+    }
+
+    private fun rememberRecording(context: Context, uri: Uri, displayName: String) {
+        val prefs = context.getSharedPreferences("oryn_recorder_library", Context.MODE_PRIVATE)
+        val existing = prefs.getStringSet("recordings", emptySet())?.toMutableSet() ?: mutableSetOf()
+        existing.removeAll { entry ->
+            val parts = entry.split("|", limit = 2)
+            parts.isEmpty() || runCatching {
+                context.contentResolver.openAssetFileDescriptor(Uri.parse(parts[0]), "r") == null
+            }.getOrDefault(true)
+        }
+        existing.add(uri.toString() + "|" + displayName)
+        prefs.edit().putStringSet("recordings", existing).apply()
     }
 
     private fun isPlayableMp4(file: File): Boolean {
