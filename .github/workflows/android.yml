@@ -78,7 +78,7 @@ jobs:
         run: |
           # Build the launcher
           gradle :app_orynlauncher:assembleFullDebug
-          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/app-debug-full.apk
+          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/app-OrynLauncher-debug-full.apk
 
       - name: Build Debug .apk (No runtime)
         run: |
@@ -91,14 +91,14 @@ jobs:
           mv app_orynlauncher/build/outputs/apk/full/pubRelease/app_orynlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
       - name: Gen md5sums
         run: |
-          md5sum out/app-debug-full.apk > out/app-debug-full.md5
+          md5sum out/app-OrynLauncher-debug-full.apk > out/app-OrynLauncher-debug-full.md5
           md5sum out/app-debug-noruntime.apk > out/app-debug-noruntime.md5
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: OrynLauncher-debug
-          path: out/app-debug-full.apk
+          path: out/app-OrynLauncher-debug-full.apk
 
       - name: Upload Debug APK (No runtime)
         uses: actions/upload-artifact@v4
