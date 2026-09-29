@@ -22,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asStateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -44,9 +43,9 @@ object GameRecorder {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(RecordingState.IDLE)
-    val state = _state.asStateFlow()
+    val state = _state
     private val _elapsedMs = kotlinx.coroutines.flow.MutableStateFlow(0L)
-    val elapsedMs = _elapsedMs.asStateFlow()
+    val elapsedMs = _elapsedMs
 
     private var encodeJob: Job? = null
     private var timerJob: Job? = null
@@ -166,7 +165,7 @@ object GameRecorder {
         val info = MediaCodec.BufferInfo()
         var eos = false
         try {
-            while (currentCoroutineContext().isActive && !eos) {
+            while (isActive && !eos) {
                 when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
                     MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         if (!muxerStarted) {
