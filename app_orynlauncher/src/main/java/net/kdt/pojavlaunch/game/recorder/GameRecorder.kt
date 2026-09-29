@@ -30,6 +30,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
+import java.io.FileInputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -55,7 +57,7 @@ object GameRecorder {
     private var glEncoderSurface: GlVideoEncoderSurface? = null
     private var recordingStartNs = 0L
     private var muxer: MediaMuxer? = null
-    private var outputPfd: android.os.ParcelFileDescriptor? = null
+    private var tempOutputFile: File? = null
     private var outputUri: Uri? = null
     private var bitmap: Bitmap? = null
     private var width = 0
@@ -94,10 +96,14 @@ object GameRecorder {
 
         try {
             appContext = context.applicationContext
-            outputUri = createOutputEntry(context)
-            outputPfd = context.contentResolver.openFileDescriptor(outputUri!!, "w")
-                ?: throw IOException("Cannot open OrynLauncher recording file")
-            muxer = MediaMuxer(outputPfd!!.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            tempOutputFile = File(
+                context.cacheDir,
+                "oryn_recording_${System.currentTimeMillis()}.mp4"
+            )
+            muxer = MediaMuxer(
+                tempOutputFile!!.absolutePath,
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
+            )
 
             val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
                 setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
@@ -299,14 +305,47 @@ object GameRecorder {
             runCatching { muxer?.stop() }
             runCatching { muxer?.release() }
             muxer = null
-            // Close the MediaStore descriptor only after MediaMuxer has finished writing.
-            runCatching { outputPfd?.close() }
-            outputPfd = null
+            val completedFile = tempOutputFile
+            val context = appContext
+            if (completedFile == null || !completedFile.exists() || completedFile.length() <= 0L || context == null) {
+                throw IOException("OrynLauncher recording did not produce a valid MP4")
+            }
 
-            outputUri?.let { uri ->
-                val values = ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }
-                appContext?.contentResolver?.update(uri, values, null, null)
-                Log.i(TAG, "OrynLauncher recording saved: $uri")
+            val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val values = ContentValues().apply {
+                put(MediaStore.Video.Media.DISPLAY_NAME, "OrynLauncher_Recording_${ts}.mp4")
+                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
+                    put(MediaStore.Video.Media.IS_PENDING, 1)
+                }
+            }
+
+            val uri = context.contentResolver.insert(
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values
+            ) ?: throw IOException("Failed to create OrynLauncher MediaStore entry")
+
+            try {
+                context.contentResolver.openOutputStream(uri, "w")?.use { output ->
+                    FileInputStream(completedFile).use { input ->
+                        input.copyTo(output, 1024 * 1024)
+                    }
+                } ?: throw IOException("Failed to open OrynLauncher MediaStore output")
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val publish = ContentValues().apply {
+                        put(MediaStore.Video.Media.IS_PENDING, 0)
+                    }
+                    context.contentResolver.update(uri, publish, null, null)
+                }
+
+                outputUri = uri
+                Log.i(TAG, "OrynLauncher recording saved: $uri (${completedFile.length()} bytes)")
+            } catch (e: Throwable) {
+                runCatching { context.contentResolver.delete(uri, null, null) }
+                throw e
+            } finally {
+                runCatching { completedFile.delete() }
             }
         } catch (e: Throwable) {
             Log.e(TAG, "Failed to save OrynLauncher recording", e)
@@ -329,8 +368,6 @@ object GameRecorder {
         inputSurface = null
         runCatching { muxer?.release() }
         muxer = null
-        runCatching { outputPfd?.close() }
-        outputPfd = null
 
         if (deleteOutput) {
             outputUri?.let { uri -> runCatching { appContext?.contentResolver?.delete(uri, null, null) } }
@@ -342,23 +379,12 @@ object GameRecorder {
         runCatching { bitmap?.recycle() }
         bitmap = null
         outputUri = null
+        runCatching { tempOutputFile?.delete() }
+        tempOutputFile = null
         recordingStartNs = 0L
         appContext = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
     }
 
-    private fun createOutputEntry(context: Context): Uri {
-        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val values = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, "OrynLauncher_Recording_${ts}.mp4")
-            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
-                put(MediaStore.Video.Media.IS_PENDING, 1)
-            }
-        }
-        return context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
-            ?: throw IOException("Failed to create OrynLauncher recording entry")
-    }
 }
