@@ -340,6 +340,8 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
     @Override
     public void onSurfaceAvailable(Surface surface) {
+        // Android may recreate the render surface. Re-register it for OrynRecorder.
+        GameSurfaceRegistry.register(mSurface);
         GameSurfaceRegistry.markReady();
         Platform.updateSurface(surface);
         if(mRefreshOnly) return;
