@@ -378,12 +378,6 @@ object GameRecorder {
                 runCatching { completedFile.delete() }
             }
         } catch (e: Throwable) {
-                runCatching { context.contentResolver.delete(uri, null, null) }
-                throw e
-            } finally {
-                runCatching { completedFile.delete() }
-            }
-        } catch (e: Throwable) {
             Log.e(TAG, "Failed to save OrynLauncher recording", e)
         } finally {
             cleanup(deleteOutput = false)
