@@ -58,8 +58,8 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
 private const val TAG = "GameRecorder"
-private const val FRAME_RATE = 30
-private const val VIDEO_BIT_RATE = 6_000_000
+private const val DEFAULT_FRAME_RATE = 30
+private const val DEFAULT_VIDEO_BIT_RATE = 6_000_000
 private const val AUDIO_SAMPLE_RATE = 48_000
 private const val AUDIO_BIT_RATE = 128_000
 private const val AUDIO_CHANNELS = 2
@@ -134,8 +134,16 @@ object GameRecorder {
             return
         }
 
-        val w = (view.width.coerceAtLeast(2)  / 2) * 2
-        val h = (view.height.coerceAtLeast(2) / 2) * 2
+        val prefs = context.getSharedPreferences("default_preferences", Context.MODE_PRIVATE)
+        val quality = prefs.getInt("recorder_quality", 100).coerceIn(25, 100) / 100f
+        val fps = prefs.getInt("recorder_fps", DEFAULT_FRAME_RATE).coerceIn(24, 60)
+        val w = ((view.width.coerceAtLeast(2) * quality).toInt() / 2) * 2
+        val h = ((view.height.coerceAtLeast(2) * quality).toInt() / 2) * 2
+        val videoBitRate = when {
+            quality <= 0.5f -> 3_000_000
+            quality <= 0.75f -> 5_000_000
+            else -> DEFAULT_VIDEO_BIT_RATE
+        }
 
         try {
             val (uri, file) = createOutputEntry(context)
@@ -160,8 +168,8 @@ object GameRecorder {
             val videoFmt = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, w, h).apply {
                 setInteger(MediaFormat.KEY_COLOR_FORMAT,
                     MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE,    VIDEO_BIT_RATE)
-                setInteger(MediaFormat.KEY_FRAME_RATE,  FRAME_RATE)
+                setInteger(MediaFormat.KEY_BIT_RATE,    videoBitRate)
+                setInteger(MediaFormat.KEY_FRAME_RATE,  fps)
                 setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             }
             videoCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also { c ->
@@ -558,9 +566,11 @@ object GameRecorder {
         return rawUs - startUs - totalPausedUs
     }
 
+    private fun currentFrameRate(): Int = appContext?.getSharedPreferences("default_preferences", Context.MODE_PRIVATE)?.getInt("recorder_fps", DEFAULT_FRAME_RATE)?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
+
     private fun scheduleNextFrame() {
         if (!isCapturing.get() || _state.value != RecordingState.RECORDING) return
-        captureHandler?.postDelayed({ captureFrame() }, 1000L / FRAME_RATE)
+        captureHandler?.postDelayed({ captureFrame() }, 1000L / currentFrameRate())
     }
 
     private fun captureFrame() {
