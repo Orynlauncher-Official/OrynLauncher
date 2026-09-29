@@ -6,6 +6,7 @@ import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.view.animation.OvershootInterpolator;
 import android.graphics.Color;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -52,6 +53,16 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
                 OrynThemeManager.stylePreferenceItem(requireContext(), child);
                 child.setMinimumHeight(dp(64));
                 child.setPadding(dp(12), child.getPaddingTop(), dp(12), child.getPaddingBottom());
+
+                // OrynLauncher screen bounce: subtle entry animation for every preference item.
+                child.setScaleX(0.96f);
+                child.setScaleY(0.96f);
+                child.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(220L)
+                        .setInterpolator(new OvershootInterpolator(1.15f))
+                        .start();
             }
             @Override public void onChildViewDetachedFromWindow(@NonNull View child) {}
         });
