@@ -381,6 +381,10 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void requestGameCapturePermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            Toast.makeText(this, "OrynRecorder requires Android 10 or newer.", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (mMediaProjectionManager == null) return;
         startActivityForResult(mMediaProjectionManager.createScreenCaptureIntent(), REQUEST_RECORDING_CAPTURE);
     }
