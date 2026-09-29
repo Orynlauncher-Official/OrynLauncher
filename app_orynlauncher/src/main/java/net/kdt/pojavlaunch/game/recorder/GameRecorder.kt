@@ -1,9 +1,3 @@
-/*
- * OrynLauncher Recorder
- * Video recording implementation adapted from Zalith Launcher 2
- * under the GNU GPL v3.0.
- */
-
 package net.kdt.pojavlaunch.game.recorder
 
 import android.content.ContentValues
@@ -11,13 +5,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
+import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
-import android.media.MediaExtractor
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.MediaStore
-import android.media.MediaScannerConnection
 import android.util.Log
 import android.view.PixelCopy
 import android.view.Surface
@@ -27,11 +22,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.asStateFlow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.asStateFlow
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
@@ -40,37 +34,39 @@ import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val TAG = "OrynLauncherRecorder"
-private const val DEFAULT_FPS = 30
-
+/**
+ * New OrynLauncher game-only recorder.
+ * Captures the registered Minecraft surface, not the Android device screen.
+ */
 object GameRecorder {
+    private const val TAG = "OrynGameRecorder"
+    private const val DEFAULT_FPS = 30
+
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val _state = kotlinx.coroutines.flow.MutableStateFlow(RecordingState.IDLE)
     val state = _state.asStateFlow()
     private val _elapsedMs = kotlinx.coroutines.flow.MutableStateFlow(0L)
     val elapsedMs = _elapsedMs.asStateFlow()
 
-    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var encodeJob: Job? = null
     private var timerJob: Job? = null
     private var captureThread: android.os.HandlerThread? = null
     private var captureHandler: android.os.Handler? = null
     private var codec: MediaCodec? = null
-    private var inputSurface: Surface? = null
-    private var glEncoderSurface: GlVideoEncoderSurface? = null
-    private var recordingStartNs = 0L
+    private var encoderSurface: Surface? = null
     private var muxer: MediaMuxer? = null
-    private var tempOutputFile: File? = null
-    private var outputUri: Uri? = null
+    private var muxerStarted = false
+    private var videoTrack = -1
+    private var tempFile: File? = null
+    private var appContext: Context? = null
     private var bitmap: Bitmap? = null
     private var width = 0
     private var height = 0
     private var fps = DEFAULT_FPS
-    private val captureRunning = AtomicBoolean(false)
-    private val frameInFlight = AtomicBoolean(false)
-    private var nextFrameNs = 0L
     private var startedAt = 0L
-    private var encodedFrameIndex = 0L
-    private var appContext: Context? = null
+    private var nextFrameNs = 0L
+    private val frameBusy = AtomicBoolean(false)
+    private val stopRequested = AtomicBoolean(false)
 
     @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
@@ -80,7 +76,7 @@ object GameRecorder {
         if (!isIdle()) return false
         val source = GameSurfaceRegistry.getView()
         if (!GameSurfaceRegistry.isReady() || source == null || source.width < 2 || source.height < 2) {
-            Log.e(TAG, "OrynLauncher game surface is not ready")
+            Log.e(TAG, "Game surface is not ready")
             return false
         }
 
@@ -89,56 +85,49 @@ object GameRecorder {
             ?.toIntOrNull()?.coerceIn(25, 100)?.div(100f) ?: 1f
         fps = prefs?.getString("recorder_fps", DEFAULT_FPS.toString())
             ?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FPS
-        width = ((source.width * quality).toInt().coerceAtLeast(2) / 2) * 2
-        height = ((source.height * quality).toInt().coerceAtLeast(2) / 2) * 2
-        val bitrate = when {
-            quality <= 0.5f -> 3_000_000
-            quality <= 0.75f -> 5_000_000
-            else -> 6_000_000
-        }
+
+        width = even((source.width * quality).toInt().coerceAtLeast(2))
+        height = even((source.height * quality).toInt().coerceAtLeast(2))
 
         try {
             appContext = context.applicationContext
-            tempOutputFile = File(
-                context.cacheDir,
-                "oryn_recording_${System.currentTimeMillis()}.mp4"
-            )
-            muxer = MediaMuxer(
-                tempOutputFile!!.absolutePath,
-                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4
-            )
+            tempFile = File(context.cacheDir, "oryn_game_recording_" + System.currentTimeMillis() + ".mp4")
+            muxer = MediaMuxer(tempFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
-            val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
-                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
-                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
-                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            val bitrate = when {
+                quality <= 0.50f -> 3_000_000
+                quality <= 0.75f -> 5_000_000
+                else -> 8_000_000
             }
+
+            val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height)
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+            format.setInteger(MediaFormat.KEY_FRAME_RATE, fps)
+            format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
 
             codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
             codec!!.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-            inputSurface = codec!!.createInputSurface()
-            glEncoderSurface = GlVideoEncoderSurface(inputSurface!!)
+            encoderSurface = codec!!.createInputSurface()
             codec!!.start()
 
-            captureThread = android.os.HandlerThread("OrynLauncher-Recorder").also { it.start() }
+            captureThread = android.os.HandlerThread("OrynGameRecorder").also { it.start() }
             captureHandler = android.os.Handler(captureThread!!.looper)
-            captureRunning.set(true)
-            frameInFlight.set(false)
+            frameBusy.set(false)
+            stopRequested.set(false)
             nextFrameNs = System.nanoTime()
-            encodedFrameIndex = 0L
             startedAt = System.currentTimeMillis()
             _elapsedMs.value = 0L
             _state.value = RecordingState.RECORDING
             startTimer()
 
             encodeJob = scope.launch { drainEncoder() }
-            captureHandler!!.post { scheduleFrame() }
-            Log.i(TAG, "OrynLauncher recording started: ${width}x${height}@@${fps}")
+            captureHandler!!.post { scheduleCapture() }
+            Log.i(TAG, "Started game recording " + width + "x" + height + " @ " + fps + "fps")
             return true
-        } catch (e: Throwable) {
-            Log.e(TAG, "Failed to start OrynLauncher recording", e)
-            cleanup(deleteOutput = true)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Unable to start game recorder", t)
+            cleanup()
             return false
         }
     }
@@ -146,93 +135,89 @@ object GameRecorder {
     fun stopAndSave(context: Context) {
         if (!isRecording() && _state.value != RecordingState.PAUSED) return
         _state.value = RecordingState.STOPPING
-        captureRunning.set(false)
-        frameInFlight.set(false)
-        nextFrameNs = 0L
+        stopRequested.set(true)
         timerJob?.cancel()
-        runCatching { codec?.signalEndOfInputStream() }
-        if (encodeJob == null) finishRecording()
+        captureHandler?.post {
+            runCatching { codec?.signalEndOfInputStream() }
+                .onFailure { Log.w(TAG, "EOS signal failed: " + it.message) }
+        }
     }
 
     fun pause() {
         if (!isRecording()) return
-        captureRunning.set(false)
         _state.value = RecordingState.PAUSED
         timerJob?.cancel()
     }
 
     fun resume() {
         if (_state.value != RecordingState.PAUSED) return
-        captureRunning.set(true)
         _state.value = RecordingState.RECORDING
         startTimer()
-        captureHandler?.post { scheduleFrame() }
+        nextFrameNs = System.nanoTime()
+        captureHandler?.post { scheduleCapture() }
     }
 
     fun toggleMicrophone() {
-        Log.i(TAG, "Microphone capture is not enabled for OrynLauncher video-only recorder")
+        Log.i(TAG, "Microphone is not part of the new game-only recorder")
     }
 
     private suspend fun drainEncoder() {
         val c = codec ?: return
         val info = MediaCodec.BufferInfo()
-        var track = -1
-        var muxerStarted = false
         var eos = false
-
-        while (currentCoroutineContext().isActive && !eos) {
-            when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
-                MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    if (!muxerStarted) {
-                        track = muxer!!.addTrack(c.outputFormat)
-                        muxer!!.start()
-                        muxerStarted = true
-                    }
-                }
-                MediaCodec.INFO_TRY_AGAIN_LATER -> {
-                    if (_state.value == RecordingState.STOPPING) {
-                        runCatching { c.signalEndOfInputStream() }
-                    }
-                }
-                else -> if (index >= 0) {
-                    val eosFlag = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
-                    val configFlag = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
-                    if (muxerStarted && !configFlag && info.size > 0) {
-                        c.getOutputBuffer(index)?.let { buffer ->
-                            muxer!!.writeSampleData(track, buffer, info)
+        try {
+            while (currentCoroutineContext().isActive && !eos) {
+                when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
+                    MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                        if (!muxerStarted) {
+                            videoTrack = muxer!!.addTrack(c.outputFormat)
+                            muxer!!.start()
+                            muxerStarted = true
                         }
                     }
-                    c.releaseOutputBuffer(index, false)
-                    if (eosFlag) eos = true
+                    MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                        if (stopRequested.get()) runCatching { c.signalEndOfInputStream() }
+                    }
+                    else -> if (index >= 0) {
+                        val end = (info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0
+                        val config = (info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0
+                        if (muxerStarted && !config && info.size > 0) {
+                            c.getOutputBuffer(index)?.let { muxer!!.writeSampleData(videoTrack, it, info) }
+                        }
+                        c.releaseOutputBuffer(index, false)
+                        if (end) eos = true
+                    }
                 }
             }
+        } catch (t: Throwable) {
+            Log.e(TAG, "Encoder drain failed", t)
+        } finally {
+            finishAndPublish()
         }
-        finishRecording()
     }
 
-    private fun scheduleFrame() {
-        if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
+    private fun scheduleCapture() {
+        if (_state.value != RecordingState.RECORDING || stopRequested.get()) return
         val handler = captureHandler ?: return
         val now = System.nanoTime()
-        val intervalNs = 1_000_000_000L / fps
-        if (nextFrameNs <= 0L) nextFrameNs = now
-        while (nextFrameNs <= now) nextFrameNs += intervalNs
-        val delayNs = nextFrameNs - now
-        handler.postDelayed({ captureFrame() }, (delayNs / 1_000_000L).coerceAtLeast(0L))
+        val interval = 1_000_000_000L / fps
+        if (nextFrameNs <= 0L || nextFrameNs < now - interval * 2) nextFrameNs = now
+        val delayMs = ((nextFrameNs - now) / 1_000_000L).coerceAtLeast(0L)
+        handler.postDelayed({ captureFrame() }, delayMs)
     }
 
     private fun captureFrame() {
-        if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
-        if (!frameInFlight.compareAndSet(false, true)) {
-            scheduleFrame()
+        if (_state.value != RecordingState.RECORDING || stopRequested.get()) return
+        if (!frameBusy.compareAndSet(false, true)) {
+            scheduleCapture()
             return
         }
 
         val source = GameSurfaceRegistry.getView()
-        val out = inputSurface
-        if (source == null || out == null) {
-            frameInFlight.set(false)
-            scheduleFrame()
+        val handler = captureHandler
+        if (source == null || handler == null) {
+            frameBusy.set(false)
+            scheduleCapture()
             return
         }
 
@@ -246,46 +231,47 @@ object GameRecorder {
                     ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { bitmap = it }
 
                 PixelCopy.request(source, bmp, { result ->
-                    if (result == PixelCopy.SUCCESS &&
-                        captureRunning.get() &&
-                        _state.value == RecordingState.RECORDING
-                    ) {
-                        drawFrame(bmp, out)
+                    if (result == PixelCopy.SUCCESS && _state.value == RecordingState.RECORDING) {
+                        writeBitmapFrame(bmp)
+                    } else if (result != PixelCopy.SUCCESS) {
+                        Log.w(TAG, "PixelCopy failed: " + result)
                     }
-                    frameInFlight.set(false)
-                    scheduleFrame()
-                }, captureHandler!!)
+                    frameBusy.set(false)
+                    scheduleCapture()
+                }, handler)
             }
             is TextureView -> {
                 try {
                     val bmp = source.getBitmap(source.width.coerceAtLeast(2), source.height.coerceAtLeast(2))
-                    if (bmp != null &&
-                        captureRunning.get() &&
-                        _state.value == RecordingState.RECORDING
-                    ) {
-                        drawFrame(bmp, out)
-                    }
-                    bmp?.recycle()
+                    if (bmp != null && _state.value == RecordingState.RECORDING) writeBitmapFrame(bmp)
+                    if (bmp != null && bmp !== bitmap) bmp.recycle()
+                } catch (t: Throwable) {
+                    Log.w(TAG, "Texture capture failed: " + t.message)
                 } finally {
-                    frameInFlight.set(false)
-                    scheduleFrame()
+                    frameBusy.set(false)
+                    scheduleCapture()
                 }
             }
             else -> {
-                frameInFlight.set(false)
-                scheduleFrame()
+                frameBusy.set(false)
+                scheduleCapture()
             }
         }
     }
 
-    private fun drawFrame(bmp: Bitmap, out: Surface) {
-        runCatching {
-            val renderer = glEncoderSurface ?: return
-            if (recordingStartNs == 0L) recordingStartNs = System.nanoTime()
-            val ptsNs = encodedFrameIndex * 1_000_000_000L / fps
-            encodedFrameIndex++
-            renderer.draw(bmp, width, height, ptsNs)
-        }.onFailure { Log.w(TAG, "OrynLauncher frame encode failed: ${it.message}") }
+    private fun writeBitmapFrame(source: Bitmap) {
+        val surface = encoderSurface ?: return
+        try {
+            val canvas = surface.lockCanvas(null)
+            try {
+                canvas.drawColor(android.graphics.Color.BLACK)
+                canvas.drawBitmap(source, null, android.graphics.Rect(0, 0, width, height), null)
+            } finally {
+                surface.unlockCanvasAndPost(canvas)
+            }
+        } catch (t: Throwable) {
+            Log.w(TAG, "Encoder surface frame failed: " + t.message)
+        }
     }
 
     private fun startTimer() {
@@ -298,168 +284,124 @@ object GameRecorder {
         }
     }
 
-    private fun finishRecording() {
+    private fun finishAndPublish() {
         try {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }
             codec = null
-            glEncoderSurface?.release()
-            glEncoderSurface = null
-            inputSurface?.release()
-            inputSurface = null
-            runCatching { muxer?.stop() }
+            runCatching { encoderSurface?.release() }
+            encoderSurface = null
+            if (muxerStarted) runCatching { muxer?.stop() }
             runCatching { muxer?.release() }
             muxer = null
-            val completedFile = tempOutputFile
-            val context = appContext
-            if (completedFile == null || !completedFile.exists() || completedFile.length() <= 0L || context == null) {
-                throw IOException("OrynLauncher recording did not produce a valid MP4")
-            }
-            if (!isPlayableMp4(completedFile)) {
-                throw IOException("OrynLauncher recording MP4 failed media validation")
-            }
+            muxerStarted = false
 
-            val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date())
-            val displayName = "OrynLauncher_Recording_${ts}.mp4"
-            val contextResolver = context.contentResolver
+            val file = tempFile
+            val context = appContext
+            if (file == null || !file.exists() || file.length() <= 0L || context == null) {
+                throw IOException("Recorder produced no MP4")
+            }
+            if (!validVideo(file)) throw IOException("Recorder produced an invalid MP4")
+
+            val name = "OrynLauncher_Recording_" +
+                SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date()) + ".mp4"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Publish through MediaStore and keep the temporary MP4 until the
-                // copy/publish operation has completed.
-                val values = ContentValues().apply {
-                    put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
-                    put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-                    put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis() / 1000L)
-                    put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
-                    put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
-                    put(MediaStore.Video.Media.IS_PENDING, 1)
-                }
-                val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-                var uri: Uri? = null
-                try {
-                    uri = contextResolver.insert(collection, values)
-                        ?: throw IOException("MediaStore insert returned null")
-                    contextResolver.openOutputStream(uri, "w")?.use { output ->
-                        FileInputStream(completedFile).use { input ->
-                            input.copyTo(output, 1024 * 1024)
-                        }
-                    } ?: throw IOException("MediaStore output stream is null")
-
-                    val publishValues = ContentValues().apply {
-                        put(MediaStore.Video.Media.IS_PENDING, 0)
-                        put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
-                    }
-                    // A few OEM providers report 0 here even though the publish
-                    // succeeds. Retry once and never delete solely for a zero count.
-                    var updated = contextResolver.update(uri, publishValues, null, null)
-                    if (updated == 0) {
-                        updated = contextResolver.update(uri, publishValues, null, null)
-                    }
-                    outputUri = uri
-                    rememberRecording(context, uri, displayName)
-                    Log.i(TAG, "OrynLauncher recording published: $uri, updateCount=$updated, bytes=${completedFile.length()}")
-                } catch (e: Throwable) {
-                    Log.e(TAG, "MediaStore publish failed for OrynLauncher recording", e)
-                    if (uri != null) runCatching { contextResolver.delete(uri, null, null) }
-                    throw e
-                } finally {
-                    runCatching { completedFile.delete() }
-                }
+                publishMediaStore(context, file, name)
             } else {
-                @Suppress("DEPRECATION")
-                val moviesDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_MOVIES)
-                val recordingsDir = File(moviesDir, "OrynLauncher Recordings")
-                if (!recordingsDir.exists() && !recordingsDir.mkdirs()) {
-                    throw IOException("Failed to create OrynLauncher recordings directory")
-                }
-                val destination = File(recordingsDir, displayName)
-                FileInputStream(completedFile).use { input ->
-                    destination.outputStream().use { output -> input.copyTo(output, 1024 * 1024) }
-                }
-                if (!destination.exists() || destination.length() <= 0L) throw IOException("OrynLauncher recording was not copied to Movies")
-                MediaScannerConnection.scanFile(context, arrayOf(destination.absolutePath), arrayOf("video/mp4")) { scannedPath, scannedUri ->
-                    if (scannedUri != null) {
-                        outputUri = scannedUri
-                        rememberRecording(context, scannedUri, displayName)
-                        Log.i(TAG, "OrynLauncher legacy recording indexed: $scannedUri ($scannedPath)")
-                    } else Log.w(TAG, "OrynLauncher legacy MediaScanner returned no URI for $scannedPath")
-                }
-                Log.i(TAG, "OrynLauncher recording saved to: ${destination.absolutePath} (${destination.length()} bytes)")
-                runCatching { completedFile.delete() }
+                publishLegacy(context, file, name)
             }
-        } catch (e: Throwable) {
-            Log.e(TAG, "Failed to save OrynLauncher recording", e)
+            Log.i(TAG, "Recording saved: " + name)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Recording save failed", t)
         } finally {
-            cleanup(deleteOutput = false)
+            cleanup()
         }
     }
 
-    private fun rememberRecording(context: Context, uri: Uri, displayName: String) {
+    private fun publishMediaStore(context: Context, file: File, name: String) {
+        val resolver = context.contentResolver
+        val values = ContentValues().apply {
+            put(MediaStore.Video.Media.DISPLAY_NAME, name)
+            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings")
+            put(MediaStore.Video.Media.IS_PENDING, 1)
+        }
+        val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+        var uri: Uri? = null
+        try {
+            uri = resolver.insert(collection, values) ?: throw IOException("MediaStore insert failed")
+            resolver.openOutputStream(uri, "w")?.use { out ->
+                FileInputStream(file).use { input -> input.copyTo(out, 1024 * 1024) }
+            } ?: throw IOException("MediaStore output stream unavailable")
+            resolver.update(uri, ContentValues().apply {
+                put(MediaStore.Video.Media.IS_PENDING, 0)
+            }, null, null)
+            remember(context, uri, name)
+            Log.i(TAG, "Published MediaStore URI: " + uri)
+        } catch (t: Throwable) {
+            if (uri != null) runCatching { resolver.delete(uri, null, null) }
+            throw t
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun publishLegacy(context: Context, file: File, name: String) {
+        val dir = File(
+            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES),
+            "OrynLauncher Recordings"
+        )
+        if (!dir.exists() && !dir.mkdirs()) throw IOException("Cannot create recording directory")
+        val destination = File(dir, name)
+        FileInputStream(file).use { input ->
+            destination.outputStream().use { output -> input.copyTo(output, 1024 * 1024) }
+        }
+        if (!destination.exists() || destination.length() <= 0L) {
+            throw IOException("Legacy recording copy failed")
+        }
+        MediaScannerConnection.scanFile(
+            context, arrayOf(destination.absolutePath), arrayOf("video/mp4")
+        ) { _, uri -> if (uri != null) remember(context, uri, name) }
+    }
+
+    private fun remember(context: Context, uri: Uri, name: String) {
         val prefs = context.getSharedPreferences("oryn_recorder_library", Context.MODE_PRIVATE)
-        val existing = prefs.getStringSet("recordings", emptySet())?.toMutableSet() ?: mutableSetOf()
-        existing.removeAll { entry ->
-            val parts = entry.split("|", limit = 2)
-            parts.isEmpty() || runCatching {
-                context.contentResolver.openAssetFileDescriptor(Uri.parse(parts[0]), "r") == null
-            }.getOrDefault(true)
-        }
-        existing.add(uri.toString() + "|" + displayName)
-        prefs.edit().putStringSet("recordings", existing).apply()
+        val old = prefs.getStringSet("recordings", emptySet())?.toMutableSet() ?: mutableSetOf()
+        old.add(uri.toString() + "|" + name)
+        prefs.edit().putStringSet("recordings", old).apply()
     }
 
-    private fun isPlayableMp4(file: File): Boolean {
+    private fun validVideo(file: File): Boolean {
         val extractor = MediaExtractor()
         return try {
             extractor.setDataSource(file.absolutePath)
-            var hasVideo = false
-            for (i in 0 until extractor.trackCount) {
-                val format = extractor.getTrackFormat(i)
-                if (format.getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true) {
-                    hasVideo = true
-                    break
-                }
+            (0 until extractor.trackCount).any {
+                extractor.getTrackFormat(it).getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true
             }
-            hasVideo && extractor.trackCount > 0
-        } catch (e: Exception) {
-            Log.e(TAG, "MP4 validation failed: " + e.message)
+        } catch (_: Throwable) {
             false
         } finally {
             runCatching { extractor.release() }
         }
     }
 
-    private fun cleanup(deleteOutput: Boolean) {
-        captureRunning.set(false)
+    private fun even(value: Int): Int = (value.coerceAtLeast(2) / 2) * 2
+
+    private fun cleanup() {
+        frameBusy.set(false)
+        stopRequested.set(false)
         timerJob?.cancel()
         timerJob = null
         encodeJob = null
-        runCatching { codec?.stop() }
-        runCatching { codec?.release() }
-        codec = null
-        runCatching { glEncoderSurface?.release() }
-        glEncoderSurface = null
-        runCatching { inputSurface?.release() }
-        inputSurface = null
-        runCatching { muxer?.release() }
-        muxer = null
-
-        if (deleteOutput) {
-            outputUri?.let { uri -> runCatching { appContext?.contentResolver?.delete(uri, null, null) } }
-        }
-
         captureThread?.quitSafely()
         captureThread = null
         captureHandler = null
         runCatching { bitmap?.recycle() }
         bitmap = null
-        outputUri = null
-        runCatching { tempOutputFile?.delete() }
-        tempOutputFile = null
-        recordingStartNs = 0L
-        encodedFrameIndex = 0L
+        runCatching { tempFile?.delete() }
+        tempFile = null
         appContext = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
     }
-
 }
