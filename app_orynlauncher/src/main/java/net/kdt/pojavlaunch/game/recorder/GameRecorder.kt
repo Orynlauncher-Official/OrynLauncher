@@ -40,6 +40,7 @@ import android.util.Log
 import android.view.PixelCopy
 import android.view.SurfaceView
 import android.view.TextureView
+import net.kdt.pojavlaunch.prefs.LauncherPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -134,9 +135,9 @@ object GameRecorder {
             return
         }
 
-        val prefs = context.getSharedPreferences("default_preferences", Context.MODE_PRIVATE)
-        val quality = prefs.getInt("recorder_quality", 100).coerceIn(25, 100) / 100f
-        val fps = prefs.getInt("recorder_fps", DEFAULT_FRAME_RATE).coerceIn(24, 60)
+        val prefs = LauncherPreferences.DEFAULT_PREF
+        val quality = prefs?.getString("recorder_quality", "100")?.toIntOrNull()?.coerceIn(25, 100)?.div(100f) ?: 1f
+        val fps = prefs?.getString("recorder_fps", DEFAULT_FRAME_RATE.toString())?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
         val w = ((view.width.coerceAtLeast(2) * quality).toInt() / 2) * 2
         val h = ((view.height.coerceAtLeast(2) * quality).toInt() / 2) * 2
         val videoBitRate = when {
@@ -566,7 +567,9 @@ object GameRecorder {
         return rawUs - startUs - totalPausedUs
     }
 
-    private fun currentFrameRate(): Int = appContext?.getSharedPreferences("default_preferences", Context.MODE_PRIVATE)?.getInt("recorder_fps", DEFAULT_FRAME_RATE)?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
+    private fun currentFrameRate(): Int =
+        LauncherPreferences.DEFAULT_PREF?.getString("recorder_fps", DEFAULT_FRAME_RATE.toString())
+            ?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
 
     private fun scheduleNextFrame() {
         if (!isCapturing.get() || _state.value != RecordingState.RECORDING) return
