@@ -340,6 +340,7 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
     @Override
     public void onSurfaceAvailable(Surface surface) {
+        GameSurfaceRegistry.markReady();
         Platform.updateSurface(surface);
         if(mRefreshOnly) return;
         realStart();
@@ -354,6 +355,7 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
     @Override
     public void onSurfaceDestroyed() {
+        GameSurfaceRegistry.markNotReady();
         GameSurfaceRegistry.unregister();
         if(PLATFORM != null)
             PLATFORM.surfaceDestroyed();
