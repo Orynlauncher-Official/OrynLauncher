@@ -382,7 +382,9 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     private void updateRecordingMenuLabel() {
         if (gameActionArrayAdapter == null) return;
-        gameActionArrayAdapter.remove(getString(R.string.recorder_menu_item));
+        if (gameActionArrayAdapter.getCount() > 5) {
+            gameActionArrayAdapter.remove(gameActionArrayAdapter.getItem(5));
+        }
         gameActionArrayAdapter.insert(
                 GameRecorder.isRecording()
                         ? "⏹ Stop OrynLauncher Recording"
