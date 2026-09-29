@@ -28,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.asStateFlow
 import java.io.IOException
@@ -159,7 +160,7 @@ object GameRecorder {
         var muxerStarted = false
         var eos = false
 
-        while (isActive && !eos) {
+        while (currentCoroutineContext().isActive && !eos) {
             when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
                 MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                     if (!muxerStarted) {
