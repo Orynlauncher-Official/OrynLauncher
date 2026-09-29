@@ -299,6 +299,9 @@ object GameRecorder {
             runCatching { muxer?.stop() }
             runCatching { muxer?.release() }
             muxer = null
+            // Close the MediaStore descriptor only after MediaMuxer has finished writing.
+            runCatching { outputPfd?.close() }
+            outputPfd = null
 
             outputUri?.let { uri ->
                 val values = ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }
