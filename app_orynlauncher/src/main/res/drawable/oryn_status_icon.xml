@@ -4,12 +4,12 @@
     android:height="24dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Oryn logo mark, simplified for Android's monochrome small-notification icon. -->
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M54,8 A46,46 0,1 0,54 100 A46,46 0,1 0,54 8 M54,28 A26,26 0,1 1,54 80 A26,26 0,1 1,54 28" />
+        android:pathData="M54,8 L86,18 L100,50 L86,90 L54,100 L22,90 L8,50 L22,18 Z
+                          M54,28 L72,34 L80,50 L72,74 L54,80 L36,74 L28,50 L36,34 Z" />
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M45,50 L63,50 L91,78 L73,78 Z" />
+        android:pathData="M45,49 L63,49 L92,78 L74,78 Z" />
 </vector>
