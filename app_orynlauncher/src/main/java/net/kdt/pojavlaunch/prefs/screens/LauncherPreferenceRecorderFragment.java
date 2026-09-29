@@ -65,7 +65,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
 
         Preference location = new Preference(requireContext());
         location.setTitle("Recording Location");
-        location.setSummary("Movies/OrynLauncher Recordings");
+        location.setSummary("Movies/OrynLauncher Recordings — OrynLauncher videos only");
         screen.addPreference(location);
     }
 
@@ -94,8 +94,10 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                 MediaStore.Video.Media.DURATION
         };
 
-        final String selection = MediaStore.Video.Media.RELATIVE_PATH + "=?";
-        final String[] args = {"Movies/OrynLauncher Recordings/"};
+        final String selection = "("
+                + MediaStore.Video.Media.RELATIVE_PATH + "=? OR "
+                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?)";
+        final String[] args = {"Movies/OrynLauncher Recordings/", "OrynLauncher_Recording_%"};
 
         try (Cursor cursor = requireContext().getContentResolver().query(
                 MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
