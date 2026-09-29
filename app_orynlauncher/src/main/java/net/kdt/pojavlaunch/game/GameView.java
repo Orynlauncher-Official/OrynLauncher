@@ -35,6 +35,7 @@ import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.render.SurfaceProvider;
 import net.kdt.pojavlaunch.render.SurfaceViewSurfaceProvider;
 import net.kdt.pojavlaunch.render.TextureViewSurfaceProvider;
+import net.kdt.pojavlaunch.game.recorder.GameSurfaceRegistry;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 
 import git.artdeell.mojo.R;
@@ -104,6 +105,7 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
         mRefreshOnly = isAlreadyRunning;
         mSurface = mSurfaceProvider.create(getContext(), this);
         this.addView(mSurface);
+        GameSurfaceRegistry.register(mSurface);
         this.mCursorView.bringToFront();
         this.requestFocus();
     }
@@ -352,6 +354,7 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
     @Override
     public void onSurfaceDestroyed() {
+        GameSurfaceRegistry.unregister();
         if(PLATFORM != null)
             PLATFORM.surfaceDestroyed();
     }
