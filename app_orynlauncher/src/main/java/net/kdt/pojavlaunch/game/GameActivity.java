@@ -47,6 +47,7 @@ import net.kdt.pojavlaunch.BaseActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.game.recorder.GameRecorder;
+import net.kdt.pojavlaunch.game.recorder.GameSurfaceRegistry;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
 import net.kdt.pojavlaunch.Logger;
@@ -372,13 +373,22 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             return;
         }
         if (GameRecorder.isIdle()) {
-            GameRecorder.start(this);
-            if (GameRecorder.isRecording()) {
-                updateRecordingMenuLabel();
-                Toast.makeText(this, "OrynLauncher recording started", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "OrynLauncher game surface is not ready", Toast.LENGTH_SHORT).show();
-            }
+            Toast.makeText(this, "Preparing OrynLauncher Recorder…", Toast.LENGTH_SHORT).show();
+            startRecordingWhenSurfaceReady(0);
+        }
+    }
+
+    private void startRecordingWhenSurfaceReady(int attempt) {
+        if (!GameRecorder.isIdle()) return;
+        if (GameRecorder.INSTANCE.start(this)) {
+            updateRecordingMenuLabel();
+            Toast.makeText(this, "OrynLauncher recording started", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (attempt < 20) {
+            Tools.MAIN_HANDLER.postDelayed(() -> startRecordingWhenSurfaceReady(attempt + 1), 250L);
+        } else {
+            Toast.makeText(this, "OrynLauncher game surface is not ready. Start after Minecraft is fully loaded.", Toast.LENGTH_LONG).show();
         }
     }
 
