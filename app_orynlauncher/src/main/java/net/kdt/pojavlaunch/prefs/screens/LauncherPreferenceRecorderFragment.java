@@ -84,125 +84,71 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
             recordingsCategory.removePreference(recordingsCategory.getPreference(0));
         }
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            addEmptyMessage("Recordings library requires Android 10 or newer.");
-            return;
-        }
+        android.content.SharedPreferences prefs = requireContext().getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
+        java.util.Set<String> entries = prefs.getStringSet("recordings", java.util.Collections.emptySet());
+        java.util.ArrayList<String> valid = new java.util.ArrayList<>();
 
-        // Query the primary MediaStore volume without a fragile SQL filter.
-        // OrynLauncher-created videos are then matched by both filename and path.
-        Uri videoCollection = MediaStore.Video.Media.getContentUri(
-                MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        for (String entry : entries) {
+            String[] parts = entry.split("\\|", 2);
+            if (parts.length != 2) continue;
+            Uri uri;
+            try { uri = Uri.parse(parts[0]); } catch (Exception e) { continue; }
+            String name = parts[1];
+            if (!name.startsWith("OrynLauncher_Recording_") || !name.endsWith(".mp4")) continue;
 
-        String[] projection = {
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.DATE_ADDED,
-                MediaStore.Video.Media.DURATION,
-                MediaStore.Video.Media.MIME_TYPE,
-                MediaStore.Video.Media.RELATIVE_PATH,
-                MediaStore.Video.Media.IS_PENDING
-        };
+            try (android.content.res.AssetFileDescriptor afd = requireContext().getContentResolver().openAssetFileDescriptor(uri, "r")) {
+                if (afd == null) continue;
+            } catch (Exception e) { continue; }
 
-        try (Cursor cursor = requireContext().getContentResolver().query(
-                videoCollection,
-                projection,
-                MediaStore.Video.Media.IS_PENDING + "=0",
-                null,
-                MediaStore.Video.Media.DATE_ADDED + " DESC")) {
-
-            if (cursor == null) {
-                addEmptyMessage("Unable to access the video library.");
-                return;
-            }
-
-            int idIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-            int nameIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-            int durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-            int mimeIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE);
-            int pathIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RELATIVE_PATH);
-
-            int found = 0;
-            while (cursor.moveToNext()) {
-                String videoName = cursor.getString(nameIndex);
-                String mime = cursor.getString(mimeIndex);
-                String relativePath = cursor.getString(pathIndex);
-
-                boolean isOrynVideo =
-                        videoName != null
-                                && videoName.startsWith("OrynLauncher_Recording_")
-                                && videoName.toLowerCase(Locale.ROOT).endsWith(".mp4")
-                                && "video/mp4".equalsIgnoreCase(mime)
-                                && relativePath != null
-                                && relativePath.startsWith("Movies/OrynLauncher Recordings");
-
-                if (!isOrynVideo) continue;
-
-                found++;
-                long id = cursor.getLong(idIndex);
-                Uri uri = Uri.withAppendedPath(videoCollection, Long.toString(id));
-                final String finalVideoName = videoName;
-
-                Preference video = new Preference(requireContext());
-                video.setTitle(finalVideoName);
-                long duration = cursor.getLong(durationIndex);
-                video.setSummary(formatDuration(requireVideoDuration(uri, duration)) + " • Tap for options");
-
-                video.setOnPreferenceClickListener(p -> {
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle(finalVideoName)
-                            .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
-                                if (which == 0) {
-                                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                                    intent.setDataAndType(uri, "video/mp4");
-                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            valid.add(entry);
+            Preference video = new Preference(requireContext());
+            video.setTitle(name);
+            long duration = 0L;
+            try {
+                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+                retriever.setDataSource(requireContext(), uri);
+                String value = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                duration = value == null ? 0L : Long.parseLong(value);
+                retriever.release();
+            } catch (Exception ignored) { }
+            final Uri finalUri = uri;
+            final String finalName = name;
+            video.setSummary(formatDuration(duration) + " • Tap for options");
+            video.setOnPreferenceClickListener(p -> {
+                new AlertDialog.Builder(requireContext())
+                    .setTitle(finalName)
+                    .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
+                        if (which == 0) {
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setDataAndType(finalUri, "video/mp4");
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            try { startActivity(intent); }
+                            catch (Exception e) { Toast.makeText(requireContext(), "No video player found for this recording.", Toast.LENGTH_SHORT).show(); }
+                        } else {
+                            new AlertDialog.Builder(requireContext())
+                                .setTitle("Delete recording?")
+                                .setMessage("This will permanently delete the OrynLauncher video.")
+                                .setNegativeButton("Cancel", null)
+                                .setPositiveButton("Delete", (d, w) -> {
                                     try {
-                                        startActivity(intent);
+                                        requireContext().getContentResolver().delete(finalUri, null, null);
+                                        valid.remove(entry);
+                                        prefs.edit().putStringSet("recordings", new java.util.HashSet<>(valid)).apply();
+                                        loadRecordings();
                                     } catch (Exception e) {
-                                        Toast.makeText(requireContext(),
-                                                "No video player found for this recording.",
-                                                Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
                                     }
-                                } else {
-                                    new AlertDialog.Builder(requireContext())
-                                            .setTitle("Delete recording?")
-                                            .setMessage("This will permanently delete the OrynLauncher video.")
-                                            .setNegativeButton("Cancel", null)
-                                            .setPositiveButton("Delete", (d, w) -> {
-                                                try {
-                                                    int deleted = requireContext().getContentResolver()
-                                                            .delete(uri, null, null);
-                                                    Toast.makeText(requireContext(),
-                                                            deleted > 0 ? "Recording deleted." : "Recording could not be deleted.",
-                                                            Toast.LENGTH_SHORT).show();
-                                                    loadRecordings();
-                                                } catch (Exception e) {
-                                                    Toast.makeText(requireContext(),
-                                                            "Could not delete recording.",
-                                                            Toast.LENGTH_SHORT).show();
-                                                }
-                                            })
-                                            .show();
-                                }
-                            })
-                            .show();
-                    return true;
-                });
-
-                recordingsCategory.addPreference(video);
-            }
-
-            if (found == 0) {
-                addEmptyMessage("No OrynLauncher recordings yet. Record a video and open this page again.");
-            }
-        } catch (Exception e) {
-            Toast.makeText(requireContext(),
-                    "Recorder library error: " + e.getClass().getSimpleName(),
-                    Toast.LENGTH_SHORT).show();
-            addEmptyMessage("Unable to load OrynLauncher recordings.");
+                                }).show();
+                        }
+                    }).show();
+                return true;
+            });
+            recordingsCategory.addPreference(video);
         }
-    }
 
+        if (valid.isEmpty()) addEmptyMessage("No OrynLauncher recordings yet. Record a video and open this page again.");
+        else prefs.edit().putStringSet("recordings", new java.util.HashSet<>(valid)).apply();
+    }
     private long requireVideoDuration(Uri uri, long fallbackMs) {
         if (fallbackMs > 0) return fallbackMs;
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
