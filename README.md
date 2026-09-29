@@ -10,6 +10,9 @@
 [![Build](https://img.shields.io/github/actions/workflow/status/Orynlauncher-Official/OrynLauncher/android.yml?style=for-the-badge&label=BUILD&logo=github)](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
 [![License](https://img.shields.io/badge/LICENSE-LGPL--3.0-0d1117?style=for-the-badge)](./LICENSE)
 
+[![v2.0.0 Downloads](https://img.shields.io/github/downloads/Orynlauncher-Official/OrynLauncher/v2.0.0/app-OrynLauncher-debug-full.apk?style=for-the-badge&label=V2.0.0%20DOWNLOADS)](https://github.com/Orynlauncher-Official/OrynLauncher/releases/tag/v2.0.0)
+[![Total Downloads](https://img.shields.io/github/downloads/Orynlauncher-Official/OrynLauncher/total?style=for-the-badge&label=TOTAL%20DOWNLOADS)](https://github.com/Orynlauncher-Official/OrynLauncher/releases)
+
 ### [⬇️ DOWNLOAD](https://github.com/Orynlauncher-Official/OrynLauncher/releases) · [⚙️ ACTION BUILDS](https://github.com/Orynlauncher-Official/OrynLauncher/actions) · [💬 ISSUES](https://github.com/Orynlauncher-Official/OrynLauncher/issues)
 
 </div>
@@ -58,6 +61,10 @@
 
 > [!IMPORTANT]
 > Debug builds are intended for testing. Compatibility can vary depending on your Android device, GPU, Minecraft version and selected renderer.
+
+### 📊 DOWNLOAD COUNTER
+
+The counters above are powered by GitHub's release-asset download statistics. GitHub exposes a download count for each release asset, so the **v2.0.0 counter** tracks the APK downloads and **Total Downloads** tracks release assets across the repository. citeturn0search0turn0search1
 
 ---
 
