@@ -15,7 +15,7 @@ import androidx.core.app.NotificationCompat;
 import git.artdeell.mojo.R;
 
 public class MediaProjectionForegroundService extends Service {
-    private static final String CHANNEL_ID = "oryn_recording";
+    private static final String CHANNEL_ID = "orynlauncher_recording";
     private static final int NOTIFICATION_ID = 4812;
 
     @Override
@@ -23,8 +23,8 @@ public class MediaProjectionForegroundService extends Service {
         super.onCreate();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, "OrynRecorder", NotificationManager.IMPORTANCE_LOW);
-            channel.setDescription("OrynLauncher game recording");
+                    CHANNEL_ID, "OrynLauncher Recorder", NotificationManager.IMPORTANCE_LOW);
+            channel.setDescription("OrynLauncher in-game recording");
             NotificationManager manager = getSystemService(NotificationManager.class);
             if (manager != null) manager.createNotificationChannel(channel);
         }
@@ -34,7 +34,7 @@ public class MediaProjectionForegroundService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setSmallIcon(R.drawable.notif_icon)
-                .setContentTitle("OrynRecorder")
+                .setContentTitle("OrynLauncher Recorder")
                 .setContentText("Recording Minecraft gameplay")
                 .setOngoing(true)
                 .setPriority(NotificationCompat.PRIORITY_LOW)
