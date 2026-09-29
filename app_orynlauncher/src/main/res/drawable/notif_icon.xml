@@ -2,14 +2,28 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Oryn's circular mark, simplified for Android's monochrome notification-icon rules. -->
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M54,8 L86,18 L100,50 L86,90 L54,100 L22,90 L8,50 L22,18 Z
-                          M54,28 L72,34 L80,50 L72,74 L54,80 L36,74 L28,50 L36,34 Z" />
-    <path
-        android:fillColor="#FFFFFFFF"
-        android:pathData="M45,49 L63,49 L92,78 L74,78 Z" />
+        android:pathData="M12,2
+            C6.48,2 2,6.48 2,12
+            C2,17.52 6.48,22 12,22
+            C14.85,22 17.43,20.81 19.24,18.9
+            L16.52,16.18
+            C15.36,17.44 13.79,18.22 12,18.22
+            C8.56,18.22 5.78,15.44 5.78,12
+            C5.78,8.56 8.56,5.78 12,5.78
+            C15.44,5.78 18.22,8.56 18.22,12
+            C18.22,12.9 18.03,13.75 17.69,14.52
+            L20.55,17.38
+            C21.47,15.82 22,13.99 22,12
+            C22,6.48 17.52,2 12,2 Z
+            M9.1,10.05
+            L12.35,10.05
+            L19.95,17.65
+            L16.7,17.65 Z" />
 </vector>
