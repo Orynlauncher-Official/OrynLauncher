@@ -324,6 +324,8 @@ object GameRecorder {
             val contextResolver = context.contentResolver
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // Publish through MediaStore and keep the temporary MP4 until the
+                // copy/publish operation has completed.
                 val values = ContentValues().apply {
                     put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
                     put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
@@ -332,26 +334,33 @@ object GameRecorder {
                     put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
                     put(MediaStore.Video.Media.IS_PENDING, 1)
                 }
-                val videoCollection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-                val uri = contextResolver.insert(videoCollection, values)
-                    ?: throw IOException("Failed to create OrynLauncher MediaStore entry")
+                val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                var uri: Uri? = null
                 try {
+                    uri = contextResolver.insert(collection, values)
+                        ?: throw IOException("MediaStore insert returned null")
                     contextResolver.openOutputStream(uri, "w")?.use { output ->
-                        FileInputStream(completedFile).use { input -> input.copyTo(output, 1024 * 1024) }
-                    } ?: throw IOException("Failed to open OrynLauncher MediaStore output")
-                    val publish = ContentValues().apply {
+                        FileInputStream(completedFile).use { input ->
+                            input.copyTo(output, 1024 * 1024)
+                        }
+                    } ?: throw IOException("MediaStore output stream is null")
+
+                    val publishValues = ContentValues().apply {
                         put(MediaStore.Video.Media.IS_PENDING, 0)
                         put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
                     }
-                    check(contextResolver.update(uri, publish, null, null) == 1) { "Failed to publish OrynLauncher recording" }
-                    // The MediaStore provider can publish a valid video URI before
-                    // its file-descriptor path is immediately probeable on some OEM ROMs.
-                    // Do not delete a successfully published recording because of that probe.
+                    // A few OEM providers report 0 here even though the publish
+                    // succeeds. Retry once and never delete solely for a zero count.
+                    var updated = contextResolver.update(uri, publishValues, null, null)
+                    if (updated == 0) {
+                        updated = contextResolver.update(uri, publishValues, null, null)
+                    }
                     outputUri = uri
                     rememberRecording(context, uri, displayName)
-                    Log.i(TAG, "OrynLauncher recording saved to MediaStore: $uri (${completedFile.length()} bytes)")
+                    Log.i(TAG, "OrynLauncher recording published: $uri, updateCount=$updated, bytes=${completedFile.length()}")
                 } catch (e: Throwable) {
-                    runCatching { contextResolver.delete(uri, null, null) }
+                    Log.e(TAG, "MediaStore publish failed for OrynLauncher recording", e)
+                    if (uri != null) runCatching { contextResolver.delete(uri, null, null) }
                     throw e
                 } finally {
                     runCatching { completedFile.delete() }
