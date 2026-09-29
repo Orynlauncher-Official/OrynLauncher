@@ -24,7 +24,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
         setPreferenceScreen(screen);
 
         PreferenceCategory qualityCategory = new PreferenceCategory(requireContext());
-        qualityCategory.setTitle("Recorder Quality");
+        qualityCategory.setTitle("OrynLauncher Recorder");
         screen.addPreference(qualityCategory);
 
         ListPreference quality = new ListPreference(requireContext());
@@ -51,7 +51,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
         qualityCategory.addPreference(microphone);
 
         recordingsCategory = new PreferenceCategory(requireContext());
-        recordingsCategory.setTitle("Your Recordings");
+        recordingsCategory.setTitle("OrynLauncher Recordings");
         screen.addPreference(recordingsCategory);
 
         Preference refresh = new Preference(requireContext());
