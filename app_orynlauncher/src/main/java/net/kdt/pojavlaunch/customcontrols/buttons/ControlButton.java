@@ -25,6 +25,7 @@ import net.kdt.pojavlaunch.customcontrols.ControlData;
 import net.kdt.pojavlaunch.customcontrols.ControlLayout;
 import net.kdt.pojavlaunch.customcontrols.handleview.EditControlSideDialog;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.utils.OrynThemeManager;
 
 import net.kdt.pojavlaunch.CallbackBridge;
 
@@ -81,12 +82,10 @@ public class ControlButton extends TextView implements ControlInterface {
         setBackgroundTintList(null);
         if (mProperties.isToggle) {
             //For the toggle layer
-            final TypedValue value = new TypedValue();
-            getContext().getTheme().resolveAttribute(R.attr.colorAccent, value, true);
-            mRectPaint.setColor(value.data);
+            mRectPaint.setColor(OrynThemeManager.getColor(getContext()));
             mRectPaint.setAlpha(BackgroundTint.BACKGROUND_TOGGLE_TINT_ALPHA);
         } else {
-            mRectPaint.setColor(Color.WHITE);
+            mRectPaint.setColor(OrynThemeManager.getColor(getContext()));
             mRectPaint.setAlpha(BackgroundTint.BACKGROUND_DEFAULT_TINT_ALPHA);
         }
     }

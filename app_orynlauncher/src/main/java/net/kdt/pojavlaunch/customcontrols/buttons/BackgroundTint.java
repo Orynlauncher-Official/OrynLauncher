@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
+
+import net.kdt.pojavlaunch.utils.OrynThemeManager;
 import android.util.TypedValue;
 
 import androidx.core.graphics.ColorUtils;
@@ -12,7 +14,6 @@ public class BackgroundTint {
     public static final int BACKGROUND_DEFAULT_TINT_ALPHA = 60;
     public static final int BACKGROUND_TOGGLE_TINT_ALPHA = 128;
 
-    private static int lastTheme = System.identityHashCode(BackgroundTint.class);
 
     private static final int[][] sState = new int[][] {
             new int[] {android.R.attr.state_activated}
@@ -32,12 +33,8 @@ public class BackgroundTint {
     );
 
     public static void applyToggleTint(Context context) {
-        Resources.Theme theme = context.getTheme();
-        int themeHash = theme.hashCode();
-        if(themeHash == lastTheme) return;
-        final TypedValue value = new TypedValue();
-        theme.resolveAttribute(android.R.attr.colorAccent, value, true);
-        sToggleableTint[0] = ColorUtils.setAlphaComponent(value.data, BACKGROUND_TOGGLE_TINT_ALPHA);
-        lastTheme = themeHash;
+        int themeColor = OrynThemeManager.getColor(context);
+        sDefaultTint[0] = ColorUtils.setAlphaComponent(themeColor, BACKGROUND_DEFAULT_TINT_ALPHA);
+        sToggleableTint[0] = ColorUtils.setAlphaComponent(themeColor, BACKGROUND_TOGGLE_TINT_ALPHA);
     }
 }
