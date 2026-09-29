@@ -21,8 +21,8 @@
 
         <Preference
             android:key="recorder_screen_setting"
-            android:title="Recorder"
-            android:summary="Video quality, FPS and your saved recordings"
+            android:title="OrynLauncher Recorder"
+            android:summary="OrynLauncher video quality, FPS and saved recordings"
             android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceRecorderFragment"
             android:icon="@drawable/ic_px_image"
             />
