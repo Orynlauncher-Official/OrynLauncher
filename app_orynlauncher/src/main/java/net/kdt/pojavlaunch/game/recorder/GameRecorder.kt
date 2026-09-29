@@ -322,14 +322,21 @@ object GameRecorder {
             val values = ContentValues().apply {
                 put(MediaStore.Video.Media.DISPLAY_NAME, "OrynLauncher_Recording_${ts}.mp4")
                 put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis() / 1000L)
+                put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
                     put(MediaStore.Video.Media.IS_PENDING, 1)
                 }
             }
 
+            val videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            } else {
+                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+            }
             val uri = context.contentResolver.insert(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values
+                videoCollection, values
             ) ?: throw IOException("Failed to create OrynLauncher MediaStore entry")
 
             try {
