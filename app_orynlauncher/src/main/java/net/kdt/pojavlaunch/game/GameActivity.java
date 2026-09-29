@@ -254,7 +254,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
             setIntent(activityIntent);
 
-            setTitle("MojoLauncher (" + version + ")");
+            setTitle("OrynLauncher (" + version + ")");
 
             // Menu
             gameActionArrayAdapter = new ArrayAdapter<>(this,
@@ -376,10 +376,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             return;
         }
         if (GameRecorder.isIdle()) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, REQUEST_RECORDING_AUDIO);
-                return;
-            }
             requestGameCapturePermission();
         }
     }
