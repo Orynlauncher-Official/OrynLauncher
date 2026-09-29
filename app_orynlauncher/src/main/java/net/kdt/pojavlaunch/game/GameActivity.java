@@ -104,7 +104,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     Instance instance;
     Account account;
 
-    private ArrayAdapter<String> gameActionArrayAdapter;
+    private GameMenuAdapter gameActionArrayAdapter;
     private AdapterView.OnItemClickListener gameActionClickListener;
     public ArrayAdapter<String> ingameControlsEditorArrayAdapter;
     public AdapterView.OnItemClickListener ingameControlsEditorListener;
@@ -250,11 +250,25 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             setTitle("OrynLauncher (" + version + ")");
 
             // Menu
-            gameActionArrayAdapter = new ArrayAdapter<>(this,
-                    android.R.layout.simple_list_item_1,
-                    new java.util.ArrayList<>(java.util.Arrays.asList(
-                            getResources().getStringArray(R.array.menu_ingame)
-                    )));
+            gameActionArrayAdapter = new GameMenuAdapter(
+                    this,
+                    new CharSequence[]{
+                            getResources().getString(R.string.control_forceclose),
+                            getResources().getString(R.string.control_viewout),
+                            getResources().getString(R.string.control_customkey),
+                            getResources().getString(R.string.quick_setting_title),
+                            getResources().getString(R.string.mcl_option_customcontrol),
+                            "🎥 Start OrynLauncher Recording"
+                    },
+                    new int[]{
+                            R.drawable.ic_game_menu_force_close,
+                            R.drawable.ic_game_menu_log,
+                            R.drawable.ic_game_menu_keycode,
+                            R.drawable.ic_game_menu_settings,
+                            R.drawable.ic_game_menu_controls,
+                            R.drawable.ic_game_menu_record
+                    }
+            );
             gameActionClickListener = (parent, view, position, id) -> {
                 switch(position) {
                      case 0: dialogForceClose(GameActivity.this); break;
@@ -395,20 +409,12 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private void updateRecordingMenuLabel() {
         if (navDrawer == null) return;
 
-        java.util.ArrayList<String> items = new java.util.ArrayList<>(
-                java.util.Arrays.asList(getResources().getStringArray(R.array.menu_ingame))
-        );
-        if (items.size() <= 5) return;
+        if (gameActionArrayAdapter == null) return;
 
-        items.set(5, GameRecorder.isRecording()
+        gameActionArrayAdapter.setText(5, GameRecorder.isRecording()
                 ? "⏹ Stop OrynLauncher Recording"
                 : "🎥 Start OrynLauncher Recording");
 
-        // Always create the adapter with a real mutable ArrayList.
-        // Do not call ArrayAdapter.remove()/insert() on an immutable backing list.
-        gameActionArrayAdapter = new ArrayAdapter<>(
-                this, android.R.layout.simple_list_item_1, items
-        );
         navDrawer.setAdapter(gameActionArrayAdapter);
         navDrawer.setOnItemClickListener(gameActionClickListener);
     }
