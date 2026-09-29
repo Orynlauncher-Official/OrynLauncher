@@ -227,6 +227,19 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         mControlLayout.setMenuListener(this);
 
         mDrawerPullButton.setOnClickListener(v -> onClickedMenu());
+        // Keep the controls drawer proportional to the game view, like the reference,
+        // instead of making it full-screen or using a fixed device-dependent width.
+        if (navDrawer != null) {
+            DrawerLayout.LayoutParams drawerParams =
+                    (DrawerLayout.LayoutParams) navDrawer.getLayoutParams();
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            drawerParams.width = Math.max(
+                    (int) (200 * getResources().getDisplayMetrics().density),
+                    Math.min((int) (420 * getResources().getDisplayMetrics().density),
+                            (int) (screenWidth * 0.28f))
+            );
+            navDrawer.setLayoutParams(drawerParams);
+        }
         drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
         launcherGLView.mCursorView.setCursorScale(LauncherPreferences.PREF_MOUSESCALE);
         weakCursor = new WeakReference<>(launcherGLView.mCursorView);
