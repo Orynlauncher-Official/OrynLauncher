@@ -84,71 +84,110 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
             recordingsCategory.removePreference(recordingsCategory.getPreference(0));
         }
 
-        android.content.SharedPreferences prefs = requireContext().getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
-        java.util.Set<String> entries = prefs.getStringSet("recordings", java.util.Collections.emptySet());
-        java.util.ArrayList<String> valid = new java.util.ArrayList<>();
+        final android.content.ContentResolver resolver = requireContext().getContentResolver();
+        final java.util.LinkedHashMap<String, Uri> recordings = new java.util.LinkedHashMap<>();
 
-        for (String entry : entries) {
-            String[] parts = entry.split("\\|", 2);
-            if (parts.length != 2) continue;
-            Uri uri;
-            try { uri = Uri.parse(parts[0]); } catch (Exception e) { continue; }
-            String name = parts[1];
-            if (!name.startsWith("OrynLauncher_Recording_") || !name.endsWith(".mp4")) continue;
-
-            try (android.content.res.AssetFileDescriptor afd = requireContext().getContentResolver().openAssetFileDescriptor(uri, "r")) {
-                if (afd == null) continue;
-            } catch (Exception e) { continue; }
-
-            valid.add(entry);
-            Preference video = new Preference(requireContext());
-            video.setTitle(name);
-            long duration = 0L;
-            try {
-                MediaMetadataRetriever retriever = new MediaMetadataRetriever();
-                retriever.setDataSource(requireContext(), uri);
-                String value = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
-                duration = value == null ? 0L : Long.parseLong(value);
-                retriever.release();
-            } catch (Exception ignored) { }
-            final Uri finalUri = uri;
-            final String finalName = name;
-            video.setSummary(formatDuration(duration) + " • Tap for options");
-            video.setOnPreferenceClickListener(p -> {
-                new AlertDialog.Builder(requireContext())
-                    .setTitle(finalName)
-                    .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
-                        if (which == 0) {
-                            Intent intent = new Intent(Intent.ACTION_VIEW);
-                            intent.setDataAndType(finalUri, "video/mp4");
-                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            try { startActivity(intent); }
-                            catch (Exception e) { Toast.makeText(requireContext(), "No video player found for this recording.", Toast.LENGTH_SHORT).show(); }
-                        } else {
-                            new AlertDialog.Builder(requireContext())
-                                .setTitle("Delete recording?")
-                                .setMessage("This will permanently delete the OrynLauncher video.")
-                                .setNegativeButton("Cancel", null)
-                                .setPositiveButton("Delete", (d, w) -> {
-                                    try {
-                                        requireContext().getContentResolver().delete(finalUri, null, null);
-                                        valid.remove(entry);
-                                        prefs.edit().putStringSet("recordings", new java.util.HashSet<>(valid)).apply();
-                                        loadRecordings();
-                                    } catch (Exception e) {
-                                        Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
-                                    }
-                                }).show();
-                        }
-                    }).show();
-                return true;
-            });
-            recordingsCategory.addPreference(video);
+        // Primary source: MediaStore. This survives launcher restarts and does not
+        // depend on a private preference cache.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            String[] projection = {
+                MediaStore.Video.Media._ID,
+                MediaStore.Video.Media.DISPLAY_NAME,
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.RELATIVE_PATH
+            };
+            String selection = MediaStore.Video.Media.RELATIVE_PATH + "=? AND "
+                    + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?";
+            String[] args = {"Movies/OrynLauncher Recordings/", "OrynLauncher_Recording_%"};
+            try (Cursor cursor = resolver.query(
+                    MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                    projection, selection, args,
+                    MediaStore.Video.Media.DATE_ADDED + " DESC")) {
+                if (cursor != null) {
+                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
+                    int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
+                    int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
+                    while (cursor.moveToNext()) {
+                        String name = cursor.getString(nameCol);
+                        long id = cursor.getLong(idCol);
+                        Uri uri = Uri.withAppendedPath(
+                                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
+                                String.valueOf(id));
+                        recordings.put(uri.toString(), uri);
+                        addRecordingPreference(uri, name, cursor.getLong(durationCol));
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.w("OrynRecorder", "MediaStore scan failed: " + e.getMessage());
+            }
         }
 
-        if (valid.isEmpty()) addEmptyMessage("No OrynLauncher recordings yet. Record a video and open this page again.");
-        else prefs.edit().putStringSet("recordings", new java.util.HashSet<>(valid)).apply();
+        // Fallback for older Android versions / migrated recordings.
+        if (recordings.isEmpty()) {
+            android.content.SharedPreferences prefs = requireContext()
+                    .getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
+            java.util.Set<String> entries = prefs.getStringSet("recordings", java.util.Collections.emptySet());
+            for (String entry : entries) {
+                String[] parts = entry.split("\\|", 2);
+                if (parts.length != 2) continue;
+                try {
+                    Uri uri = Uri.parse(parts[0]);
+                    String name = parts[1];
+                    if (name.startsWith("OrynLauncher_Recording_") && name.endsWith(".mp4")) {
+                        if (resolver.openAssetFileDescriptor(uri, "r") != null) {
+                            addRecordingPreference(uri, name, 0L);
+                            recordings.put(uri.toString(), uri);
+                        }
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (recordings.isEmpty()) {
+            addEmptyMessage("No OrynLauncher recordings yet. Record a video and refresh this page.");
+        }
     }
+
+    private void addRecordingPreference(Uri uri, String name, long duration) {
+        Preference video = new Preference(requireContext());
+        video.setTitle(name);
+        long durationMs = duration;
+        if (durationMs <= 0) durationMs = requireVideoDuration(uri, 0L);
+        video.setSummary(formatDuration(durationMs) + " • Tap for options");
+        final Uri finalUri = uri;
+        final String finalName = name;
+        video.setOnPreferenceClickListener(p -> {
+            new AlertDialog.Builder(requireContext())
+                .setTitle(finalName)
+                .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
+                    if (which == 0) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(finalUri, "video/mp4");
+                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        try { startActivity(intent); }
+                        catch (Exception e) {
+                            Toast.makeText(requireContext(), "Can't open this video.", Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        new AlertDialog.Builder(requireContext())
+                            .setTitle("Delete recording?")
+                            .setMessage("This will permanently delete the OrynLauncher video.")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Delete", (d, w) -> {
+                                try {
+                                    resolver.delete(finalUri, null, null);
+                                    loadRecordings();
+                                } catch (Exception e) {
+                                    Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
+                                }
+                            }).show();
+                    }
+                }).show();
+            return true;
+        });
+        recordingsCategory.addPreference(video);
+    }
+
     private long requireVideoDuration(Uri uri, long fallbackMs) {
         if (fallbackMs > 0) return fallbackMs;
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
