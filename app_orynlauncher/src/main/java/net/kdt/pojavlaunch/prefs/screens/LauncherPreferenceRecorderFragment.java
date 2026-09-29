@@ -172,14 +172,12 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                     continue;
                 }
 
-                // Don't require openAssetFileDescriptor() here. Some Android/OEM
-                // MediaStore providers return a valid published URI but temporarily
-                // reject an AFD probe, which previously made the recording disappear.
-                if (resolver.query(uri,
-                        new String[]{MediaStore.Video.Media._ID}, null, null, null) != null) {
-                    recordings.put(uri.toString(), uri);
-                    addRecordingPreference(uri, name, 0L);
-                }
+                // The recorder stores only successfully published MediaStore URIs.
+                // Trust this persisted library entry instead of probing it: some OEM
+                // providers temporarily reject query()/AFD calls even though the URI
+                // is valid and playable.
+                recordings.put(uri.toString(), uri);
+                addRecordingPreference(uri, name, 0L);
             } catch (Exception ignored) {
                 // Try MediaStore discovery below.
             }
