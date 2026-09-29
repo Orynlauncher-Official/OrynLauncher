@@ -344,8 +344,9 @@ object GameRecorder {
                         put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
                     }
                     check(contextResolver.update(uri, publish, null, null) == 1) { "Failed to publish OrynLauncher recording" }
-                    contextResolver.openAssetFileDescriptor(uri, "r")?.use { }
-                        ?: throw IOException("Published recording is not readable")
+                    // The MediaStore provider can publish a valid video URI before
+                    // its file-descriptor path is immediately probeable on some OEM ROMs.
+                    // Do not delete a successfully published recording because of that probe.
                     outputUri = uri
                     rememberRecording(context, uri, displayName)
                     Log.i(TAG, "OrynLauncher recording saved to MediaStore: $uri (${completedFile.length()} bytes)")
