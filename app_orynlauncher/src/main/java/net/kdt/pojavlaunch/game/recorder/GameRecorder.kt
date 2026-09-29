@@ -61,6 +61,8 @@ object GameRecorder {
     private var height = 0
     private var fps = DEFAULT_FPS
     private val captureRunning = AtomicBoolean(false)
+    private val frameInFlight = AtomicBoolean(false)
+    private var nextFrameNs = 0L
     private var startedAt = 0L
     private var appContext: Context? = null
 
@@ -111,6 +113,8 @@ object GameRecorder {
             captureThread = android.os.HandlerThread("OrynLauncher-Recorder").also { it.start() }
             captureHandler = android.os.Handler(captureThread!!.looper)
             captureRunning.set(true)
+            frameInFlight.set(false)
+            nextFrameNs = System.nanoTime()
             startedAt = System.currentTimeMillis()
             _elapsedMs.value = 0L
             _state.value = RecordingState.RECORDING
@@ -129,6 +133,8 @@ object GameRecorder {
         if (!isRecording() && _state.value != RecordingState.PAUSED) return
         _state.value = RecordingState.STOPPING
         captureRunning.set(false)
+        frameInFlight.set(false)
+        nextFrameNs = 0L
         timerJob?.cancel()
         runCatching { codec?.signalEndOfInputStream() }
         if (encodeJob == null) finishRecording()
@@ -192,17 +198,31 @@ object GameRecorder {
 
     private fun scheduleFrame() {
         if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
-        captureHandler?.postDelayed({ captureFrame() }, 1000L / fps)
+        val handler = captureHandler ?: return
+        val now = System.nanoTime()
+        val intervalNs = 1_000_000_000L / fps
+        if (nextFrameNs <= 0L) nextFrameNs = now
+        while (nextFrameNs <= now) nextFrameNs += intervalNs
+        val delayNs = nextFrameNs - now
+        handler.postDelayed({ captureFrame() }, (delayNs / 1_000_000L).coerceAtLeast(0L))
     }
 
     private fun captureFrame() {
         if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
-        val source = GameSurfaceRegistry.getView()
-        val out = inputSurface
-        if (source == null || out == null) {
+        if (!frameInFlight.compareAndSet(false, true)) {
             scheduleFrame()
             return
         }
+
+        val source = GameSurfaceRegistry.getView()
+        val out = inputSurface
+        if (source == null || out == null) {
+            frameInFlight.set(false)
+            scheduleFrame()
+            return
+        }
+
+        nextFrameNs += 1_000_000_000L / fps
 
         when (source) {
             is SurfaceView -> {
@@ -210,20 +230,37 @@ object GameRecorder {
                 val h = source.height.coerceAtLeast(2)
                 val bmp = bitmap?.takeIf { !it.isRecycled && it.width == w && it.height == h }
                     ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { bitmap = it }
+
                 PixelCopy.request(source, bmp, { result ->
-                    if (result == PixelCopy.SUCCESS) drawFrame(bmp, out)
+                    if (result == PixelCopy.SUCCESS &&
+                        captureRunning.get() &&
+                        _state.value == RecordingState.RECORDING
+                    ) {
+                        drawFrame(bmp, out)
+                    }
+                    frameInFlight.set(false)
                     scheduleFrame()
                 }, captureHandler!!)
             }
             is TextureView -> {
-                val bmp = source.getBitmap(source.width.coerceAtLeast(2), source.height.coerceAtLeast(2))
-                if (bmp != null) {
-                    drawFrame(bmp, out)
-                    bmp.recycle()
+                try {
+                    val bmp = source.getBitmap(source.width.coerceAtLeast(2), source.height.coerceAtLeast(2))
+                    if (bmp != null &&
+                        captureRunning.get() &&
+                        _state.value == RecordingState.RECORDING
+                    ) {
+                        drawFrame(bmp, out)
+                    }
+                    bmp?.recycle()
+                } finally {
+                    frameInFlight.set(false)
+                    scheduleFrame()
                 }
+            }
+            else -> {
+                frameInFlight.set(false)
                 scheduleFrame()
             }
-            else -> scheduleFrame()
         }
     }
 
