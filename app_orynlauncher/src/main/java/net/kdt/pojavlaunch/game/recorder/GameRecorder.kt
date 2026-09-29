@@ -13,6 +13,7 @@ import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import android.media.MediaExtractor
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -67,6 +68,7 @@ object GameRecorder {
     private val frameInFlight = AtomicBoolean(false)
     private var nextFrameNs = 0L
     private var startedAt = 0L
+    private var encodedFrameIndex = 0L
     private var appContext: Context? = null
 
     @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
@@ -123,6 +125,7 @@ object GameRecorder {
             captureRunning.set(true)
             frameInFlight.set(false)
             nextFrameNs = System.nanoTime()
+            encodedFrameIndex = 0L
             startedAt = System.currentTimeMillis()
             _elapsedMs.value = 0L
             _state.value = RecordingState.RECORDING
@@ -278,8 +281,9 @@ object GameRecorder {
         runCatching {
             val renderer = glEncoderSurface ?: return
             if (recordingStartNs == 0L) recordingStartNs = System.nanoTime()
-            val ptsNs = System.nanoTime() - recordingStartNs
-            renderer.draw(bmp, width, height, ptsNs.coerceAtLeast(1L))
+            val ptsNs = encodedFrameIndex * 1_000_000_000L / fps
+            encodedFrameIndex++
+            renderer.draw(bmp, width, height, ptsNs)
         }.onFailure { Log.w(TAG, "OrynLauncher frame encode failed: ${it.message}") }
     }
 
@@ -309,6 +313,9 @@ object GameRecorder {
             val context = appContext
             if (completedFile == null || !completedFile.exists() || completedFile.length() <= 0L || context == null) {
                 throw IOException("OrynLauncher recording did not produce a valid MP4")
+            }
+            if (!isPlayableMp4(completedFile)) {
+                throw IOException("OrynLauncher recording MP4 failed media validation")
             }
 
             val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -354,6 +361,27 @@ object GameRecorder {
         }
     }
 
+    private fun isPlayableMp4(file: File): Boolean {
+        val extractor = MediaExtractor()
+        return try {
+            extractor.setDataSource(file.absolutePath)
+            var hasVideo = false
+            for (i in 0 until extractor.trackCount) {
+                val format = extractor.getTrackFormat(i)
+                if (format.getString(MediaFormat.KEY_MIME)?.startsWith("video/") == true) {
+                    hasVideo = true
+                    break
+                }
+            }
+            hasVideo && extractor.trackCount > 0
+        } catch (e: Exception) {
+            Log.e(TAG, "MP4 validation failed: " + e.message)
+            false
+        } finally {
+            runCatching { extractor.release() }
+        }
+    }
+
     private fun cleanup(deleteOutput: Boolean) {
         captureRunning.set(false)
         timerJob?.cancel()
@@ -382,6 +410,7 @@ object GameRecorder {
         runCatching { tempOutputFile?.delete() }
         tempOutputFile = null
         recordingStartNs = 0L
+        encodedFrameIndex = 0L
         appContext = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
