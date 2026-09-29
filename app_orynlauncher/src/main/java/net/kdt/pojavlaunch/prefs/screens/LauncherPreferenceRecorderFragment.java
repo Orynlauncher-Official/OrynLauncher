@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.media.MediaMetadataRetriever;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
@@ -124,7 +125,8 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
 
                 Preference video = new Preference(requireContext());
                 video.setTitle(videoName);
-                video.setSummary(formatDuration(cursor.getLong(durationIndex)) + " • Tap for options");
+                long mediaStoreDuration = cursor.getLong(durationIndex);
+                video.setSummary(formatDuration(requireVideoDuration(uri, mediaStoreDuration)) + " • Tap for options");
                 video.setOnPreferenceClickListener(p -> {
                     new AlertDialog.Builder(requireContext())
                             .setTitle(videoName)
@@ -165,6 +167,21 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
 
         } catch (Exception e) {
             addEmptyMessage("Unable to load recordings: " + e.getClass().getSimpleName());
+        }
+    }
+
+    private long requireVideoDuration(Uri uri, long fallbackMs) {
+        if (fallbackMs > 0) return fallbackMs;
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(requireContext(), uri);
+            String value = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            long duration = value == null ? 0L : Long.parseLong(value);
+            return duration > 0 ? duration : fallbackMs;
+        } catch (Exception ignored) {
+            return fallbackMs;
+        } finally {
+            try { retriever.release(); } catch (Exception ignored) {}
         }
     }
 
