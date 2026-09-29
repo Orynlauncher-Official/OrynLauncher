@@ -1,5 +1,6 @@
 package net.kdt.pojavlaunch.prefs.screens;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -122,16 +123,40 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
 
                 Preference video = new Preference(requireContext());
                 video.setTitle(cursor.getString(nameIndex));
-                video.setSummary(formatDuration(cursor.getLong(durationIndex)) + " • Tap to play");
+                video.setSummary(formatDuration(cursor.getLong(durationIndex)) + " • Tap for options");
                 video.setOnPreferenceClickListener(p -> {
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uri, "video/mp4");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    try {
-                        startActivity(intent);
-                    } catch (Exception e) {
-                        Toast.makeText(requireContext(), "No video player found.", Toast.LENGTH_SHORT).show();
-                    }
+                    new AlertDialog.Builder(requireContext())
+                            .setTitle(cursor.getString(nameIndex))
+                            .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
+                                if (which == 0) {
+                                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                                    intent.setDataAndType(uri, "video/mp4");
+                                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                    try {
+                                        startActivity(intent);
+                                    } catch (Exception e) {
+                                        Toast.makeText(requireContext(), "No video player found.", Toast.LENGTH_SHORT).show();
+                                    }
+                                } else {
+                                    new AlertDialog.Builder(requireContext())
+                                            .setTitle("Delete recording?")
+                                            .setMessage("This will permanently delete the OrynLauncher video.")
+                                            .setNegativeButton("Cancel", null)
+                                            .setPositiveButton("Delete", (d, w) -> {
+                                                try {
+                                                    int deleted = requireContext().getContentResolver().delete(uri, null, null);
+                                                    Toast.makeText(requireContext(),
+                                                            deleted > 0 ? "Recording deleted." : "Recording could not be deleted.",
+                                                            Toast.LENGTH_SHORT).show();
+                                                    loadRecordings();
+                                                } catch (Exception e) {
+                                                    Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
+                                                }
+                                            })
+                                            .show();
+                                }
+                            })
+                            .show();
                     return true;
                 });
                 recordingsCategory.addPreference(video);
