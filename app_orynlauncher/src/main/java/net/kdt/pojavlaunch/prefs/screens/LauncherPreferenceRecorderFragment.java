@@ -120,13 +120,14 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                 Uri uri = Uri.withAppendedPath(
                         MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
                         cursor.getString(idIndex));
+                final String videoName = cursor.getString(nameIndex);
 
                 Preference video = new Preference(requireContext());
-                video.setTitle(cursor.getString(nameIndex));
+                video.setTitle(videoName);
                 video.setSummary(formatDuration(cursor.getLong(durationIndex)) + " • Tap for options");
                 video.setOnPreferenceClickListener(p -> {
                     new AlertDialog.Builder(requireContext())
-                            .setTitle(cursor.getString(nameIndex))
+                            .setTitle(videoName)
                             .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
                                 if (which == 0) {
                                     Intent intent = new Intent(Intent.ACTION_VIEW);
