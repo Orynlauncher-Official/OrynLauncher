@@ -17,6 +17,7 @@ import android.media.MediaExtractor
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.media.MediaScannerConnection
 import android.util.Log
 import android.view.PixelCopy
 import android.view.Surface
@@ -318,45 +319,65 @@ object GameRecorder {
                 throw IOException("OrynLauncher recording MP4 failed media validation")
             }
 
-            val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val values = ContentValues().apply {
-                put(MediaStore.Video.Media.DISPLAY_NAME, "OrynLauncher_Recording_${ts}.mp4")
-                put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-                put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis() / 1000L)
-                put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val ts = SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date())
+            val displayName = "OrynLauncher_Recording_${ts}.mp4"
+            val contextResolver = context.contentResolver
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val values = ContentValues().apply {
+                    put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
+                    put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+                    put(MediaStore.Video.Media.DATE_ADDED, System.currentTimeMillis() / 1000L)
+                    put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
                     put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
                     put(MediaStore.Video.Media.IS_PENDING, 1)
                 }
-            }
-
-            val videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
-            } else {
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-            }
-            val uri = context.contentResolver.insert(
-                videoCollection, values
-            ) ?: throw IOException("Failed to create OrynLauncher MediaStore entry")
-
-            try {
-                context.contentResolver.openOutputStream(uri, "w")?.use { output ->
-                    FileInputStream(completedFile).use { input ->
-                        input.copyTo(output, 1024 * 1024)
-                    }
-                } ?: throw IOException("Failed to open OrynLauncher MediaStore output")
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val videoCollection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+                val uri = contextResolver.insert(videoCollection, values)
+                    ?: throw IOException("Failed to create OrynLauncher MediaStore entry")
+                try {
+                    contextResolver.openOutputStream(uri, "w")?.use { output ->
+                        FileInputStream(completedFile).use { input -> input.copyTo(output, 1024 * 1024) }
+                    } ?: throw IOException("Failed to open OrynLauncher MediaStore output")
                     val publish = ContentValues().apply {
                         put(MediaStore.Video.Media.IS_PENDING, 0)
+                        put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1000L)
                     }
-                    context.contentResolver.update(uri, publish, null, null)
+                    check(contextResolver.update(uri, publish, null, null) == 1) { "Failed to publish OrynLauncher recording" }
+                    contextResolver.openAssetFileDescriptor(uri, "r")?.use { }
+                        ?: throw IOException("Published recording is not readable")
+                    outputUri = uri
+                    rememberRecording(context, uri, displayName)
+                    Log.i(TAG, "OrynLauncher recording saved to MediaStore: $uri (${completedFile.length()} bytes)")
+                } catch (e: Throwable) {
+                    runCatching { contextResolver.delete(uri, null, null) }
+                    throw e
+                } finally {
+                    runCatching { completedFile.delete() }
                 }
-
-                outputUri = uri
-                rememberRecording(context, uri, values.getAsString(MediaStore.Video.Media.DISPLAY_NAME) ?: "OrynLauncher Recording.mp4")
-                Log.i(TAG, "OrynLauncher recording saved: $uri (${completedFile.length()} bytes)")
-            } catch (e: Throwable) {
+            } else {
+                @Suppress("DEPRECATION")
+                val moviesDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_MOVIES)
+                val recordingsDir = File(moviesDir, "OrynLauncher Recordings")
+                if (!recordingsDir.exists() && !recordingsDir.mkdirs()) {
+                    throw IOException("Failed to create OrynLauncher recordings directory")
+                }
+                val destination = File(recordingsDir, displayName)
+                FileInputStream(completedFile).use { input ->
+                    destination.outputStream().use { output -> input.copyTo(output, 1024 * 1024) }
+                }
+                if (!destination.exists() || destination.length() <= 0L) throw IOException("OrynLauncher recording was not copied to Movies")
+                MediaScannerConnection.scanFile(context, arrayOf(destination.absolutePath), arrayOf("video/mp4")) { scannedPath, scannedUri ->
+                    if (scannedUri != null) {
+                        outputUri = scannedUri
+                        rememberRecording(context, scannedUri, displayName)
+                        Log.i(TAG, "OrynLauncher legacy recording indexed: $scannedUri ($scannedPath)")
+                    } else Log.w(TAG, "OrynLauncher legacy MediaScanner returned no URI for $scannedPath")
+                }
+                Log.i(TAG, "OrynLauncher recording saved to: ${destination.absolutePath} (${destination.length()} bytes)")
+                runCatching { completedFile.delete() }
+            }
+        } catch (e: Throwable) {
                 runCatching { context.contentResolver.delete(uri, null, null) }
                 throw e
             } finally {
