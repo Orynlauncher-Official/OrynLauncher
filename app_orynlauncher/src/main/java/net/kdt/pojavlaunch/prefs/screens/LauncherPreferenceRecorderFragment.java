@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.media.MediaMetadataRetriever;
+import android.media.MediaScannerConnection;
 import android.provider.MediaStore;
 import android.widget.Toast;
 
@@ -85,6 +86,12 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
         }
 
         final android.content.ContentResolver resolver = requireContext().getContentResolver();
+        // Legacy recordings can exist as real files before MediaStore has indexed them.
+        // Ask Android's media scanner to index the public recordings directory before querying.
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            scanLegacyRecordingFiles();
+        }
+
         final java.util.LinkedHashMap<String, Uri> recordings = new java.util.LinkedHashMap<>();
 
         // Scan every external MediaStore volume. Do not require RELATIVE_PATH in SQL:
@@ -173,9 +180,66 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
             } catch (Exception ignored) {}
         }
 
+        // Provider fallback: some devices expose the video only through the synthetic
+        // external volume even though individual-volume queries return no rows.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && recordings.isEmpty()) {
+            try {
+                Uri collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+                String[] projection = {
+                    MediaStore.Video.Media._ID,
+                    MediaStore.Video.Media.DISPLAY_NAME,
+                    MediaStore.Video.Media.DURATION,
+                    MediaStore.Video.Media.RELATIVE_PATH
+                };
+                String selection = MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?";
+                String[] args = {"OrynLauncher_Recording_%"};
+                try (Cursor cursor = resolver.query(collection, projection, selection, args,
+                        MediaStore.Video.Media.DATE_ADDED + " DESC")) {
+                    if (cursor != null) {
+                        int idCol = cursor.getColumnIndex(MediaStore.Video.Media._ID);
+                        int nameCol = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
+                        int durationCol = cursor.getColumnIndex(MediaStore.Video.Media.DURATION);
+                        if (idCol >= 0 && nameCol >= 0) {
+                            while (cursor.moveToNext()) {
+                                String name = cursor.getString(nameCol);
+                                if (name == null || !name.startsWith("OrynLauncher_Recording_")
+                                        || !name.endsWith(".mp4")) continue;
+                                long id = cursor.getLong(idCol);
+                                Uri uri = Uri.withAppendedPath(collection, String.valueOf(id));
+                                if (!recordings.containsKey(uri.toString())) {
+                                    long duration = durationCol >= 0 ? cursor.getLong(durationCol) : 0L;
+                                    recordings.put(uri.toString(), uri);
+                                    addRecordingPreference(uri, name, duration);
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                android.util.Log.w("OrynRecorder", "Synthetic MediaStore scan failed: " + e.getMessage());
+            }
+        }
+
         if (recordings.isEmpty()) {
             addEmptyMessage("No OrynLauncher recordings yet. Record a video and refresh this page.");
         }
+    }
+
+    private void scanLegacyRecordingFiles() {
+        java.io.File movies = android.os.Environment.getExternalStoragePublicDirectory(
+                android.os.Environment.DIRECTORY_MOVIES);
+        java.io.File directory = new java.io.File(movies, "OrynLauncher Recordings");
+        java.io.File[] files = directory.listFiles((dir, name) ->
+                name != null && name.startsWith("OrynLauncher_Recording_") && name.endsWith(".mp4"));
+        if (files == null || files.length == 0) return;
+
+        String[] paths = new String[files.length];
+        String[] mimeTypes = new String[files.length];
+        for (int i = 0; i < files.length; i++) {
+            paths[i] = files[i].getAbsolutePath();
+            mimeTypes[i] = "video/mp4";
+        }
+        MediaScannerConnection.scanFile(requireContext(), paths, mimeTypes, null);
     }
 
     private void addRecordingPreference(Uri uri, String name, long duration) {
