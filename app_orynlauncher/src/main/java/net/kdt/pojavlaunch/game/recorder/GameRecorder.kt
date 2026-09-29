@@ -71,12 +71,12 @@ object GameRecorder {
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
 
     @JvmStatic
-    fun start(context: Context) {
-        if (!isIdle()) return
+    fun start(context: Context): Boolean {
+        if (!isIdle()) return false
         val source = GameSurfaceRegistry.getView()
-        if (source == null || source.width < 2 || source.height < 2) {
+        if (!GameSurfaceRegistry.isReady() || source == null || source.width < 2 || source.height < 2) {
             Log.e(TAG, "OrynLauncher game surface is not ready")
-            return
+            return false
         }
 
         val prefs = net.kdt.pojavlaunch.prefs.LauncherPreferences.DEFAULT_PREF
@@ -125,9 +125,11 @@ object GameRecorder {
             encodeJob = scope.launch { drainEncoder() }
             captureHandler!!.post { scheduleFrame() }
             Log.i(TAG, "OrynLauncher recording started: ${width}x${height}@@${fps}")
+            return true
         } catch (e: Throwable) {
             Log.e(TAG, "Failed to start OrynLauncher recording", e)
             cleanup(deleteOutput = true)
+            return false
         }
     }
 
