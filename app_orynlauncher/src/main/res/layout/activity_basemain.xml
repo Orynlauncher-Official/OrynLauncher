@@ -114,10 +114,12 @@
 	</FrameLayout>
 
 	<ListView
-		android:layout_width="match_parent"
+		android:layout_width="280dp"
 		android:layout_height="match_parent"
 		android:layout_gravity="right"
-		android:background="?attr/colorBackgroundFloating"
+		android:background="@drawable/background_game_menu_drawer"
+		android:divider="@null"
+		android:dividerHeight="0dp"
 		android:fitsSystemWindows="false"
 		android:id="@+id/main_navigation_view"/>
 
