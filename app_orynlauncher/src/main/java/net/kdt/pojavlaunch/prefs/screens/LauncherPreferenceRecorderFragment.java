@@ -78,7 +78,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
     }
 
     private void loadRecordings() {
-        if (recordingsCategory == null) return;
+        if (recordingsCategory == null || !isAdded()) return;
 
         while (recordingsCategory.getPreferenceCount() > 0) {
             recordingsCategory.removePreference(recordingsCategory.getPreference(0));
@@ -93,16 +93,28 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                 MediaStore.Video.Media._ID,
                 MediaStore.Video.Media.DISPLAY_NAME,
                 MediaStore.Video.Media.DATE_ADDED,
-                MediaStore.Video.Media.DURATION
+                MediaStore.Video.Media.DURATION,
+                MediaStore.Video.Media.MIME_TYPE
         };
 
         final String selection = "("
                 + MediaStore.Video.Media.RELATIVE_PATH + "=? OR "
-                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?)";
-        final String[] args = {"Movies/OrynLauncher Recordings/", "OrynLauncher_Recording_%"};
+                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?) AND "
+                + MediaStore.Video.Media.IS_PENDING + "=0 AND "
+                + MediaStore.Video.Media.MIME_TYPE + "=?";
+        final String[] args = {
+                "Movies/OrynLauncher Recordings/",
+                "OrynLauncher_Recording_%",
+                "video/mp4"
+        };
+
+        Uri videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            videoCollection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        }
 
         try (Cursor cursor = requireContext().getContentResolver().query(
-                MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                videoCollection,
                 projection,
                 selection,
                 args,
@@ -119,7 +131,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
 
             do {
                 Uri uri = Uri.withAppendedPath(
-                        MediaStore.Video.Media.EXTERNAL_CONTENT_URI,
+                        videoCollection,
                         cursor.getString(idIndex));
                 final String videoName = cursor.getString(nameIndex);
 
