@@ -245,8 +245,8 @@
     <string name="pedit_java_runtime">Java Runtime</string>
     <string name="pedit_renderer">Renderer</string>
     <string name="color_default_hex" translatable="false">FFFF0000</string>
-    <string name="notif_channel_name">General</string>
-    <string name="notif_channel_id" translatable="false">channel_id</string>
+    <string name="notif_channel_name">OrynLauncher Notifications</string>
+    <string name="notif_channel_id" translatable="false">orynlauncher_general</string>
     <string name="lazy_service_default_title">OrynLauncher Foreground Service</string>
     <string name="mcl_setting_veroption_installed">Installed</string>
     <string name="use_global_default">(Use global default)</string>
