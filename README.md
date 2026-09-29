@@ -2,73 +2,139 @@
 
 # ⚡ ORYNLAUNCHER
 
-### Your world. Your rules. Anywhere.
+### **THE NEXT GENERATION OF MINECRAFT ON ANDROID**
 
-**Minecraft: Java Edition on Android**
+*Fast. Clean. Powerful. Built for players who want more.*
 
-[![Android](https://img.shields.io/badge/Android-Launcher-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Orynlauncher-Official/OrynLauncher)
-[![Build](https://img.shields.io/github/actions/workflow/status/Orynlauncher-Official/OrynLauncher/android.yml?style=for-the-badge&label=Build)](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
-[![License](https://img.shields.io/badge/License-LGPL--3.0-blue?style=for-the-badge)](./LICENSE)
+[![Android](https://img.shields.io/badge/Android-15%2B-0d1117?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Orynlauncher-Official/OrynLauncher)
+[![Build](https://img.shields.io/github/actions/workflow/status/Orynlauncher-Official/OrynLauncher/android.yml?style=for-the-badge&label=BUILD&logo=github)](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
+[![License](https://img.shields.io/badge/LICENSE-LGPL--3.0-0d1117?style=for-the-badge)](./LICENSE)
 
-**[⬇️ Download](https://github.com/Orynlauncher-Official/OrynLauncher/releases) · [🚀 Builds](https://github.com/Orynlauncher-Official/OrynLauncher/actions) · [🐛 Report an issue](https://github.com/Orynlauncher-Official/OrynLauncher/issues)**
-
----
-
-*Launch. Explore. Create.*
+### [⬇️ DOWNLOAD](https://github.com/Orynlauncher-Official/OrynLauncher/releases) · [⚙️ ACTION BUILDS](https://github.com/Orynlauncher-Official/OrynLauncher/actions) · [💬 ISSUES](https://github.com/Orynlauncher-Official/OrynLauncher/issues)
 
 </div>
 
-## ✨ Features
+---
 
-| 🎮 Play | 🧩 Customize | 📦 Manage |
-| :--- | :--- | :--- |
-| Enjoy Minecraft: Java Edition on Android | Use Forge, Fabric and compatible mods | Keep your worlds organized with instances |
-| Explore a wide range of Minecraft versions | Import supported modpacks | Choose the setup that suits you |
+## ◈ WHAT IS ORYNLAUNCHER?
 
-## 📥 Get OrynLauncher
+**OrynLauncher** is a Minecraft: Java Edition launcher for Android, focused on a clean experience, performance, customization and modern launcher features.
 
-Head to **[GitHub Releases](https://github.com/Orynlauncher-Official/OrynLauncher/releases)** to check for available downloads. Want to try development builds? Visit **[GitHub Actions](https://github.com/Orynlauncher-Official/OrynLauncher/actions)**.
+> **One launcher. Your instances. Your Minecraft.**
 
-> [!NOTE]
-> Availability and compatibility may vary by device, Minecraft version and build.
+---
 
-## 🛠️ Build from source
+## ✦ FEATURES
 
-Clone this repository and run:
+| 🎮 **PLAY** | ⚙️ **CUSTOMIZE** | 🚀 **PERFORMANCE** |
+|:---:|:---:|:---:|
+| Multiple Minecraft versions | Custom themes | OpenGL ES renderers |
+| Fabric / Forge support | Instance management | MobileGlues support |
+| Modpack imports | Clean modern UI | Zink / Vulkan integration |
+| Java Edition on Android | Account support | Native optimizations |
+
+---
+
+## 🎨 ORYN EXPERIENCE
+
+- 🔵 **Custom Oryn theme system**
+- 🧩 **Instance & modpack management**
+- 🖥️ **Multiple renderer options**
+- 📱 **Mobile-first interface**
+- 🔔 **Oryn-branded notifications**
+- 🛠️ **Active development & testing**
+
+---
+
+## 📦 DOWNLOAD
+
+### Latest Builds
+
+**Stable releases:**  
+👉 [GitHub Releases](https://github.com/Orynlauncher-Official/OrynLauncher/releases)
+
+**Development / debug builds:**  
+👉 [GitHub Actions](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
+
+> [!IMPORTANT]
+> Debug builds are intended for testing. Compatibility can vary depending on your Android device, GPU, Minecraft version and selected renderer.
+
+---
+
+## 🛠️ BUILD FROM SOURCE
+
+Clone the repository:
 
 ```bash
-./gradlew :app_orynlauncher:assembleDebug
+git clone https://github.com/Orynlauncher-Official/OrynLauncher.git
+cd OrynLauncher
 ```
 
-On Windows, use `gradlew.bat` instead. Ensure `mojoexec`, `sdl` and `glfw` are symlinked into `app_orynlauncher/src/main/jni/` as required by the project.
+Build the debug APK:
 
-## 🗺️ Roadmap
+```bash
+./gradlew :app_orynlauncher:assembleFullDebug
+```
 
+Windows:
+
+```bat
+gradlew.bat :app_orynlauncher:assembleFullDebug
+```
+
+---
+
+## 🗺️ ROADMAP
+
+- [x] Modern Oryn interface
+- [x] Theme customization
 - [x] Instance system
-- [x] Minecraft 1.21.5 support
-- [x] Modpack import (mrpack / CurseForge ZIP)
-- [x] LTW compute shader / image extensions
-- [ ] Improve Create compatibility
-- [ ] LTW color-renderable framebuffer support
-- [ ] Modpack and mod management
-- [ ] MMC-compatible instance import
-- [ ] Vintage Story support
-- [ ] Common native library standard
+- [x] Modpack import
+- [x] MobileGlues renderer integration
+- [x] Oryn notification branding
+- [ ] More renderer improvements
+- [ ] Improved mod management
+- [ ] More device-specific optimizations
+- [ ] Additional launcher customization
 
-## 🤝 Contributing
+---
 
-Found a bug or have an idea? [Open an issue](https://github.com/Orynlauncher-Official/OrynLauncher/issues). Code contributions are welcome via pull requests; describe your changes and how to test them.
+## 🤝 CONTRIBUTING
 
-## 📜 License & acknowledgements
+Found a bug? Have an idea? Want to help develop OrynLauncher?
 
-OrynLauncher is distributed under the [GNU LGPLv3](./LICENSE). This project incorporates third-party open-source components; their respective copyrights and licenses remain with their original authors. See the source tree and license files for applicable notices, including [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher), [OpenJDK](https://openjdk.org/), [LWJGL](https://www.lwjgl.org/), [GLFW](https://www.glfw.org/) and [SDL](https://www.libsdl.org/).
+**Open an issue or submit a pull request.**
+
+Please include:
+- What changed
+- Device / Android version
+- Minecraft version
+- Steps to reproduce, if reporting a bug
+
+---
+
+## 🧾 CREDITS
+
+OrynLauncher incorporates and builds upon open-source technologies and projects.
+
+Special thanks to the developers and communities behind:
+
+- [PojavLauncher](https://github.com/PojavLauncherTeam/PojavLauncher)
+- [OpenJDK](https://openjdk.org/)
+- [LWJGL](https://www.lwjgl.org/)
+- [GLFW](https://www.glfw.org/)
+- [SDL](https://www.libsdl.org/)
+
+All third-party copyrights and licenses remain with their respective authors.
 
 ---
 
 <div align="center">
 
-### ⚡ ORYNLAUNCHER
+## ⚡ ORYNLAUNCHER
 
-**Take your Minecraft world with you.**
+### **PLAY. CREATE. PUSH LIMITS.**
+
+*Built for Minecraft: Java Edition on Android.*
 
 </div>
