@@ -16,8 +16,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
-import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -50,7 +48,6 @@ import net.kdt.pojavlaunch.BaseActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.game.recorder.GameRecorder;
-import net.kdt.pojavlaunch.game.recorder.MediaProjectionForegroundService;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
 import net.kdt.pojavlaunch.Logger;
@@ -90,8 +87,6 @@ import git.artdeell.mojo.R;
 public class GameActivity extends BaseActivity implements ControlButtonMenuListener, EditorExitable, ServiceConnection {
     public static final String INTENT_LAUNCH_VERSION = "intent_version";
     public static final String INTENT_LAUNCH_CLASSPATH = "intent_classpath";
-    private static final int REQUEST_RECORDING_CAPTURE = 4813;
-    private static final int REQUEST_RECORDING_AUDIO = 4814;
 
     public static TouchCharInput touchCharInput;
     private GameView launcherGLView;
@@ -116,7 +111,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private GameService.LocalBinder mServiceBinder;
 
     private QuickSettingSideDialog mQuickSettingSideDialog;
-    private MediaProjectionManager mMediaProjectionManager;
 
     public static int mForcedPanningHeight = 0;
     public static int mImeHeight = 0;
@@ -132,7 +126,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             return;
         }
         mGameRenderer = new GameRenderer(instance.getLaunchRenderer());
-        mMediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
 
         if(GpuUtils.getGlInfo().isAdreno() && !PREF_ZINK_PREFER_SYSTEM_DRIVER) {
             mGameRenderer.overrideVulkanDriver();
@@ -372,30 +365,29 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private void toggleGameRecording() {
         if (GameRecorder.isRecording()) {
             GameRecorder.INSTANCE.stopAndSave(this);
-            Toast.makeText(this, "Saving Oryn recording…", Toast.LENGTH_SHORT).show();
+            updateRecordingMenuLabel();
+            Toast.makeText(this, "Saving OrynLauncher recording…", Toast.LENGTH_SHORT).show();
             return;
         }
         if (GameRecorder.isIdle()) {
-            requestGameCapturePermission();
+            GameRecorder.start(this);
+            if (GameRecorder.isRecording()) {
+                updateRecordingMenuLabel();
+                Toast.makeText(this, "OrynLauncher recording started", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "OrynLauncher game surface is not ready", Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
-    private void requestGameCapturePermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            Toast.makeText(this, "OrynRecorder requires Android 10 or newer.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        if (mMediaProjectionManager == null) return;
-        startActivityForResult(mMediaProjectionManager.createScreenCaptureIntent(), REQUEST_RECORDING_CAPTURE);
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_RECORDING_AUDIO) {
-            if (grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED) requestGameCapturePermission();
-            else Toast.makeText(this, "Audio permission is required for recording game sound.", Toast.LENGTH_LONG).show();
-        }
+    private void updateRecordingMenuLabel() {
+        if (gameActionArrayAdapter == null) return;
+        gameActionArrayAdapter.remove(getString(R.string.recorder_menu_item));
+        gameActionArrayAdapter.insert(
+                GameRecorder.isRecording()
+                        ? "⏹ Stop OrynLauncher Recording"
+                        : "🎥 Start OrynLauncher Recording", 5);
+        gameActionArrayAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -432,23 +424,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode == REQUEST_RECORDING_CAPTURE) {
-            if (resultCode == Activity.RESULT_OK && data != null && mMediaProjectionManager != null) {
-                try {
-                    ContextCompat.startForegroundService(this, new Intent(this, MediaProjectionForegroundService.class));
-                    MediaProjection projection = mMediaProjectionManager.getMediaProjection(resultCode, data);
-                    if (projection != null) {
-                        GameRecorder.INSTANCE.start(this, projection);
-                        Toast.makeText(this, "OrynRecorder started", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (Throwable e) {
-                    Log.e("OrynRecorder", "Failed to start recorder", e);
-                    Toast.makeText(this, "Failed to start OrynRecorder", Toast.LENGTH_LONG).show();
-                }
-            }
-            return;
-        }
 
         if (requestCode == 1 && resultCode == Activity.RESULT_OK) {
             // Reload PREF_DEFAULTCTRL_PATH
