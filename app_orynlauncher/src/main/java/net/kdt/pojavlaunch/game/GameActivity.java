@@ -250,7 +250,10 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
             // Menu
             gameActionArrayAdapter = new ArrayAdapter<>(this,
-                    android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.menu_ingame));
+                    android.R.layout.simple_list_item_1,
+                    new java.util.ArrayList<>(java.util.Arrays.asList(
+                            getResources().getStringArray(R.array.menu_ingame)
+                    )));
             gameActionClickListener = (parent, view, position, id) -> {
                 switch(position) {
                      case 0: dialogForceClose(GameActivity.this); break;
@@ -380,10 +383,19 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void updateRecordingMenuLabel() {
-        if (gameActionArrayAdapter == null) return;
-        if (gameActionArrayAdapter.getCount() > 5) {
-            gameActionArrayAdapter.remove(gameActionArrayAdapter.getItem(5));
-        }
+        if (gameActionArrayAdapter == null || gameActionArrayAdapter.getCount() <= 5) return;
+
+        // The adapter is backed by a mutable ArrayList. Replace the existing
+        // recorder row in-place instead of ArrayAdapter.remove()/insert(),
+        // which can throw UnsupportedOperationException with immutable data.
+        gameActionArrayAdapter.getItem(5);
+        gameActionArrayAdapter.clear();
+        gameActionArrayAdapter.addAll(
+                new java.util.ArrayList<>(java.util.Arrays.asList(
+                        getResources().getStringArray(R.array.menu_ingame)
+                ))
+        );
+        gameActionArrayAdapter.remove(gameActionArrayAdapter.getItem(5));
         gameActionArrayAdapter.insert(
                 GameRecorder.isRecording()
                         ? "⏹ Stop OrynLauncher Recording"
