@@ -151,7 +151,9 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
             }
         }
 
-        // Fallback to the exact URI saved by GameRecorder after publishing the MP4.
+        // Always try the exact MediaStore URI recorded by GameRecorder first.
+        // This is the most reliable path on Android 10+ because the provider may not
+        // expose RELATIVE_PATH consistently across OEM MediaStore implementations.
         android.content.SharedPreferences prefs = requireContext()
                 .getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
         java.util.Set<String> entries = prefs.getStringSet(
@@ -170,14 +172,17 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                     continue;
                 }
 
-                try (android.content.res.AssetFileDescriptor afd =
-                             resolver.openAssetFileDescriptor(uri, "r")) {
-                    if (afd != null) {
-                        recordings.put(uri.toString(), uri);
-                        addRecordingPreference(uri, name, 0L);
-                    }
+                // Don't require openAssetFileDescriptor() here. Some Android/OEM
+                // MediaStore providers return a valid published URI but temporarily
+                // reject an AFD probe, which previously made the recording disappear.
+                if (resolver.query(uri,
+                        new String[]{MediaStore.Video.Media._ID}, null, null, null) != null) {
+                    recordings.put(uri.toString(), uri);
+                    addRecordingPreference(uri, name, 0L);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // Try MediaStore discovery below.
+            }
         }
 
         // Provider fallback: some devices expose the video only through the synthetic
