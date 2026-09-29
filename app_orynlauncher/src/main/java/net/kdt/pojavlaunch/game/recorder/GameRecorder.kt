@@ -813,7 +813,7 @@ object GameRecorder {
 
     private fun createOutputEntry(context: Context): Pair<android.net.Uri, File> {
         val ts       = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val fileName = "OrynRec_$ts.mp4"
+        val fileName = "OrynLauncher_Recording_$ts.mp4"
         val relPath  = "Movies/OrynLauncher Recordings"
 
         val values = ContentValues().apply {
