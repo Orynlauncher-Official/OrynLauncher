@@ -87,60 +87,90 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
         final android.content.ContentResolver resolver = requireContext().getContentResolver();
         final java.util.LinkedHashMap<String, Uri> recordings = new java.util.LinkedHashMap<>();
 
-        // Primary source: MediaStore. This survives launcher restarts and does not
-        // depend on a private preference cache.
+        // Scan every external MediaStore volume. Do not require RELATIVE_PATH in SQL:
+        // some Android providers normalize or omit that field even when insertion succeeded.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            String[] projection = {
-                MediaStore.Video.Media._ID,
-                MediaStore.Video.Media.DISPLAY_NAME,
-                MediaStore.Video.Media.DURATION,
-                MediaStore.Video.Media.RELATIVE_PATH
-            };
-            String selection = MediaStore.Video.Media.RELATIVE_PATH + "=? AND "
-                    + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?";
-            String[] args = {"Movies/OrynLauncher Recordings/", "OrynLauncher_Recording_%"};
-            try (Cursor cursor = resolver.query(
-                    MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
-                    projection, selection, args,
-                    MediaStore.Video.Media.DATE_ADDED + " DESC")) {
-                if (cursor != null) {
-                    int idCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
-                    int nameCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
-                    int durationCol = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
-                    while (cursor.moveToNext()) {
-                        String name = cursor.getString(nameCol);
-                        long id = cursor.getLong(idCol);
-                        Uri uri = Uri.withAppendedPath(
-                                MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY),
-                                String.valueOf(id));
-                        recordings.put(uri.toString(), uri);
-                        addRecordingPreference(uri, name, cursor.getLong(durationCol));
+            try {
+                java.util.Set<String> volumes = MediaStore.getExternalVolumeNames(requireContext());
+                for (String volume : volumes) {
+                    Uri collection = MediaStore.Video.Media.getContentUri(volume);
+                    String[] projection = {
+                        MediaStore.Video.Media._ID,
+                        MediaStore.Video.Media.DISPLAY_NAME,
+                        MediaStore.Video.Media.DURATION,
+                        MediaStore.Video.Media.RELATIVE_PATH
+                    };
+                    String selection = MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?";
+                    String[] args = {"OrynLauncher_Recording_%"};
+
+                    try (Cursor cursor = resolver.query(
+                            collection, projection, selection, args,
+                            MediaStore.Video.Media.DATE_ADDED + " DESC")) {
+                        if (cursor == null) continue;
+
+                        int idCol = cursor.getColumnIndex(MediaStore.Video.Media._ID);
+                        int nameCol = cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME);
+                        int durationCol = cursor.getColumnIndex(MediaStore.Video.Media.DURATION);
+                        int pathCol = cursor.getColumnIndex(MediaStore.Video.Media.RELATIVE_PATH);
+                        if (idCol < 0 || nameCol < 0) continue;
+
+                        while (cursor.moveToNext()) {
+                            String name = cursor.getString(nameCol);
+                            if (name == null
+                                    || !name.startsWith("OrynLauncher_Recording_")
+                                    || !name.endsWith(".mp4")) {
+                                continue;
+                            }
+
+                            String relativePath = pathCol >= 0 ? cursor.getString(pathCol) : null;
+                            if (relativePath != null
+                                    && !relativePath.equals("Movies/OrynLauncher Recordings/")
+                                    && !relativePath.equals("Movies/OrynLauncher Recordings")) {
+                                continue;
+                            }
+
+                            long id = cursor.getLong(idCol);
+                            Uri uri = Uri.withAppendedPath(collection, String.valueOf(id));
+                            if (recordings.put(uri.toString(), uri) == null) {
+                                long duration = durationCol >= 0 ? cursor.getLong(durationCol) : 0L;
+                                addRecordingPreference(uri, name, duration);
+                            }
+                        }
                     }
                 }
             } catch (Exception e) {
-                android.util.Log.w("OrynRecorder", "MediaStore scan failed: " + e.getMessage());
+                android.util.Log.w("OrynRecorder",
+                        "MediaStore scan failed: " + e.getMessage(), e);
             }
         }
 
-        // Fallback for older Android versions / migrated recordings.
-        if (recordings.isEmpty()) {
-            android.content.SharedPreferences prefs = requireContext()
-                    .getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
-            java.util.Set<String> entries = prefs.getStringSet("recordings", java.util.Collections.emptySet());
-            for (String entry : entries) {
-                String[] parts = entry.split("\\|", 2);
-                if (parts.length != 2) continue;
-                try {
-                    Uri uri = Uri.parse(parts[0]);
-                    String name = parts[1];
-                    if (name.startsWith("OrynLauncher_Recording_") && name.endsWith(".mp4")) {
-                        if (resolver.openAssetFileDescriptor(uri, "r") != null) {
-                            addRecordingPreference(uri, name, 0L);
-                            recordings.put(uri.toString(), uri);
-                        }
+        // Fallback to the exact URI saved by GameRecorder after publishing the MP4.
+        android.content.SharedPreferences prefs = requireContext()
+                .getSharedPreferences("oryn_recorder_library", android.content.Context.MODE_PRIVATE);
+        java.util.Set<String> entries = prefs.getStringSet(
+                "recordings", java.util.Collections.emptySet());
+
+        for (String entry : entries) {
+            String[] parts = entry.split("\\|", 2);
+            if (parts.length != 2) continue;
+
+            try {
+                Uri uri = Uri.parse(parts[0]);
+                String name = parts[1];
+                if (!name.startsWith("OrynLauncher_Recording_")
+                        || !name.endsWith(".mp4")
+                        || recordings.containsKey(uri.toString())) {
+                    continue;
+                }
+
+                try (android.content.res.AssetFileDescriptor afd =
+                             resolver.openAssetFileDescriptor(uri, "r")) {
+                    if (afd != null) {
+                        recordings.put(uri.toString(), uri);
+                        addRecordingPreference(uri, name, 0L);
                     }
-                } catch (Exception ignored) {}
-            }
+                }
+            } catch (Exception ignored) {}
         }
 
         if (recordings.isEmpty()) {
