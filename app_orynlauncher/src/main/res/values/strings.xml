@@ -2,6 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <!-- App name part -->
     <string name="app_short_name">OrynLauncher</string>
+    <string name="oryn_app_name" translatable="false">OrynLauncher</string>
 
     <!-- Action bar part -->
 
