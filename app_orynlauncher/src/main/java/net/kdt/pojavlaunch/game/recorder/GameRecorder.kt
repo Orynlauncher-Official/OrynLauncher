@@ -165,7 +165,7 @@ object GameRecorder {
         val info = MediaCodec.BufferInfo()
         var eos = false
         try {
-            while (isActive && !eos) {
+            while (!eos) {
                 when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
                     MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         if (!muxerStarted) {
