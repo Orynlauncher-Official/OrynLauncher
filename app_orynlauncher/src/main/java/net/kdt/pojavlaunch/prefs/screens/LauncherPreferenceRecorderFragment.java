@@ -94,17 +94,19 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                 MediaStore.Video.Media.DISPLAY_NAME,
                 MediaStore.Video.Media.DATE_ADDED,
                 MediaStore.Video.Media.DURATION,
-                MediaStore.Video.Media.MIME_TYPE
+                MediaStore.Video.Media.MIME_TYPE,
+                MediaStore.Video.Media.RELATIVE_PATH,
+                MediaStore.Video.Media.IS_PENDING
         };
 
         final String selection = "("
-                + MediaStore.Video.Media.RELATIVE_PATH + "=? OR "
-                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ?) AND "
+                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ? OR "
+                + MediaStore.Video.Media.RELATIVE_PATH + " LIKE ?) AND "
                 + MediaStore.Video.Media.IS_PENDING + "=0 AND "
                 + MediaStore.Video.Media.MIME_TYPE + "=?";
         final String[] args = {
-                "Movies/OrynLauncher Recordings/",
-                "OrynLauncher_Recording_%",
+                "OrynLauncher_Recording_%.mp4",
+                "Movies/OrynLauncher Recordings%",
                 "video/mp4"
         };
 
