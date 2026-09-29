@@ -313,3 +313,4 @@ object GameRecorder {
         return context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
             ?: throw IOException("Failed to create OrynLauncher recording entry")
     }
+}
