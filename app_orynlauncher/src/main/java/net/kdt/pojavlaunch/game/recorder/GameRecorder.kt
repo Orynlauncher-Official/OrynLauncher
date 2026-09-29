@@ -9,7 +9,6 @@ package net.kdt.pojavlaunch.game.recorder
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.Rect
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
@@ -53,6 +52,8 @@ object GameRecorder {
     private var captureHandler: android.os.Handler? = null
     private var codec: MediaCodec? = null
     private var inputSurface: Surface? = null
+    private var glEncoderSurface: GlVideoEncoderSurface? = null
+    private var recordingStartNs = 0L
     private var muxer: MediaMuxer? = null
     private var outputPfd: android.os.ParcelFileDescriptor? = null
     private var outputUri: Uri? = null
@@ -108,6 +109,7 @@ object GameRecorder {
             codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
             codec!!.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             inputSurface = codec!!.createInputSurface()
+            glEncoderSurface = GlVideoEncoderSurface(inputSurface!!)
             codec!!.start()
 
             captureThread = android.os.HandlerThread("OrynLauncher-Recorder").also { it.start() }
@@ -264,14 +266,13 @@ object GameRecorder {
         }
     }
 
-    @Suppress("DEPRECATION")
     private fun drawFrame(bmp: Bitmap, out: Surface) {
         runCatching {
-            val canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) out.lockHardwareCanvas()
-            else out.lockCanvas(null)
-            canvas.drawBitmap(bmp, null, Rect(0, 0, width, height), null)
-            out.unlockCanvasAndPost(canvas)
-        }.onFailure { Log.w(TAG, "OrynLauncher frame capture failed: ${it.message}") }
+            val renderer = glEncoderSurface ?: return
+            if (recordingStartNs == 0L) recordingStartNs = System.nanoTime()
+            val ptsNs = System.nanoTime() - recordingStartNs
+            renderer.draw(bmp, width, height, ptsNs.coerceAtLeast(1L))
+        }.onFailure { Log.w(TAG, "OrynLauncher frame encode failed: ${it.message}") }
     }
 
     private fun startTimer() {
@@ -289,6 +290,8 @@ object GameRecorder {
             runCatching { codec?.stop() }
             runCatching { codec?.release() }
             codec = null
+            glEncoderSurface?.release()
+            glEncoderSurface = null
             inputSurface?.release()
             inputSurface = null
             runCatching { muxer?.stop() }
@@ -315,6 +318,8 @@ object GameRecorder {
         runCatching { codec?.stop() }
         runCatching { codec?.release() }
         codec = null
+        runCatching { glEncoderSurface?.release() }
+        glEncoderSurface = null
         runCatching { inputSurface?.release() }
         inputSurface = null
         runCatching { muxer?.release() }
@@ -332,6 +337,7 @@ object GameRecorder {
         runCatching { bitmap?.recycle() }
         bitmap = null
         outputUri = null
+        recordingStartNs = 0L
         appContext = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
