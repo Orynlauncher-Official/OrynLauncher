@@ -1,19 +1,7 @@
 /*
- * Zalith Launcher 2
- * Copyright (C) 2025 MovTery <movtery228@qq.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/gpl-3.0.txt>.
+ * OrynLauncher Recorder
+ * Video recording implementation adapted from Zalith Launcher 2
+ * under the GNU GPL v3.0.
  */
 
 package net.kdt.pojavlaunch.game.recorder
@@ -21,26 +9,19 @@ package net.kdt.pojavlaunch.game.recorder
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
-import android.media.AudioAttributes
-import android.media.AudioFormat
-import android.media.AudioPlaybackCaptureConfiguration
-import android.media.AudioRecord
-import android.media.MediaPlayer
+import android.graphics.Rect
 import android.media.MediaCodec
 import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.MediaMuxer
-import android.media.MediaRecorder
-import android.media.projection.MediaProjection
+import android.net.Uri
 import android.os.Build
-import android.os.Handler
-import android.os.HandlerThread
 import android.provider.MediaStore
 import android.util.Log
 import android.view.PixelCopy
+import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
-import net.kdt.pojavlaunch.prefs.LauncherPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -48,787 +29,285 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
 
-private const val TAG = "GameRecorder"
-private const val DEFAULT_FRAME_RATE = 30
-private const val DEFAULT_VIDEO_BIT_RATE = 6_000_000
-private const val AUDIO_SAMPLE_RATE = 48_000
-private const val AUDIO_BIT_RATE = 128_000
-private const val AUDIO_CHANNELS = 2
-private const val BYTES_PER_FRAME = 2 * AUDIO_CHANNELS
+private const val TAG = "OrynLauncherRecorder"
+private const val DEFAULT_FPS = 30
 
 object GameRecorder {
+    private val _state = kotlinx.coroutines.flow.MutableStateFlow(RecordingState.IDLE)
+    val state = _state.asStateFlow()
+    private val _elapsedMs = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val elapsedMs = _elapsedMs.asStateFlow()
 
-    private val _state = MutableStateFlow(RecordingState.IDLE)
-    val state: StateFlow<RecordingState> = _state.asStateFlow()
-
-    private val _elapsedMs = MutableStateFlow(0L)
-    val elapsedMs: StateFlow<Long> = _elapsedMs.asStateFlow()
-
-    private val _micEnabled = MutableStateFlow(false)
-    val micEnabled: StateFlow<Boolean> = _micEnabled.asStateFlow()
-
-    private val timerScope  = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val encodeScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-    private var timerJob:       Job? = null
-    private var videoEncodeJob: Job? = null
-    private var audioJob:       Job? = null
-
-    @Volatile private var accumulatedMs = 0L
-    @Volatile private var resumeTimeMs  = 0L
-
-    private var videoCodec:     MediaCodec? = null
-    @Volatile private var inputSurface: android.view.Surface? = null
-    @Volatile private var videoTrackIndex = -1
-
-    private var audioRecord:    AudioRecord?  = null
-    private var micAudioRecord: AudioRecord?  = null
-    private var audioCodec:     MediaCodec?   = null
-    @Volatile private var audioTrackIndex = -1
-
-    private var muxer:          MediaMuxer?   = null
-    @Volatile private var muxerStarted = false
-    private val muxerLock = Any()
-
-    private var mediaProjection: MediaProjection? = null
-
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var encodeJob: Job? = null
+    private var timerJob: Job? = null
+    private var captureThread: android.os.HandlerThread? = null
+    private var captureHandler: android.os.Handler? = null
+    private var codec: MediaCodec? = null
+    private var inputSurface: Surface? = null
+    private var muxer: MediaMuxer? = null
+    private var outputPfd: android.os.ParcelFileDescriptor? = null
+    private var outputUri: Uri? = null
+    private var bitmap: Bitmap? = null
+    private var width = 0
+    private var height = 0
+    private var fps = DEFAULT_FPS
+    private val captureRunning = AtomicBoolean(false)
+    private var startedAt = 0L
     private var appContext: Context? = null
 
-    private var captureThread:  HandlerThread? = null
-    private var captureHandler: Handler?       = null
-    private val isCapturing = AtomicBoolean(false)
-
-    private var captureBitmap: Bitmap? = null
-
-    @Volatile private var recordingStartNs      = 0L
-    @Volatile private var muxerStartedNs        = 0L
-    @Volatile private var captureStartNs        = 0L
-    @Volatile private var audioStartOffsetUs    = 0L
-    @Volatile private var totalPausedUs         = 0L
-    @Volatile private var pauseStartMs          = 0L
-
-    @Volatile private var pendingUri:  android.net.Uri? = null
-    @Volatile private var pendingFile: File?            = null
+    @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
+    @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
 
     @JvmStatic
-    fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
-
-    @JvmStatic
-    fun isIdle(): Boolean = _state.value == RecordingState.IDLE
-
-    fun start(context: Context, projection: MediaProjection) {
-        if (_state.value != RecordingState.IDLE) return
-
-        val view = GameSurfaceRegistry.getView()
-        if (view == null) {
-            Log.e(TAG, "No game surface registered — cannot start recording")
+    fun start(context: Context) {
+        if (!isIdle()) return
+        val source = GameSurfaceRegistry.getView()
+        if (source == null || source.width < 2 || source.height < 2) {
+            Log.e(TAG, "OrynLauncher game surface is not ready")
             return
         }
 
-        val prefs = LauncherPreferences.DEFAULT_PREF
-        val quality = prefs?.getString("recorder_quality", "100")?.toIntOrNull()?.coerceIn(25, 100)?.div(100f) ?: 1f
-        val fps = prefs?.getString("recorder_fps", DEFAULT_FRAME_RATE.toString())?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
-        val w = ((view.width.coerceAtLeast(2) * quality).toInt() / 2) * 2
-        val h = ((view.height.coerceAtLeast(2) * quality).toInt() / 2) * 2
-        val videoBitRate = when {
+        val prefs = net.kdt.pojavlaunch.prefs.LauncherPreferences.DEFAULT_PREF
+        val quality = prefs?.getString("recorder_quality", "100")
+            ?.toIntOrNull()?.coerceIn(25, 100)?.div(100f) ?: 1f
+        fps = prefs?.getString("recorder_fps", DEFAULT_FPS.toString())
+            ?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FPS
+        width = ((source.width * quality).toInt().coerceAtLeast(2) / 2) * 2
+        height = ((source.height * quality).toInt().coerceAtLeast(2) / 2) * 2
+        val bitrate = when {
             quality <= 0.5f -> 3_000_000
             quality <= 0.75f -> 5_000_000
-            else -> DEFAULT_VIDEO_BIT_RATE
+            else -> 6_000_000
         }
 
         try {
-            val (uri, file) = createOutputEntry(context)
-            pendingUri  = uri
-            pendingFile = file
+            appContext = context.applicationContext
+            outputUri = createOutputEntry(context)
+            outputPfd = context.contentResolver.openFileDescriptor(outputUri!!, "w")
+                ?: throw IOException("Cannot open OrynLauncher recording file")
+            muxer = MediaMuxer(outputPfd!!.fileDescriptor, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
 
-            mediaProjection = projection
-            appContext      = context.applicationContext
-
-            muxerStarted       = false
-            videoTrackIndex    = -1
-            audioTrackIndex    = -1
-            recordingStartNs   = 0L
-            muxerStartedNs     = 0L
-            captureStartNs     = 0L
-            audioStartOffsetUs = 0L
-            totalPausedUs      = 0L
-
-            val fd = context.contentResolver.openFileDescriptor(uri, "w")!!.fileDescriptor
-            muxer = MediaMuxer(fd, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
-
-            val videoFmt = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, w, h).apply {
-                setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                    MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-                setInteger(MediaFormat.KEY_BIT_RATE,    videoBitRate)
-                setInteger(MediaFormat.KEY_FRAME_RATE,  fps)
+            val format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, width, height).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
+                setInteger(MediaFormat.KEY_FRAME_RATE, fps)
                 setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
             }
-            videoCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).also { c ->
-                c.configure(videoFmt, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-                inputSurface = c.createInputSurface()
-                c.start()
-            }
 
-            val audioFmt = MediaFormat.createAudioFormat(
-                MediaFormat.MIMETYPE_AUDIO_AAC, AUDIO_SAMPLE_RATE, AUDIO_CHANNELS
-            ).apply {
-                setInteger(MediaFormat.KEY_AAC_PROFILE,
-                    MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-                setInteger(MediaFormat.KEY_BIT_RATE,       AUDIO_BIT_RATE)
-                setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, audioReadChunkSize())
-            }
-            audioCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).also { c ->
-                c.configure(audioFmt, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-                c.start()
-            }
+            codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            codec!!.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            inputSurface = codec!!.createInputSurface()
+            codec!!.start()
 
-            audioRecord    = buildAudioRecord(projection)
-            micAudioRecord = buildMicAudioRecord()
-            _micEnabled.value = false
-
-            captureThread  = HandlerThread("GameRecorder-Capture").also { it.start() }
-            captureHandler = Handler(captureThread!!.looper)
-
-            accumulatedMs    = 0L
-            resumeTimeMs     = System.currentTimeMillis()
+            captureThread = android.os.HandlerThread("OrynLauncher-Recorder").also { it.start() }
+            captureHandler = android.os.Handler(captureThread!!.looper)
+            captureRunning.set(true)
+            startedAt = System.currentTimeMillis()
             _elapsedMs.value = 0L
             _state.value = RecordingState.RECORDING
-            startTimerTick()
+            startTimer()
 
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to start recording: ${e.message}")
-            cleanup()
-            return
-        }
-
-        encodeScope.launch {
-            try {
-                primeVideoTrack()
-                primeAudioTrack()
-
-                if (_state.value != RecordingState.RECORDING) {
-                    cleanup(); return@launch
-                }
-
-                recordingStartNs = System.nanoTime()
-                audioRecord!!.startRecording()
-                audioStartOffsetUs = (System.nanoTime() - recordingStartNs) / 1_000L
-
-                if (videoTrackIndex >= 0 && audioTrackIndex >= 0) {
-                    synchronized(muxerLock) {
-                        muxer!!.start()
-                        muxerStarted  = true
-                        muxerStartedNs = System.nanoTime()
-                        Log.i(TAG, "MediaMuxer pre-started (video=$videoTrackIndex, audio=$audioTrackIndex)")
-                    }
-                } else {
-                    Log.w(TAG, "Priming incomplete (video=$videoTrackIndex audio=$audioTrackIndex) — encode jobs will register remaining tracks")
-                }
-
-                discardVideoOutput(videoCodec!!)
-
-                startVideoEncodeJob()
-                startAudioJob()
-
-                captureStartNs = System.nanoTime()
-
-                isCapturing.set(true)
-                scheduleNextFrame()
-
-                playRecordingStartSound()
-
-                Log.i(TAG, "Recording started ${w}x${h} — audio via AudioPlaybackCapture")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed during codec priming: ${e.message}")
-                cleanup()
-            }
-        }
-    }
-
-    fun pause() {
-        if (_state.value != RecordingState.RECORDING) return
-        try {
-            isCapturing.set(false)
-            pauseStartMs   = System.currentTimeMillis()
-            accumulatedMs += System.currentTimeMillis() - resumeTimeMs
-            timerJob?.cancel(); timerJob = null
-            runCatching {
-                if (_micEnabled.value &&
-                    micAudioRecord?.recordingState == AudioRecord.RECORDSTATE_RECORDING
-                ) {
-                    micAudioRecord?.stop()
-                }
-            }
-            _state.value = RecordingState.PAUSED
-            Log.i(TAG, "Recording paused at ${accumulatedMs}ms")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to pause: ${e.message}")
-        }
-    }
-
-    fun resume() {
-        if (_state.value != RecordingState.PAUSED) return
-        try {
-            totalPausedUs += (System.currentTimeMillis() - pauseStartMs) * 1_000L
-            runCatching {
-                if (_micEnabled.value &&
-                    micAudioRecord?.recordingState != AudioRecord.RECORDSTATE_RECORDING
-                ) {
-                    micAudioRecord?.startRecording()
-                }
-            }
-            isCapturing.set(true)
-            resumeTimeMs = System.currentTimeMillis()
-            startTimerTick()
-            _state.value = RecordingState.RECORDING
-            scheduleNextFrame()
-            Log.i(TAG, "Recording resumed")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to resume: ${e.message}")
-        }
-    }
-
-    fun toggleMicrophone() {
-        if (_micEnabled.value) disableMicrophone() else enableMicrophone()
-    }
-
-    private fun enableMicrophone() {
-        val state = _state.value
-        if (state != RecordingState.RECORDING && state != RecordingState.PAUSED) return
-        val mar = micAudioRecord ?: run {
-            Log.w(TAG, "Microphone AudioRecord not available")
-            return
-        }
-        try {
-            if (mar.recordingState != AudioRecord.RECORDSTATE_RECORDING &&
-                state == RecordingState.RECORDING
-            ) {
-                mar.startRecording()
-            }
-            _micEnabled.value = true
-            Log.i(TAG, "Microphone recording enabled")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to enable microphone: ${e.message}")
-        }
-    }
-
-    private fun disableMicrophone() {
-        _micEnabled.value = false
-        val mar = micAudioRecord ?: return
-        try {
-            if (mar.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                mar.stop()
-            }
-            Log.i(TAG, "Microphone recording disabled")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to disable microphone: ${e.message}")
+            encodeJob = scope.launch { drainEncoder() }
+            captureHandler!!.post { scheduleFrame() }
+            Log.i(TAG, "OrynLauncher recording started: ${width}x${height}@@${fps}")
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to start OrynLauncher recording", e)
+            cleanup(deleteOutput = true)
         }
     }
 
     fun stopAndSave(context: Context) {
-        val current = _state.value
-        if (current == RecordingState.IDLE || current == RecordingState.STOPPING) return
+        if (!isRecording() && _state.value != RecordingState.PAUSED) return
         _state.value = RecordingState.STOPPING
-        isCapturing.set(false)
-        timerJob?.cancel(); timerJob = null
-        captureHandler?.post { finalise(context) }
-            ?: run { finalise(context) }
+        captureRunning.set(false)
+        timerJob?.cancel()
+        runCatching { codec?.signalEndOfInputStream() }
+        if (encodeJob == null) finishRecording()
     }
 
-    @Suppress("DEPRECATION")
-    private fun primeVideoTrack() {
-        val codec   = videoCodec   ?: return
-        val surface = inputSurface ?: return
-        val info    = MediaCodec.BufferInfo()
-
-        runCatching {
-            val canvas = try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) surface.lockHardwareCanvas()
-                else surface.lockCanvas(null)
-            } catch (_: Exception) { surface.lockCanvas(null) }
-            canvas.drawColor(android.graphics.Color.BLACK)
-            surface.unlockCanvasAndPost(canvas)
-        }
-
-        repeat(200) {
-            when (val idx = codec.dequeueOutputBuffer(info, 10_000L)) {
-                MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    videoTrackIndex = muxer!!.addTrack(codec.outputFormat)
-                    Log.i(TAG, "Video track primed (index=$videoTrackIndex)")
-                    return
-                }
-                else -> if (idx >= 0) codec.releaseOutputBuffer(idx, false)
-            }
-        }
-        Log.w(TAG, "Video codec did not emit FORMAT_CHANGED during priming")
+    fun pause() {
+        if (!isRecording()) return
+        captureRunning.set(false)
+        _state.value = RecordingState.PAUSED
+        timerJob?.cancel()
     }
 
-    private fun primeAudioTrack() {
-        val ac    = audioCodec ?: return
-        val info  = MediaCodec.BufferInfo()
-        val chunkSize = audioReadChunkSize()
-        val inputIdx = ac.dequeueInputBuffer(200_000L)
-        if (inputIdx >= 0) {
-            ac.getInputBuffer(inputIdx)!!.apply { clear(); put(ByteArray(chunkSize)) }
-            ac.queueInputBuffer(inputIdx, 0, chunkSize, 0L, 0)
-        }
-        repeat(200) {
-            when (val idx = ac.dequeueOutputBuffer(info, 10_000L)) {
-                MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    audioTrackIndex = muxer!!.addTrack(ac.outputFormat)
-                    Log.i(TAG, "Audio track primed (index=$audioTrackIndex)")
-                    discardAudioOutput(ac)
-                    return
-                }
-                else -> if (idx >= 0) ac.releaseOutputBuffer(idx, false)
-            }
-        }
-        Log.w(TAG, "Audio codec did not emit FORMAT_CHANGED during priming")
+    fun resume() {
+        if (_state.value != RecordingState.PAUSED) return
+        captureRunning.set(true)
+        _state.value = RecordingState.RECORDING
+        startTimer()
+        captureHandler?.post { scheduleFrame() }
     }
 
-    private fun discardAudioOutput(ac: MediaCodec) {
+    fun toggleMicrophone() {
+        Log.i(TAG, "Microphone capture is not enabled for OrynLauncher video-only recorder")
+    }
+
+    private suspend fun drainEncoder() {
+        val c = codec ?: return
         val info = MediaCodec.BufferInfo()
-        while (true) {
-            val idx = ac.dequeueOutputBuffer(info, 0L)
-            if (idx >= 0) ac.releaseOutputBuffer(idx, false) else return
-        }
-    }
+        var track = -1
+        var muxerStarted = false
+        var eos = false
 
-    private fun startVideoEncodeJob() {
-        videoEncodeJob = encodeScope.launch {
-            val bufInfo = MediaCodec.BufferInfo()
-            val codec   = videoCodec ?: return@launch
-            while (isActive) {
-                val idx = codec.dequeueOutputBuffer(bufInfo, 10_000L)
-                when {
-                    idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                        synchronized(muxerLock) {
-                            if (!muxerStarted) {
-                                videoTrackIndex = muxer!!.addTrack(codec.outputFormat)
-                                tryStartMuxerLocked()
-                            }
+        while (isActive && !eos) {
+            when (val index = c.dequeueOutputBuffer(info, 10_000L)) {
+                MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
+                    if (!muxerStarted) {
+                        track = muxer!!.addTrack(c.outputFormat)
+                        muxer!!.start()
+                        muxerStarted = true
+                    }
+                }
+                MediaCodec.INFO_TRY_AGAIN_LATER -> {
+                    if (_state.value == RecordingState.STOPPING) {
+                        runCatching { c.signalEndOfInputStream() }
+                    }
+                }
+                else -> if (index >= 0) {
+                    val eosFlag = info.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM != 0
+                    val configFlag = info.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
+                    if (muxerStarted && !configFlag && info.size > 0) {
+                        c.getOutputBuffer(index)?.let { buffer ->
+                            muxer!!.writeSampleData(track, buffer, info)
                         }
                     }
-                    idx >= 0 -> {
-                        val isConfig = bufInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
-                        val isEos    = bufInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM  != 0
-                        if (!isConfig && bufInfo.size > 0) {
-                            val adjusted = adjustVideoTimestampUs(bufInfo.presentationTimeUs)
-                            if (adjusted >= 0) {
-                                val buf = codec.getOutputBuffer(idx)!!
-                                bufInfo.presentationTimeUs = adjusted
-                                synchronized(muxerLock) {
-                                    if (muxerStarted)
-                                        muxer!!.writeSampleData(videoTrackIndex, buf, bufInfo)
-                                }
-                            }
-                        }
-                        codec.releaseOutputBuffer(idx, false)
-                        if (isEos) break
-                    }
+                    c.releaseOutputBuffer(index, false)
+                    if (eosFlag) eos = true
                 }
             }
         }
+        finishRecording()
     }
 
-    private fun startAudioJob() {
-        audioJob = encodeScope.launch {
-            val ar        = audioRecord ?: return@launch
-            val ac        = audioCodec  ?: return@launch
-            val chunkSize = audioReadChunkSize()
-            val pcmBuf    = ByteArray(chunkSize)
-            val micBuf    = ByteArray(chunkSize)
-
-            var totalFrames = 0L
-
-            try {
-                while (isActive &&
-                    _state.value != RecordingState.STOPPING &&
-                    _state.value != RecordingState.IDLE
-                ) {
-                    if (_state.value == RecordingState.PAUSED) {
-                        delay(30L)
-                        continue
-                    }
-
-                    val read = ar.read(pcmBuf, 0, chunkSize)
-                    if (read <= 0) continue
-
-                    if (_micEnabled.value) {
-                        val mar = micAudioRecord
-                        if (mar != null && mar.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
-                            val micRead = mar.read(micBuf, 0, read, AudioRecord.READ_NON_BLOCKING)
-                            if (micRead > 0) {
-                                mixPcm16Le(pcmBuf, micBuf, minOf(read, micRead))
-                            }
-                        }
-                    }
-
-                    val framesInBatch = read.toLong() / BYTES_PER_FRAME
-                    val pts = audioStartOffsetUs + totalFrames * 1_000_000L / AUDIO_SAMPLE_RATE
-                    totalFrames += framesInBatch
-
-                    var inputIdx = ac.dequeueInputBuffer(5_000L)
-                    if (inputIdx < 0) {
-                        drainAudioCodec(ac, endOfStream = false)
-                        inputIdx = ac.dequeueInputBuffer(10_000L)
-                    }
-                    if (inputIdx >= 0) {
-                        ac.getInputBuffer(inputIdx)!!.apply { clear(); put(pcmBuf, 0, read) }
-                        ac.queueInputBuffer(inputIdx, 0, read, pts.coerceAtLeast(0L), 0)
-                    } else {
-                        Log.w(TAG, "Audio encoder input buffer unavailable — batch dropped ($framesInBatch frames)")
-                    }
-
-                    drainAudioCodec(ac, endOfStream = false)
-                }
-            } finally {
-                val eosIdx = ac.dequeueInputBuffer(5_000L)
-                if (eosIdx >= 0)
-                    ac.queueInputBuffer(eosIdx, 0, 0, 0L, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
-                drainAudioCodec(ac, endOfStream = true)
-                runCatching { ar.stop() }
-            }
-        }
-    }
-
-    private fun mixPcm16Le(dst: ByteArray, src: ByteArray, len: Int) {
-        var i = 0
-        while (i + 1 < len) {
-            val a = ((dst[i].toInt() and 0xFF) or ((dst[i + 1].toInt() and 0xFF) shl 8)).toShort().toInt()
-            val b = ((src[i].toInt() and 0xFF) or ((src[i + 1].toInt() and 0xFF) shl 8)).toShort().toInt()
-            val mixed = (a + b).coerceIn(-32768, 32767)
-            dst[i]     = (mixed and 0xFF).toByte()
-            dst[i + 1] = ((mixed ushr 8) and 0xFF).toByte()
-            i += 2
-        }
-    }
-
-    private fun drainAudioCodec(ac: MediaCodec, endOfStream: Boolean) {
-        val bufInfo = MediaCodec.BufferInfo()
-        while (true) {
-            val timeout = if (endOfStream) 10_000L else 0L
-            val idx = ac.dequeueOutputBuffer(bufInfo, timeout)
-            when {
-                idx == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    synchronized(muxerLock) {
-                        if (!muxerStarted) {
-                            audioTrackIndex = muxer!!.addTrack(ac.outputFormat)
-                            tryStartMuxerLocked()
-                        }
-                    }
-                }
-                idx >= 0 -> {
-                    val isConfig = bufInfo.flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
-                    val isEos    = bufInfo.flags and MediaCodec.BUFFER_FLAG_END_OF_STREAM  != 0
-                    if (!isConfig && bufInfo.size > 0) {
-                        val buf = ac.getOutputBuffer(idx)!!
-                        synchronized(muxerLock) {
-                            if (muxerStarted) {
-                                val muxerDeltaUs = (muxerStartedNs - recordingStartNs) / 1_000L
-                                val captureShiftUs = ((captureStartNs - muxerStartedNs) / 1_000L)
-                                    .coerceAtLeast(0L)
-                                bufInfo.presentationTimeUs =
-                                    (bufInfo.presentationTimeUs - muxerDeltaUs + captureShiftUs)
-                                        .coerceAtLeast(0L)
-                                muxer!!.writeSampleData(audioTrackIndex, buf, bufInfo)
-                            }
-                        }
-                    }
-                    ac.releaseOutputBuffer(idx, false)
-                    if (isEos) return
-                }
-                else -> return
-            }
-        }
-    }
-
-    private fun tryStartMuxerLocked() {
-        if (videoTrackIndex >= 0 && audioTrackIndex >= 0 && !muxerStarted) {
-            muxer!!.start()
-            muxerStarted   = true
-            muxerStartedNs = System.nanoTime()
-            Log.i(TAG, "MediaMuxer started (fallback) (video=$videoTrackIndex, audio=$audioTrackIndex)")
-        }
-    }
-
-    private fun adjustVideoTimestampUs(rawUs: Long): Long {
-        val startUs = muxerStartedNs / 1_000L
-        return rawUs - startUs - totalPausedUs
-    }
-
-    private fun currentFrameRate(): Int =
-        LauncherPreferences.DEFAULT_PREF?.getString("recorder_fps", DEFAULT_FRAME_RATE.toString())
-            ?.toIntOrNull()?.coerceIn(24, 60) ?: DEFAULT_FRAME_RATE
-
-    private fun scheduleNextFrame() {
-        if (!isCapturing.get() || _state.value != RecordingState.RECORDING) return
-        captureHandler?.postDelayed({ captureFrame() }, 1000L / currentFrameRate())
+    private fun scheduleFrame() {
+        if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
+        captureHandler?.postDelayed({ captureFrame() }, 1000L / fps)
     }
 
     private fun captureFrame() {
-        if (!isCapturing.get()) return
-        if (_state.value != RecordingState.RECORDING) return
+        if (!captureRunning.get() || _state.value != RecordingState.RECORDING) return
+        val source = GameSurfaceRegistry.getView()
+        val out = inputSurface
+        if (source == null || out == null) {
+            scheduleFrame()
+            return
+        }
 
-        val view    = GameSurfaceRegistry.getView()
-        val surface = inputSurface
-        if (view == null || surface == null) { scheduleNextFrame(); return }
-
-        when (view) {
-            is SurfaceView -> captureFromSurfaceView(view, surface)
-            is TextureView -> captureFromTextureView(view, surface)
-            else           -> scheduleNextFrame()
+        when (source) {
+            is SurfaceView -> {
+                val w = source.width.coerceAtLeast(2)
+                val h = source.height.coerceAtLeast(2)
+                val bmp = bitmap?.takeIf { !it.isRecycled && it.width == w && it.height == h }
+                    ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { bitmap = it }
+                PixelCopy.request(source, bmp, { result ->
+                    if (result == PixelCopy.SUCCESS) drawFrame(bmp, out)
+                    scheduleFrame()
+                }, captureHandler!!)
+            }
+            is TextureView -> {
+                val bmp = source.getBitmap(source.width.coerceAtLeast(2), source.height.coerceAtLeast(2))
+                if (bmp != null) {
+                    drawFrame(bmp, out)
+                    bmp.recycle()
+                }
+                scheduleFrame()
+            }
+            else -> scheduleFrame()
         }
     }
 
-    private fun captureFromSurfaceView(sv: SurfaceView, out: android.view.Surface) {
-        val w = sv.width.coerceAtLeast(1)
-        val h = sv.height.coerceAtLeast(1)
-        val bmp = captureBitmap?.takeIf { !it.isRecycled && it.width == w && it.height == h }
-            ?: Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).also { captureBitmap = it }
-        PixelCopy.request(sv, bmp, { result ->
-            if (result == PixelCopy.SUCCESS) drawToSurface(bmp, out)
-            scheduleNextFrame()
-        }, captureHandler!!)
-    }
-
-    private fun captureFromTextureView(tv: TextureView, out: android.view.Surface) {
-        val bmp = tv.getBitmap(tv.width.coerceAtLeast(1), tv.height.coerceAtLeast(1))
-        if (bmp != null) { drawToSurface(bmp, out); bmp.recycle() }
-        scheduleNextFrame()
-    }
-
     @Suppress("DEPRECATION")
-    private fun drawToSurface(bmp: Bitmap, surface: android.view.Surface) {
+    private fun drawFrame(bmp: Bitmap, out: Surface) {
         runCatching {
-            val canvas = try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) surface.lockHardwareCanvas()
-                else surface.lockCanvas(null)
-            } catch (_: Exception) { surface.lockCanvas(null) }
-            canvas.drawBitmap(bmp, 0f, 0f, null)
-            surface.unlockCanvasAndPost(canvas)
-        }.onFailure { Log.w(TAG, "drawToSurface failed: ${it.message}") }
+            val canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) out.lockHardwareCanvas()
+            else out.lockCanvas(null)
+            canvas.drawBitmap(bmp, null, Rect(0, 0, width, height), null)
+            out.unlockCanvasAndPost(canvas)
+        }.onFailure { Log.w(TAG, "OrynLauncher frame capture failed: ${it.message}") }
     }
 
-    private fun startTimerTick() {
+    private fun startTimer() {
         timerJob?.cancel()
-        timerJob = timerScope.launch {
-            while (isActive) {
-                _elapsedMs.value = accumulatedMs + (System.currentTimeMillis() - resumeTimeMs)
+        timerJob = scope.launch {
+            while (isActive && (_state.value == RecordingState.RECORDING || _state.value == RecordingState.PAUSED)) {
+                _elapsedMs.value = System.currentTimeMillis() - startedAt
                 delay(250L)
             }
         }
     }
 
-    @Suppress("MissingPermission")
-    private fun buildAudioRecord(projection: MediaProjection): AudioRecord {
-        val config = AudioPlaybackCaptureConfiguration.Builder(projection)
-            .addMatchingUsage(android.media.AudioAttributes.USAGE_GAME)
-            .addMatchingUsage(android.media.AudioAttributes.USAGE_MEDIA)
-            .addMatchingUsage(android.media.AudioAttributes.USAGE_UNKNOWN)
-            .build()
-
-        return AudioRecord.Builder()
-            .setAudioPlaybackCaptureConfig(config)
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setSampleRate(AUDIO_SAMPLE_RATE)
-                    .setChannelMask(AudioFormat.CHANNEL_IN_STEREO)
-                    .build()
-            )
-            .setBufferSizeInBytes(audioHardwareBufferSize())
-            .build()
-    }
-
-    private fun audioHardwareBufferSize(): Int = maxOf(
-        AudioRecord.getMinBufferSize(
-            AUDIO_SAMPLE_RATE,
-            AudioFormat.CHANNEL_IN_STEREO,
-            AudioFormat.ENCODING_PCM_16BIT
-        ) * 4,
-        32_768
-    )
-
-    private fun audioReadChunkSize(): Int = maxOf(
-        AudioRecord.getMinBufferSize(
-            AUDIO_SAMPLE_RATE,
-            AudioFormat.CHANNEL_IN_STEREO,
-            AudioFormat.ENCODING_PCM_16BIT
-        ),
-        4_096
-    )
-
-    @Suppress("MissingPermission")
-    private fun buildMicAudioRecord(): AudioRecord? {
-        return try {
-            val bufSize = maxOf(
-                AudioRecord.getMinBufferSize(
-                    AUDIO_SAMPLE_RATE,
-                    AudioFormat.CHANNEL_IN_STEREO,
-                    AudioFormat.ENCODING_PCM_16BIT
-                ) * 2,
-                16_384
-            )
-            AudioRecord(
-                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
-                AUDIO_SAMPLE_RATE,
-                AudioFormat.CHANNEL_IN_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT,
-                bufSize
-            ).also { ar ->
-                if (ar.state != AudioRecord.STATE_INITIALIZED) {
-                    ar.release()
-                    Log.w(TAG, "Microphone AudioRecord failed to initialize — mic toggle disabled")
-                    return null
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not create microphone AudioRecord: ${e.message}")
-            null
-        }
-    }
-
-    private fun finalise(context: Context) {
+    private fun finishRecording() {
         try {
-            runCatching { videoCodec?.signalEndOfInputStream() }
-
-            audioJob?.cancel()
-
-            val deadline = System.currentTimeMillis() + 5_000L
-            while ((videoEncodeJob?.isActive == true || audioJob?.isActive == true)
-                && System.currentTimeMillis() < deadline
-            ) {
-                Thread.sleep(50L)
-            }
-
-            synchronized(muxerLock) {
-                if (muxerStarted) {
-                    runCatching { muxer?.stop() }
-                    muxerStarted = false
-                }
-                runCatching { muxer?.release() }
-                muxer = null
-            }
-
-            pendingUri?.let { uri ->
-                val values = ContentValues().apply {
-                    put(MediaStore.Video.Media.IS_PENDING, 0)
-                }
-                runCatching { context.contentResolver.update(uri, values, null, null) }
-                Log.i(TAG, "Recording saved: $uri")
-                playRecordingStopSound()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Finalise error: ${e.message}")
-        } finally {
-            cleanup()
-        }
-    }
-
-    private fun cleanup() {
-        isCapturing.set(false)
-
-        videoEncodeJob?.cancel(); videoEncodeJob = null
-        audioJob?.cancel();       audioJob       = null
-
-        runCatching { videoCodec?.stop()    }
-        runCatching { videoCodec?.release() }
-        videoCodec = null
-
-        runCatching { inputSurface?.release() }
-        inputSurface = null
-
-        runCatching { audioRecord?.stop()    }
-        runCatching { audioRecord?.release() }
-        audioRecord = null
-
-        runCatching { micAudioRecord?.stop()    }
-        runCatching { micAudioRecord?.release() }
-        micAudioRecord = null
-        _micEnabled.value = false
-
-        runCatching { audioCodec?.stop()    }
-        runCatching { audioCodec?.release() }
-        audioCodec = null
-
-        synchronized(muxerLock) {
-            if (muxerStarted) { runCatching { muxer?.stop() }; muxerStarted = false }
+            runCatching { codec?.stop() }
+            runCatching { codec?.release() }
+            codec = null
+            inputSurface?.release()
+            inputSurface = null
+            runCatching { muxer?.stop() }
             runCatching { muxer?.release() }
             muxer = null
+
+            outputUri?.let { uri ->
+                val values = ContentValues().apply { put(MediaStore.Video.Media.IS_PENDING, 0) }
+                appContext?.contentResolver?.update(uri, values, null, null)
+                Log.i(TAG, "OrynLauncher recording saved: $uri")
+            }
+        } catch (e: Throwable) {
+            Log.e(TAG, "Failed to save OrynLauncher recording", e)
+        } finally {
+            cleanup(deleteOutput = false)
+        }
+    }
+
+    private fun cleanup(deleteOutput: Boolean) {
+        captureRunning.set(false)
+        timerJob?.cancel()
+        timerJob = null
+        encodeJob = null
+        runCatching { codec?.stop() }
+        runCatching { codec?.release() }
+        codec = null
+        runCatching { inputSurface?.release() }
+        inputSurface = null
+        runCatching { muxer?.release() }
+        muxer = null
+        runCatching { outputPfd?.close() }
+        outputPfd = null
+
+        if (deleteOutput) {
+            outputUri?.let { uri -> runCatching { appContext?.contentResolver?.delete(uri, null, null) } }
         }
 
-        mediaProjection?.stop()
-        mediaProjection = null
-
-        appContext?.stopService(
-            android.content.Intent(appContext, MediaProjectionForegroundService::class.java)
-        )
-        appContext = null
-
-        captureThread?.quit()
-        captureThread  = null
+        captureThread?.quitSafely()
+        captureThread = null
         captureHandler = null
-
-        runCatching { captureBitmap?.recycle() }
-        captureBitmap = null
-
-        timerJob?.cancel(); timerJob = null
-        _elapsedMs.value   = 0L
-        accumulatedMs      = 0L
-        videoTrackIndex    = -1
-        audioTrackIndex    = -1
-        recordingStartNs   = 0L
-        muxerStartedNs     = 0L
-        captureStartNs     = 0L
-        audioStartOffsetUs = 0L
-        totalPausedUs      = 0L
-        pendingUri         = null
-        pendingFile        = null
-
+        runCatching { bitmap?.recycle() }
+        bitmap = null
+        outputUri = null
+        appContext = null
+        _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
     }
 
-    private fun discardVideoOutput(vc: MediaCodec) {
-        val info = MediaCodec.BufferInfo()
-        while (true) {
-            val idx = vc.dequeueOutputBuffer(info, 0L)
-            if (idx >= 0) vc.releaseOutputBuffer(idx, false) else return
-        }
-    }
-
-    private fun playRecordingStartSound() { }
-
-    private fun playRecordingStopSound() { }
-
-    private fun createOutputEntry(context: Context): Pair<android.net.Uri, File> {
-        val ts       = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-        val fileName = "OrynLauncher_Recording_$ts.mp4"
-        val relPath  = "Movies/OrynLauncher Recordings"
-
+    private fun createOutputEntry(context: Context): Uri {
+        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val values = ContentValues().apply {
-            put(MediaStore.Video.Media.DISPLAY_NAME, fileName)
-            put(MediaStore.Video.Media.MIME_TYPE,    "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, relPath)
-            put(MediaStore.Video.Media.IS_PENDING,   1)
+            put(MediaStore.Video.Media.DISPLAY_NAME, "OrynLauncher_Recording_${ts}.mp4")
+            put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/OrynLauncher Recordings/")
+                put(MediaStore.Video.Media.IS_PENDING, 1)
+            }
         }
-        val uri = context.contentResolver.insert(
-            MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values
-        ) ?: throw IOException("Failed to create MediaStore entry for recording")
-
-        val publicMovies = android.os.Environment.getExternalStoragePublicDirectory(
-            android.os.Environment.DIRECTORY_MOVIES
-        )
-        return Pair(uri, File(publicMovies, "OrynLauncher Recordings/$fileName"))
+        return context.contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+            ?: throw IOException("Failed to create OrynLauncher recording entry")
     }
-}
