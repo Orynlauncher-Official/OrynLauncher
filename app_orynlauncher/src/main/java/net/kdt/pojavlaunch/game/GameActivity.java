@@ -383,24 +383,24 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void updateRecordingMenuLabel() {
-        if (gameActionArrayAdapter == null || gameActionArrayAdapter.getCount() <= 5) return;
+        if (navDrawer == null) return;
 
-        // The adapter is backed by a mutable ArrayList. Replace the existing
-        // recorder row in-place instead of ArrayAdapter.remove()/insert(),
-        // which can throw UnsupportedOperationException with immutable data.
-        gameActionArrayAdapter.getItem(5);
-        gameActionArrayAdapter.clear();
-        gameActionArrayAdapter.addAll(
-                new java.util.ArrayList<>(java.util.Arrays.asList(
-                        getResources().getStringArray(R.array.menu_ingame)
-                ))
+        java.util.ArrayList<String> items = new java.util.ArrayList<>(
+                java.util.Arrays.asList(getResources().getStringArray(R.array.menu_ingame))
         );
-        gameActionArrayAdapter.remove(gameActionArrayAdapter.getItem(5));
-        gameActionArrayAdapter.insert(
-                GameRecorder.isRecording()
-                        ? "⏹ Stop OrynLauncher Recording"
-                        : "🎥 Start OrynLauncher Recording", 5);
-        gameActionArrayAdapter.notifyDataSetChanged();
+        if (items.size() <= 5) return;
+
+        items.set(5, GameRecorder.isRecording()
+                ? "⏹ Stop OrynLauncher Recording"
+                : "🎥 Start OrynLauncher Recording");
+
+        // Always create the adapter with a real mutable ArrayList.
+        // Do not call ArrayAdapter.remove()/insert() on an immutable backing list.
+        gameActionArrayAdapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_list_item_1, items
+        );
+        navDrawer.setAdapter(gameActionArrayAdapter);
+        navDrawer.setOnItemClickListener(gameActionClickListener);
     }
 
     @Override
