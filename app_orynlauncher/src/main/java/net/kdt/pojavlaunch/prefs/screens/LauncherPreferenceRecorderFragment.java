@@ -89,6 +89,11 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
             return;
         }
 
+        // Query the primary MediaStore volume without a fragile SQL filter.
+        // OrynLauncher-created videos are then matched by both filename and path.
+        Uri videoCollection = MediaStore.Video.Media.getContentUri(
+                MediaStore.VOLUME_EXTERNAL_PRIMARY);
+
         String[] projection = {
                 MediaStore.Video.Media._ID,
                 MediaStore.Video.Media.DISPLAY_NAME,
@@ -99,51 +104,53 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                 MediaStore.Video.Media.IS_PENDING
         };
 
-        final String selection = "("
-                + MediaStore.Video.Media.DISPLAY_NAME + " LIKE ? OR "
-                + MediaStore.Video.Media.RELATIVE_PATH + " LIKE ?) AND "
-                + MediaStore.Video.Media.IS_PENDING + "=0 AND "
-                + MediaStore.Video.Media.MIME_TYPE + "=?";
-        final String[] args = {
-                "OrynLauncher_Recording_%.mp4",
-                "Movies/OrynLauncher Recordings%",
-                "video/mp4"
-        };
-
-        Uri videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            videoCollection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        }
-
         try (Cursor cursor = requireContext().getContentResolver().query(
                 videoCollection,
                 projection,
-                selection,
-                args,
+                MediaStore.Video.Media.IS_PENDING + "=0",
+                null,
                 MediaStore.Video.Media.DATE_ADDED + " DESC")) {
 
-            if (cursor == null || !cursor.moveToFirst()) {
-                addEmptyMessage("No recordings yet. Start one from the in-game menu.");
+            if (cursor == null) {
+                addEmptyMessage("Unable to access the video library.");
                 return;
             }
 
             int idIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media._ID);
             int nameIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DISPLAY_NAME);
             int durationIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.DURATION);
+            int mimeIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.MIME_TYPE);
+            int pathIndex = cursor.getColumnIndexOrThrow(MediaStore.Video.Media.RELATIVE_PATH);
 
-            do {
-                Uri uri = Uri.withAppendedPath(
-                        videoCollection,
-                        cursor.getString(idIndex));
-                final String videoName = cursor.getString(nameIndex);
+            int found = 0;
+            while (cursor.moveToNext()) {
+                String videoName = cursor.getString(nameIndex);
+                String mime = cursor.getString(mimeIndex);
+                String relativePath = cursor.getString(pathIndex);
+
+                boolean isOrynVideo =
+                        videoName != null
+                                && videoName.startsWith("OrynLauncher_Recording_")
+                                && videoName.toLowerCase(Locale.ROOT).endsWith(".mp4")
+                                && "video/mp4".equalsIgnoreCase(mime)
+                                && relativePath != null
+                                && relativePath.startsWith("Movies/OrynLauncher Recordings");
+
+                if (!isOrynVideo) continue;
+
+                found++;
+                long id = cursor.getLong(idIndex);
+                Uri uri = Uri.withAppendedPath(videoCollection, Long.toString(id));
+                final String finalVideoName = videoName;
 
                 Preference video = new Preference(requireContext());
-                video.setTitle(videoName);
-                long mediaStoreDuration = cursor.getLong(durationIndex);
-                video.setSummary(formatDuration(requireVideoDuration(uri, mediaStoreDuration)) + " • Tap for options");
+                video.setTitle(finalVideoName);
+                long duration = cursor.getLong(durationIndex);
+                video.setSummary(formatDuration(requireVideoDuration(uri, duration)) + " • Tap for options");
+
                 video.setOnPreferenceClickListener(p -> {
                     new AlertDialog.Builder(requireContext())
-                            .setTitle(videoName)
+                            .setTitle(finalVideoName)
                             .setItems(new String[]{"▶ Play", "🗑 Delete"}, (dialog, which) -> {
                                 if (which == 0) {
                                     Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -152,7 +159,9 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                                     try {
                                         startActivity(intent);
                                     } catch (Exception e) {
-                                        Toast.makeText(requireContext(), "No video player found.", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(requireContext(),
+                                                "No video player found for this recording.",
+                                                Toast.LENGTH_SHORT).show();
                                     }
                                 } else {
                                     new AlertDialog.Builder(requireContext())
@@ -161,13 +170,16 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                                             .setNegativeButton("Cancel", null)
                                             .setPositiveButton("Delete", (d, w) -> {
                                                 try {
-                                                    int deleted = requireContext().getContentResolver().delete(uri, null, null);
+                                                    int deleted = requireContext().getContentResolver()
+                                                            .delete(uri, null, null);
                                                     Toast.makeText(requireContext(),
                                                             deleted > 0 ? "Recording deleted." : "Recording could not be deleted.",
                                                             Toast.LENGTH_SHORT).show();
                                                     loadRecordings();
                                                 } catch (Exception e) {
-                                                    Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(requireContext(),
+                                                            "Could not delete recording.",
+                                                            Toast.LENGTH_SHORT).show();
                                                 }
                                             })
                                             .show();
@@ -176,11 +188,18 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                             .show();
                     return true;
                 });
-                recordingsCategory.addPreference(video);
-            } while (cursor.moveToNext());
 
+                recordingsCategory.addPreference(video);
+            }
+
+            if (found == 0) {
+                addEmptyMessage("No OrynLauncher recordings yet. Record a video and open this page again.");
+            }
         } catch (Exception e) {
-            addEmptyMessage("Unable to load recordings: " + e.getClass().getSimpleName());
+            Toast.makeText(requireContext(),
+                    "Recorder library error: " + e.getClass().getSimpleName(),
+                    Toast.LENGTH_SHORT).show();
+            addEmptyMessage("Unable to load OrynLauncher recordings.");
         }
     }
 
