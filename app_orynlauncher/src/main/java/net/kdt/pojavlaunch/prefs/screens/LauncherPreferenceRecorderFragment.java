@@ -175,7 +175,7 @@ public class LauncherPreferenceRecorderFragment extends LauncherPreferenceFragme
                             .setNegativeButton("Cancel", null)
                             .setPositiveButton("Delete", (d, w) -> {
                                 try {
-                                    resolver.delete(finalUri, null, null);
+                                    requireContext().getContentResolver().delete(finalUri, null, null);
                                     loadRecordings();
                                 } catch (Exception e) {
                                     Toast.makeText(requireContext(), "Could not delete recording.", Toast.LENGTH_SHORT).show();
