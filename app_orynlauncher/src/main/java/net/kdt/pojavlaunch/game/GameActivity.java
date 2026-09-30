@@ -44,6 +44,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import com.kdt.LoggerView;
 
 import net.kdt.pojavlaunch.BaseActivity;
+import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.game.recorder.GameRecorder;
@@ -271,6 +272,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                             getResources().getString(R.string.control_customkey),
                             getResources().getString(R.string.quick_setting_title),
                             getResources().getString(R.string.mcl_option_customcontrol),
+                            "📁 Oryn File Manager",
                             "🎥 Start OrynLauncher Recording"
                     },
                     new int[]{
@@ -279,6 +281,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                             R.drawable.ic_game_menu_keycode,
                             R.drawable.ic_game_menu_settings,
                             R.drawable.ic_game_menu_controls,
+                            R.drawable.oryn_nav_folder,
                             R.drawable.ic_game_menu_record
                     }
             );
@@ -289,7 +292,8 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                      case 2: dialogSendCustomKey(); break;
                      case 3: openQuickSettings(); break;
                      case 4: openCustomControls(); break;
-                     case 5: toggleGameRecording(); break;
+                     case 5: startActivity(new Intent(GameActivity.this, OrynFileManagerActivity.class)); break;
+                     case 6: toggleGameRecording(); break;
                 }
                 drawerLayout.closeDrawers();
             };
@@ -424,7 +428,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
         if (gameActionArrayAdapter == null) return;
 
-        gameActionArrayAdapter.setText(5, GameRecorder.isRecording()
+        gameActionArrayAdapter.setText(6, GameRecorder.isRecording()
                 ? "⏹ Stop OrynLauncher Recording"
                 : "🎥 Start OrynLauncher Recording");
 
