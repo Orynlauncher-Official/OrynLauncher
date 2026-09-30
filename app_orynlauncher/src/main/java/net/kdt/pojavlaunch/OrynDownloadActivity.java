@@ -220,13 +220,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 // selected instance loader.
                 String minecraftVersion = getSelectedMinecraftVersion();
                 String loader = getModrinthLoader(Instances.loadSelectedInstance());
-                StringBuilder facets = new StringBuilder("[[\\"project_type:")
-                        .append(category.projectType).append("\\"");
+                StringBuilder facets = new StringBuilder("[[\"project_type:")
+                        .append(category.projectType).append("\"]");
                 if (minecraftVersion != null) {
-                    facets.append(",\\"versions:").append(minecraftVersion).append("\\"");
+                    facets.append(",\"versions:").append(minecraftVersion).append("\"");
                 }
                 if (loader != null && category == Category.MOD) {
-                    facets.append(",\\"categories:").append(loader).append("\\"");
+                    facets.append(",\"categories:").append(loader).append("\"");
                 }
                 facets.append("]]");
                 params.put("facets", facets.toString());
