@@ -308,32 +308,37 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setText("Checking…");
                 });
 
-                JsonArray versions = api.get("project/" + URLEncoder.encode(projectId, "UTF-8") + "/version", JsonArray.class);
-                if (versions == null || versions.size() == 0) throw new Exception("No downloadable version found");
+                // Let Modrinth do the compatibility filtering. This matches the
+                // behavior of Modrinth-style launchers: request versions for the
+                // selected Minecraft version (and loader when it is known).
+                HashMap<String, Object> versionQuery = new HashMap<>();
+                versionQuery.put("game_versions", "[\"" + minecraftVersion + "\"]");
 
-                JsonObject version = null;
+                String loader = getModrinthLoader(instance);
+                if (loader != null) {
+                    versionQuery.put("loaders", "[\"" + loader + "\"]");
+                }
+
+                JsonArray versions = api.get(
+                        "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
+                        versionQuery,
+                        JsonArray.class
+                );
+
+                if (versions == null || versions.size() == 0) {
+                    throw new Exception("This " + category.title.toLowerCase()
+                            + " is not available for Minecraft " + minecraftVersion
+                            + (loader == null ? "" : " (" + loader + ")"));
+                }
+
+                // Prefer a featured compatible release when Modrinth marks one.
+                JsonObject version = versions.get(0).getAsJsonObject();
                 for (int i = 0; i < versions.size(); i++) {
                     JsonObject candidate = versions.get(i).getAsJsonObject();
-                    JsonArray gameVersions = candidate.has("game_versions")
-                            ? candidate.getAsJsonArray("game_versions") : null;
-                    if (gameVersions == null) continue;
-
-                    boolean matches = false;
-                    for (int j = 0; j < gameVersions.size(); j++) {
-                        if (minecraftVersion.equals(gameVersions.get(j).getAsString())) {
-                            matches = true;
-                            break;
-                        }
-                    }
-                    if (matches) {
+                    if (candidate.has("featured") && candidate.get("featured").getAsBoolean()) {
                         version = candidate;
                         break;
                     }
-                }
-
-                if (version == null) {
-                    throw new Exception("This " + category.title.toLowerCase()
-                            + " is not made for Minecraft " + minecraftVersion);
                 }
 
                 JsonArray files = version.getAsJsonArray("files");
@@ -362,6 +367,39 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private String getModrinthLoader(Instance instance) {
+        // Resource packs and shaders use the special Modrinth "minecraft" loader.
+        if (category == Category.RESOURCEPACK || category == Category.SHADER) {
+            return "minecraft";
+        }
+
+        // Mods are loader-specific. Infer the loader from the selected instance
+        // when possible. If it cannot be determined, do not guess and reject a
+        // valid mod; Modrinth will filter by Minecraft version only.
+        if (instance.installer != null) {
+            String url = instance.installer.installerDownloadUrl;
+            if (url != null) {
+                String lower = url.toLowerCase();
+                if (lower.contains("neoforge")) return "neoforge";
+                if (lower.contains("forge")) return "forge";
+                if (lower.contains("fabric")) return "fabric";
+                if (lower.contains("quilt")) return "quilt";
+            }
+
+            if (instance.installer.commandLineArgs != null) {
+                for (String arg : instance.installer.commandLineArgs) {
+                    if (arg == null) continue;
+                    String lower = arg.toLowerCase();
+                    if (lower.contains("neoforge")) return "neoforge";
+                    if (lower.contains("forge")) return "forge";
+                    if (lower.contains("fabric")) return "fabric";
+                    if (lower.contains("quilt")) return "quilt";
+                }
+            }
+        }
+        return null;
     }
 
     private void downloadFile(String urlString, File output) throws Exception {
