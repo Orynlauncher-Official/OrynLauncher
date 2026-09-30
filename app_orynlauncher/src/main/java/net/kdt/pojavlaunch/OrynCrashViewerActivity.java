@@ -1,6 +1,7 @@
 package net.kdt.pojavlaunch;
 
 import android.app.Activity;
+import git.artdeell.mojo.R;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
