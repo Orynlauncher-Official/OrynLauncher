@@ -527,4 +527,5 @@
     <string name="oryn_update_message">A newer OrynLauncher release is available: %1$s (v%2$s). Update now to get the latest version.</string>
     <string name="oryn_update_button">Update</string>
     <string name="oryn_update_later">Later</string>
+    <string name="oryn_download">Downloads</string>
 </resources>
