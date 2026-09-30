@@ -1,6 +1,7 @@
 package net.kdt.pojavlaunch.fragments;
 
 import net.kdt.pojavlaunch.OrynDownloadActivity;
+import net.kdt.pojavlaunch.OrynCrashViewerActivity;
 
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.shareLog;
@@ -59,6 +60,7 @@ public class MainMenuFragment extends Fragment {
         Button mShareLogsButton = view.findViewById(R.id.share_logs_button);
         ImageButton mOpenDirectoryButton = view.findViewById(R.id.open_files_button);
         ImageButton mDownloadButton = view.findViewById(R.id.download_button);
+        ImageButton mCrashButton = view.findViewById(R.id.crash_viewer_button);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -75,6 +77,7 @@ public class MainMenuFragment extends Fragment {
 
         mOpenDirectoryButton.setOnClickListener((v)-> openGameDirectory(v.getContext()));
         mDownloadButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
+        mCrashButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
 
 
     }
