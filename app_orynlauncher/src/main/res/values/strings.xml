@@ -528,4 +528,9 @@
     <string name="oryn_update_button">Update</string>
     <string name="oryn_update_later">Later</string>
     <string name="oryn_download">Downloads</string>
+    <string name="oryn_crash_viewer">Crash Viewer</string>
+    <string name="oryn_crash_refresh">Refresh</string>
+    <string name="oryn_crash_select">Select a crash report to view it here.</string>
+    <string name="oryn_crash_none">No crash reports found for this instance.</string>
+    <string name="oryn_crash_read_failed">Failed to read crash report: %s</string>
 </resources>
