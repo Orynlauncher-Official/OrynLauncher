@@ -323,27 +323,63 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setText("Checking…");
                 });
 
-                // Let Modrinth do the compatibility filtering. This matches the
-                // behavior of Modrinth-style launchers: request versions for the
-                // selected Minecraft version (and loader when it is known).
-                HashMap<String, Object> versionQuery = new HashMap<>();
-                versionQuery.put("game_versions", "[\"" + minecraftVersion + "\"]");
-
-                String loader = getModrinthLoader(instance);
-                if (loader != null) {
-                    versionQuery.put("loaders", "[\"" + loader + "\"]");
-                }
-
+                // ZalithLauncher-style: fetch the project's versions, then
+                // choose a version whose metadata explicitly matches the selected
+                // Minecraft version and loader.
                 JsonArray versions = api.get(
                         "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
-                        versionQuery,
                         JsonArray.class
                 );
 
-                if (versions == null || versions.size() == 0) {
-                    throw new Exception("This " + category.title.toLowerCase()
-                            + " is not available for Minecraft " + minecraftVersion
-                            + (loader == null ? "" : " (" + loader + ")"));
+                String minecraftVersion = getSelectedMinecraftVersion();
+                if (minecraftVersion == null) {
+                    throw new Exception("Could not determine the Minecraft version of this instance");
+                }
+
+                String loader = getModrinthLoader(instance);
+                JsonObject version = null;
+                for (int i = 0; versions != null && i < versions.size(); i++) {
+                    JsonObject candidate = versions.get(i).getAsJsonObject();
+                    boolean gameMatch = false;
+                    if (candidate.has("game_versions")) {
+                        JsonArray gameVersions = candidate.getAsJsonArray("game_versions");
+                        for (int j = 0; j < gameVersions.size(); j++) {
+                            if (minecraftVersion.equals(gameVersions.get(j).getAsString())) {
+                                gameMatch = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!gameMatch) continue;
+
+                    if (loader != null && category == Category.MOD) {
+                        boolean loaderMatch = false;
+                        if (candidate.has("loaders")) {
+                            JsonArray loaders = candidate.getAsJsonArray("loaders");
+                            for (int j = 0; j < loaders.size(); j++) {
+                                if (loader.equalsIgnoreCase(loaders.get(j).getAsString())) {
+                                    loaderMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!loaderMatch) continue;
+                    }
+
+                    // Prefer a featured release, otherwise keep the first
+                    // compatible version returned by Modrinth.
+                    if (version == null) {
+                        version = candidate;
+                    } else if (candidate.has("featured") && candidate.get("featured").getAsBoolean()) {
+                        version = candidate;
+                        break;
+                    }
+                }
+
+                if (version == null) {
+                    throw new Exception("No compatible " + category.title.toLowerCase()
+                            + " version for Minecraft " + minecraftVersion
+                            + (loader == null || category != Category.MOD ? "" : " (" + loader + ")"));
                 }
 
                 // Prefer a featured compatible release when Modrinth marks one.
