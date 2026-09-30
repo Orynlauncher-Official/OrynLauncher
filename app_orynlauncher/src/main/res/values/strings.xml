@@ -523,4 +523,8 @@
     <string name="preference_button_transparency">Buttons transparency</string>
     <string name="preference_button_transparency_summary">Changes on-screen buttons transparency</string>
     <string name="main_please_restart">Please restart the game from the launcher homescreen</string>
+    <string name="oryn_update_title">Oryn Need to Update!</string>
+    <string name="oryn_update_message">A newer OrynLauncher release is available: %1$s (v%2$s). Update now to get the latest version.</string>
+    <string name="oryn_update_button">Update</string>
+    <string name="oryn_update_later">Later</string>
 </resources>
