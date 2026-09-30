@@ -331,11 +331,6 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         JsonArray.class
                 );
 
-                String minecraftVersion = getSelectedMinecraftVersion();
-                if (minecraftVersion == null) {
-                    throw new Exception("Could not determine the Minecraft version of this instance");
-                }
-
                 String loader = getModrinthLoader(instance);
                 JsonObject version = null;
                 for (int i = 0; versions != null && i < versions.size(); i++) {
@@ -382,16 +377,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                             + (loader == null || category != Category.MOD ? "" : " (" + loader + ")"));
                 }
 
-                // Prefer a featured compatible release when Modrinth marks one.
-                JsonObject version = versions.get(0).getAsJsonObject();
-                for (int i = 0; i < versions.size(); i++) {
-                    JsonObject candidate = versions.get(i).getAsJsonObject();
-                    if (candidate.has("featured") && candidate.get("featured").getAsBoolean()) {
-                        version = candidate;
-                        break;
-                    }
-                }
-
+                // The version selected above is already filtered for the
+                // instance Minecraft version and loader.
                 JsonArray files = version.getAsJsonArray("files");
                 if (files == null || files.size() == 0) throw new Exception("No downloadable file found");
 
