@@ -16,8 +16,9 @@ import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -132,8 +133,14 @@ public class OrynCrashViewerActivity extends Activity {
 
     private void showCrash(File file) {
         try {
-            byte[] data = Files.readAllBytes(file.toPath());
-            viewer.setText(new String(data, StandardCharsets.UTF_8));
+            StringBuilder text = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                text.append(line).append("\\n");
+            }
+            reader.close();
+            viewer.setText(text.toString());
         } catch (Exception e) {
             viewer.setText(getString(R.string.oryn_crash_read_failed, e.getMessage()));
         }
