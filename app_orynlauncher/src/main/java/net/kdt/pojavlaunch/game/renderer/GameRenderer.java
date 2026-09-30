@@ -150,8 +150,15 @@ public class GameRenderer {
     public boolean maybeSetupRenderer() {
         setRendererLibraryPath(Tools.NATIVE_LIB_DIR, currentRenderer.librarySearchPath());
         if (!currentRenderer.setupRenderer()) {
-            Log.e(TAG, "Failed to setup renderer " + currentRenderer.name() + ", falling back to " + FALLBACK_RENDERER);
-            // Hopefully (yes, it's going to be fun if it returns null for the fallback renderer. Shouldn't happen though)
+            Log.e(TAG, "Failed to setup renderer " + currentRenderer.name());
+            // Do not silently replace a requested renderer with GL4ES. That made
+            // MobileGlues appear selected in the UI while the game was actually
+            // running through a different backend.
+            if (MOBILEGLUES_RENDERER.equals(currentRenderer.tag())) {
+                Log.e(TAG, "MobileGlues could not be initialized; refusing a fake fallback");
+                return false;
+            }
+            Log.e(TAG, "Falling back to " + FALLBACK_RENDERER);
             return getKnownRenderer(FALLBACK_RENDERER).setupRenderer();
         }
         return true;
