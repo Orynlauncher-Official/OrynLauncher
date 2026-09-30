@@ -1,10 +1,13 @@
 package net.kdt.pojavlaunch.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+
+import java.lang.ref.WeakReference;
 import android.util.Log;
 
 import androidx.appcompat.app.AlertDialog;
@@ -34,8 +37,9 @@ public final class OrynUpdateChecker {
 
     private OrynUpdateChecker() {}
 
-    public static void check(Context context) {
-        Context appContext = context.getApplicationContext();
+    public static void check(Activity activity) {
+        WeakReference<Activity> activityRef = new WeakReference<>(activity);
+        Context appContext = activity.getApplicationContext();
 
         new Thread(() -> {
             HttpURLConnection connection = null;
@@ -75,8 +79,11 @@ public final class OrynUpdateChecker {
                 final String finalVersion = latestVersion;
                 final String finalUrl = releaseUrl;
 
-                new Handler(Looper.getMainLooper()).post(() ->
-                        showUpdateDialog(appContext, finalReleaseName, finalVersion, finalUrl));
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    Activity currentActivity = activityRef.get();
+                    if (currentActivity == null || currentActivity.isFinishing() || currentActivity.isDestroyed()) return;
+                    showUpdateDialog(currentActivity, finalReleaseName, finalVersion, finalUrl);
+                });
             } catch (Exception e) {
                 Log.w(TAG, "Unable to check for OrynLauncher updates", e);
             } finally {
