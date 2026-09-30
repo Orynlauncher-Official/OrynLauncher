@@ -247,15 +247,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     hits = response == null ? null : response.getAsJsonArray("hits");
                 }
 
+                final JsonArray searchHits = hits;
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-                    if (hits == null || hits.size() == 0) {
+                    if (searchHits == null || searchHits.size() == 0) {
                         status.setText("No " + category.title.toLowerCase() + " found.");
                         return;
                     }
-                    status.setText(hits.size() + " results");
-                    for (int i = 0; i < hits.size(); i++) {
-                        addResult(hits.get(i).getAsJsonObject());
+                    status.setText(searchHits.size() + " results");
+                    for (int i = 0; i < searchHits.size(); i++) {
+                        addResult(searchHits.get(i).getAsJsonObject());
                     }
                 });
             } catch (Exception e) {
