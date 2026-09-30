@@ -43,7 +43,7 @@
         tools:ignore="UnusedAttribute">
         <activity
             android:name="net.kdt.pojavlaunch.OrynDownloadActivity"
-            android:screenOrientation="portrait"
+            android:screenOrientation="landscape"
             android:label="OrynLauncher Downloads" />
 
         <activity
