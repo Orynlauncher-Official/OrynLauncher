@@ -24,6 +24,8 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.List;
 
 public class OrynCrashViewerActivity extends Activity {
     private LinearLayout list;
@@ -110,7 +112,26 @@ public class OrynCrashViewerActivity extends Activity {
         list.removeAllViews();
         viewer.setText(R.string.oryn_crash_select);
 
-        if (!crashDir.exists() || !crashDir.isDirectory()) {
+        List<File> reports = new ArrayList<>();
+
+        if (crashDir.exists() && crashDir.isDirectory()) {
+            File[] crashFiles = crashDir.listFiles((dir, name) ->
+                    name != null && name.toLowerCase().endsWith(".txt"));
+            if (crashFiles != null) {
+                reports.addAll(Arrays.asList(crashFiles));
+            }
+        }
+
+        // Minecraft does not create a crash-report file for every kind of crash
+        // (native crashes, forced closes, renderer crashes, etc.). Keep the
+        // game's latest log visible as a fallback so the Crash Viewer is still useful.
+        File logsDir = new File(crashDir.getParentFile(), "logs");
+        File latestLog = new File(logsDir, "latest.log");
+        if (latestLog.exists() && latestLog.isFile()) {
+            reports.add(latestLog);
+        }
+
+        if (reports.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText(R.string.oryn_crash_none);
             empty.setTextColor(Color.LTGRAY);
@@ -119,23 +140,13 @@ public class OrynCrashViewerActivity extends Activity {
             return;
         }
 
-        File[] files = crashDir.listFiles((dir, name) ->
-                name != null && name.toLowerCase().endsWith(".txt"));
+        reports.sort(Comparator.comparingLong(File::lastModified).reversed());
 
-        if (files == null || files.length == 0) {
-            TextView empty = new TextView(this);
-            empty.setText(R.string.oryn_crash_none);
-            empty.setTextColor(Color.LTGRAY);
-            empty.setPadding(dp(12), dp(12), dp(12), dp(12));
-            list.addView(empty);
-            return;
-        }
-
-        Arrays.sort(files, Comparator.comparingLong(File::lastModified).reversed());
-
-        for (File file : files) {
+        for (File file : reports) {
             Button item = new Button(this);
-            item.setText(file.getName());
+            item.setText(file.getName().equals("latest.log")
+                    ? "Latest game log"
+                    : file.getName());
             item.setTextSize(11);
             item.setAllCaps(false);
             item.setOnClickListener(v -> showCrash(file));
