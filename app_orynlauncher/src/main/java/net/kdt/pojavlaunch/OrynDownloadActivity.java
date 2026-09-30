@@ -28,6 +28,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -294,10 +296,46 @@ public class OrynDownloadActivity extends AppCompatActivity {
         executor.execute(() -> {
             File output = null;
             try {
+                // Scan the selected instance first. Never download an arbitrary/latest
+                // project version: it must explicitly support this Minecraft version.
+                final String minecraftVersion = instance.versionId;
+                if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
+                    throw new Exception("Could not determine the Minecraft version of this instance");
+                }
+
+                runOnUiThread(() -> {
+                    status.setText("Checking " + minecraftVersion + " compatibility…");
+                    button.setText("Checking…");
+                });
+
                 JsonArray versions = api.get("project/" + URLEncoder.encode(projectId, "UTF-8") + "/version", JsonArray.class);
                 if (versions == null || versions.size() == 0) throw new Exception("No downloadable version found");
 
-                JsonObject version = versions.get(0).getAsJsonObject();
+                JsonObject version = null;
+                for (int i = 0; i < versions.size(); i++) {
+                    JsonObject candidate = versions.get(i).getAsJsonObject();
+                    JsonArray gameVersions = candidate.has("game_versions")
+                            ? candidate.getAsJsonArray("game_versions") : null;
+                    if (gameVersions == null) continue;
+
+                    boolean matches = false;
+                    for (int j = 0; j < gameVersions.size(); j++) {
+                        if (minecraftVersion.equals(gameVersions.get(j).getAsString())) {
+                            matches = true;
+                            break;
+                        }
+                    }
+                    if (matches) {
+                        version = candidate;
+                        break;
+                    }
+                }
+
+                if (version == null) {
+                    throw new Exception("This " + category.title.toLowerCase()
+                            + " is not made for Minecraft " + minecraftVersion);
+                }
+
                 JsonArray files = version.getAsJsonArray("files");
                 if (files == null || files.size() == 0) throw new Exception("No downloadable file found");
 
