@@ -45,6 +45,10 @@
             android:name="net.kdt.pojavlaunch.OrynDownloadActivity"
             android:screenOrientation="landscape"
             android:label="OrynLauncher Downloads" />
+        <activity
+            android:name="net.kdt.pojavlaunch.OrynCrashViewerActivity"
+            android:screenOrientation="landscape"
+            android:label="@string/oryn_crash_viewer" />
 
         <activity
             android:name="net.kdt.pojavlaunch.MissingStorageActivity"
