@@ -5,10 +5,10 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -65,6 +65,15 @@ public class OrynDownloadActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         buildUi();
         searchProjects("");
     }
@@ -84,7 +93,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(18), dp(16), dp(18), dp(12));
+        root.setPadding(dp(8), dp(6), dp(8), dp(6));
         root.setBackgroundResource(R.drawable.oryn_home_bg);
 
         LinearLayout header = new LinearLayout(this);
@@ -96,20 +105,19 @@ public class OrynDownloadActivity extends AppCompatActivity {
         back.setTextColor(Color.WHITE);
         back.setBackgroundResource(android.R.color.transparent);
         back.setOnClickListener(v -> finish());
-        header.addView(back, new LinearLayout.LayoutParams(dp(48), dp(52)));
+        header.addView(back, new LinearLayout.LayoutParams(dp(38), dp(38)));
 
-        TextView title = label("Download", 24);
+        TextView title = label("Downloads", 19);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(52), 1));
+        header.addView(title, new LinearLayout.LayoutParams(0, dp(38), 1));
 
         root.addView(header);
 
-        selectedCategory = label("Mods", 16);
-        selectedCategory.setPadding(dp(14), dp(8), dp(14), dp(8));
+        selectedCategory = label("Mods", 12);
 
         LinearLayout tabs = new LinearLayout(this);
         tabs.setGravity(Gravity.CENTER);
-        tabs.setPadding(0, 0, 0, dp(10));
+        tabs.setPadding(0, 0, 0, dp(4));
 
         addTab(tabs, "Mods", Category.MOD);
         addTab(tabs, "Resource Packs", Category.RESOURCEPACK);
@@ -122,18 +130,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
         search.setHintTextColor(0xFF9EA0A8);
         search.setTextColor(Color.WHITE);
         search.setInputType(InputType.TYPE_CLASS_TEXT);
-        search.setPadding(dp(14), 0, dp(14), 0);
+        search.setPadding(dp(10), 0, dp(10), 0);
         search.setBackgroundResource(R.drawable.oryn_pill);
-        root.addView(search, new LinearLayout.LayoutParams(-1, dp(50)));
+        LinearLayout searchRow = new LinearLayout(this);
+        searchRow.setGravity(Gravity.CENTER_VERTICAL);
+        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(38), 1));
+        root.addView(searchRow);
 
         Button searchButton = new Button(this);
         searchButton.setText("Search");
         searchButton.setTextColor(Color.WHITE);
         searchButton.setAllCaps(false);
         searchButton.setBackgroundResource(R.drawable.oryn_pill);
-        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(-1, dp(48));
-        searchLp.topMargin = dp(8);
-        root.addView(searchButton, searchLp);
+        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(dp(82), dp(38));
+        searchLp.leftMargin = dp(6);
+        searchRow.addView(searchButton, searchLp);
         searchButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim()));
         search.setOnEditorActionListener((v, actionId, event) -> {
             searchProjects(search.getText().toString().trim());
@@ -146,8 +157,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         status = label("Choose a category and search for content.", 14);
         status.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(-1, dp(52));
-        statusLp.topMargin = dp(6);
+        LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(-1, dp(28));
+        statusLp.topMargin = dp(2);
         root.addView(status, statusLp);
 
         ScrollView scroll = new ScrollView(this);
@@ -161,19 +172,26 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void addTab(LinearLayout parent, String text, Category value) {
-        Button button = new Button(this);
-        button.setText(text);
-        if (value == Category.MOD) button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_mod, 0, 0, 0);
-        else if (value == Category.RESOURCEPACK) button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_resource, 0, 0, 0);
-        else button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_shader, 0, 0, 0);
-        button.setTextColor(Color.WHITE);
-        button.setAllCaps(false);
-        button.setTextSize(12);
-        button.setPadding(dp(8), 0, dp(8), 0);
+        LinearLayout button = new LinearLayout(this);
+        button.setOrientation(LinearLayout.HORIZONTAL);
         button.setGravity(Gravity.CENTER);
+        button.setPadding(dp(6), 0, dp(6), 0);
         button.setBackgroundResource(R.drawable.oryn_pill);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(44), 1);
-        lp.setMargins(dp(3), 0, dp(3), 0);
+
+        ImageView icon = new ImageView(this);
+        if (value == Category.MOD) icon.setImageResource(R.drawable.oryn_download_mod);
+        else if (value == Category.RESOURCEPACK) icon.setImageResource(R.drawable.oryn_download_resource);
+        else icon.setImageResource(R.drawable.oryn_download_shader);
+        button.addView(icon, new LinearLayout.LayoutParams(dp(20), dp(20)));
+
+        TextView textView = label(text, 11);
+        textView.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(-2, -1);
+        textLp.leftMargin = dp(4);
+        button.addView(textView, textLp);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(34), 1);
+        lp.setMargins(dp(2), 0, dp(2), 0);
         parent.addView(button, lp);
         button.setOnClickListener(v -> {
             category = value;
