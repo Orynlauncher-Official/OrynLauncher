@@ -23,13 +23,13 @@ import com.google.gson.JsonObject;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.security.MessageDigest;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -214,7 +214,22 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 params.put("query", query);
                 params.put("limit", 30);
                 params.put("index", "relevance");
-                params.put("facets", "[[\"project_type:" + category.projectType + "\"]]");
+
+                // ZalithLauncher-style Modrinth search: filter the project list
+                // itself by the selected Minecraft version and, for mods, the
+                // selected instance loader.
+                String minecraftVersion = getSelectedMinecraftVersion();
+                String loader = getModrinthLoader(Instances.loadSelectedInstance());
+                StringBuilder facets = new StringBuilder("[[\\"project_type:")
+                        .append(category.projectType).append("\\"");
+                if (minecraftVersion != null) {
+                    facets.append(",\\"versions:").append(minecraftVersion).append("\\"");
+                }
+                if (loader != null && category == Category.MOD) {
+                    facets.append(",\\"categories:").append(loader).append("\\"");
+                }
+                facets.append("]]");
+                params.put("facets", facets.toString());
 
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
@@ -344,13 +359,27 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonArray files = version.getAsJsonArray("files");
                 if (files == null || files.size() == 0) throw new Exception("No downloadable file found");
 
+                // Prefer Modrinth's primary file, like ZalithLauncher does.
                 JsonObject file = files.get(0).getAsJsonObject();
+                for (int i = 0; i < files.size(); i++) {
+                    JsonObject candidate = files.get(i).getAsJsonObject();
+                    if (candidate.has("primary") && candidate.get("primary").getAsBoolean()) {
+                        file = candidate;
+                        break;
+                    }
+                }
+
                 String url = file.get("url").getAsString();
                 String filename = file.has("filename") ? file.get("filename").getAsString() : projectId + ".download";
                 filename = new File(filename).getName();
+                String sha1 = null;
+                if (file.has("hashes") && file.getAsJsonObject("hashes").has("sha1")) {
+                    sha1 = file.getAsJsonObject("hashes").get("sha1").getAsString();
+                }
+                long expectedSize = file.has("size") ? file.get("size").getAsLong() : -1L;
 
                 output = new File(targetDirectory, filename);
-                downloadFile(url, output);
+                downloadFile(url, output, sha1, expectedSize, button, projectTitle);
 
                 final String saved = output.getName();
                 runOnUiThread(() -> {
@@ -369,19 +398,30 @@ public class OrynDownloadActivity extends AppCompatActivity {
         });
     }
 
+    private String getSelectedMinecraftVersion() {
+        try {
+            Instance instance = Instances.loadSelectedInstance();
+            return instance == null ? null : getVersionOrNull(instance.versionId);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String getVersionOrNull(String version) {
+        if (version == null || version.trim().isEmpty()) return null;
+        return version.trim();
+    }
+
     private String getModrinthLoader(Instance instance) {
-        // Resource packs and shaders use the special Modrinth "minecraft" loader.
+        if (instance == null) return null;
         if (category == Category.RESOURCEPACK || category == Category.SHADER) {
             return "minecraft";
         }
 
-        // Mods are loader-specific. Infer the loader from the selected instance
-        // when possible. If it cannot be determined, do not guess and reject a
-        // valid mod; Modrinth will filter by Minecraft version only.
         if (instance.installer != null) {
             String url = instance.installer.installerDownloadUrl;
             if (url != null) {
-                String lower = url.toLowerCase();
+                String lower = url.toLowerCase(Locale.ROOT);
                 if (lower.contains("neoforge")) return "neoforge";
                 if (lower.contains("forge")) return "forge";
                 if (lower.contains("fabric")) return "fabric";
@@ -391,7 +431,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             if (instance.installer.commandLineArgs != null) {
                 for (String arg : instance.installer.commandLineArgs) {
                     if (arg == null) continue;
-                    String lower = arg.toLowerCase();
+                    String lower = arg.toLowerCase(Locale.ROOT);
                     if (lower.contains("neoforge")) return "neoforge";
                     if (lower.contains("forge")) return "forge";
                     if (lower.contains("fabric")) return "fabric";
@@ -402,39 +442,102 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return null;
     }
 
-    private void downloadFile(String urlString, File output) throws Exception {
-        HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
-        connection.setConnectTimeout(15000);
-        connection.setReadTimeout(30000);
-        connection.setRequestProperty("User-Agent", "OrynLauncher/2.2");
-        connection.connect();
+    private void downloadFile(String urlString, File output, String expectedSha1,
+                              long expectedSize, Button button, String projectTitle) throws Exception {
+        Exception last = null;
 
-        if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) {
-            throw new Exception("Download server returned HTTP " + connection.getResponseCode());
-        }
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            File temp = new File(output.getParentFile(), output.getName() + ".part");
+            if (temp.exists()) temp.delete();
 
-        File parent = output.getParentFile();
-        if (parent != null && !parent.exists() && !parent.mkdirs()) {
-            throw new Exception("Could not create download directory");
-        }
+            try {
+                HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+                connection.setConnectTimeout(15000);
+                connection.setReadTimeout(30000);
+                connection.setInstanceFollowRedirects(true);
+                connection.setRequestProperty("User-Agent", "OrynLauncher/2.2 (Zalith-style Modrinth downloader)");
+                connection.connect();
 
-        File temp = new File(output.getParentFile(), output.getName() + ".part");
-        try (InputStream in = new BufferedInputStream(connection.getInputStream());
-             FileOutputStream out = new FileOutputStream(temp)) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = in.read(buffer)) != -1) {
-                out.write(buffer, 0, read);
+                if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) {
+                    throw new Exception("Download server returned HTTP " + connection.getResponseCode());
+                }
+
+                long total = connection.getContentLengthLong() > 0
+                        ? connection.getContentLengthLong() : expectedSize;
+                long done = 0L;
+                MessageDigest digest = MessageDigest.getInstance("SHA-1");
+
+                try (InputStream in = new BufferedInputStream(connection.getInputStream());
+                     FileOutputStream out = new FileOutputStream(temp)) {
+                    byte[] buffer = new byte[32768];
+                    int read;
+                    long lastUi = 0;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                        digest.update(buffer, 0, read);
+                        done += read;
+
+                        long now = android.os.SystemClock.elapsedRealtime();
+                        if (now - lastUi > 150 || (total > 0 && done >= total)) {
+                            final long progressDone = done;
+                            final long progressTotal = total;
+                            runOnUiThread(() -> {
+                                if (progressTotal > 0) {
+                                    int pct = (int) Math.min(100, progressDone * 100L / progressTotal);
+                                    button.setText("Downloading " + pct + "%");
+                                    status.setText(projectTitle + " • " + pct + "%");
+                                } else {
+                                    button.setText("Downloading…");
+                                    status.setText(projectTitle + " • " + progressDone + " bytes");
+                                }
+                            });
+                            lastUi = now;
+                        }
+                    }
+                    out.flush();
+                } finally {
+                    connection.disconnect();
+                }
+
+                if (expectedSize > 0 && temp.length() != expectedSize) {
+                    throw new Exception("Downloaded file size does not match Modrinth metadata");
+                }
+
+                if (expectedSha1 != null && !expectedSha1.isEmpty()) {
+                    String actual = toHex(digest.digest());
+                    if (!expectedSha1.equalsIgnoreCase(actual)) {
+                        throw new Exception("SHA-1 verification failed");
+                    }
+                }
+
+                if (output.exists() && !output.delete()) {
+                    throw new Exception("Could not replace existing file");
+                }
+                if (!temp.renameTo(output)) {
+                    throw new Exception("Could not finalize downloaded file");
+                }
+                return;
+            } catch (Exception e) {
+                last = e;
+                if (temp.exists()) temp.delete();
+                if (attempt < 3) {
+                    try {
+                        Thread.sleep(500L * attempt);
+                    } catch (InterruptedException interrupted) {
+                        Thread.currentThread().interrupt();
+                        throw new Exception("Download cancelled", interrupted);
+                    }
+                }
             }
-            out.flush();
-        } finally {
-            connection.disconnect();
         }
 
-        if (!temp.renameTo(output)) {
-            if (output.exists()) output.delete();
-            if (!temp.renameTo(output)) throw new Exception("Could not finalize downloaded file");
-        }
+        throw last == null ? new Exception("Download failed") : last;
+    }
+
+    private String toHex(byte[] bytes) {
+        StringBuilder result = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) result.append(String.format(Locale.ROOT, "%02x", b & 0xff));
+        return result.toString();
     }
 
     @Override
