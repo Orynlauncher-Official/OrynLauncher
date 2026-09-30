@@ -9,4 +9,5 @@
 </LinearLayout>
 <ImageButton android:id="@+id/setting_button" android:layout_width="56dp" android:layout_height="56dp" android:layout_marginStart="37dp" android:layout_marginTop="24dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Settings" android:background="@android:color/transparent" android:padding="12dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
 <com.kdt.mcgui.ProgressLayout android:id="@+id/progress_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent"/>
+<include layout="@layout/view_oryn_loading_screen"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -44,6 +45,7 @@ import net.kdt.pojavlaunch.modloaders.modpacks.imagecache.IconCacheJanitor;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceFragment;
 import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
+import net.kdt.pojavlaunch.progresskeeper.ProgressListener;
 import net.kdt.pojavlaunch.progresskeeper.TaskCountListener;
 import net.kdt.pojavlaunch.services.ProgressServiceKeeper;
 import net.kdt.pojavlaunch.tasks.MoJsonExtras;
@@ -65,7 +67,26 @@ public class LauncherActivity extends BaseActivity {
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private NotificationManager mNotificationManager;
+    private View mLoadingScreen;
+    private TextView mLoadingStatus;
     private static ActivityResultLauncher<String> mRequestPermissionLauncher;
+
+    /** Progress keys whose status text is mirrored on the loading screen */
+    private static final String[] LOADING_STATUS_KEYS = {
+            ProgressLayout.DOWNLOAD_GAME,
+            ProgressLayout.UNPACK_RUNTIME,
+            ProgressLayout.INSTALL_MODPACK,
+            ProgressLayout.AUTHENTICATE,
+            ProgressLayout.DOWNLOAD_VERSION_LIST,
+            ProgressLayout.INSTANCE_INSTALL,
+            ProgressLayout.DATA_MIGRATION,
+            ProgressLayout.EXTRACT_COMPONENTS,
+            ProgressLayout.EXTRACT_SINGLE_FILES
+    };
+
+    /** Give the launcher a frame to swap screens before hiding the loading screen */
+    private static final long LOADING_HIDE_DELAY_MS = 350L;
+    private static final long LOADING_FADE_DURATION_MS = 160L;
 
     /* Allows to switch from one button "type" to another */
     private final FragmentManager.FragmentLifecycleCallbacks mFragmentCallbackListener = new FragmentManager.FragmentLifecycleCallbacks() {
@@ -161,6 +182,8 @@ public class LauncherActivity extends BaseActivity {
         }
         String normalizedVersionId = MoJsonExtras.normalizeVersionId(selectedInstance.versionId);
         JVersionList.Version mcVersion = MoJsonExtras.getListedVersion(normalizedVersionId);
+        // Show the loading screen right away, the download task takes a moment to start
+        showLoadingScreen(getString(R.string.oryn_loading_launching));
         new MoJsonDownloader().start(
                 this.getAssets(),
                 mcVersion,
@@ -180,6 +203,75 @@ public class LauncherActivity extends BaseActivity {
         }
         return false;
     };
+
+    /** Hides the loading screen, unless new tasks showed up in the meantime */
+    private final Runnable mHideLoadingScreenRunnable = () -> {
+        if(mLoadingScreen == null || ProgressKeeper.getTaskCount() > 0) return;
+        mLoadingScreen.animate()
+                .alpha(0f)
+                .setDuration(LOADING_FADE_DURATION_MS)
+                .withEndAction(() -> {
+                    if(mLoadingScreen != null && ProgressKeeper.getTaskCount() <= 0) {
+                        mLoadingScreen.setVisibility(View.GONE);
+                    }
+                })
+                .start();
+    };
+
+    /** Keeps the fullscreen loading screen visible while any task or the game launch is ongoing */
+    private final TaskCountListener mLoadingScreenTaskListener = taskCount -> {
+        if(mLoadingScreen == null) return false;
+        mLoadingScreen.post(() -> {
+            if(taskCount > 0) {
+                // Make sure a pending hide can not take the loading screen away again
+                mLoadingScreen.removeCallbacks(mHideLoadingScreenRunnable);
+                mLoadingScreen.animate().cancel();
+                if(mLoadingScreen.getVisibility() != View.VISIBLE) {
+                    showLoadingScreen(getString(R.string.oryn_loading_please_wait));
+                }else {
+                    // A fade-out may be in progress, bring the screen back right away
+                    mLoadingScreen.setAlpha(1f);
+                }
+            }else {
+                // Delay the hide a little: if a game launch just finished, the GameActivity
+                // takes over before the loading screen ever disappears.
+                mLoadingScreen.postDelayed(mHideLoadingScreenRunnable, LOADING_HIDE_DELAY_MS);
+            }
+        });
+        return false;
+    };
+
+    /** Forwards the newest ongoing task status message to the loading screen */
+    private final ProgressListener mLoadingStatusListener = new ProgressListener() {
+        @Override
+        public void onProgressStarted() {}
+
+        @Override
+        public void onProgressUpdated(int progress, int resid, Object... va) {
+            String latestStatus = null;
+            if(resid != -1) latestStatus = getString(resid, va);
+            else if(va.length > 0 && va[0] != null) latestStatus = String.valueOf(va[0]);
+            if(latestStatus == null || mLoadingStatus == null) return;
+            final String status = latestStatus;
+            mLoadingStatus.post(() -> {
+                if(mLoadingStatus != null) mLoadingStatus.setText(status);
+            });
+        }
+
+        @Override
+        public void onProgressEnded() {}
+    };
+
+    /** Shows the fullscreen loading screen with the given status text */
+    private void showLoadingScreen(String status) {
+        if(mLoadingScreen == null) return;
+        mLoadingScreen.removeCallbacks(mHideLoadingScreenRunnable);
+        mLoadingScreen.animate().cancel();
+        mLoadingScreen.setAlpha(1f);
+        mLoadingScreen.setVisibility(View.VISIBLE);
+        if(mLoadingStatus != null) mLoadingStatus.setText(status);
+    }
+
     @Override
     protected boolean shouldIgnoreNotch() {
         return getResources().getConfiguration().orientation == ORIENTATION_PORTRAIT;
@@ -231,6 +323,11 @@ public class LauncherActivity extends BaseActivity {
 
         mSettingsButton.setOnClickListener(mSettingButtonListener);
         ProgressKeeper.addTaskCountListener(mProgressLayout);
+        // Register the loading screen before any progress listener so its show() runs first
+        ProgressKeeper.addTaskCountListener(mLoadingScreenTaskListener);
+        for(String progressKey : LOADING_STATUS_KEYS) {
+            ProgressKeeper.addListener(progressKey, mLoadingStatusListener);
+        }
         ExtraCore.addExtraListener(ExtraConstants.BACK_PREFERENCE, mBackPreferenceListener);
         ExtraCore.addExtraListener(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
 
@@ -274,6 +371,14 @@ public class LauncherActivity extends BaseActivity {
         mProgressLayout.cleanUpObservers();
         ProgressKeeper.removeTaskCountListener(mProgressLayout);
         ProgressKeeper.removeTaskCountListener(mProgressServiceKeeper);
+        ProgressKeeper.removeTaskCountListener(mLoadingScreenTaskListener);
+        for(String progressKey : LOADING_STATUS_KEYS) {
+            ProgressKeeper.removeListener(progressKey, mLoadingStatusListener);
+        }
+        if(mLoadingScreen != null) {
+            mLoadingScreen.removeCallbacks(mHideLoadingScreenRunnable);
+            mLoadingScreen.animate().cancel();
+        }
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.BACK_PREFERENCE, mBackPreferenceListener);
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.SELECT_AUTH_METHOD, mSelectAuthMethod);
         ExtraCore.removeExtraListenerFromValue(ExtraConstants.LAUNCH_GAME, mLaunchGameListener);
@@ -374,5 +479,7 @@ public class LauncherActivity extends BaseActivity {
         mOrynBrand = findViewById(R.id.oryn_brand);
         mAccountHeader = findViewById(R.id.oryn_account_header);
         mProgressLayout = findViewById(R.id.progress_layout);
+        mLoadingScreen = findViewById(R.id.oryn_loading_screen);
+        mLoadingStatus = findViewById(R.id.oryn_loading_status);
     }
 }
