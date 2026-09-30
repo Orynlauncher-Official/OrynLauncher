@@ -291,7 +291,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Rename", (d, w) -> {
                     String name = input.getText().toString().trim();
-                    if (name.isEmpty() || name.contains("/") || name.contains("\") ||
+                    if (name.isEmpty() || name.contains("/") || name.contains("\\") ||
                             ".".equals(name) || "..".equals(name)) {
                         Toast.makeText(this, "Invalid name", Toast.LENGTH_SHORT).show();
                         return;
