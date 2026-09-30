@@ -78,7 +78,14 @@ public abstract class GLESRenderSpec implements RenderSpec {
         }
 
         public void setupEnvironment(Context context, Map<String, String> envMap) {
-            envMap.put("MG_DIR_PATH", Tools.DIR_DATA + "/MobileGlues");
+            // Give MobileGlues a real persistent per-launcher configuration/cache
+            // directory. The native renderer reads MG_DIR_PATH directly.
+            File mobileGluesDir = new File(Tools.DIR_DATA, "MobileGlues");
+            if (!mobileGluesDir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                mobileGluesDir.mkdirs();
+            }
+            envMap.put("MG_DIR_PATH", mobileGluesDir.getAbsolutePath());
         }
 
         public String tag() {
