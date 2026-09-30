@@ -234,6 +234,19 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
 
+                // Some Modrinth projects do not expose loader/version facets consistently.
+                // Fall back progressively so the browser still shows content; the actual
+                // download step remains strict and checks the selected Minecraft version.
+                if (hits == null || hits.size() == 0) {
+                    HashMap<String, Object> fallback = new HashMap<>();
+                    fallback.put("query", query);
+                    fallback.put("limit", 30);
+                    fallback.put("index", "relevance");
+                    fallback.put("facets", "[[\\\"project_type:" + category.projectType + "\\"]]");
+                    response = api.get("search", fallback, JsonObject.class);
+                    hits = response == null ? null : response.getAsJsonArray("hits");
+                }
+
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
                     if (hits == null || hits.size() == 0) {
