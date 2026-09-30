@@ -1,5 +1,7 @@
 package net.kdt.pojavlaunch.fragments;
 
+import net.kdt.pojavlaunch.OrynDownloadActivity;
+
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.shareLog;
 
