@@ -156,16 +156,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
         scroll.addView(results);
         root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
+        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
     }
 
     private void addTab(LinearLayout parent, String text, Category value) {
         Button button = new Button(this);
         button.setText(text);
+        if (value == Category.MOD) button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_mod, 0, 0, 0);
+        else if (value == Category.RESOURCEPACK) button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_resource, 0, 0, 0);
+        else button.setCompoundDrawablesWithIntrinsicBounds(R.drawable.oryn_download_shader, 0, 0, 0);
         button.setTextColor(Color.WHITE);
         button.setAllCaps(false);
         button.setTextSize(12);
-        button.setPadding(dp(5), 0, dp(5), 0);
+        button.setPadding(dp(8), 0, dp(8), 0);
+        button.setGravity(Gravity.CENTER);
         button.setBackgroundResource(R.drawable.oryn_pill);
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(44), 1);
         lp.setMargins(dp(3), 0, dp(3), 0);
