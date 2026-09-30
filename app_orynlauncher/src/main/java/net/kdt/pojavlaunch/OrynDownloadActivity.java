@@ -61,8 +61,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private EditText search;
     private LinearLayout results;
     private TextView status;
-    private TextView selectedCategory;
     private ProgressBar progress;
+    private TextView detailTitle;
+    private TextView detailVersion;
+    private TextView detailDesc;
+    private ImageView detailIcon;
+    private Button detailDownload;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -94,112 +98,180 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(8), dp(6), dp(8), dp(6));
-        root.setBackgroundResource(R.drawable.oryn_home_bg);
+        root.setOrientation(LinearLayout.HORIZONTAL);
+        root.setPadding(dp(0), dp(0), dp(0), dp(0));
+        root.setBackgroundColor(Color.rgb(18, 19, 23));
 
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
+        // Old ZalithLauncher-inspired layout: slim category rail + results + detail panel.
+        LinearLayout rail = new LinearLayout(this);
+        rail.setOrientation(LinearLayout.VERTICAL);
+        rail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        rail.setPadding(dp(8), dp(14), dp(8), dp(10));
+        rail.setBackgroundColor(Color.rgb(25, 26, 31));
+        root.addView(rail, new LinearLayout.LayoutParams(dp(122), -1));
 
-        Button back = new Button(this);
-        back.setText("‹");
-        back.setTextSize(28);
-        back.setTextColor(Color.WHITE);
-        back.setBackgroundResource(android.R.color.transparent);
-        back.setOnClickListener(v -> finish());
-        header.addView(back, new LinearLayout.LayoutParams(dp(38), dp(38)));
+        TextView railTitle = label("DOWNLOAD", 10);
+        railTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        railTitle.setTextColor(0xFF8F93A0);
+        railTitle.setGravity(Gravity.CENTER);
+        rail.addView(railTitle, new LinearLayout.LayoutParams(-1, dp(28)));
 
-        TextView title = label("Downloads", 19);
+        addRailItem(rail, "Mods", "MODS", Category.MOD);
+        addRailItem(rail, "Resource Packs", "PACKS", Category.RESOURCEPACK);
+        addRailItem(rail, "Shaders", "SHADERS", Category.SHADER);
+
+        TextView version = label("", 10);
+        version.setTextColor(0xFF777B86);
+        version.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams versionLp = new LinearLayout.LayoutParams(-1, dp(30));
+        versionLp.topMargin = dp(12);
+        rail.addView(version, versionLp);
+
+        LinearLayout center = new LinearLayout(this);
+        center.setOrientation(LinearLayout.VERTICAL);
+        center.setPadding(dp(12), dp(10), dp(8), dp(8));
+        root.addView(center, new LinearLayout.LayoutParams(0, -1, 6.5f));
+
+        LinearLayout top = new LinearLayout(this);
+        top.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = label("Download", 22);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
-        header.addView(title, new LinearLayout.LayoutParams(0, dp(38), 1));
+        top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
-        root.addView(header);
+        TextView mcVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 11);
+        mcVersion.setTextColor(0xFF9FA3AE);
+        mcVersion.setGravity(Gravity.CENTER);
+        top.addView(mcVersion, new LinearLayout.LayoutParams(dp(100), dp(34)));
+        center.addView(top);
 
-        selectedCategory = label("Mods", 12);
-
-        LinearLayout tabs = new LinearLayout(this);
-        tabs.setGravity(Gravity.CENTER);
-        tabs.setPadding(0, 0, 0, dp(4));
-
-        addTab(tabs, "Mods", Category.MOD);
-        addTab(tabs, "Resource Packs", Category.RESOURCEPACK);
-        addTab(tabs, "Shaders", Category.SHADER);
-        root.addView(tabs);
-
-        search = new EditText(this);
-        search.setSingleLine(true);
-        search.setHint("Search " + category.title.toLowerCase());
-        search.setHintTextColor(0xFF9EA0A8);
-        search.setTextColor(Color.WHITE);
-        search.setInputType(InputType.TYPE_CLASS_TEXT);
-        search.setPadding(dp(10), 0, dp(10), 0);
-        search.setBackgroundResource(R.drawable.oryn_pill);
         LinearLayout searchRow = new LinearLayout(this);
         searchRow.setGravity(Gravity.CENTER_VERTICAL);
-        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(38), 1));
-        root.addView(searchRow);
+        search = new EditText(this);
+        search.setSingleLine(true);
+        search.setHint("Search " + category.title.toLowerCase(Locale.ROOT));
+        search.setHintTextColor(0xFF777B86);
+        search.setTextColor(Color.WHITE);
+        search.setTextSize(13);
+        search.setInputType(InputType.TYPE_CLASS_TEXT);
+        search.setPadding(dp(12), 0, dp(12), 0);
+        search.setBackground(roundBg(0xFF292B32, dp(9)));
+        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         Button searchButton = new Button(this);
         searchButton.setText("Search");
         searchButton.setTextColor(Color.WHITE);
+        searchButton.setTextSize(12);
         searchButton.setAllCaps(false);
-        searchButton.setBackgroundResource(R.drawable.oryn_pill);
-        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(dp(82), dp(38));
-        searchLp.leftMargin = dp(6);
-        searchRow.addView(searchButton, searchLp);
+        searchButton.setBackground(roundBg(0xFF343740, dp(9)));
+        LinearLayout.LayoutParams sbLp = new LinearLayout.LayoutParams(dp(82), dp(42));
+        sbLp.leftMargin = dp(7);
+        searchRow.addView(searchButton, sbLp);
+        center.addView(searchRow);
+
+        progress = new ProgressBar(this);
+        progress.setVisibility(View.GONE);
+        center.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
+
+        status = label("Select a category and search for content.", 11);
+        status.setTextColor(0xFF8F93A0);
+        status.setGravity(Gravity.CENTER_VERTICAL);
+        center.addView(status, new LinearLayout.LayoutParams(-1, dp(28)));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(true);
+        results = new LinearLayout(this);
+        results.setOrientation(LinearLayout.VERTICAL);
+        results.setPadding(0, dp(2), dp(4), dp(10));
+        scroll.addView(results);
+        center.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        LinearLayout detail = new LinearLayout(this);
+        detail.setOrientation(LinearLayout.VERTICAL);
+        detail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        detail.setPadding(dp(14), dp(16), dp(14), dp(10));
+        detail.setBackgroundColor(Color.rgb(25, 26, 31));
+        root.addView(detail, new LinearLayout.LayoutParams(0, -1, 3f));
+
+        ImageView detailIcon = new ImageView(this);
+        detailIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        detailIcon.setImageResource(R.drawable.oryn_download_mod);
+        detail.addView(detailIcon, new LinearLayout.LayoutParams(dp(76), dp(76)));
+
+        TextView detailTitle = label("Select a project", 17);
+        detailTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        detailTitle.setGravity(Gravity.CENTER);
+        LinearLayout.LayoutParams dtLp = new LinearLayout.LayoutParams(-1, -2);
+        dtLp.topMargin = dp(10);
+        detail.addView(detailTitle, dtLp);
+
+        TextView detailVersion = label("", 10);
+        detailVersion.setTextColor(0xFF8F93A0);
+        detailVersion.setGravity(Gravity.CENTER);
+        detail.addView(detailVersion, new LinearLayout.LayoutParams(-1, dp(24)));
+
+        TextView detailDesc = label("Choose a result to view its details and install it into the selected Minecraft instance.", 12);
+        detailDesc.setTextColor(0xFFB6B8C0);
+        detailDesc.setGravity(Gravity.CENTER);
+        detailDesc.setMaxLines(8);
+        LinearLayout.LayoutParams ddLp = new LinearLayout.LayoutParams(-1, 0, 1);
+        ddLp.topMargin = dp(8);
+        detail.addView(detailDesc, ddLp);
+
+        Button detailDownload = new Button(this);
+        detailDownload.setText("Download");
+        detailDownload.setTextColor(Color.WHITE);
+        detailDownload.setTextSize(13);
+        detailDownload.setAllCaps(false);
+        detailDownload.setEnabled(false);
+        detailDownload.setBackground(roundBg(0xFF3A3D48, dp(9)));
+        detail.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(44)));
+
         searchButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim()));
         search.setOnEditorActionListener((v, actionId, event) -> {
             searchProjects(search.getText().toString().trim());
             return true;
         });
 
-        progress = new ProgressBar(this);
-        progress.setVisibility(View.GONE);
-        root.addView(progress, new LinearLayout.LayoutParams(-1, dp(4)));
-
-        status = label("Choose a category and search for content.", 14);
-        status.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams statusLp = new LinearLayout.LayoutParams(-1, dp(28));
-        statusLp.topMargin = dp(2);
-        root.addView(status, statusLp);
-
-        ScrollView scroll = new ScrollView(this);
-        results = new LinearLayout(this);
-        results.setOrientation(LinearLayout.VERTICAL);
-        scroll.addView(results);
-        root.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        this.detailTitle = detailTitle;
+        this.detailVersion = detailVersion;
+        this.detailDesc = detailDesc;
+        this.detailIcon = detailIcon;
+        this.detailDownload = detailDownload;
 
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
     }
 
-    private void addTab(LinearLayout parent, String text, Category value) {
-        LinearLayout button = new LinearLayout(this);
-        button.setOrientation(LinearLayout.HORIZONTAL);
-        button.setGravity(Gravity.CENTER);
-        button.setPadding(dp(6), 0, dp(6), 0);
-        button.setBackgroundResource(R.drawable.oryn_pill);
+    private void addRailItem(LinearLayout parent, String text, String shortText, Category value) {
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setGravity(Gravity.CENTER);
+        item.setPadding(dp(5), dp(8), dp(5), dp(8));
+        item.setBackground(roundBg(value == category ? 0xFF363943 : 0x00252529, dp(9)));
 
-        ImageView icon = new ImageView(this);
-        if (value == Category.MOD) icon.setImageResource(R.drawable.oryn_download_mod);
-        else if (value == Category.RESOURCEPACK) icon.setImageResource(R.drawable.oryn_download_resource);
-        else icon.setImageResource(R.drawable.oryn_download_shader);
-        button.addView(icon, new LinearLayout.LayoutParams(dp(20), dp(20)));
+        TextView icon = label(value == Category.MOD ? "▣" : value == Category.RESOURCEPACK ? "◆" : "◇", 22);
+        icon.setGravity(Gravity.CENTER);
+        icon.setTextColor(value == category ? Color.WHITE : 0xFF9DA1AC);
+        item.addView(icon, new LinearLayout.LayoutParams(-1, dp(28)));
 
-        TextView textView = label(text, 11);
-        textView.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams textLp = new LinearLayout.LayoutParams(-2, -1);
-        textLp.leftMargin = dp(4);
-        button.addView(textView, textLp);
+        TextView name = label(shortText, 9);
+        name.setGravity(Gravity.CENTER);
+        name.setTypeface(null, android.graphics.Typeface.BOLD);
+        name.setTextColor(value == category ? Color.WHITE : 0xFF9DA1AC);
+        item.addView(name, new LinearLayout.LayoutParams(-1, dp(20)));
 
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(34), 1);
-        lp.setMargins(dp(2), 0, dp(2), 0);
-        parent.addView(button, lp);
-        button.setOnClickListener(v -> {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(68));
+        lp.topMargin = dp(4);
+        parent.addView(item, lp);
+        item.setOnClickListener(v -> {
             category = value;
-            selectedCategory.setText(value.title);
-            search.setHint("Search " + value.title.toLowerCase());
+            search.setHint("Search " + value.title.toLowerCase(Locale.ROOT));
             searchProjects(search.getText().toString().trim());
+            for (int i = 1; i < parent.getChildCount() - 1; i++) {
+                View child = parent.getChildAt(i);
+                child.setBackground(roundBg(i == (value == Category.MOD ? 1 : value == Category.RESOURCEPACK ? 2 : 3)
+                        ? 0xFF363943 : 0x00252529, dp(9)));
+            }
         });
     }
 
@@ -272,38 +344,93 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void addResult(JsonObject hit) {
         final String projectId = hit.has("project_id") ? hit.get("project_id").getAsString() : "";
         final String title = hit.has("title") ? hit.get("title").getAsString() : "Unknown";
-        String description = hit.has("description") ? hit.get("description").getAsString() : "";
+        final String description = hit.has("description") ? hit.get("description").getAsString() : "";
+        final String iconUrl = hit.has("icon_url") && !hit.get("icon_url").isJsonNull()
+                ? hit.get("icon_url").getAsString() : null;
 
         LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(14), dp(12), dp(14), dp(12));
-        card.setBackgroundResource(R.drawable.oryn_pill);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setPadding(dp(10), dp(9), dp(10), dp(9));
+        card.setBackground(roundBg(0xFF292B32, dp(9)));
 
-        TextView name = label(title, 17);
+        ImageView icon = new ImageView(this);
+        icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        icon.setImageResource(category == Category.MOD ? R.drawable.oryn_download_mod
+                : category == Category.RESOURCEPACK ? R.drawable.oryn_download_resource
+                : R.drawable.oryn_download_shader);
+        card.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(dp(10), 0, dp(8), 0);
+        TextView name = label(title, 14);
         name.setTypeface(null, android.graphics.Typeface.BOLD);
-        card.addView(name);
+        info.addView(name, new LinearLayout.LayoutParams(-1, dp(22)));
+        TextView desc = label(description, 10);
+        desc.setTextColor(0xFFAEB1BA);
+        desc.setMaxLines(2);
+        info.addView(desc, new LinearLayout.LayoutParams(-1, dp(32)));
+        TextView type = label(category.title + " • " + (getSelectedMinecraftVersion() == null ? "Any version" : getSelectedMinecraftVersion()), 9);
+        type.setTextColor(0xFF7F8490);
+        info.addView(type, new LinearLayout.LayoutParams(-1, dp(18)));
+        card.addView(info, new LinearLayout.LayoutParams(0, dp(68), 1));
 
-        TextView desc = label(description, 12);
-        desc.setTextColor(0xFFB8BAC2);
-        desc.setMaxLines(3);
-        LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(-1, -2);
-        descLp.topMargin = dp(4);
-        card.addView(desc, descLp);
+        TextView arrow = label("›", 26);
+        arrow.setGravity(Gravity.CENTER);
+        arrow.setTextColor(0xFFB9BCC6);
+        card.addView(arrow, new LinearLayout.LayoutParams(dp(30), dp(68)));
 
-        Button download = new Button(this);
-        download.setText("Download");
-        download.setTextColor(Color.WHITE);
-        download.setAllCaps(false);
-        download.setBackgroundResource(R.drawable.oryn_pill);
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(-1, dp(42));
-        btnLp.topMargin = dp(8);
-        card.addView(download, btnLp);
-
-        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, -2);
-        cardLp.setMargins(0, 0, 0, dp(10));
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, dp(78));
+        cardLp.setMargins(0, 0, 0, dp(7));
         results.addView(card, cardLp);
 
-        download.setOnClickListener(v -> downloadProject(projectId, title, download));
+        View.OnClickListener select = v -> showProjectDetails(projectId, title, description, iconUrl);
+        card.setOnClickListener(select);
+        if (iconUrl != null) loadImage(icon, iconUrl);
+    }
+
+    private android.graphics.drawable.Drawable roundBg(int color, int radius) {
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(color);
+        bg.setCornerRadius(radius);
+        return bg;
+    }
+
+    private void showProjectDetails(final String projectId, String title, String description, String iconUrl) {
+        detailTitle.setText(title);
+        detailVersion.setText(category.title + " • " +
+                (getSelectedMinecraftVersion() == null ? "Version will be scanned" : getSelectedMinecraftVersion()));
+        detailDesc.setText(description == null || description.trim().isEmpty()
+                ? "No description available." : description);
+        detailDownload.setEnabled(true);
+        detailDownload.setText("Download");
+        detailDownload.setOnClickListener(v -> downloadProject(projectId, title, detailDownload));
+        if (iconUrl != null) {
+            loadImage(detailIcon, iconUrl);
+        } else {
+            detailIcon.setImageResource(category == Category.MOD ? R.drawable.oryn_download_mod
+                    : category == Category.RESOURCEPACK ? R.drawable.oryn_download_resource
+                    : R.drawable.oryn_download_shader);
+        }
+    }
+
+    private void loadImage(final ImageView target, final String imageUrl) {
+        executor.execute(() -> {
+            try {
+                HttpURLConnection connection = (HttpURLConnection) new URL(imageUrl).openConnection();
+                connection.setConnectTimeout(10000);
+                connection.setReadTimeout(15000);
+                connection.setInstanceFollowRedirects(true);
+                connection.setRequestProperty("User-Agent", "OrynLauncher/2.2");
+                InputStream in = connection.getInputStream();
+                final android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(in);
+                in.close();
+                connection.disconnect();
+                if (bitmap != null) runOnUiThread(() -> target.setImageBitmap(bitmap));
+            } catch (Exception ignored) {
+            }
+        });
     }
 
     private void downloadProject(final String projectId, final String projectTitle, final Button button) {
