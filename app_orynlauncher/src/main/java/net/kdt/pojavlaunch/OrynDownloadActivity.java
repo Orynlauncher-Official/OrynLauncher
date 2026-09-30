@@ -242,7 +242,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     fallback.put("query", query);
                     fallback.put("limit", 30);
                     fallback.put("index", "relevance");
-                    fallback.put("facets", "[[\\\"project_type:" + category.projectType + "\\"]]");
+                    fallback.put("facets", "[[\"project_type:" + category.projectType + "\"]]");
                     response = api.get("search", fallback, JsonObject.class);
                     hits = response == null ? null : response.getAsJsonArray("hits");
                 }
