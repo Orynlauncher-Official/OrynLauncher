@@ -50,6 +50,7 @@ import net.kdt.pojavlaunch.tasks.MoJsonExtras;
 import net.kdt.pojavlaunch.tasks.AsyncVersionList;
 import net.kdt.pojavlaunch.tasks.MoJsonDownloader;
 import net.kdt.pojavlaunch.utils.NotificationUtils;
+import net.kdt.pojavlaunch.utils.OrynUpdateChecker;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
 
 import git.artdeell.mojo.R;
@@ -209,6 +210,11 @@ public class LauncherActivity extends BaseActivity {
         getWindow().setBackgroundDrawable(null);
         bindViews();
         OrynThemeManager.apply(this);
+
+        // Check the official OrynLauncher GitHub release in the background.
+        // The check never blocks launcher startup or game launching.
+        OrynUpdateChecker.check(this);
+
         mRequestPermissionLauncher = this.registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
                 isAllowed -> {
