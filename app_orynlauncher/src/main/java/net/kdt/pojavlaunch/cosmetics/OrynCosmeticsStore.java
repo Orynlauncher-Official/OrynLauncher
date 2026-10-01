@@ -103,8 +103,32 @@ public final class OrynCosmeticsStore {
         return BitmapFactory.decodeFile(f.getAbsolutePath());
     }
 
-    public void delete(File file) {
-        if (file != null) file.delete();
+    public boolean delete(File file) {
+        return file != null && file.exists() && file.delete();
+    }
+
+    public void removeCosmetic(String fileName, boolean skin) throws Exception {
+        if (fileName == null || fileName.isEmpty()) return;
+        File target = new File(skin ? skins : capes, fileName);
+        if (target.exists() && !target.delete()) {
+            throw new IllegalStateException("Could not remove " + fileName);
+        }
+
+        File[] fs = profiles.listFiles();
+        if (fs == null) return;
+        for (File profileFile : fs) {
+            if (!profileFile.getName().endsWith(".json")) continue;
+            try {
+                JSONObject o = new JSONObject(read(profileFile));
+                String key = skin ? "skin" : "cape";
+                if (fileName.equals(o.optString(key, ""))) {
+                    o.put(key, "");
+                    try (FileOutputStream out = new FileOutputStream(profileFile)) {
+                        out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public void saveProfile(CosmeticProfile p) throws Exception {
