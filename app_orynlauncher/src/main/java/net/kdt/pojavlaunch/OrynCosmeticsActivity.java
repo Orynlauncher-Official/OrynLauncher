@@ -33,7 +33,7 @@ public class OrynCosmeticsActivity extends Activity {
 
     private OrynCosmeticsStore store;
     private OrynCosmeticPreviewView preview;
-    private Spinner profiles, models, skins, capes;
+    private Button profiles, models, skins, capes;
     private TextView status, selectedSkin, selectedCape, tabTitle;
     private Button skinTab, capeTab, applyButton, saveButton, removeButton, unequipButton;
     private OrynCosmeticsStore.CosmeticProfile active;
@@ -93,11 +93,12 @@ public class OrynCosmeticsActivity extends Activity {
         b.setTextColor(Color.WHITE);
     }
 
-    private Spinner spinner() {
-        Spinner s = new Spinner(this);
-        s.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
-        s.setPadding(d(8), 0, d(8), 0);
-        return s;
+    private Button selectorButton(String value) {
+        Button b = button(value);
+        b.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        b.setPadding(d(10), 0, d(10), 0);
+        b.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
+        return b;
     }
 
     private LinearLayout.LayoutParams lp(int w, int h) {
@@ -171,22 +172,22 @@ public class OrynCosmeticsActivity extends Activity {
         right.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
 
         right.addView(text("Cosmetic Profile", 18, WHITE), lp(-1, 28));
-        profiles = spinner();
+        profiles = selectorButton("Default");
         right.addView(profiles, lp(-1, 42));
 
         Button newProfile = button("＋  New Profile");
         right.addView(newProfile, lp(-1, 36));
 
         right.addView(text("SKIN", 10, MUTED), lp(-1, 20));
-        skins = spinner();
+        skins = selectorButton("None");
         right.addView(skins, lp(-1, 40));
 
         right.addView(text("CAPE", 10, MUTED), lp(-1, 20));
-        capes = spinner();
+        capes = selectorButton("None");
         right.addView(capes, lp(-1, 40));
 
         right.addView(text("PLAYER MODEL", 10, MUTED), lp(-1, 20));
-        models = spinner();
+        models = selectorButton("Classic (Steve)");
         right.addView(models, lp(-1, 40));
 
         selectedSkin = text("Skin: None", 11, MUTED);
@@ -253,103 +254,64 @@ public class OrynCosmeticsActivity extends Activity {
                     }).show();
         });
 
-        profiles.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onNothingSelected(AdapterView<?> p) {}
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (refreshing) return;
-                List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
-                if (pos < ps.size()) {
-                    active = ps.get(pos);
-                    refresh();
-                }
-            }
-        });
-
-        models.setAdapter(adapter(new String[]{"Classic (Steve)", "Slim (Alex)"}));
-
-        // Android Spinner popups are unreliable on some launcher/device combinations.
-        // Use a touch-driven selection dialog so every cosmetic selector is always clickable.
-        installSelectorTouch(models, () -> {
-            final String[] values = {"Classic (Steve)", "Slim (Alex)"};
-            showChoice("Player Model", values, models.getSelectedItemPosition(), pos -> {
-                if (active == null) return;
-                active.model = pos == 1 ? "slim" : "classic";
-                models.setSelection(pos);
-                refreshPreview();
-                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
-            });
-        });
-
-        installSelectorTouch(profiles, () -> {
+        profiles.setOnClickListener(v -> {
             List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
             String[] values = new String[ps.size()];
-            for (int i = 0; i < ps.size(); i++) values[i] = ps.get(i).name;
-            showChoice("Cosmetic Profile", values, Math.max(0, profiles.getSelectedItemPosition()), pos -> {
+            int selected = 0;
+            for (int i = 0; i < ps.size(); i++) {
+                values[i] = ps.get(i).name;
+                if (active != null && values[i].equals(active.name)) selected = i;
+            }
+            showChoice("Cosmetic Profile", values, selected, pos -> {
                 if (pos < ps.size()) {
                     active = ps.get(pos);
+                    store.setActiveProfile(active);
                     refresh();
                     status.setText("Profile: " + active.name);
                 }
             });
         });
 
-        installSelectorTouch(skins, () -> {
+        models.setOnClickListener(v -> {
+            final String[] values = {"Classic (Steve)", "Slim (Alex)"};
+            int selected = "slim".equals(active.model) ? 1 : 0;
+            showChoice("Player Model", values, selected, pos -> {
+                active.model = pos == 1 ? "slim" : "classic";
+                refresh();
+                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
+            });
+        });
+
+        skins.setOnClickListener(v -> {
             List<File> fs = store.listSkins();
             String[] values = new String[fs.size() + 1];
             values[0] = "None";
-            for (int i = 0; i < fs.size(); i++) values[i + 1] = displayName(fs.get(i));
-            showChoice("Skin", values, Math.max(0, skins.getSelectedItemPosition()), pos -> {
-                if (active == null) return;
+            int selected = 0;
+            for (int i = 0; i < fs.size(); i++) {
+                values[i + 1] = displayName(fs.get(i));
+                if (fs.get(i).getName().equals(active.skin)) selected = i + 1;
+            }
+            showChoice("Skin", values, selected, pos -> {
                 active.skin = pos == 0 ? "" : fs.get(pos - 1).getName();
-                skins.setSelection(pos);
-                refreshPreview();
+                refresh();
                 status.setText(pos == 0 ? "Skin unequipped" : "Skin selected");
             });
         });
 
-        installSelectorTouch(capes, () -> {
+        capes.setOnClickListener(v -> {
             List<File> fs = store.listCapes();
             String[] values = new String[fs.size() + 1];
             values[0] = "None";
-            for (int i = 0; i < fs.size(); i++) values[i + 1] = displayName(fs.get(i));
-            showChoice("Cape", values, Math.max(0, capes.getSelectedItemPosition()), pos -> {
-                if (active == null) return;
+            int selected = 0;
+            for (int i = 0; i < fs.size(); i++) {
+                values[i + 1] = displayName(fs.get(i));
+                if (fs.get(i).getName().equals(active.cape)) selected = i + 1;
+            }
+            showChoice("Cape", values, selected, pos -> {
                 active.cape = pos == 0 ? "" : fs.get(pos - 1).getName();
-                capes.setSelection(pos);
-                refreshPreview();
+                refresh();
                 status.setText(pos == 0 ? "Cape unequipped" : "Cape selected");
             });
-        });
-
-        // Keep the legacy listeners for programmatic refresh/setSelection only.
-        models.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onNothingSelected(AdapterView<?> p) {}
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (active != null && !refreshing) {
-                    active.model = pos == 1 ? "slim" : "classic";
-                    refreshPreview();
-                }
-            }
-        });
-
-        skins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onNothingSelected(AdapterView<?> p) {}
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (active == null || refreshing) return;
-                List<File> fs = store.listSkins();
-                active.skin = pos == 0 ? "" : (pos - 1 < fs.size() ? fs.get(pos - 1).getName() : "");
-                refreshPreview();
-            }
-        });
-
-        capes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            public void onNothingSelected(AdapterView<?> p) {}
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
-                if (active == null || refreshing) return;
-                List<File> fs = store.listCapes();
-                active.cape = pos == 0 ? "" : (pos - 1 < fs.size() ? fs.get(pos - 1).getName() : "");
-                refreshPreview();
-            }
         });
 
         applyButton.setOnClickListener(v -> {
@@ -363,39 +325,7 @@ public class OrynCosmeticsActivity extends Activity {
         });
     }
 
-    private ArrayAdapter<String> adapter(String[] values) {
-        return new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
-            @Override public View getView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView v = (TextView) super.getView(position, convertView, parent);
-                v.setTextColor(WHITE);
-                v.setTextSize(13);
-                v.setGravity(Gravity.CENTER_VERTICAL);
-                v.setPadding(d(10), 0, d(8), 0);
-                return v;
-            }
-            @Override public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView v = (TextView) super.getDropDownView(position, convertView, parent);
-                v.setTextColor(WHITE);
-                v.setTextSize(13);
-                v.setPadding(d(12), d(8), d(8), d(8));
-                v.setBackgroundColor(Color.rgb(18, 22, 29));
-                return v;
-            }
-        };
-    }
-
     private interface ChoiceAction { void run(int position); }
-
-    private void installSelectorTouch(Spinner spinner, final Runnable opener) {
-        spinner.setClickable(true);
-        spinner.setFocusable(true);
-        spinner.setOnTouchListener((v, event) -> {
-            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
-                opener.run();
-            }
-            return true;
-        });
-    }
 
     private void showChoice(String title, String[] values, int selected, ChoiceAction action) {
         if (values == null || values.length == 0) return;
@@ -442,38 +372,30 @@ public class OrynCosmeticsActivity extends Activity {
     private void refresh() {
         refreshing = true;
         List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
-        String[] pn = new String[ps.size()];
-        int profilePos = 0;
-        for (int i = 0; i < ps.size(); i++) {
-            pn[i] = ps.get(i).name;
-            if (pn[i].equals(active.name)) profilePos = i;
-        }
-        profiles.setAdapter(adapter(pn));
-        profiles.setSelection(profilePos);
 
-        models.setSelection("slim".equals(active.model) ? 1 : 0);
+        profiles.setText(active == null ? "Default" : active.name);
+
+        models.setText("slim".equals(active.model) ? "Slim (Alex)" : "Classic (Steve)");
 
         List<File> sf = store.listSkins();
-        String[] sn = new String[sf.size() + 1];
-        sn[0] = "None";
-        int skinPos = 0;
-        for (int i = 0; i < sf.size(); i++) {
-            sn[i + 1] = displayName(sf.get(i));
-            if (sf.get(i).getName().equals(active.skin)) skinPos = i + 1;
+        String skinLabel = "None";
+        for (File f : sf) {
+            if (f.getName().equals(active.skin)) {
+                skinLabel = displayName(f);
+                break;
+            }
         }
-        skins.setAdapter(adapter(sn));
-        skins.setSelection(skinPos);
+        skins.setText(skinLabel);
 
         List<File> cf = store.listCapes();
-        String[] cn = new String[cf.size() + 1];
-        cn[0] = "None";
-        int capePos = 0;
-        for (int i = 0; i < cf.size(); i++) {
-            cn[i + 1] = displayName(cf.get(i));
-            if (cf.get(i).getName().equals(active.cape)) capePos = i + 1;
+        String capeLabel = "None";
+        for (File f : cf) {
+            if (f.getName().equals(active.cape)) {
+                capeLabel = displayName(f);
+                break;
+            }
         }
-        capes.setAdapter(adapter(cn));
-        capes.setSelection(capePos);
+        capes.setText(capeLabel);
 
         refreshing = false;
         refreshPreview();
@@ -513,7 +435,7 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     private void saveCurrent(String message) {
-        active.model = models.getSelectedItemPosition() == 1 ? "slim" : "classic";
+        active.model = "Slim (Alex)".equals(models.getText().toString()) ? "slim" : "classic";
         try {
             store.setActiveProfile(active);
             syncInstance();
