@@ -1,9 +1,11 @@
 package net.kdt.pojavlaunch;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
@@ -21,122 +23,424 @@ import java.io.File;
 import java.util.List;
 
 public class OrynCosmeticsActivity extends Activity {
-    private static final int PICK_SKIN=501, PICK_CAPE=502;
+    private static final int PICK_SKIN = 501, PICK_CAPE = 502;
+    private static final int BG = Color.rgb(8, 10, 14);
+    private static final int PANEL = Color.rgb(16, 20, 27);
+    private static final int CARD = Color.rgb(22, 27, 36);
+    private static final int BLUE = Color.rgb(55, 125, 235);
+    private static final int WHITE = Color.rgb(242, 245, 249);
+    private static final int MUTED = Color.rgb(155, 165, 180);
+
     private OrynCosmeticsStore store;
     private OrynCosmeticPreviewView preview;
     private Spinner profiles, models, skins, capes;
-    private TextView status, selectedSkin, selectedCape;
+    private TextView status, selectedSkin, selectedCape, tabTitle;
+    private Button skinTab, capeTab;
     private OrynCosmeticsStore.CosmeticProfile active;
-    private boolean capeTab=false;
+    private boolean capeTabSelected;
+    private boolean refreshing;
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().getDecorView().setSystemUiVisibility(5894);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
+                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        store=new OrynCosmeticsStore(this);
-        active=store.getActiveProfile();
+        store = new OrynCosmeticsStore(this);
+        active = store.getActiveProfile();
         buildUi();
         refresh();
     }
 
-    private TextView tv(String s,int size){TextView t=new TextView(this);t.setText(s);t.setTextColor(Color.WHITE);t.setTextSize(size);t.setGravity(Gravity.CENTER_VERTICAL);t.setPadding(16,8,16,8);return t;}
-    private Button btn(String s){Button b=new Button(this);b.setText(s);b.setAllCaps(false);b.setTextColor(Color.WHITE);b.setTextSize(14);return b;}
+    private int d(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
 
-    private void buildUi(){
-        LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.HORIZONTAL); root.setPadding(20,16,20,16); root.setBackgroundColor(Color.rgb(9,11,15));
-        LinearLayout left=new LinearLayout(this);left.setOrientation(LinearLayout.VERTICAL);left.setPadding(10,10,10,10);left.setBackgroundColor(Color.rgb(18,21,27));
-        TextView title=tv("ORYN  •  COSMETICS",20);left.addView(title,new LinearLayout.LayoutParams(210,-2));
-        Button skinTab=btn("SKINS"); Button capeTabButton=btn("CAPES"); left.addView(skinTab,new LinearLayout.LayoutParams(-1,56));left.addView(capeTabButton,new LinearLayout.LayoutParams(-1,56));
-        Button importSkin=btn("＋ Import Skin"); Button importCape=btn("＋ Import Cape");left.addView(importSkin,new LinearLayout.LayoutParams(-1,56));left.addView(importCape,new LinearLayout.LayoutParams(-1,56));
-        Button delete=btn("Remove Selected");left.addView(delete,new LinearLayout.LayoutParams(-1,56));
-        Button back=btn("Back");left.addView(back,new LinearLayout.LayoutParams(-1,56));
-        root.addView(left,new LinearLayout.LayoutParams(230,-1));
+    private TextView text(String value, float size, int color) {
+        TextView t = new TextView(this);
+        t.setText(value);
+        t.setTextColor(color);
+        t.setTextSize(size);
+        t.setGravity(Gravity.CENTER_VERTICAL);
+        t.setPadding(d(12), d(4), d(12), d(4));
+        return t;
+    }
 
-        LinearLayout center=new LinearLayout(this);center.setOrientation(LinearLayout.VERTICAL);center.setGravity(Gravity.CENTER);preview=new OrynCosmeticPreviewView(this);center.addView(preview,new LinearLayout.LayoutParams(-1,0,1));status=tv("Ready",13);center.addView(status,new LinearLayout.LayoutParams(-1,40));root.addView(center,new LinearLayout.LayoutParams(0,-1,1));
+    private GradientDrawable bg(int color, int radius, int strokeColor, int stroke) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(color);
+        g.setCornerRadius(d(radius));
+        if (stroke > 0) g.setStroke(d(stroke), strokeColor);
+        return g;
+    }
 
-        LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setPadding(14,8,8,8);right.setBackgroundColor(Color.rgb(18,21,27));
-        right.addView(tv("Cosmetic Profile",18));
-        profiles=new Spinner(this);right.addView(profiles,new LinearLayout.LayoutParams(-1,52));
-        Button newProfile=btn("＋ New Profile");right.addView(newProfile,new LinearLayout.LayoutParams(-1,48));
-        right.addView(tv("Skin",13)); skins=new Spinner(this);right.addView(skins,new LinearLayout.LayoutParams(-1,48));
-        right.addView(tv("Cape",13)); capes=new Spinner(this);right.addView(capes,new LinearLayout.LayoutParams(-1,48));
-        right.addView(tv("Player Model",13)); models=new Spinner(this);right.addView(models,new LinearLayout.LayoutParams(-1,48));
-        selectedSkin=tv("",14);selectedCape=tv("",14);right.addView(selectedSkin);right.addView(selectedCape);
-        Button save=btn("Save Profile");Button apply=btn("Apply Profile");right.addView(save,new LinearLayout.LayoutParams(-1,58));right.addView(apply,new LinearLayout.LayoutParams(-1,58));
-        right.addView(tv("Custom capes are local cosmetics. Oryn does not claim an official Minecraft cape unless the account actually owns one.",11),new LinearLayout.LayoutParams(-1,0,1));
-        root.addView(right,new LinearLayout.LayoutParams(300,-1));
+    private Button button(String value) {
+        Button b = new Button(this);
+        b.setText(value);
+        b.setTextColor(WHITE);
+        b.setTextSize(13);
+        b.setAllCaps(false);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(d(8), 0, d(8), 0);
+        b.setMinHeight(0);
+        b.setMinWidth(0);
+        b.setBackground(bg(CARD, 10, Color.rgb(42, 49, 62), 1));
+        return b;
+    }
+
+    private void primary(Button b) {
+        b.setBackground(bg(BLUE, 10, BLUE, 1));
+        b.setTextColor(Color.WHITE);
+    }
+
+    private Spinner spinner() {
+        Spinner s = new Spinner(this);
+        s.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
+        s.setPadding(d(8), 0, d(8), 0);
+        return s;
+    }
+
+    private LinearLayout.LayoutParams lp(int w, int h) {
+        return new LinearLayout.LayoutParams(w == -1 ? -1 : d(w), h == -1 ? -1 : d(h));
+    }
+
+    private void buildUi() {
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.HORIZONTAL);
+        root.setPadding(d(14), d(12), d(14), d(12));
+        root.setBackgroundColor(BG);
+
+        // Left navigation
+        LinearLayout left = new LinearLayout(this);
+        left.setOrientation(LinearLayout.VERTICAL);
+        left.setPadding(d(10), d(10), d(10), d(10));
+        left.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
+
+        TextView title = text("ORYN", 22, WHITE);
+        left.addView(title, lp(-1, 30));
+        TextView sub = text("COSMETICS", 11, MUTED);
+        left.addView(sub, lp(-1, 22));
+        Space gap = new Space(this);
+        left.addView(gap, lp(-1, 10));
+
+        skinTab = button("▣   Skins");
+        capeTab = button("▰   Capes");
+        left.addView(skinTab, lp(-1, 48));
+        left.addView(capeTab, lp(-1, 48));
+
+        Space gap2 = new Space(this);
+        left.addView(gap2, lp(-1, 12));
+        Button importSkin = button("＋  Import Skin");
+        Button importCape = button("＋  Import Cape");
+        left.addView(importSkin, lp(-1, 46));
+        left.addView(importCape, lp(-1, 46));
+
+        Space push = new Space(this);
+        left.addView(push, new LinearLayout.LayoutParams(1, 0, 1));
+        Button back = button("‹  Back");
+        left.addView(back, lp(-1, 44));
+        root.addView(left, new LinearLayout.LayoutParams(d(190), -1));
+
+        // Center 3D preview
+        LinearLayout center = new LinearLayout(this);
+        center.setOrientation(LinearLayout.VERTICAL);
+        center.setPadding(d(12), 0, d(12), 0);
+
+        LinearLayout head = new LinearLayout(this);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        tabTitle = text("Skin Preview", 17, WHITE);
+        head.addView(tabTitle, new LinearLayout.LayoutParams(0, d(42), 1));
+        TextView hint = text("Drag to rotate  •  Classic / Slim", 11, MUTED);
+        head.addView(hint, lp(-1, 42));
+        center.addView(head, lp(-1, 42));
+
+        preview = new OrynCosmeticPreviewView(this);
+        preview.setBackground(bg(Color.rgb(11, 14, 19), 16, Color.rgb(31, 38, 49), 1));
+        center.addView(preview, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        status = text("Ready", 12, MUTED);
+        status.setGravity(Gravity.CENTER);
+        center.addView(status, lp(-1, 34));
+        root.addView(center, new LinearLayout.LayoutParams(0, -1, 1));
+
+        // Right control panel
+        LinearLayout right = new LinearLayout(this);
+        right.setOrientation(LinearLayout.VERTICAL);
+        right.setPadding(d(14), d(10), d(10), d(10));
+        right.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
+
+        right.addView(text("Cosmetic Profile", 18, WHITE), lp(-1, 30));
+        profiles = spinner();
+        right.addView(profiles, lp(-1, 46));
+
+        Button newProfile = button("＋  New Profile");
+        right.addView(newProfile, lp(-1, 40));
+
+        right.addView(text("SKIN", 10, MUTED), lp(-1, 24));
+        skins = spinner();
+        right.addView(skins, lp(-1, 44));
+
+        right.addView(text("CAPE", 10, MUTED), lp(-1, 24));
+        capes = spinner();
+        right.addView(capes, lp(-1, 44));
+
+        right.addView(text("PLAYER MODEL", 10, MUTED), lp(-1, 24));
+        models = spinner();
+        right.addView(models, lp(-1, 44));
+
+        selectedSkin = text("Skin: None", 11, MUTED);
+        selectedCape = text("Cape: None", 11, MUTED);
+        right.addView(selectedSkin, lp(-1, 24));
+        right.addView(selectedCape, lp(-1, 24));
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        Button apply = button("Apply");
+        Button save = button("Save");
+        primary(apply);
+        actions.addView(apply, new LinearLayout.LayoutParams(0, d(46), 1));
+        actions.addView(save, new LinearLayout.LayoutParams(0, d(46), 1));
+        right.addView(actions, lp(-1, 46));
+
+        LinearLayout actions2 = new LinearLayout(this);
+        actions2.setOrientation(LinearLayout.HORIZONTAL);
+        Button remove = button("Remove");
+        Button unequip = button("Unequip Cape");
+        actions2.addView(remove, new LinearLayout.LayoutParams(0, d(42), 1));
+        actions2.addView(unequip, new LinearLayout.LayoutParams(0, d(42), 1));
+        right.addView(actions2, lp(-1, 42));
+
+        TextView note = text("Local cosmetics work offline. An official Minecraft cape is shown only when the account actually owns one.", 10, MUTED);
+        note.setGravity(Gravity.BOTTOM);
+        right.addView(note, new LinearLayout.LayoutParams(-1, 0, 1));
+        root.addView(right, new LinearLayout.LayoutParams(d(350), -1));
+
         setContentView(root);
 
-        skinTab.setOnClickListener(v->{capeTab=false;status.setText("Skins • 64×64 compatible PNG");});
-        capeTabButton.setOnClickListener(v->{capeTab=true;status.setText("Capes • local and compatible");});
-        importSkin.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_SKIN);});
-        importCape.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_CAPE);});
-        delete.setOnClickListener(v->removeSelected());
-        back.setOnClickListener(v->finish());
-        newProfile.setOnClickListener(v->{
-            final EditText input=new EditText(this); input.setHint("Profile name");
-            new android.app.AlertDialog.Builder(this).setTitle("New Cosmetic Profile").setView(input)
-                .setNegativeButton("Cancel",null).setPositiveButton("Create",(d,w)->{
-                    String n=input.getText().toString().trim(); if(n.isEmpty()) n="Custom";
-                    OrynCosmeticsStore.CosmeticProfile p=new OrynCosmeticsStore.CosmeticProfile(); p.name=n;
-                    try{store.saveProfile(p);active=p;refresh();}catch(Exception e){status.setText("Profile creation failed");}
-                }).show();
+        skinTab.setOnClickListener(v -> setTab(false));
+        capeTab.setOnClickListener(v -> setTab(true));
+        importSkin.setOnClickListener(v -> pick(PICK_SKIN));
+        importCape.setOnClickListener(v -> pick(PICK_CAPE));
+        back.setOnClickListener(v -> finish());
+
+        newProfile.setOnClickListener(v -> {
+            final EditText input = new EditText(this);
+            input.setSingleLine(true);
+            input.setHint("Profile name");
+            input.setTextColor(WHITE);
+            input.setHintTextColor(MUTED);
+            new AlertDialog.Builder(this).setTitle("New Cosmetic Profile").setView(input)
+                    .setNegativeButton("Cancel", null)
+                    .setPositiveButton("Create", (dialog, which) -> {
+                        String n = input.getText().toString().trim();
+                        if (n.isEmpty()) n = "Custom";
+                        OrynCosmeticsStore.CosmeticProfile p = new OrynCosmeticsStore.CosmeticProfile();
+                        p.name = n;
+                        try {
+                            store.saveProfile(p);
+                            active = p;
+                            refresh();
+                            status.setText("Profile created");
+                        } catch (Exception e) {
+                            status.setText("Could not create profile");
+                        }
+                    }).show();
         });
-        save.setOnClickListener(v->saveCurrent());
-        apply.setOnClickListener(v->saveCurrent());
-        profiles.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<OrynCosmeticsStore.CosmeticProfile> ps=store.listProfiles();if(pos<ps.size()){active=ps.get(pos);refreshPreview();}}});
-        models.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Classic (Steve)","Slim (Alex)"}));
-        skins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<File> fs=store.listSkins();if(pos==0)active.skin="";else if(pos-1<fs.size())active.skin=fs.get(pos-1).getName();refreshPreview();}});
-        capes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<File> fs=store.listCapes();if(pos==0)active.cape="";else if(pos-1<fs.size())active.cape=fs.get(pos-1).getName();refreshPreview();}});
+
+        profiles.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onNothingSelected(AdapterView<?> p) {}
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (refreshing) return;
+                List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
+                if (pos < ps.size()) {
+                    active = ps.get(pos);
+                    refresh();
+                }
+            }
+        });
+
+        models.setAdapter(adapter(new String[]{"Classic (Steve)", "Slim (Alex)"}));
+        models.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onNothingSelected(AdapterView<?> p) {}
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (active != null && !refreshing) {
+                    active.model = pos == 1 ? "slim" : "classic";
+                    refreshPreview();
+                }
+            }
+        });
+
+        skins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onNothingSelected(AdapterView<?> p) {}
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (active == null || refreshing) return;
+                List<File> fs = store.listSkins();
+                active.skin = pos == 0 ? "" : (pos - 1 < fs.size() ? fs.get(pos - 1).getName() : "");
+                refreshPreview();
+            }
+        });
+
+        capes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onNothingSelected(AdapterView<?> p) {}
+            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (active == null || refreshing) return;
+                List<File> fs = store.listCapes();
+                active.cape = pos == 0 ? "" : (pos - 1 < fs.size() ? fs.get(pos - 1).getName() : "");
+                refreshPreview();
+            }
+        });
+
+        apply.setOnClickListener(v -> {
+            saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin"));
+        });
+        save.setOnClickListener(v -> saveCurrent("Profile saved"));
+        remove.setOnClickListener(v -> removeSelected());
+        unequip.setOnClickListener(v -> {
+            active.cape = "";
+            saveCurrent("Cape unequipped");
+        });
     }
 
-    private void refresh(){
-        List<OrynCosmeticsStore.CosmeticProfile> ps=store.listProfiles();String[] names=new String[ps.size()];for(int i=0;i<ps.size();i++)names[i]=ps.get(i).name;
-        profiles.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));
-        models.setSelection("slim".equals(active.model)?1:0);
-        List<File> sf=store.listSkins(); String[] sn=new String[sf.size()+1]; sn[0]="None"; for(int i=0;i<sf.size();i++)sn[i+1]=sf.get(i).getName();
-        skins.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,sn));
-        List<File> cf=store.listCapes(); String[] cn=new String[cf.size()+1]; cn[0]="None"; for(int i=0;i<cf.size();i++)cn[i+1]=cf.get(i).getName();
-        capes.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,cn));
+    private ArrayAdapter<String> adapter(String[] values) {
+        return new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
+            @Override public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView v = (TextView) super.getView(position, convertView, parent);
+                v.setTextColor(WHITE);
+                v.setTextSize(13);
+                v.setGravity(Gravity.CENTER_VERTICAL);
+                v.setPadding(d(10), 0, d(8), 0);
+                return v;
+            }
+            @Override public View getDropDownView(int position, View convertView, android.view.ViewGroup parent) {
+                TextView v = (TextView) super.getDropDownView(position, convertView, parent);
+                v.setTextColor(WHITE);
+                v.setTextSize(13);
+                v.setPadding(d(12), d(8), d(8), d(8));
+                v.setBackgroundColor(Color.rgb(18, 22, 29));
+                return v;
+            }
+        };
+    }
+
+    private void setTab(boolean capesTab) {
+        capeTabSelected = capesTab;
+        tabTitle.setText(capesTab ? "Cape Preview" : "Skin Preview");
+        skinTab.setBackground(bg(capesTab ? CARD : BLUE, 10, Color.rgb(42,49,62), 1));
+        capeTab.setBackground(bg(capesTab ? BLUE : CARD, 10, Color.rgb(42,49,62), 1));
+        status.setText(capesTab ? "Capes • local and compatible" : "Skins • 64×64 compatible PNG");
+    }
+
+    private void pick(int requestCode) {
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.setType("image/png");
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(i, requestCode);
+    }
+
+    private void refresh() {
+        refreshing = true;
+        List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
+        String[] pn = new String[ps.size()];
+        int profilePos = 0;
+        for (int i = 0; i < ps.size(); i++) {
+            pn[i] = ps.get(i).name;
+            if (pn[i].equals(active.name)) profilePos = i;
+        }
+        profiles.setAdapter(adapter(pn));
+        profiles.setSelection(profilePos);
+
+        models.setSelection("slim".equals(active.model) ? 1 : 0);
+
+        List<File> sf = store.listSkins();
+        String[] sn = new String[sf.size() + 1];
+        sn[0] = "None";
+        int skinPos = 0;
+        for (int i = 0; i < sf.size(); i++) {
+            sn[i + 1] = displayName(sf.get(i));
+            if (sf.get(i).getName().equals(active.skin)) skinPos = i + 1;
+        }
+        skins.setAdapter(adapter(sn));
+        skins.setSelection(skinPos);
+
+        List<File> cf = store.listCapes();
+        String[] cn = new String[cf.size() + 1];
+        cn[0] = "None";
+        int capePos = 0;
+        for (int i = 0; i < cf.size(); i++) {
+            cn[i + 1] = displayName(cf.get(i));
+            if (cf.get(i).getName().equals(active.cape)) capePos = i + 1;
+        }
+        capes.setAdapter(adapter(cn));
+        capes.setSelection(capePos);
+
+        refreshing = false;
         refreshPreview();
-        status.setText(capeTab?"Capes • local and compatible":"Skins • 64×64 compatible PNG");
+        setTab(capeTabSelected);
     }
 
-    private void refreshPreview(){
-        Bitmap s=null,c=null;
-        if(!active.skin.isEmpty()) s=store.load(new File(storeSkinDir(),active.skin));
-        if(!active.cape.isEmpty()) c=store.load(new File(storeCapeDir(),active.cape));
-        preview.setSkin(s,"slim".equals(active.model));preview.setCape(c);
-        selectedSkin.setText("Skin: "+(active.skin.isEmpty()?"None":active.skin));
-        selectedCape.setText("Cape: "+(active.cape.isEmpty()?"None":active.cape));
-    }
-    private File storeSkinDir(){return new File(getFilesDir(),"cosmetics/skins");}
-    private File storeCapeDir(){return new File(getFilesDir(),"cosmetics/capes");}
-
-    private void removeSelected(){
-        if(capeTab){if(!active.cape.isEmpty()){store.delete(new File(storeCapeDir(),active.cape));active.cape="";}}
-        else {if(!active.skin.isEmpty()){store.delete(new File(storeSkinDir(),active.skin));active.skin="";}}
-        saveCurrent();
+    private String displayName(File f) {
+        String n = f.getName();
+        if (n.toLowerCase().endsWith(".png")) n = n.substring(0, n.length() - 4);
+        return n.replace('_', ' ');
     }
 
-    private void saveCurrent(){
-        active.model=models.getSelectedItemPosition()==1?"slim":"classic";
-        try{store.setActiveProfile(active);status.setText("✓ Profile saved: "+active.name);syncInstance();}catch(Exception e){status.setText("Save failed: "+e.getMessage());}
-        refreshPreview();
+    private void refreshPreview() {
+        if (active == null) return;
+        Bitmap s = active.skin.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
+        Bitmap c = active.cape.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
+        preview.setSkin(s, "slim".equals(active.model));
+        preview.setCape(c);
+        selectedSkin.setText("Skin  •  " + (active.skin.isEmpty() ? "None" : displayName(new File(active.skin))));
+        selectedCape.setText("Cape  •  " + (active.cape.isEmpty() ? "None" : displayName(new File(active.cape))));
     }
 
-    private void syncInstance(){try{net.kdt.pojavlaunch.instances.Instance i=Instances.loadSelectedInstance();if(i!=null)store.writeActiveForInstance(i.getGameDirectory());}catch(Exception ignored){}}
+    private void removeSelected() {
+        if (capeTabSelected) {
+            if (!active.cape.isEmpty()) {
+                store.delete(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
+                active.cape = "";
+                saveCurrent("Cape removed");
+            }
+        } else {
+            if (!active.skin.isEmpty()) {
+                store.delete(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
+                active.skin = "";
+                saveCurrent("Skin removed");
+            }
+        }
+    }
 
-    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
-        super.onActivityResult(requestCode,resultCode,data);
-        if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
-        Uri uri=data.getData();
-        try{
-            File f=requestCode==PICK_SKIN?store.importSkin(uri,"skin"):store.importCape(uri,"cape");
-            if(requestCode==PICK_SKIN)active.skin=f.getName();else active.cape=f.getName();
-            saveCurrent();
-            Toast.makeText(this,"Imported "+f.getName(),Toast.LENGTH_SHORT).show();
-        }catch(Exception e){Toast.makeText(this,e.getMessage(),Toast.LENGTH_LONG).show();}
+    private void saveCurrent(String message) {
+        active.model = models.getSelectedItemPosition() == 1 ? "slim" : "classic";
+        try {
+            store.setActiveProfile(active);
+            syncInstance();
+            refresh();
+            status.setText("✓  " + message);
+        } catch (Exception e) {
+            status.setText("Save failed: " + e.getMessage());
+        }
+    }
+
+    private void syncInstance() {
+        try {
+            net.kdt.pojavlaunch.instances.Instance i = Instances.loadSelectedInstance();
+            if (i != null) store.writeActiveForInstance(i.getGameDirectory());
+        } catch (Exception ignored) {}
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
+        Uri uri = data.getData();
+        try {
+            File f = requestCode == PICK_SKIN ? store.importSkin(uri, "skin") : store.importCape(uri, "cape");
+            if (requestCode == PICK_SKIN) active.skin = f.getName();
+            else active.cape = f.getName();
+            saveCurrent("Imported " + displayName(f));
+        } catch (Exception e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            status.setText("Import failed");
+        }
     }
 }
