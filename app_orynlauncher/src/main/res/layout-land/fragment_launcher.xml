@@ -21,20 +21,22 @@
             android:background="@android:color/transparent" android:padding="13dp"/>
     </LinearLayout>
 
-    <LinearLayout android:id="@+id/oryn_feature_panel" android:layout_width="330dp" android:layout_height="82dp"
-        android:orientation="horizontal" android:gravity="center" android:padding="8dp"
-        android:background="@drawable/oryn_pill"
-        app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginEnd="28dp" android:layout_marginBottom="92dp">
-        <ImageButton android:id="@+id/download_button" android:layout_width="88dp" android:layout_height="66dp"
+    <LinearLayout
+        android:id="@+id/oryn_feature_panel"
+        android:layout_width="330dp" android:layout_height="64dp"
+        android:orientation="horizontal" android:gravity="center"
+        android:background="@android:color/transparent"
+        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="12dp">
+        <ImageButton android:id="@+id/download_button" android:layout_width="88dp" android:layout_height="60dp"
             android:src="@drawable/oryn_nav_download" android:contentDescription="@string/oryn_download"
-            android:background="@android:color/transparent" android:padding="19dp"/>
-        <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="88dp" android:layout_height="66dp"
+            android:background="@android:color/transparent" android:padding="18dp"/>
+        <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="88dp" android:layout_height="60dp"
             android:src="@drawable/oryn_nav_crash" android:contentDescription="@string/oryn_crash_viewer"
-            android:background="@android:color/transparent" android:padding="19dp"/>
-        <ImageButton android:id="@+id/cosmetics_button" android:layout_width="88dp" android:layout_height="66dp"
+            android:background="@android:color/transparent" android:padding="18dp"/>
+        <ImageButton android:id="@+id/cosmetics_button" android:layout_width="88dp" android:layout_height="60dp"
             android:src="@drawable/oryn_nav_cosmetics" android:contentDescription="Oryn Cosmetics"
-            android:background="@android:color/transparent" android:padding="19dp"/>
+            android:background="@android:color/transparent" android:padding="18dp"/>
     </LinearLayout>
 
     <LinearLayout android:id="@+id/oryn_launch_group" android:layout_width="260dp" android:layout_height="74dp"
