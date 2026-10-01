@@ -424,16 +424,30 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void removeSelected() {
         if (capeTabSelected) {
-            if (!active.cape.isEmpty()) {
-                store.delete(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
+            if (active.cape.isEmpty()) {
+                status.setText("No cape selected");
+                return;
+            }
+            String removed = active.cape;
+            try {
+                store.removeCosmetic(removed, false);
                 active.cape = "";
                 saveCurrent("Cape removed");
+            } catch (Exception e) {
+                status.setText("Could not remove cape");
             }
         } else {
-            if (!active.skin.isEmpty()) {
-                store.delete(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
+            if (active.skin.isEmpty()) {
+                status.setText("No skin selected");
+                return;
+            }
+            String removed = active.skin;
+            try {
+                store.removeCosmetic(removed, true);
                 active.skin = "";
                 saveCurrent("Skin removed");
+            } catch (Exception e) {
+                status.setText("Could not remove skin");
             }
         }
     }
