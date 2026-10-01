@@ -6,6 +6,9 @@ import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+
+import javax.microedition.khronos.egl.EGLConfig;
+import javax.microedition.khronos.opengles.GL10;
 import android.view.MotionEvent;
 
 import java.nio.ByteBuffer;
@@ -69,7 +72,7 @@ public class OrynCosmeticPreviewView extends GLSurfaceView {
             pendingCape = b;
         }
 
-        @Override public void onSurfaceCreated(javax.microedition.khronos.egl.EGLConfig config) {
+        @Override public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             GLES20.glClearColor(0.035f, 0.043f, 0.055f, 1f);
             GLES20.glEnable(GLES20.GL_DEPTH_TEST);
             GLES20.glEnable(GLES20.GL_CULL_FACE);
