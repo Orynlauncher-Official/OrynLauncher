@@ -99,16 +99,21 @@ class OrynShowcaseAnimation extends skinview3d.PlayerAnimation {
         player.skin.head.rotation.y = Math.sin(t * 0.75) * 0.12;
         player.skin.head.rotation.x = Math.sin(t * 1.7) * 0.035;
 
-        // Relaxed arm.
-        player.skin.rightArm.rotation.x = Math.sin(t * 1.8) * 0.035;
-        player.skin.rightArm.rotation.z = 0.035;
+        // Keep both arms attached naturally to the shoulders.
+        // The previous version rotated the left arm around Z by ~60 degrees,
+        // which makes the arm cut diagonally across the chest and look detached.
+        const idleArm = Math.sin(t * 1.8) * 0.035;
+        player.skin.rightArm.rotation.x = 0;
+        player.skin.rightArm.rotation.y = 0;
+        player.skin.rightArm.rotation.z = idleArm + 0.035;
 
-        // Raised arm + small hand wave, like the reference video.
-        const raise = -1.05 + Math.sin(t * 1.15) * 0.10;
-        const wave = Math.sin(t * 5.0) * 0.20;
-        player.skin.leftArm.rotation.z = raise;
-        player.skin.leftArm.rotation.x = -0.18 + wave * 0.18;
-        player.skin.leftArm.rotation.y = Math.sin(t * 2.5) * 0.06;
+        // Showcase wave: lift the whole arm forward/up using X rotation.
+        // Do not use Z for the main lift; Z is the side/shoulder swing axis.
+        const raise = 0.95 + Math.sin(t * 1.4) * 0.08;
+        const wave = Math.sin(t * 5.0) * 0.10;
+        player.skin.leftArm.rotation.x = -raise + wave;
+        player.skin.leftArm.rotation.y = Math.sin(t * 2.2) * 0.04;
+        player.skin.leftArm.rotation.z = 0.035;
 
         if (player.cape) {
             player.cape.rotation.x = 0.18 + Math.sin(t * 1.8) * 0.06;
