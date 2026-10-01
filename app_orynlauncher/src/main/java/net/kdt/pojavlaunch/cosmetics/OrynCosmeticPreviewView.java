@@ -11,7 +11,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import java.io.ByteArrayOutputStream;
-import java.util.Base64;
+import android.util.Base64;
 
 /**
  * Real Minecraft player preview powered by skinview3d, the same 3D skin
@@ -23,7 +23,7 @@ import java.util.Base64;
 public class OrynCosmeticPreviewView extends WebView {
     private Bitmap pendingSkin;
     private Bitmap pendingCape;
-    private boolean pageReady;
+    private boolean pageReady;\n    private boolean pendingSlim;
 
     public OrynCosmeticPreviewView(Context context) {
         super(context);
@@ -83,7 +83,7 @@ public class OrynCosmeticPreviewView extends WebView {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
-            return "data:image/png;base64," + Base64.getEncoder().encodeToString(out.toByteArray());
+            return "data:image/png;base64," + Base64.encodeToString(out.toByteArray(), Base64.NO_WRAP);
         } catch (Throwable ignored) {
             return null;
         }
