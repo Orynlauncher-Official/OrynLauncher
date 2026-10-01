@@ -391,13 +391,9 @@ public class OrynCosmeticsActivity extends Activity {
         spinner.setFocusable(true);
         spinner.setOnTouchListener((v, event) -> {
             if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
-                v.performClick();
                 opener.run();
             }
             return true;
-        });
-        spinner.setOnClickListener(v -> {
-            // Touch handler opens the dialog; this keeps accessibility/click semantics intact.
         });
     }
 
