@@ -27,6 +27,7 @@ public class OrynCosmeticPreviewView extends WebView {
     private Bitmap pendingCape;
     private boolean pageReady;
     private boolean pendingSlim;
+    private boolean pendingCapeBack;
 
     public OrynCosmeticPreviewView(Context context) {
         super(context);
@@ -78,10 +79,18 @@ public class OrynCosmeticPreviewView extends WebView {
         }
     }
 
+    public void setCapePreview(boolean showBack) {
+        pendingCapeBack = showBack;
+        if (pageReady) {
+            evaluateJavascript("setCapePreview(" + (showBack ? "true" : "false") + ")", null);
+        }
+    }
+
     private void applyPending() {
         String skin = bitmapToDataUrl(pendingSkin);
         String model = pendingSlim ? "slim" : "default";
         evaluateJavascript("loadSkin(" + toJsString(skin) + "," + toJsString(model) + ")", null);
+        evaluateJavascript("setCapePreview(" + (pendingCapeBack ? "true" : "false") + ")", null);
         evaluateJavascript("loadCape(" + toJsString(bitmapToDataUrl(pendingCape)) + ")", null);
     }
 
