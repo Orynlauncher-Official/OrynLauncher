@@ -329,11 +329,18 @@ setTimeout(resize, 500);
 
 function loadSkin(skinUrl, model = "auto-detect") {
     if (!skinUrl) skinUrl = DEFAULT_STEVE_SKIN;
-    skinViewer.loadSkin(skinUrl, { model: model });
+    skinViewer.loadSkin(skinUrl, { model: model }).then(() => {
+        startAnim("OrynShowcase", 1.0);
+    }).catch(() => {});
 }
 
 function loadCape(capeUrl) {
-    skinViewer.loadCape(capeUrl);
+    if (!capeUrl) {
+        skinViewer.loadCape(null);
+    } else {
+        skinViewer.loadCape(capeUrl);
+    }
+    startAnim("OrynShowcase", 1.0);
 }
 
 function setInteractionEnabled(enabled) {
