@@ -53,6 +53,11 @@
             android:name="net.kdt.pojavlaunch.OrynCrashViewerActivity"
             android:screenOrientation="landscape"
             android:label="@string/oryn_crash_viewer" />
+        <activity
+            android:name="net.kdt.pojavlaunch.OrynCosmeticsActivity"
+            android:screenOrientation="landscape"
+            android:label="Oryn Cosmetics"
+            android:exported="false" />
 
         <activity
             android:name="net.kdt.pojavlaunch.MissingStorageActivity"
