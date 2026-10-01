@@ -206,6 +206,12 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
     updateDefaultCameraPosition();
 }
 
+function setCapePreview(showBack) {
+    // Capes are mounted behind the player. The normal preview is front-facing,
+    // so the cape can be fully hidden by the player model.
+    setAzimuthAndPitch(showBack ? 180 : 0, 8, 48);
+}
+
 setAzimuthAndPitch(0, 8, 48);
 
 // 确保 OrbitControls 也有相同的目标点，覆盖默认的 lookAt
@@ -346,25 +352,26 @@ function loadSkin(skinUrl, model = "auto-detect") {
 }
 
 function loadCape(capeUrl) {
-    // Always attach the cape after the current skin/model has finished loading.
-    // skinview3d can otherwise replace/reset the cape while the player texture loads.
-    skinLoadPromise.then(() => {
+    // Load the cape after the current skin promise settles. This avoids a
+    // rejected skin promise silently preventing the cape from ever loading.
+    const afterSkin = skinLoadPromise.catch(() => null);
+    afterSkin.then(() => {
         if (!capeUrl) {
             skinViewer.loadCape(null);
             return;
         }
 
-        Promise.resolve(skinViewer.loadCape(capeUrl)).then(() => {
-            if (skinViewer.cape) {
-                skinViewer.cape.visible = true;
-            }
+        return Promise.resolve(skinViewer.loadCape(capeUrl)).then(() => {
             if (skinViewer.playerObject) {
                 skinViewer.playerObject.backEquipment = "cape";
             }
+            if (skinViewer.cape) {
+                skinViewer.cape.visible = true;
+            }
             startAnim("DefaultIdle", 1.0);
-        }).catch((e) => {
-            console.error("Oryn cape load failed", e);
         });
+    }).catch((e) => {
+        console.error("Oryn cape load failed", e);
     });
 }
 
