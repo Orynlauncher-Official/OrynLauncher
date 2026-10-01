@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.BitmapFactory;
+import java.io.InputStream;
 import android.graphics.drawable.ColorDrawable;
 import android.view.MotionEvent;
 import android.webkit.WebSettings;
@@ -57,7 +59,9 @@ public class OrynCosmeticPreviewView extends WebView {
     }
 
     public void setSkin(Bitmap bitmap, boolean slim) {
-        pendingSkin = bitmap;
+        // Always keep a real player visible. When the profile has no imported skin,
+        // use the bundled Oryn Steve texture instead of passing a null texture.
+        pendingSkin = bitmap != null ? bitmap : loadDefaultSkin();
         pendingSlim = slim;
         String model = slim ? "slim" : "default";
         if (pageReady) {
@@ -78,6 +82,14 @@ public class OrynCosmeticPreviewView extends WebView {
         String model = pendingSlim ? "slim" : "default";
         evaluateJavascript("loadSkin(" + toJsString(skin) + "," + toJsString(model) + ")", null);
         evaluateJavascript("loadCape(" + toJsString(bitmapToDataUrl(pendingCape)) + ")", null);
+    }
+
+    private Bitmap loadDefaultSkin() {
+        try (InputStream in = getContext().getAssets().open("skinview/oryn_steve_skin.png")) {
+            return BitmapFactory.decodeStream(in);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     private String bitmapToDataUrl(Bitmap bitmap) {
