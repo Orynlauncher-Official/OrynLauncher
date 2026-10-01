@@ -587,7 +587,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 // mod. Required dependencies are resolved recursively and missing
                 // files are downloaded automatically. Optional dependencies are
                 // deliberately not installed.
-                scanAndInstallRequiredDependencies(projectId, version, instance, button);
+                if (category == Category.MOD) {\n                    scanAndInstallRequiredDependencies(projectId, version, instance, button);\n                }
 
                 // Prefer Modrinth's primary file, like ZalithLauncher does.
                 JsonObject file = files.get(0).getAsJsonObject();
