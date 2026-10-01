@@ -1,4 +1,4 @@
-const DEFAULT_STEVE_SKIN = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABWklEQVR4nO2aMa4BURSG730R3iLeAiSiRF5BxQroLEChEA1roHlRKCxA96yAigqlSCzAJmi87gUjc+7kzvjD+b/qTjJz8/lz5t4xc6wRaFZyF+mcMKbLvfW5Pmk+0AJoGABaAA0DQAugYQBoATRW2ufbjVroBOPfuZcA+jlBfQU4B9CaHUxrdgiMXx31FZByPXFSzz4cvzrOARhjzGK5+x9XK/nYZRBECuBdfvQ16teAwB5cLHdCnws2q1Hovl3q9b3eH6yHA6/5pevvUV8BDAAtgMZK97w4wfdnXC6JIK0J6iuAAaAF0DAAtAAaBoAWQBP4N2jP25vjS7rwNBkXfr5ON8fdY8ZrPvUVwADQAoQQQgghhBBCCCHPJvYevaT7C6J+/5dQ/0aIAaAF0HjfT+j+At81QX0FMAC0ABoGgBZAwwDQAmgidYu74NtfEPf3fwn1FcAA0AJo/gD7PUDsM7NWowAAAABJRU5ErkJggg==";
+const DEFAULT_STEVE_SKIN = "oryn_steve_skin.png";
 const container = document.getElementById("skin-container");
 
 const getWidth = () => container.clientWidth || window.innerWidth || 300;
@@ -335,7 +335,7 @@ setTimeout(resize, 500);
 function loadSkin(skinUrl, model = "auto-detect") {
     if (!skinUrl) skinUrl = DEFAULT_STEVE_SKIN;
     skinViewer.loadSkin(skinUrl, { model: model }).then(() => {
-        startAnim("OrynShowcase", 1.0);
+        startAnim("DefaultIdle", 1.0);
     }).catch(() => {});
 }
 
