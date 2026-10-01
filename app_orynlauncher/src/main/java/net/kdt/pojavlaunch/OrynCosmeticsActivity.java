@@ -327,6 +327,10 @@ public class OrynCosmeticsActivity extends Activity {
         tabTitle.setText(capesTab ? "Cape Preview" : "Skin Preview");
         skinTab.setBackground(bg(capesTab ? CARD : BLUE, 10, Color.rgb(42,49,62), 1));
         capeTab.setBackground(bg(capesTab ? BLUE : CARD, 10, Color.rgb(42,49,62), 1));
+        applyButton.setText(capesTab ? "Equip Cape" : "Apply Skin");
+        saveButton.setText(capesTab ? "Save Cape" : "Save Skin");
+        removeButton.setText(capesTab ? "Remove Cape" : "Remove Skin");
+        unequipButton.setVisibility(capesTab ? View.VISIBLE : View.GONE);
         status.setText(capesTab ? "Capes • local and compatible" : "Skins • 64×64 compatible PNG");
     }
 
