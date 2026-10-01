@@ -173,15 +173,41 @@ public class OrynCosmeticPreviewView extends GLSurfaceView {
         }
 
         private void drawMesh(int pos,int uv,float[] verts,float[] tex) {
-            vertexBuffer=FloatBuffer.wrap(verts); uvBuffer=FloatBuffer.wrap(tex);
-            GLES20.glEnableVertexAttribArray(pos); GLES20.glEnableVertexAttribArray(uv);
+            // GLES20.glVertexAttribPointer requires a native-order direct buffer.
+            // FloatBuffer.wrap() creates a heap buffer and crashes on Android.
+            if (vertexBuffer == null || vertexBuffer.capacity() < verts.length) {
+                vertexBuffer = ByteBuffer.allocateDirect(verts.length * 4)
+                        .order(ByteOrder.nativeOrder())
+                        .asFloatBuffer();
+            }
+            if (uvBuffer == null || uvBuffer.capacity() < tex.length) {
+                uvBuffer = ByteBuffer.allocateDirect(tex.length * 4)
+                        .order(ByteOrder.nativeOrder())
+                        .asFloatBuffer();
+            }
+
+            vertexBuffer.clear();
+            vertexBuffer.put(verts);
+            vertexBuffer.position(0);
+
+            uvBuffer.clear();
+            uvBuffer.put(tex);
+            uvBuffer.position(0);
+
+            GLES20.glEnableVertexAttribArray(pos);
+            GLES20.glEnableVertexAttribArray(uv);
             GLES20.glVertexAttribPointer(pos,3,GLES20.GL_FLOAT,false,0,vertexBuffer);
             GLES20.glVertexAttribPointer(uv,2,GLES20.GL_FLOAT,false,0,uvBuffer);
+
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN,0,4);
             if (verts.length > 12) {
-                for(int i=4;i<verts.length/3;i+=4) GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN,i,4);
+                for(int i=4;i<verts.length/3;i+=4) {
+                    GLES20.glDrawArrays(GLES20.GL_TRIANGLE_FAN,i,4);
+                }
             }
-            GLES20.glDisableVertexAttribArray(pos); GLES20.glDisableVertexAttribArray(uv);
+
+            GLES20.glDisableVertexAttribArray(pos);
+            GLES20.glDisableVertexAttribArray(uv);
         }
 
         private int uploadTexture(Bitmap bitmap) {
