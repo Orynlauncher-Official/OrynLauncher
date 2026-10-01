@@ -265,9 +265,13 @@ public class OrynCosmeticsActivity extends Activity {
             showChoice("Cosmetic Profile", values, selected, pos -> {
                 if (pos < ps.size()) {
                     active = ps.get(pos);
-                    store.setActiveProfile(active);
-                    refresh();
-                    status.setText("Profile: " + active.name);
+                    try {
+                        store.setActiveProfile(active);
+                        refresh();
+                        status.setText("Profile: " + active.name);
+                    } catch (Exception e) {
+                        status.setText("Could not save profile");
+                    }
                 }
             });
         });
