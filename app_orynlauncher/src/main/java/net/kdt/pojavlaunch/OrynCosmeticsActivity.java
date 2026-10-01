@@ -24,7 +24,7 @@ public class OrynCosmeticsActivity extends Activity {
     private static final int PICK_SKIN=501, PICK_CAPE=502;
     private OrynCosmeticsStore store;
     private OrynCosmeticPreviewView preview;
-    private Spinner profiles, models;
+    private Spinner profiles, models, skins, capes;
     private TextView status, selectedSkin, selectedCape;
     private OrynCosmeticsStore.CosmeticProfile active;
     private boolean capeTab=false;
@@ -58,29 +58,47 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setPadding(14,8,8,8);right.setBackgroundColor(Color.rgb(18,21,27));
         right.addView(tv("Cosmetic Profile",18));
         profiles=new Spinner(this);right.addView(profiles,new LinearLayout.LayoutParams(-1,52));
-        models=new Spinner(this);right.addView(models,new LinearLayout.LayoutParams(-1,52));
+        Button newProfile=btn("＋ New Profile");right.addView(newProfile,new LinearLayout.LayoutParams(-1,48));
+        right.addView(tv("Skin",13)); skins=new Spinner(this);right.addView(skins,new LinearLayout.LayoutParams(-1,48));
+        right.addView(tv("Cape",13)); capes=new Spinner(this);right.addView(capes,new LinearLayout.LayoutParams(-1,48));
+        right.addView(tv("Player Model",13)); models=new Spinner(this);right.addView(models,new LinearLayout.LayoutParams(-1,48));
         selectedSkin=tv("",14);selectedCape=tv("",14);right.addView(selectedSkin);right.addView(selectedCape);
         Button save=btn("Save Profile");Button apply=btn("Apply Profile");right.addView(save,new LinearLayout.LayoutParams(-1,58));right.addView(apply,new LinearLayout.LayoutParams(-1,58));
         right.addView(tv("Custom capes are local cosmetics. Oryn does not claim an official Minecraft cape unless the account actually owns one.",11),new LinearLayout.LayoutParams(-1,0,1));
         root.addView(right,new LinearLayout.LayoutParams(300,-1));
         setContentView(root);
 
-        skins.setOnClickListener(v->{capeTab=false;refresh();});
-        capes.setOnClickListener(v->{capeTab=true;refresh();});
+        skins.setOnTouchListener((v,e)->{capeTab=false;return false;});
+        capes.setOnTouchListener((v,e)->{capeTab=true;return false;});
         importSkin.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_SKIN);});
         importCape.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_CAPE);});
         delete.setOnClickListener(v->removeSelected());
         back.setOnClickListener(v->finish());
+        newProfile.setOnClickListener(v->{
+            final EditText input=new EditText(this); input.setHint("Profile name");
+            new android.app.AlertDialog.Builder(this).setTitle("New Cosmetic Profile").setView(input)
+                .setNegativeButton("Cancel",null).setPositiveButton("Create",(d,w)->{
+                    String n=input.getText().toString().trim(); if(n.isEmpty()) n="Custom";
+                    OrynCosmeticsStore.CosmeticProfile p=new OrynCosmeticsStore.CosmeticProfile(); p.name=n;
+                    try{store.saveProfile(p);active=p;refresh();}catch(Exception e){status.setText("Profile creation failed");}
+                }).show();
+        });
         save.setOnClickListener(v->saveCurrent());
         apply.setOnClickListener(v->saveCurrent());
         profiles.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<OrynCosmeticsStore.CosmeticProfile> ps=store.listProfiles();if(pos<ps.size()){active=ps.get(pos);refreshPreview();}}});
         models.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,new String[]{"Classic (Steve)","Slim (Alex)"}));
+        skins.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<File> fs=store.listSkins();if(pos==0)active.skin="";else if(pos-1<fs.size())active.skin=fs.get(pos-1).getName();refreshPreview();}});
+        capes.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){public void onNothingSelected(AdapterView<?> p){} public void onItemSelected(AdapterView<?> p,View v,int pos,long id){List<File> fs=store.listCapes();if(pos==0)active.cape="";else if(pos-1<fs.size())active.cape=fs.get(pos-1).getName();refreshPreview();}});
     }
 
     private void refresh(){
         List<OrynCosmeticsStore.CosmeticProfile> ps=store.listProfiles();String[] names=new String[ps.size()];for(int i=0;i<ps.size();i++)names[i]=ps.get(i).name;
         profiles.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,names));
         models.setSelection("slim".equals(active.model)?1:0);
+        List<File> sf=store.listSkins(); String[] sn=new String[sf.size()+1]; sn[0]="None"; for(int i=0;i<sf.size();i++)sn[i+1]=sf.get(i).getName();
+        skins.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,sn));
+        List<File> cf=store.listCapes(); String[] cn=new String[cf.size()+1]; cn[0]="None"; for(int i=0;i<cf.size();i++)cn[i+1]=cf.get(i).getName();
+        capes.setAdapter(new ArrayAdapter<String>(this,android.R.layout.simple_spinner_dropdown_item,cn));
         refreshPreview();
         status.setText(capeTab?"Capes • local and compatible":"Skins • 64×64 compatible PNG");
     }
