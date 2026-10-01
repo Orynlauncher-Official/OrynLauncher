@@ -23,29 +23,13 @@
             android:background="@android:color/transparent" android:padding="13dp"/>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/oryn_feature_panel"
-        android:layout_width="320dp" android:layout_height="84dp"
-        android:orientation="horizontal" android:gravity="center" android:padding="8dp"
-        android:background="@drawable/oryn_pill"
-        app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginEnd="20dp" android:layout_marginBottom="20dp">
-        <ImageButton android:id="@+id/download_button" android:layout_width="82dp" android:layout_height="68dp"
-            android:src="@drawable/oryn_nav_download" android:contentDescription="@string/oryn_download"
-            android:background="@drawable/oryn_pill" android:padding="20dp"/>
-        <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="82dp" android:layout_height="68dp"
-            android:src="@drawable/oryn_nav_crash" android:contentDescription="@string/oryn_crash_viewer"
-            android:background="@android:color/transparent" android:padding="20dp"/>
-        <ImageButton android:id="@+id/cosmetics_button" android:layout_width="82dp" android:layout_height="68dp"
-            android:src="@drawable/oryn_nav_cosmetics" android:contentDescription="Oryn Cosmetics"
-            android:background="@android:color/transparent" android:padding="20dp"/>
-    </LinearLayout>
+
 
     <LinearLayout
         android:id="@+id/oryn_feature_panel"
         android:layout_width="320dp" android:layout_height="64dp"
         android:orientation="horizontal" android:gravity="center"
-        android:background="@android:color/transparent"
+        android:background="@drawable/oryn_pill"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="18dp">
         <ImageButton android:id="@+id/download_button" android:layout_width="76dp" android:layout_height="60dp"
