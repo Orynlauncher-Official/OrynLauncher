@@ -69,6 +69,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private ProgressBar progress;
     private TextView detailTitle;
     private TextView detailVersion;
+    private android.widget.Spinner loaderSpinner;
+    private String selectedLoader;
     private TextView detailDesc;
     private ImageView detailIcon;
     private Button detailDownload;
@@ -148,6 +150,27 @@ public class OrynDownloadActivity extends AppCompatActivity {
         mcVersion.setTextColor(0xFF9FA3AE);
         mcVersion.setGravity(Gravity.CENTER);
         top.addView(mcVersion, new LinearLayout.LayoutParams(dp(100), dp(34)));
+        loaderSpinner = new android.widget.Spinner(this);
+        String[] loaderChoices = new String[]{"Auto", "Fabric", "Forge", "NeoForge", "Quilt"};
+        android.widget.ArrayAdapter<String> loaderAdapter = new android.widget.ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_dropdown_item, loaderChoices);
+        loaderSpinner.setAdapter(loaderAdapter);
+        String detectedLoader = getModrinthLoader(Instances.loadSelectedInstance());
+        selectedLoader = detectedLoader;
+        if ("fabric".equals(detectedLoader)) loaderSpinner.setSelection(1);
+        else if ("forge".equals(detectedLoader)) loaderSpinner.setSelection(2);
+        else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
+        else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
+        loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                selectedLoader = position == 1 ? "fabric" :
+                        position == 2 ? "forge" :
+                        position == 3 ? "neoforge" :
+                        position == 4 ? "quilt" : getModrinthLoader(Instances.loadSelectedInstance());
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+        top.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(105), dp(34)));
         center.addView(top);
 
         LinearLayout searchRow = new LinearLayout(this);
@@ -297,7 +320,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 // itself by the selected Minecraft version and, for mods, the
                 // selected instance loader.
                 String minecraftVersion = getSelectedMinecraftVersion();
-                String loader = getModrinthLoader(Instances.loadSelectedInstance());
+                String loader = getSelectedLoader();
                 StringBuilder facets = new StringBuilder("[[\"project_type:")
                         .append(category.projectType).append("\"]");
                 if (minecraftVersion != null) {
@@ -531,7 +554,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         JsonArray.class
                 );
 
-                String loader = getModrinthLoader(instance);
+                String loader = getSelectedLoader();
                 JsonObject version = null;
                 for (int i = 0; versions != null && i < versions.size(); i++) {
                     JsonObject candidate = versions.get(i).getAsJsonObject();
@@ -794,6 +817,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         if (prefix.find()) return prefix.group(1);
 
         return id;
+    }
+
+    private String getSelectedLoader() {
+        if (category != Category.MOD) return null;
+        if (selectedLoader != null && !selectedLoader.isEmpty()) return selectedLoader;
+        return getModrinthLoader(Instances.loadSelectedInstance());
     }
 
     private String getModrinthLoader(Instance instance) {
