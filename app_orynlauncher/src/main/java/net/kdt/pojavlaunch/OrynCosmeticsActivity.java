@@ -218,6 +218,11 @@ public class OrynCosmeticsActivity extends Activity {
 
         setContentView(root);
 
+        skinTab.setClickable(true);
+        skinTab.setFocusable(true);
+        capeTab.setClickable(true);
+        capeTab.setFocusable(true);
+
         skinTab.setOnClickListener(v -> setTab(false));
         capeTab.setOnClickListener(v -> setTab(true));
         importSkin.setOnClickListener(v -> pick(PICK_SKIN));
@@ -325,14 +330,24 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void setTab(boolean capesTab) {
         capeTabSelected = capesTab;
+
+        // Make the left rail a real tab switch, not just a visual toggle.
         tabTitle.setText(capesTab ? "Cape Preview" : "Skin Preview");
         skinTab.setBackground(bg(capesTab ? CARD : BLUE, 10, Color.rgb(42,49,62), 1));
         capeTab.setBackground(bg(capesTab ? BLUE : CARD, 10, Color.rgb(42,49,62), 1));
+
+        // Only show the selector relevant to the active tab.
+        if (skins != null) skins.setVisibility(capesTab ? View.GONE : View.VISIBLE);
+        if (capes != null) capes.setVisibility(capesTab ? View.VISIBLE : View.GONE);
+
         applyButton.setText(capesTab ? "Equip Cape" : "Apply Skin");
         saveButton.setText(capesTab ? "Save Cape" : "Save Skin");
         removeButton.setText(capesTab ? "Remove Cape" : "Remove Skin");
         unequipButton.setVisibility(capesTab ? View.VISIBLE : View.GONE);
-        status.setText(capesTab ? "Capes • local and compatible" : "Skins • 64×64 compatible PNG");
+
+        status.setText(capesTab
+                ? "Capes • local and compatible"
+                : "Skins • 64×64 compatible PNG");
     }
 
     private void pick(int requestCode) {
