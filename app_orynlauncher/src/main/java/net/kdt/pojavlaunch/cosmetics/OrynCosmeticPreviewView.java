@@ -65,7 +65,8 @@ public class OrynCosmeticPreviewView extends WebView {
         pendingSlim = slim;
         String model = slim ? "slim" : "default";
         if (pageReady) {
-            evaluateJavascript("loadSkin(" + toJsString(bitmapToDataUrl(bitmap)) + "," +
+            // Use pendingSkin so "None" immediately falls back to the bundled Steve.
+            evaluateJavascript("loadSkin(" + toJsString(bitmapToDataUrl(pendingSkin)) + "," +
                     toJsString(model) + ")", null);
         }
     }
