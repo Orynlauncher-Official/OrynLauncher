@@ -124,7 +124,7 @@ public class OrynCosmeticsActivity extends Activity {
         Space gap = new Space(this);
         left.addView(gap, lp(-1, 10));
 
-        skinTab = button("▣   Skins");
+        skinTab = button("👕   Skins");
         capeTab = button("▰   Capes");
         left.addView(skinTab, lp(-1, 48));
         left.addView(capeTab, lp(-1, 48));
