@@ -134,9 +134,12 @@ public final class OrynCosmeticsStore {
             } catch (Exception ignored) {}
         }
         if (result.isEmpty()) {
-            CosmeticProfile p = new CosmeticProfile();
-            try { saveProfile(p); } catch (Exception ignored) {}
-            result.add(p);
+            String[] defaults = {"Default", "PvP", "Survival", "Custom"};
+            for (String name : defaults) {
+                CosmeticProfile p = new CosmeticProfile(); p.name = name;
+                try { saveProfile(p); } catch (Exception ignored) {}
+                result.add(p);
+            }
         }
         return result;
     }
