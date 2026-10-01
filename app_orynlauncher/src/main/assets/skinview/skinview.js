@@ -345,7 +345,7 @@ function loadCape(capeUrl) {
     } else {
         skinViewer.loadCape(capeUrl);
     }
-    startAnim("OrynShowcase", 1.0);
+    startAnim("DefaultIdle", 1.0);
 }
 
 function setInteractionEnabled(enabled) {
