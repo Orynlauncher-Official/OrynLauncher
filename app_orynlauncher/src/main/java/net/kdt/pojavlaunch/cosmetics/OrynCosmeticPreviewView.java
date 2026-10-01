@@ -104,14 +104,17 @@ public class OrynCosmeticPreviewView extends GLSurfaceView {
             int mat = GLES20.glGetUniformLocation(program, "uMVP");
             int sampler = GLES20.glGetUniformLocation(program, "uTexture");
             int tint = GLES20.glGetUniformLocation(program, "uTint");
+            int hasTexture = GLES20.glGetUniformLocation(program, "uHasTexture");
             GLES20.glUniformMatrix4fv(mat, 1, false, mvp, 0);
             GLES20.glUniform1i(sampler, 0);
             GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
             if (texture != 0) {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, texture);
+                GLES20.glUniform1i(hasTexture, 1);
                 GLES20.glUniform4f(tint, 1f,1f,1f,1f);
             } else {
                 GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+                GLES20.glUniform1i(hasTexture, 0);
                 GLES20.glUniform4f(tint, 0.56f,0.59f,0.64f,1f);
             }
 
@@ -192,7 +195,7 @@ public class OrynCosmeticPreviewView extends GLSurfaceView {
 
         private int buildProgram() {
             String vs="attribute vec4 aPosition; attribute vec2 aTexCoord; uniform mat4 uMVP; varying vec2 vTexCoord; void main(){gl_Position=uMVP*aPosition;vTexCoord=aTexCoord;}";
-            String fs="precision mediump float; varying vec2 vTexCoord; uniform sampler2D uTexture; uniform vec4 uTint; void main(){vec4 c=uTint; if(uTexture!=0) c*=texture2D(uTexture,vTexCoord); gl_FragColor=c;}";
+            String fs="precision mediump float; varying vec2 vTexCoord; uniform sampler2D uTexture; uniform vec4 uTint; uniform bool uHasTexture; void main(){vec4 c=uTint; if(uHasTexture) c*=texture2D(uTexture,vTexCoord); gl_FragColor=c;}";
             int v=compile(GLES20.GL_VERTEX_SHADER,vs), f=compile(GLES20.GL_FRAGMENT_SHADER,fs);
             int p=GLES20.glCreateProgram(); GLES20.glAttachShader(p,v); GLES20.glAttachShader(p,f); GLES20.glLinkProgram(p);
             return p;
