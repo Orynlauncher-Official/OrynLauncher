@@ -57,6 +57,7 @@ public class OrynCosmeticPreviewView extends WebView {
 
     public void setSkin(Bitmap bitmap, boolean slim) {
         pendingSkin = bitmap;
+        pendingSlim = slim;
         String model = slim ? "slim" : "default";
         if (pageReady) {
             evaluateJavascript("loadSkin(" + toJsString(bitmapToDataUrl(bitmap)) + "," +
@@ -73,7 +74,7 @@ public class OrynCosmeticPreviewView extends WebView {
 
     private void applyPending() {
         String skin = bitmapToDataUrl(pendingSkin);
-        String model = "default";
+        String model = pendingSlim ? "slim" : "default";
         evaluateJavascript("loadSkin(" + toJsString(skin) + "," + toJsString(model) + ")", null);
         evaluateJavascript("loadCape(" + toJsString(bitmapToDataUrl(pendingCape)) + ")", null);
     }
