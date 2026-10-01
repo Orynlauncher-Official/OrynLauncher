@@ -200,15 +200,15 @@ public class OrynCosmeticsActivity extends Activity {
         saveButton = button("Save Skin");
         primary(applyButton);
         actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(40), 1));
-        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(46), 1));
+        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(40), 1));
         right.addView(actions, lp(-1, 40));
 
         LinearLayout actions2 = new LinearLayout(this);
         actions2.setOrientation(LinearLayout.HORIZONTAL);
         removeButton = button("Remove Skin");
         unequipButton = button("Unequip Cape");
-        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(42), 1));
-        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(42), 1));
+        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(36), 1));
+        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(36), 1));
         right.addView(actions2, lp(-1, 36));
 
         TextView note = text("Local cosmetics work offline. Official capes are only shown when owned by the account.", 9, MUTED);
