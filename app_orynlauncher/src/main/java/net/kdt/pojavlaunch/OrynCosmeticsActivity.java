@@ -422,6 +422,9 @@ public class OrynCosmeticsActivity extends Activity {
         Bitmap c = active.cape.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
         preview.setSkin(s, "slim".equals(active.model));
         // Keep the skin preview clean; show the equipped cape in the dedicated Capes tab.\n        preview.setCape(capeTabSelected ? c : null);
+        // A cape sits behind the player, so automatically show the back while
+        // the Capes tab is active. Return to the front for the Skin tab.
+        preview.setCapePreview(capeTabSelected);
         selectedSkin.setText("Skin  •  " + (active.skin.isEmpty() ? "None" : displayName(new File(active.skin))));
         selectedCape.setText("Cape  •  " + (active.cape.isEmpty() ? "None" : displayName(new File(active.cape))));
     }
