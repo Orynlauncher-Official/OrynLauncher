@@ -582,6 +582,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonArray files = version.getAsJsonArray("files");
                 if (files == null || files.size() == 0) throw new Exception("No downloadable file found");
 
+                // Oryn AI Dependency Scanner:
+                // inspect Modrinth's dependency graph before saving the selected
+                // mod. Required dependencies are resolved recursively and missing
+                // files are downloaded automatically. Optional dependencies are
+                // deliberately not installed.
+                scanAndInstallRequiredDependencies(projectId, version, instance, button);
+
                 // Prefer Modrinth's primary file, like ZalithLauncher does.
                 JsonObject file = files.get(0).getAsJsonObject();
                 for (int i = 0; i < files.size(); i++) {
@@ -619,6 +626,138 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void scanAndInstallRequiredDependencies(String rootProjectId, JsonObject rootVersion,
+                                                         Instance instance, Button button) throws Exception {
+        java.util.HashSet<String> visited = new java.util.HashSet<>();
+        java.util.HashSet<String> installedFiles = new java.util.HashSet<>();
+        File modsDir = new File(instance.getGameDirectory(), "mods");
+        if (modsDir.isDirectory()) {
+            File[] files = modsDir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isFile()) installedFiles.add(f.getName().toLowerCase(Locale.ROOT));
+                }
+            }
+        }
+
+        scanDependencyNode(rootProjectId, rootVersion, instance, installedFiles, visited, button);
+    }
+
+    private void scanDependencyNode(String projectId, JsonObject version, Instance instance,
+                                    java.util.Set<String> installedFiles,
+                                    java.util.Set<String> visited, Button button) throws Exception {
+        String versionKey = version.has("id") ? version.get("id").getAsString() : projectId;
+        if (!visited.add(versionKey)) return;
+
+        if (!version.has("dependencies") || !version.get("dependencies").isJsonArray()) return;
+        JsonArray dependencies = version.getAsJsonArray("dependencies");
+
+        for (int i = 0; i < dependencies.size(); i++) {
+            JsonObject dep = dependencies.get(i).getAsJsonObject();
+            String type = dep.has("dependency_type") ? dep.get("dependency_type").getAsString() : "required";
+            if (!"required".equalsIgnoreCase(type)) continue;
+
+            String depProjectId = dep.has("project_id") && !dep.get("project_id").isJsonNull()
+                    ? dep.get("project_id").getAsString() : null;
+            String depVersionId = dep.has("version_id") && !dep.get("version_id").isJsonNull()
+                    ? dep.get("version_id").getAsString() : null;
+
+            if (depProjectId == null && depVersionId == null) continue;
+
+            JsonObject depVersion = null;
+            if (depVersionId != null && !depVersionId.isEmpty()) {
+                depVersion = api.get("version/" + URLEncoder.encode(depVersionId, "UTF-8"),
+                        JsonObject.class);
+            }
+
+            if (depVersion == null && depProjectId != null) {
+                JsonArray depVersions = api.get(
+                        "project/" + URLEncoder.encode(depProjectId, "UTF-8") + "/version",
+                        JsonArray.class);
+                String minecraftVersion = instance.versionId;
+                String loader = getModrinthLoader(instance);
+
+                for (int j = 0; depVersions != null && j < depVersions.size(); j++) {
+                    JsonObject candidate = depVersions.get(j).getAsJsonObject();
+                    if (!supportsMinecraftAndLoader(candidate, minecraftVersion, loader)) continue;
+                    depVersion = candidate;
+                    if (candidate.has("featured") && candidate.get("featured").getAsBoolean()) break;
+                }
+            }
+
+            if (depVersion == null) {
+                throw new Exception("Required dependency is unavailable for this Minecraft version");
+            }
+
+            JsonArray depFiles = depVersion.getAsJsonArray("files");
+            if (depFiles == null || depFiles.size() == 0) {
+                throw new Exception("Required dependency has no downloadable file");
+            }
+
+            JsonObject depFile = depFiles.get(0).getAsJsonObject();
+            for (int j = 0; j < depFiles.size(); j++) {
+                JsonObject candidate = depFiles.get(j).getAsJsonObject();
+                if (candidate.has("primary") && candidate.get("primary").getAsBoolean()) {
+                    depFile = candidate;
+                    break;
+                }
+            }
+
+            String filename = depFile.has("filename")
+                    ? new File(depFile.get("filename").getAsString()).getName()
+                    : (depProjectId == null ? depVersion.get("id").getAsString() : depProjectId) + ".jar";
+
+            if (!installedFiles.contains(filename.toLowerCase(Locale.ROOT))) {
+                File modsDir = new File(instance.getGameDirectory(), "mods");
+                if (!modsDir.exists() && !modsDir.mkdirs()) {
+                    throw new Exception("Could not create mods folder for dependency");
+                }
+
+                String url = depFile.get("url").getAsString();
+                String sha1 = null;
+                if (depFile.has("hashes") && depFile.get("hashes").isJsonObject()
+                        && depFile.getAsJsonObject("hashes").has("sha1")) {
+                    sha1 = depFile.getAsJsonObject("hashes").get("sha1").getAsString();
+                }
+                long expectedSize = depFile.has("size") ? depFile.get("size").getAsLong() : -1L;
+                File output = new File(modsDir, filename);
+
+                final String dependencyName = depProjectId == null ? filename : depProjectId;
+                runOnUiThread(() -> {
+                    status.setText("AI Scanner: installing dependency " + dependencyName);
+                    button.setText("Dependency…");
+                });
+                downloadFile(url, output, sha1, expectedSize, button, dependencyName);
+                installedFiles.add(filename.toLowerCase(Locale.ROOT));
+            }
+
+            scanDependencyNode(
+                    depProjectId == null ? "version:" + depVersion.get("id").getAsString() : depProjectId,
+                    depVersion, instance, installedFiles, visited, button);
+        }
+    }
+
+    private boolean supportsMinecraftAndLoader(JsonObject version, String minecraftVersion, String loader) {
+        if (minecraftVersion == null || !version.has("game_versions")) return false;
+        JsonArray gameVersions = version.getAsJsonArray("game_versions");
+        boolean gameMatch = false;
+        for (int i = 0; i < gameVersions.size(); i++) {
+            if (minecraftVersion.equals(gameVersions.get(i).getAsString())) {
+                gameMatch = true;
+                break;
+            }
+        }
+        if (!gameMatch) return false;
+
+        if (loader == null) return true;
+        if (!version.has("loaders")) return true;
+        JsonArray loaders = version.getAsJsonArray("loaders");
+        for (int i = 0; i < loaders.size(); i++) {
+            if (loader.equalsIgnoreCase(loaders.get(i).getAsString())) return true;
+        }
+        return false;
     }
 
     private String getSelectedMinecraftVersion() {
