@@ -29,6 +29,7 @@ import androidx.fragment.app.FragmentManager;
 import com.kdt.mcgui.ProgressLayout;
 
 import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
+import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.extra.ExtraListener;
@@ -143,6 +144,8 @@ public class LauncherActivity extends BaseActivity {
             Toast.makeText(this, R.string.no_instance, Toast.LENGTH_LONG).show();
             return false;
         }
+
+        new OrynCosmeticsStore(this).writeActiveForInstance(selectedInstance.getGameDirectory());
 
         if(selectedInstance.installer != null) {
             selectedInstance.installer.start();
