@@ -216,6 +216,7 @@ if (skinViewer.controls) {
 }
 
 let resetAnimationId = null;
+let skinLoadPromise = Promise.resolve();
 
 // 监听容器的双击事件
 container.addEventListener("dblclick", () => {
@@ -334,28 +335,36 @@ setTimeout(resize, 500);
 
 function loadSkin(skinUrl, model = "auto-detect") {
     if (!skinUrl) skinUrl = DEFAULT_STEVE_SKIN;
-    skinViewer.loadSkin(skinUrl, { model: model }).then(() => {
-        startAnim("DefaultIdle", 1.0);
-    }).catch(() => {});
+    skinLoadPromise = Promise.resolve(skinViewer.loadSkin(skinUrl, { model: model }))
+        .then(() => {
+            startAnim("DefaultIdle", 1.0);
+        })
+        .catch((e) => {
+            console.warn("Oryn skin load failed", e);
+        });
+    return skinLoadPromise;
 }
 
 function loadCape(capeUrl) {
-    if (!capeUrl) {
-        skinViewer.loadCape(null);
-        return;
-    }
+    // Always attach the cape after the current skin/model has finished loading.
+    // skinview3d can otherwise replace/reset the cape while the player texture loads.
+    skinLoadPromise.then(() => {
+        if (!capeUrl) {
+            skinViewer.loadCape(null);
+            return;
+        }
 
-    // Explicitly select the cape equipment and force it visible.
-    // This also makes local data-URL capes reliable in Android WebView.
-    Promise.resolve(skinViewer.loadCape(capeUrl, {
-        backEquipment: "cape",
-        makeVisible: true
-    })).then(() => {
-        skinViewer.playerObject.backEquipment = "cape";
-        skinViewer.cape.visible = true;
-        startAnim("DefaultIdle", 1.0);
-    }).catch((e) => {
-        console.error("Oryn cape load failed", e);
+        Promise.resolve(skinViewer.loadCape(capeUrl)).then(() => {
+            if (skinViewer.cape) {
+                skinViewer.cape.visible = true;
+            }
+            if (skinViewer.playerObject) {
+                skinViewer.playerObject.backEquipment = "cape";
+            }
+            startAnim("DefaultIdle", 1.0);
+        }).catch((e) => {
+            console.error("Oryn cape load failed", e);
+        });
     });
 }
 
