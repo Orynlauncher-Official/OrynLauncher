@@ -461,8 +461,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
                 String mcVersion = getSelectedMinecraftVersion();
                 int selected = -1;
-                for (int i = 0; i < detail.versionMinecraftNames.length; i++) {
-                    if (mcVersion != null && mcVersion.equals(detail.versionMinecraftNames[i])) {
+                for (int i = 0; i < detail.mcVersionNames.length; i++) {
+                    if (mcVersion != null && mcVersion.equals(detail.mcVersionNames[i])) {
                         selected = i;
                         break;
                     }
@@ -479,7 +479,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     button.setText("Install started");
                     Toast.makeText(this, "Installing " + projectTitle + " for Minecraft "
-                            + detail.versionMinecraftNames[versionIndex], Toast.LENGTH_LONG).show();
+                            + detail.mcVersionNames[versionIndex], Toast.LENGTH_LONG).show();
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
