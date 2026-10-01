@@ -47,7 +47,7 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout root=new LinearLayout(this); root.setOrientation(LinearLayout.HORIZONTAL); root.setPadding(20,16,20,16); root.setBackgroundColor(Color.rgb(9,11,15));
         LinearLayout left=new LinearLayout(this);left.setOrientation(LinearLayout.VERTICAL);left.setPadding(10,10,10,10);left.setBackgroundColor(Color.rgb(18,21,27));
         TextView title=tv("ORYN  •  COSMETICS",20);left.addView(title,new LinearLayout.LayoutParams(210,-2));
-        Button skins=btn("SKINS"); Button capes=btn("CAPES"); left.addView(skins,new LinearLayout.LayoutParams(-1,56));left.addView(capes,new LinearLayout.LayoutParams(-1,56));
+        Button skinTab=btn("SKINS"); Button capeTabButton=btn("CAPES"); left.addView(skinTab,new LinearLayout.LayoutParams(-1,56));left.addView(capeTabButton,new LinearLayout.LayoutParams(-1,56));
         Button importSkin=btn("＋ Import Skin"); Button importCape=btn("＋ Import Cape");left.addView(importSkin,new LinearLayout.LayoutParams(-1,56));left.addView(importCape,new LinearLayout.LayoutParams(-1,56));
         Button delete=btn("Remove Selected");left.addView(delete,new LinearLayout.LayoutParams(-1,56));
         Button back=btn("Back");left.addView(back,new LinearLayout.LayoutParams(-1,56));
@@ -68,8 +68,8 @@ public class OrynCosmeticsActivity extends Activity {
         root.addView(right,new LinearLayout.LayoutParams(300,-1));
         setContentView(root);
 
-        skins.setOnTouchListener((v,e)->{capeTab=false;return false;});
-        capes.setOnTouchListener((v,e)->{capeTab=true;return false;});
+        skinTab.setOnClickListener(v->{capeTab=false;status.setText("Skins • 64×64 compatible PNG");});
+        capeTabButton.setOnClickListener(v->{capeTab=true;status.setText("Capes • local and compatible");});
         importSkin.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_SKIN);});
         importCape.setOnClickListener(v->{Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);startActivityForResult(i,PICK_CAPE);});
         delete.setOnClickListener(v->removeSelected());
