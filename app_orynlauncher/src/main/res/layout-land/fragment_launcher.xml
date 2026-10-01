@@ -25,7 +25,7 @@
         android:id="@+id/oryn_feature_panel"
         android:layout_width="330dp" android:layout_height="64dp"
         android:orientation="horizontal" android:gravity="center"
-        android:background="@android:color/transparent"
+        android:background="@drawable/oryn_pill"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="12dp">
         <ImageButton android:id="@+id/download_button" android:layout_width="88dp" android:layout_height="60dp"
