@@ -149,7 +149,7 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout head = new LinearLayout(this);
         head.setGravity(Gravity.CENTER_VERTICAL);
         tabTitle = text("Skin Preview", 17, WHITE);
-        head.addView(tabTitle, new LinearLayout.LayoutParams(0, d(42), 1));
+        head.addView(tabTitle, new LinearLayout.LayoutParams(0, d(36), 1));
         TextView hint = text("Drag to rotate  •  Classic / Slim", 11, MUTED);
         head.addView(hint, lp(-1, 42));
         center.addView(head, lp(-1, 42));
@@ -166,41 +166,42 @@ public class OrynCosmeticsActivity extends Activity {
         // Right control panel
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
-        right.setPadding(d(14), d(10), d(10), d(10));
+        right.setPadding(d(12), d(8), d(8), d(8));
+        right.setClipChildren(false);
         right.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
 
-        right.addView(text("Cosmetic Profile", 18, WHITE), lp(-1, 30));
+        right.addView(text("Cosmetic Profile", 18, WHITE), lp(-1, 28));
         profiles = spinner();
-        right.addView(profiles, lp(-1, 46));
+        right.addView(profiles, lp(-1, 42));
 
         Button newProfile = button("＋  New Profile");
-        right.addView(newProfile, lp(-1, 40));
+        right.addView(newProfile, lp(-1, 36));
 
-        right.addView(text("SKIN", 10, MUTED), lp(-1, 24));
+        right.addView(text("SKIN", 10, MUTED), lp(-1, 20));
         skins = spinner();
-        right.addView(skins, lp(-1, 44));
+        right.addView(skins, lp(-1, 40));
 
-        right.addView(text("CAPE", 10, MUTED), lp(-1, 24));
+        right.addView(text("CAPE", 10, MUTED), lp(-1, 20));
         capes = spinner();
-        right.addView(capes, lp(-1, 44));
+        right.addView(capes, lp(-1, 40));
 
-        right.addView(text("PLAYER MODEL", 10, MUTED), lp(-1, 24));
+        right.addView(text("PLAYER MODEL", 10, MUTED), lp(-1, 20));
         models = spinner();
-        right.addView(models, lp(-1, 44));
+        right.addView(models, lp(-1, 40));
 
         selectedSkin = text("Skin: None", 11, MUTED);
         selectedCape = text("Cape: None", 11, MUTED);
-        right.addView(selectedSkin, lp(-1, 24));
-        right.addView(selectedCape, lp(-1, 24));
+        right.addView(selectedSkin, lp(-1, 20));
+        right.addView(selectedCape, lp(-1, 20));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         applyButton = button("Apply Skin");
         saveButton = button("Save Skin");
         primary(applyButton);
-        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(46), 1));
+        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(40), 1));
         actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(46), 1));
-        right.addView(actions, lp(-1, 46));
+        right.addView(actions, lp(-1, 40));
 
         LinearLayout actions2 = new LinearLayout(this);
         actions2.setOrientation(LinearLayout.HORIZONTAL);
@@ -208,12 +209,12 @@ public class OrynCosmeticsActivity extends Activity {
         unequipButton = button("Unequip Cape");
         actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(42), 1));
         actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(42), 1));
-        right.addView(actions2, lp(-1, 42));
+        right.addView(actions2, lp(-1, 36));
 
-        TextView note = text("Local cosmetics work offline. An official Minecraft cape is shown only when the account actually owns one.", 10, MUTED);
+        TextView note = text("Local cosmetics work offline. Official capes are only shown when owned by the account.", 9, MUTED);
         note.setGravity(Gravity.BOTTOM);
         right.addView(note, new LinearLayout.LayoutParams(-1, 0, 1));
-        root.addView(right, new LinearLayout.LayoutParams(d(350), -1));
+        root.addView(right, new LinearLayout.LayoutParams(d(365), -1));
 
         setContentView(root);
 
