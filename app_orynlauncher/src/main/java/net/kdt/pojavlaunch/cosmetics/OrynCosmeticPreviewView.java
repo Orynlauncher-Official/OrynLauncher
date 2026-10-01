@@ -23,7 +23,8 @@ import android.util.Base64;
 public class OrynCosmeticPreviewView extends WebView {
     private Bitmap pendingSkin;
     private Bitmap pendingCape;
-    private boolean pageReady;\n    private boolean pendingSlim;
+    private boolean pageReady;
+    private boolean pendingSlim;
 
     public OrynCosmeticPreviewView(Context context) {
         super(context);
