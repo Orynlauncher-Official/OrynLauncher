@@ -452,7 +452,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         button.setText("Checking version…");
         executor.execute(() -> {
             try {
-                ModItem item = new ModItem("modrinth", true, projectId, projectTitle,
+                ModItem item = new ModItem(net.kdt.pojavlaunch.modloaders.modpacks.models.Constants.SOURCE_MODRINTH, true, projectId, projectTitle,
                         projectTitle, iconUrl == null ? "" : iconUrl);
                 ModDetail detail = modrinthModpackApi.getModDetails(item);
                 if (detail == null || detail.versionUrls == null || detail.versionUrls.length == 0) {
