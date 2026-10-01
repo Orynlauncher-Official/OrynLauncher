@@ -3,6 +3,7 @@ package net.kdt.pojavlaunch.fragments;
 import net.kdt.pojavlaunch.OrynDownloadActivity;
 import net.kdt.pojavlaunch.OrynCrashViewerActivity;
 import net.kdt.pojavlaunch.OrynFileManagerActivity;
+import net.kdt.pojavlaunch.OrynCosmeticsActivity;
 
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.shareLog;
@@ -62,6 +63,7 @@ public class MainMenuFragment extends Fragment {
         ImageButton mOpenDirectoryButton = view.findViewById(R.id.open_files_button);
         ImageButton mDownloadButton = view.findViewById(R.id.download_button);
         ImageButton mCrashButton = view.findViewById(R.id.crash_viewer_button);
+        ImageButton mCosmeticsButton = view.findViewById(R.id.cosmetics_button);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -79,6 +81,7 @@ public class MainMenuFragment extends Fragment {
         mOpenDirectoryButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynFileManagerActivity.class)));
         mDownloadButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
         mCrashButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
+        mCosmeticsButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCosmeticsActivity.class)));
 
 
     }
