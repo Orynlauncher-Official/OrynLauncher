@@ -342,10 +342,21 @@ function loadSkin(skinUrl, model = "auto-detect") {
 function loadCape(capeUrl) {
     if (!capeUrl) {
         skinViewer.loadCape(null);
-    } else {
-        skinViewer.loadCape(capeUrl);
+        return;
     }
-    startAnim("DefaultIdle", 1.0);
+
+    // Explicitly select the cape equipment and force it visible.
+    // This also makes local data-URL capes reliable in Android WebView.
+    Promise.resolve(skinViewer.loadCape(capeUrl, {
+        backEquipment: "cape",
+        makeVisible: true
+    })).then(() => {
+        skinViewer.playerObject.backEquipment = "cape";
+        skinViewer.cape.visible = true;
+        startAnim("DefaultIdle", 1.0);
+    }).catch((e) => {
+        console.error("Oryn cape load failed", e);
+    });
 }
 
 function setInteractionEnabled(enabled) {
