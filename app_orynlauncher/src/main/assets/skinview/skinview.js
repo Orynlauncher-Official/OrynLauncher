@@ -278,6 +278,7 @@ setTimeout(resize, 100);
 setTimeout(resize, 500);
 
 function loadSkin(skinUrl, model = "auto-detect") {
+    if (!skinUrl) skinUrl = DEFAULT_STEVE_SKIN;
     skinViewer.loadSkin(skinUrl, { model: model });
 }
 
