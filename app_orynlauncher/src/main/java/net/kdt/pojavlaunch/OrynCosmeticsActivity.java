@@ -266,6 +266,62 @@ public class OrynCosmeticsActivity extends Activity {
         });
 
         models.setAdapter(adapter(new String[]{"Classic (Steve)", "Slim (Alex)"}));
+
+        // Android Spinner popups are unreliable on some launcher/device combinations.
+        // Use a touch-driven selection dialog so every cosmetic selector is always clickable.
+        installSelectorTouch(models, () -> {
+            final String[] values = {"Classic (Steve)", "Slim (Alex)"};
+            showChoice("Player Model", values, models.getSelectedItemPosition(), pos -> {
+                if (active == null) return;
+                active.model = pos == 1 ? "slim" : "classic";
+                models.setSelection(pos);
+                refreshPreview();
+                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
+            });
+        });
+
+        installSelectorTouch(profiles, () -> {
+            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
+            String[] values = new String[ps.size()];
+            for (int i = 0; i < ps.size(); i++) values[i] = ps.get(i).name;
+            showChoice("Cosmetic Profile", values, Math.max(0, profiles.getSelectedItemPosition()), pos -> {
+                if (pos < ps.size()) {
+                    active = ps.get(pos);
+                    refresh();
+                    status.setText("Profile: " + active.name);
+                }
+            });
+        });
+
+        installSelectorTouch(skins, () -> {
+            List<File> fs = store.listSkins();
+            String[] values = new String[fs.size() + 1];
+            values[0] = "None";
+            for (int i = 0; i < fs.size(); i++) values[i + 1] = displayName(fs.get(i));
+            showChoice("Skin", values, Math.max(0, skins.getSelectedItemPosition()), pos -> {
+                if (active == null) return;
+                active.skin = pos == 0 ? "" : fs.get(pos - 1).getName();
+                skins.setSelection(pos);
+                refreshPreview();
+                status.setText(pos == 0 ? "Skin unequipped" : "Skin selected");
+            });
+        });
+
+        installSelectorTouch(capes, () -> {
+            List<File> fs = store.listCapes();
+            String[] values = new String[fs.size() + 1];
+            values[0] = "None";
+            for (int i = 0; i < fs.size(); i++) values[i + 1] = displayName(fs.get(i));
+            showChoice("Cape", values, Math.max(0, capes.getSelectedItemPosition()), pos -> {
+                if (active == null) return;
+                active.cape = pos == 0 ? "" : fs.get(pos - 1).getName();
+                capes.setSelection(pos);
+                refreshPreview();
+                status.setText(pos == 0 ? "Cape unequipped" : "Cape selected");
+            });
+        });
+
+        // Keep the legacy listeners for programmatic refresh/setSelection only.
         models.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             public void onNothingSelected(AdapterView<?> p) {}
             public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
@@ -326,6 +382,36 @@ public class OrynCosmeticsActivity extends Activity {
                 return v;
             }
         };
+    }
+
+    private interface ChoiceAction { void run(int position); }
+
+    private void installSelectorTouch(Spinner spinner, final Runnable opener) {
+        spinner.setClickable(true);
+        spinner.setFocusable(true);
+        spinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() == android.view.MotionEvent.ACTION_UP) {
+                v.performClick();
+                opener.run();
+            }
+            return true;
+        });
+        spinner.setOnClickListener(v -> {
+            // Touch handler opens the dialog; this keeps accessibility/click semantics intact.
+        });
+    }
+
+    private void showChoice(String title, String[] values, int selected, ChoiceAction action) {
+        if (values == null || values.length == 0) return;
+        int safe = Math.max(0, Math.min(selected, values.length - 1));
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setSingleChoiceItems(values, safe, (dialog, which) -> {
+                    action.run(which);
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void setTab(boolean capesTab) {
