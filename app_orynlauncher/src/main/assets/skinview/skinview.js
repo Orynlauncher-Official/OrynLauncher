@@ -75,6 +75,52 @@ class IdleAnimation extends skinview3d.PlayerAnimation {
     }
 }
 
+// Oryn showcase animation: matches the launcher preview style with one arm raised and waving.
+class OrynShowcaseAnimation extends skinview3d.PlayerAnimation {
+    constructor() {
+        super();
+        this.elapsed = 0;
+        this.maxDelta = 0.05;
+    }
+
+    animate(player, delta) {
+        const dt = Math.min(delta, this.maxDelta);
+        this.elapsed += dt;
+        const t = this.elapsed;
+
+        const bob = Math.sin(t * 2.0) * 0.10;
+        const sway = Math.sin(t * 1.25) * 0.035;
+
+        player.skin.body.position.y = -6.1 + bob;
+        player.skin.head.position.y = -0.1 + bob;
+        player.skin.body.rotation.z = sway;
+        player.skin.body.rotation.x = Math.sin(t * 1.5) * 0.018;
+
+        player.skin.head.rotation.y = Math.sin(t * 0.75) * 0.12;
+        player.skin.head.rotation.x = Math.sin(t * 1.7) * 0.035;
+
+        // Relaxed arm.
+        player.skin.rightArm.rotation.x = Math.sin(t * 1.8) * 0.035;
+        player.skin.rightArm.rotation.z = 0.035;
+
+        // Raised arm + small hand wave, like the reference video.
+        const raise = -1.05 + Math.sin(t * 1.15) * 0.10;
+        const wave = Math.sin(t * 5.0) * 0.20;
+        player.skin.leftArm.rotation.z = raise;
+        player.skin.leftArm.rotation.x = -0.18 + wave * 0.18;
+        player.skin.leftArm.rotation.y = Math.sin(t * 2.5) * 0.06;
+
+        if (player.cape) {
+            player.cape.rotation.x = 0.18 + Math.sin(t * 1.8) * 0.06;
+            player.cape.rotation.z = Math.sin(t * 1.1) * 0.025;
+        }
+    }
+
+    reset() {
+        this.elapsed = 0;
+    }
+}
+
 function startAnim(name, speed) {
     if (typeof name !== 'string' || name.trim() === '') {
         console.warn('The animation name must be a non-empty string');
@@ -93,6 +139,9 @@ function startAnim(name, speed) {
             break;
         case "NewIdle":
             anim = new IdleAnimation();
+            break;
+        case "OrynShowcase":
+            anim = new OrynShowcaseAnimation();
             break;
         case "Walking":
             anim = new skinview3d.WalkingAnimation();
@@ -152,7 +201,7 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
     updateDefaultCameraPosition();
 }
 
-setAzimuthAndPitch(0, 10);
+setAzimuthAndPitch(0, 8, 48);
 
 // 确保 OrbitControls 也有相同的目标点，覆盖默认的 lookAt
 if (skinViewer.controls) {
@@ -293,4 +342,5 @@ function setInteractionEnabled(enabled) {
     container.style.pointerEvents = interactive ? 'auto' : 'none';
 }
 
+startAnim("OrynShowcase", 1.0);
 setInteractionEnabled(true);
