@@ -364,6 +364,10 @@ public class OrynCosmeticsActivity extends Activity {
         status.setText(capesTab
                 ? "Capes • local and compatible"
                 : "Skins • 64×64 compatible PNG");
+
+        // Refresh the 3D preview when switching tabs so an already-equipped
+        // cape appears immediately instead of waiting for another profile change.
+        refreshPreview();
     }
 
     private void pick(int requestCode) {
