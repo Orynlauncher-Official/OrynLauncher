@@ -35,7 +35,7 @@ public class OrynCosmeticsActivity extends Activity {
     private OrynCosmeticPreviewView preview;
     private Spinner profiles, models, skins, capes;
     private TextView status, selectedSkin, selectedCape, tabTitle;
-    private Button skinTab, capeTab;
+    private Button skinTab, capeTab, applyButton, saveButton, removeButton, unequipButton;
     private OrynCosmeticsStore.CosmeticProfile active;
     private boolean capeTabSelected;
     private boolean refreshing;
@@ -290,7 +290,7 @@ public class OrynCosmeticsActivity extends Activity {
             }
         });
 
-        apply.setOnClickListener(v -> {
+        applyButton.setOnClickListener(v -> {
             saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin"));
         });
         save.setOnClickListener(v -> saveCurrent("Profile saved"));
