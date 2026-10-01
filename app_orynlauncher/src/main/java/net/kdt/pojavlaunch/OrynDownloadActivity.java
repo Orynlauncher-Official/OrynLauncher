@@ -37,12 +37,16 @@ import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ApiHandler;
+import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
+import net.kdt.pojavlaunch.modloaders.modpacks.models.ModDetail;
+import net.kdt.pojavlaunch.modloaders.modpacks.models.ModItem;
 
 public class OrynDownloadActivity extends AppCompatActivity {
     private enum Category {
         MOD("Mods", "mod", "mods"),
         RESOURCEPACK("Resource Packs", "resourcepack", "resourcepacks"),
-        SHADER("Shaders", "shader", "shaderpacks");
+        SHADER("Shaders", "shader", "shaderpacks"),
+        MODPACK("Modpacks", "modpack", "");
 
         final String title;
         final String projectType;
@@ -57,6 +61,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final ApiHandler api = new ApiHandler("https://api.modrinth.com/v2");
+    private final ModrinthApi modrinthModpackApi = new ModrinthApi();
     private Category category = Category.MOD;
     private EditText search;
     private LinearLayout results;
@@ -119,6 +124,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         addRailItem(rail, "Mods", "MODS", Category.MOD);
         addRailItem(rail, "Resource Packs", "PACKS", Category.RESOURCEPACK);
         addRailItem(rail, "Shaders", "SHADERS", Category.SHADER);
+        addRailItem(rail, "Modpacks", "MODPACKS", Category.MODPACK);
 
         TextView version = label("", 10);
         version.setTextColor(0xFF777B86);
@@ -358,7 +364,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
         icon.setImageResource(category == Category.MOD ? R.drawable.oryn_download_mod
                 : category == Category.RESOURCEPACK ? R.drawable.oryn_download_resource
-                : R.drawable.oryn_download_shader);
+                : category == Category.SHADER ? R.drawable.oryn_download_shader
+                : R.drawable.oryn_download_mod);
         card.addView(icon, new LinearLayout.LayoutParams(dp(48), dp(48)));
 
         LinearLayout info = new LinearLayout(this);
@@ -404,14 +411,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDesc.setText(description == null || description.trim().isEmpty()
                 ? "No description available." : description);
         detailDownload.setEnabled(true);
-        detailDownload.setText("Download");
-        detailDownload.setOnClickListener(v -> downloadProject(projectId, title, detailDownload));
+        detailDownload.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
+        detailDownload.setOnClickListener(v -> {
+            if (category == Category.MODPACK) {
+                installModpack(projectId, title, iconUrl, detailDownload);
+            } else {
+                downloadProject(projectId, title, detailDownload);
+            }
+        });
         if (iconUrl != null) {
             loadImage(detailIcon, iconUrl);
         } else {
             detailIcon.setImageResource(category == Category.MOD ? R.drawable.oryn_download_mod
                     : category == Category.RESOURCEPACK ? R.drawable.oryn_download_resource
-                    : R.drawable.oryn_download_shader);
+                    : category == Category.SHADER ? R.drawable.oryn_download_shader
+                    : R.drawable.oryn_download_mod);
         }
     }
 
@@ -429,6 +443,51 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 connection.disconnect();
                 if (bitmap != null) runOnUiThread(() -> target.setImageBitmap(bitmap));
             } catch (Exception ignored) {
+            }
+        });
+    }
+
+    private void installModpack(final String projectId, final String projectTitle, final String iconUrl, final Button button) {
+        button.setEnabled(false);
+        button.setText("Checking version…");
+        executor.execute(() -> {
+            try {
+                ModItem item = new ModItem("modrinth", true, projectId, projectTitle,
+                        projectTitle, iconUrl == null ? "" : iconUrl);
+                ModDetail detail = modrinthModpackApi.getModDetails(item);
+                if (detail == null || detail.versionUrls == null || detail.versionUrls.length == 0) {
+                    throw new Exception("No modpack versions found");
+                }
+
+                String mcVersion = getSelectedMinecraftVersion();
+                int selected = -1;
+                for (int i = 0; i < detail.versionMinecraftNames.length; i++) {
+                    if (mcVersion != null && mcVersion.equals(detail.versionMinecraftNames[i])) {
+                        selected = i;
+                        break;
+                    }
+                }
+                if (selected < 0) {
+                    throw new Exception("This modpack is not made for your Minecraft version"
+                            + (mcVersion == null ? "" : " (" + mcVersion + ")"));
+                }
+
+                final int versionIndex = selected;
+                runOnUiThread(() -> button.setText("Installing…"));
+                modrinthModpackApi.handleModpackInstallation(this, detail, versionIndex);
+
+                runOnUiThread(() -> {
+                    button.setText("Install started");
+                    Toast.makeText(this, "Installing " + projectTitle + " for Minecraft "
+                            + detail.versionMinecraftNames[versionIndex], Toast.LENGTH_LONG).show();
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    button.setEnabled(true);
+                    button.setText("Install Modpack");
+                    Toast.makeText(this, e.getMessage() == null ? "Modpack installation failed" : e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
             }
         });
     }
@@ -578,7 +637,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private String getModrinthLoader(Instance instance) {
         if (instance == null) return null;
-        if (category == Category.RESOURCEPACK || category == Category.SHADER) {
+        if (category == Category.RESOURCEPACK || category == Category.SHADER || category == Category.MODPACK) {
             return "minecraft";
         }
 
