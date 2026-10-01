@@ -513,7 +513,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             try {
                 // Scan the selected instance first. Never download an arbitrary/latest
                 // project version: it must explicitly support this Minecraft version.
-                final String minecraftVersion = instance.versionId;
+                final String minecraftVersion = getMinecraftVersionFromInstanceId(instance.versionId);
                 if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
                     throw new Exception("Could not determine the Minecraft version of this instance");
                 }
@@ -624,15 +624,37 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private String getSelectedMinecraftVersion() {
         try {
             Instance instance = Instances.loadSelectedInstance();
-            return instance == null ? null : getVersionOrNull(instance.versionId);
+            if (instance == null) return null;
+            return getMinecraftVersionFromInstanceId(instance.versionId);
         } catch (Exception e) {
             return null;
         }
     }
 
-    private String getVersionOrNull(String version) {
-        if (version == null || version.trim().isEmpty()) return null;
-        return version.trim();
+    /**
+     * Instance.versionId may be a loader profile id, not the raw Minecraft
+     * version, e.g. fabric-loader-0.19.5-1.21.11.
+     */
+    private String getMinecraftVersionFromInstanceId(String versionId) {
+        if (versionId == null || versionId.trim().isEmpty()) return null;
+        String id = versionId.trim();
+
+        if (id.startsWith("fabric-loader-")) {
+            int lastDash = id.lastIndexOf('-');
+            if (lastDash >= 0 && lastDash + 1 < id.length()) {
+                String candidate = id.substring(lastDash + 1);
+                if (candidate.matches("\\d+\\.\\d+(?:\\.\\d+)?(?:[-+].*)?")) {
+                    return candidate;
+                }
+            }
+        }
+
+        java.util.regex.Matcher prefix = java.util.regex.Pattern
+                .compile("^(\\d+\\.\\d+(?:\\.\\d+)?)")
+                .matcher(id);
+        if (prefix.find()) return prefix.group(1);
+
+        return id;
     }
 
     private String getModrinthLoader(Instance instance) {
