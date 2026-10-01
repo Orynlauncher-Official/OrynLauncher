@@ -195,19 +195,19 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
-        Button apply = button("Apply");
-        Button save = button("Save");
-        primary(apply);
-        actions.addView(apply, new LinearLayout.LayoutParams(0, d(46), 1));
-        actions.addView(save, new LinearLayout.LayoutParams(0, d(46), 1));
+        applyButton = button("Apply Skin");
+        saveButton = button("Save Skin");
+        primary(applyButton);
+        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(46), 1));
+        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(46), 1));
         right.addView(actions, lp(-1, 46));
 
         LinearLayout actions2 = new LinearLayout(this);
         actions2.setOrientation(LinearLayout.HORIZONTAL);
-        Button remove = button("Remove");
-        Button unequip = button("Unequip Cape");
-        actions2.addView(remove, new LinearLayout.LayoutParams(0, d(42), 1));
-        actions2.addView(unequip, new LinearLayout.LayoutParams(0, d(42), 1));
+        removeButton = button("Remove Skin");
+        unequipButton = button("Unequip Cape");
+        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(42), 1));
+        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(42), 1));
         right.addView(actions2, lp(-1, 42));
 
         TextView note = text("Local cosmetics work offline. An official Minecraft cape is shown only when the account actually owns one.", 10, MUTED);
@@ -293,9 +293,9 @@ public class OrynCosmeticsActivity extends Activity {
         applyButton.setOnClickListener(v -> {
             saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin"));
         });
-        save.setOnClickListener(v -> saveCurrent("Profile saved"));
-        remove.setOnClickListener(v -> removeSelected());
-        unequip.setOnClickListener(v -> {
+        saveButton.setOnClickListener(v -> saveCurrent(capeTabSelected ? "Cape saved" : "Skin saved"));
+        removeButton.setOnClickListener(v -> removeSelected());
+        unequipButton.setOnClickListener(v -> {
             active.cape = "";
             saveCurrent("Cape unequipped");
         });
