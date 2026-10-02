@@ -52,6 +52,19 @@ public final class OrynThemeManager {
     private static void applyView(View view, int color) {
         int id = view.getId();
 
+        // V4 has its own fixed blue visual language from the reference design.
+        // Do not let the legacy/custom accent preference recolor the V4 home screen.
+        if (id == R.id.fragment_menu_main || id == R.id.oryn_brand || id == R.id.account_spinner) {
+            if (id == R.id.fragment_menu_main) return;
+            if (view instanceof ViewGroup) {
+                ViewGroup group = (ViewGroup) view;
+                for (int i = 0; i < group.getChildCount(); i++) {
+                    applyView(group.getChildAt(i), color);
+                }
+            }
+            return;
+        }
+
         // Home screen: only the Launch button background changes.
         if (id == R.id.play_button) {
             setThemeButtonBackground(view, color);
