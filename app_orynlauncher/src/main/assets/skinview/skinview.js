@@ -219,8 +219,11 @@ function getPreviewDistance() {
     const shortSide = Math.min(w, h);
     if (shortSide <= 0) return 92;
 
-    const distance = 92 * (420 / shortSide);
-    return Math.max(82, Math.min(112, distance));
+    // The previous 92-unit framing made the player tiny on wide
+    // landscape cosmetics screens. Use a much closer camera while still
+    // keeping the full head-to-feet model inside the preview.
+    const distance = 48 * (420 / shortSide);
+    return Math.max(44, Math.min(58, distance));
 }
 
 let pendingCapeView = false;
