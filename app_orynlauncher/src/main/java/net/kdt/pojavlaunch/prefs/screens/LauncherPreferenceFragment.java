@@ -16,6 +16,7 @@ import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 
 import net.kdt.pojavlaunch.LauncherActivity;
+import net.kdt.pojavlaunch.OrynCustomizationActivity;
 import net.kdt.pojavlaunch.utils.OrynColorPickerDialog;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
 import git.artdeell.mojo.R;
@@ -80,6 +81,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         addPreferencesFromResource(R.xml.pref_main);
         setupNotificationRequestPreference();
         setupThemePreference();
+        setupCustomizationPreference();
     }
 
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
@@ -92,6 +94,14 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         Preference preference = requirePreference("theme_color");
         preference.setOnPreferenceClickListener(p -> {
             OrynColorPickerDialog.show(requireContext());
+            return true;
+        });
+    }
+
+    private void setupCustomizationPreference() {
+        Preference preference = requirePreference("oryn_customization");
+        preference.setOnPreferenceClickListener(p -> {
+            startActivity(new android.content.Intent(requireContext(), OrynCustomizationActivity.class));
             return true;
         });
     }
