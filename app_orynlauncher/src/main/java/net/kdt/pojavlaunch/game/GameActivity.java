@@ -4,6 +4,7 @@ package net.kdt.pojavlaunch.game;
 import static net.kdt.pojavlaunch.Tools.dialogForceClose;
 import static net.kdt.pojavlaunch.game.platform.Platform.PLATFORM;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_ENABLE_GYRO;
+import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_ORYN_FPS_BOOST;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_SUSTAINED_PERFORMANCE;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_USE_ALTERNATE_SURFACE;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_VIRTUAL_MOUSE_START;
@@ -150,7 +151,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
         // Set the sustained performance mode for available APIs
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            getWindow().setSustainedPerformanceMode(PREF_SUSTAINED_PERFORMANCE);
+            getWindow().setSustainedPerformanceMode(PREF_SUSTAINED_PERFORMANCE || PREF_ORYN_FPS_BOOST);
 
         // This is required on Android 10 for the insets listener
         // https://issuetracker.google.com/issues/266331465
