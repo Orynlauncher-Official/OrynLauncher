@@ -63,6 +63,21 @@ public class mcVersionSpinner extends ExtendedTextView {
     private Object mPopupAnimation;
     private int mSelectedIndex;
 
+    /** Callback for UI elements that mirror the currently selected Minecraft instance. */
+    public interface OnSelectionChangedListener {
+        void onSelectionChanged(@Nullable DisplayInstance instance);
+    }
+
+    private OnSelectionChangedListener mSelectionChangedListener;
+
+    public void setOnSelectionChangedListener(@Nullable OnSelectionChangedListener listener) {
+        mSelectionChangedListener = listener;
+        if (listener != null) {
+            Object item = mProfileAdapter.getItem(mSelectedIndex);
+            listener.onSelectionChanged(item instanceof DisplayInstance ? (DisplayInstance) item : null);
+        }
+    }
+
     private final InstanceAdapter mProfileAdapter = new InstanceAdapter(new InstanceAdapterExtra[]{
             new InstanceAdapterExtra(VERSION_SPINNER_PROFILE_CREATE,
                     R.string.create_instance,
@@ -81,6 +96,12 @@ public class mcVersionSpinner extends ExtendedTextView {
         mProfileAdapter.setView(this, position, false);
         mSelectedIndex = position;
         mProfileAdapter.applySelectionIndex(mSelectedIndex);
+        if (mSelectionChangedListener != null) {
+            Object item = mProfileAdapter.getItem(position);
+            mSelectionChangedListener.onSelectionChanged(
+                    item instanceof DisplayInstance ? (DisplayInstance) item : null
+            );
+        }
     }
 
     public void openProfileEditor(FragmentActivity fragmentActivity) {
