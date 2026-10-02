@@ -44,6 +44,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
     private Button upButton;
     private Button pasteButton;
     private File currentDir;
+    private File rootDir;
     private File pendingCopy;
     private boolean pendingCut;
 
@@ -66,7 +67,17 @@ public class OrynFileManagerActivity extends AppCompatActivity {
             return;
         }
 
-        currentDir = instance.getGameDirectory();
+        // Start at OrynLauncher storage root, not the selected instance directory.
+        // The old implementation opened the selected instance directly, which could
+        // make OrynFiles appear to contain only .oryn when that instance had no other
+        // top-level files. Users should be able to browse the complete launcher storage.
+        rootDir = new File(Tools.DIR_GAME_HOME);
+        if (!rootDir.exists() && !rootDir.mkdirs()) {
+            Toast.makeText(this, "Unable to access OrynLauncher storage", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        currentDir = rootDir;
         setTitle("Oryn File Manager");
         getWindow().setStatusBarColor(Color.rgb(18, 18, 20));
         getWindow().setNavigationBarColor(Color.rgb(18, 18, 20));
@@ -125,7 +136,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
 
     private void refresh() {
         pathView.setText(currentDir.getAbsolutePath());
-        upButton.setEnabled(currentDir.getParentFile() != null);
+        upButton.setEnabled(!sameFile(currentDir, rootDir) && currentDir.getParentFile() != null);
         pasteButton.setEnabled(pendingCopy != null && pendingCopy.exists());
 
         list.removeAllViews();
@@ -365,8 +376,9 @@ public class OrynFileManagerActivity extends AppCompatActivity {
     }
 
     private void goUp() {
+        if (sameFile(currentDir, rootDir)) return;
         File parent = currentDir.getParentFile();
-        if (parent != null) {
+        if (parent != null && (isInside(parent, rootDir) || sameFile(parent, rootDir))) {
             currentDir = parent;
             refresh();
         }
