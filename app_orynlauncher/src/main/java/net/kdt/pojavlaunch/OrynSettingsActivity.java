@@ -45,6 +45,7 @@ public class OrynSettingsActivity extends BaseActivity {
     private LinearLayout sidebar;
     private TextView pageTitle;
     private TextView pageSubtitle;
+    private Button activeNav;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -86,7 +87,7 @@ public class OrynSettingsActivity extends BaseActivity {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setPadding(dp(18), 0, dp(14), 0);
+        r.setPadding(dp(18), 0, dp(12), 0);
         r.setBackground(bg(PANEL_2, 16));
         return r;
     }
@@ -94,42 +95,42 @@ public class OrynSettingsActivity extends BaseActivity {
     private void build() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(42), dp(28), dp(42), dp(28));
+        int sideMargin = Math.max(dp(28), (int) (getResources().getDisplayMetrics().widthPixels * 0.085f));
+        root.setPadding(sideMargin, dp(24), sideMargin, dp(24));
         root.setBackgroundColor(BG);
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
+
         ImageView gear = new ImageView(this);
         gear.setImageResource(R.drawable.oryn_nav_settings);
-        gear.setPadding(dp(3), dp(3), dp(3), dp(3));
-        header.addView(gear, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        gear.setPadding(dp(2), dp(2), dp(2), dp(2));
+        header.addView(gear, new LinearLayout.LayoutParams(dp(54), dp(54)));
 
         LinearLayout headerText = new LinearLayout(this);
         headerText.setOrientation(LinearLayout.VERTICAL);
         pageTitle = text("Settings", 25, TEXT);
         pageTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         pageSubtitle = text("Customize your launcher experience", 12, MUTED);
-        headerText.addView(pageTitle, new LinearLayout.LayoutParams(-1, dp(30)));
-        headerText.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, dp(24)));
+        headerText.addView(pageTitle, new LinearLayout.LayoutParams(-1, dp(31)));
+        headerText.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, dp(23)));
         LinearLayout.LayoutParams ht = new LinearLayout.LayoutParams(0, dp(58), 1);
         ht.leftMargin = dp(12);
         header.addView(headerText, ht);
 
-        Button close = textButton("Back");
-        close.setOnClickListener(v -> finish());
-        header.addView(close, new LinearLayout.LayoutParams(dp(92), dp(44)));
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(66)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(68)));
 
         LinearLayout body = new LinearLayout(this);
         body.setOrientation(LinearLayout.HORIZONTAL);
         body.setGravity(Gravity.TOP);
-        body.setPadding(0, dp(12), 0, 0);
+        body.setPadding(0, dp(10), 0, 0);
 
         sidebar = new LinearLayout(this);
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(10), dp(10), dp(10), dp(10));
         sidebar.setBackground(bg(PANEL, 22));
-        body.addView(sidebar, new LinearLayout.LayoutParams(dp(302), -1));
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(dp(302), -1);
+        body.addView(sidebar, sp);
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -141,9 +142,10 @@ public class OrynSettingsActivity extends BaseActivity {
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -1, 1);
         cp.leftMargin = dp(2);
         body.addView(scroll, cp);
-        root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
 
+        root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
+
         addNav("General", R.drawable.oryn_nav_settings, v -> showGeneral());
         addNav("Appearance", R.drawable.ic_px_image, v -> showAppearance());
         addNav("Game", R.drawable.ic_px_gamepad, v -> showGame());
@@ -173,11 +175,20 @@ public class OrynSettingsActivity extends BaseActivity {
         b.setCompoundDrawablePadding(dp(16));
         b.setPadding(dp(18), 0, dp(10), 0);
         b.setBackground(bg(PANEL, 14));
-        b.setOnClickListener(listener);
+        b.setOnClickListener(v -> {
+            if (activeNav != null) activeNav.setBackground(bg(PANEL, 14));
+            activeNav = b;
+            b.setBackground(bg(Color.rgb(31, 48, 71), 14));
+            listener.onClick(v);
+        });
         sidebar.addView(b, new LinearLayout.LayoutParams(-1, dp(58)));
-        LinearLayout.LayoutParams p = (LinearLayout.LayoutParams)b.getLayoutParams();
+        LinearLayout.LayoutParams p = (LinearLayout.LayoutParams) b.getLayoutParams();
         p.bottomMargin = dp(4);
         b.setLayoutParams(p);
+        if (activeNav == null && "General".equals(label)) {
+            activeNav = b;
+            b.setBackground(bg(Color.rgb(31, 48, 71), 14));
+        }
     }
 
     private void clear(String title, String subtitle) {
@@ -215,11 +226,11 @@ public class OrynSettingsActivity extends BaseActivity {
         labels.setGravity(Gravity.CENTER_VERTICAL);
         TextView a = text(title, 14, TEXT);
         TextView b = text(subtitle, 11, MUTED);
-        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(24)));
-        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(21)));
-        r.addView(labels, new LinearLayout.LayoutParams(0, dp(68), 1));
-        r.addView(control, new LinearLayout.LayoutParams(dp(180), dp(50)));
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(70));
+        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(21)));
+        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(19)));
+        r.addView(labels, new LinearLayout.LayoutParams(0, dp(56), 1));
+        r.addView(control, new LinearLayout.LayoutParams(dp(180), dp(46)));
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(58));
         rp.bottomMargin = dp(4);
         content.addView(r, rp);
     }
@@ -252,15 +263,33 @@ public class OrynSettingsActivity extends BaseActivity {
 
     private void showGeneral() {
         clear("Settings", "Customize your launcher experience");
+
         section("General", R.drawable.oryn_nav_settings);
-        Spinner language = spinner(new String[]{"English"}, 0);
-        addSetting("Language", "Choose your preferred language", language);
-        Switch update = toggle(uiPrefs.getBoolean("auto_update", true), (b, c) ->
-                uiPrefs.edit().putBoolean("auto_update", c).apply());
-        addSetting("Auto Update", "Automatically check for updates", update);
-        Switch compact = toggle(uiPrefs.getBoolean("compact_mode", false), (b, c) ->
-                uiPrefs.edit().putBoolean("compact_mode", c).apply());
-        addSetting("Compact Mode", "Use a smaller layout for better performance", compact);
+        addSetting("Language", "Choose your preferred language",
+                spinner(new String[]{"English"}, 0));
+        addSetting("Auto Update", "Automatically check for updates",
+                toggle(uiPrefs.getBoolean("auto_update", true), (b, checked) ->
+                        uiPrefs.edit().putBoolean("auto_update", checked).apply()));
+        addSetting("Compact Mode", "Use a smaller layout for better performance",
+                toggle(uiPrefs.getBoolean("compact_mode", false), (b, checked) ->
+                        uiPrefs.edit().putBoolean("compact_mode", checked).apply()));
+
+        addGap();
+
+        section("Appearance", R.drawable.ic_px_image);
+        addSetting("Theme", "Choose your preferred theme",
+                spinner(new String[]{"Dark", "Oryn Blue", "Oryn Purple", "AMOLED"}, 0));
+        addSetting("UI Scale", "Adjust the interface size",
+                spinner(new String[]{"Small", "Default", "Large"}, 1));
+
+        addGap();
+
+        section("Game", R.drawable.ic_px_gamepad);
+        addSetting("Max FPS (Launcher)", "Limit the launcher framerate (0 = Uncapped)",
+                spinner(new String[]{"30 FPS", "60 FPS", "90 FPS", "120 FPS", "Uncapped"}, 1));
+        addSetting("Animations", "Enable smooth UI animations",
+                toggle(uiPrefs.getBoolean("animations", true), (b, checked) ->
+                        uiPrefs.edit().putBoolean("animations", checked).apply()));
     }
 
     private void showAppearance() {
