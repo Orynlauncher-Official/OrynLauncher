@@ -276,6 +276,13 @@
             android:padding="5dp"/>
     </LinearLayout>
 
+    <!-- Compatibility hook for OrynCustomizationManager. -->
+    <FrameLayout
+        android:id="@+id/oryn_feature_panel"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone" />
+
     <!-- Existing wiring kept alive but visually hidden. -->
     <ImageButton
         android:id="@+id/open_files_button"
