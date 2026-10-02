@@ -16,6 +16,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.projection.MediaProjection;
 import android.media.projection.MediaProjectionManager;
 import android.graphics.Color;
@@ -146,6 +148,16 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         initLayout(R.layout.activity_basemain);
 
         Platform.initialize(this, launcherGLView);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
+                if (audioManager != null) {
+                    audioManager.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
+                }
+            } catch (Throwable t) {
+                Log.w("OrynRecorder", "Could not enable playback capture policy", t);
+            }
+        }
 
         mGyroControl = new GyroControl(this);
 
