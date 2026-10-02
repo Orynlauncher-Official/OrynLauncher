@@ -246,7 +246,7 @@
         <ImageView
             android:layout_width="25dp"
             android:layout_height="30dp"
-            android:src="@drawable/oryn_v4_crystal"
+            android:src="@drawable/oryn_official_logo_v4"
             android:contentDescription="Oryn"/>
 
         <TextView
