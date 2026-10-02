@@ -29,7 +29,7 @@ public class LauncherPreferences {
     public static String PREF_RENDERER = "opengles2";
 
 	public static boolean PREF_IGNORE_NOTCH = false;
-	public static float PREF_BUTTONSIZE = 100f;
+	public static float PREF_BUTTONSIZE = 115f;
 	public static float PREF_MOUSESCALE = 1f;
 	public static int PREF_LONGPRESS_TRIGGER = 300;
 	public static String PREF_DEFAULTCTRL_PATH = Tools.CTRLDEF_FILE;
@@ -84,7 +84,10 @@ public class LauncherPreferences {
         boolean isDevicePowerful = isDevicePowerful(ctx);
 
         PREF_RENDERER = DEFAULT_PREF.getString("renderer", "opengles2");
-        PREF_BUTTONSIZE = DEFAULT_PREF.getInt("buttonscale", 100);
+        if (!DEFAULT_PREF.contains("buttonscale")) {
+            DEFAULT_PREF.edit().putInt("buttonscale", 115).apply();
+        }
+        PREF_BUTTONSIZE = DEFAULT_PREF.getInt("buttonscale", 115);
         PREF_MOUSESCALE = DEFAULT_PREF.getInt("mousescale", 100)/100f;
         PREF_MOUSESPEED = ((float)DEFAULT_PREF.getInt("mousespeed",100))/100f;
         PREF_IGNORE_NOTCH = DEFAULT_PREF.getBoolean("ignoreNotch", false);
