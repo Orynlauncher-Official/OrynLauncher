@@ -11,14 +11,14 @@
     <LinearLayout
         android:id="@+id/oryn_sidebar"
         android:layout_width="72dp"
-        android:layout_height="500dp"
+        android:layout_height="460dp"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:paddingTop="12dp"
         android:paddingBottom="12dp"
         android:background="@drawable/oryn_sidebar"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="44dp"
         android:elevation="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -35,58 +35,58 @@
 
         <ImageButton
             android:id="@+id/download_button"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/oryn_nav_cube"
             android:contentDescription="@string/oryn_download"
             android:background="@android:color/transparent"
-            android:padding="15dp"
+            android:padding="48dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
             android:id="@+id/custom_control_button"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/oryn_nav_gamepad"
             android:contentDescription="@string/mcl_option_customcontrol"
             android:background="@android:color/transparent"
-            android:padding="15dp"
+            android:padding="48dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
             android:id="@+id/cosmetics_button"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/oryn_nav_cosmetics"
             android:contentDescription="Oryn Cosmetics"
             android:background="@android:color/transparent"
-            android:padding="15dp"
+            android:padding="48dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
             android:id="@+id/oryn_files_nav"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_px_file"
             android:contentDescription="Files"
             android:background="@android:color/transparent"
-            android:padding="15dp"
+            android:padding="48dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
             android:id="@+id/oryn_crash_nav"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/oryn_nav_crash"
             android:contentDescription="Crash Viewer"
             android:background="@android:color/transparent"
-            android:padding="15dp"
+            android:padding="48dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
             android:id="@+id/install_jar_button"
-            android:layout_width="58dp"
-            android:layout_height="58dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/oryn_nav_settings"
             android:contentDescription="Settings"
             android:background="@android:color/transparent"
@@ -219,8 +219,8 @@
 
             <LinearLayout
                 android:layout_width="265dp"
-                android:layout_height="70dp"
-                android:layout_marginTop="14dp"
+                android:layout_height="62dp"
+                android:layout_marginTop="12dp"
                 android:orientation="horizontal"
                 android:gravity="center">
 
@@ -231,37 +231,37 @@
                     android:src="@drawable/ic_px_file"
                     android:contentDescription="Files"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp"/>
+                    android:padding="13dp""/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_downloads"
-                    android:layout_width="62dp"
-                    android:layout_height="58dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:layout_marginStart="6dp"
                     android:src="@drawable/oryn_nav_cube"
                     android:contentDescription="Downloads"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="15dp"/>
+                    android:padding="48dp"/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_controls"
-                    android:layout_width="62dp"
-                    android:layout_height="58dp"
-                    android:layout_marginStart="7dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:layout_marginStart="6dp"
                     android:src="@drawable/oryn_nav_gamepad"
                     android:contentDescription="Controls"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="15dp"/>
+                    android:padding="13dp"""/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_cosmetics"
-                    android:layout_width="62dp"
-                    android:layout_height="58dp"
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
                     android:layout_marginStart="7dp"
                     android:src="@drawable/oryn_nav_cosmetics"
                     android:contentDescription="Cosmetics"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="15dp"/>
+                    android:padding="13dp""/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
