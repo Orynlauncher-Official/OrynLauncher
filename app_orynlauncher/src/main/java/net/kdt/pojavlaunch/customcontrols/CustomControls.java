@@ -84,7 +84,18 @@ public class CustomControls {
 		this.mControlDataList.add(new ControlData("SEC", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${screen_width} * 0.785", "${screen_height} * 0.49", 74, 48, false));
 
 		// Inventory key near the lower-right middle.
-		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
+		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${screen_width} * 0.66", "${screen_height} * 0.815", 62, 48, false));
+
+		// Direct hotbar slot controls. Minecraft Java maps 1-9 to hotbar slots 1-9,
+		// so users can select any slot directly instead of repeatedly scrolling.
+		final float hotbarWidth = 9 * 46 + 8 * 6;
+		final String hotbarX = "${screen_width} * 0.5 - " + (hotbarWidth / 2f);
+		final String hotbarY = "${screen_height} * 0.86";
+		for (int i = 0; i < 9; i++) {
+			int keycode = KeyEvent.KEYCODE_1 + i;
+			String x = hotbarX + " + " + (i * 52);
+			this.mControlDataList.add(new ControlData(String.valueOf(i + 1), new int[]{keycode}, x, hotbarY, 46, 42, false));
+		}
 
 		// Floating gear/menu button. It is intentionally circular and uses the
 		// free-positioning path in ControlInterface instead of snapping to other controls.
@@ -99,7 +110,7 @@ public class CustomControls {
 		);
 		floatingMenu.cornerRadius = 50;
 		this.mControlDataList.add(floatingMenu);
-		version = 10;
+		version = 11;
 	}
 	public void save(String path) throws IOException {
 		//Current version is the V3.2 so the version as to be marked as 8 !
