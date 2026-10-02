@@ -14,6 +14,8 @@ import git.artdeell.mojo.R;
 public final class OrynThemeManager {
     private static final String PREF_KEY = "oryn_theme_color";
     private static final int DEFAULT_COLOR = Color.rgb(80, 150, 255);
+    private static final String CUSTOM_PREFS = "oryn_customization";
+    private static final String CUSTOM_ACCENT = "accent";
 
     private OrynThemeManager() {}
 
