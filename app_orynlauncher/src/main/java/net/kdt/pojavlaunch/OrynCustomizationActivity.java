@@ -80,9 +80,10 @@ public class OrynCustomizationActivity extends AppCompatActivity {
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setPadding(dp(28), dp(18), dp(28), dp(28));
-        root.setBackgroundColor(OrynCustomizationManager.getBackgroundColor(this));
+        root.setBackgroundColor(Color.TRANSPARENT);
         scroll.addView(root);
         setContentView(scroll);
+        root.setBackgroundColor(OrynCustomizationManager.getBackgroundColor(this));
 
         root.addView(heading("Oryn Customization", 25));
         TextView sub = heading("Customize the OrynLauncher v3 experience.", 13);
@@ -235,6 +236,7 @@ public class OrynCustomizationActivity extends AppCompatActivity {
     }
 
     private void applyNow() {
+        root.setBackgroundColor(OrynCustomizationManager.getBackgroundColor(this));
         OrynCustomizationManager.apply(this);
     }
 
