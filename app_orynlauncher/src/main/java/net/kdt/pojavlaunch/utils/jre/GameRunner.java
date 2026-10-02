@@ -184,6 +184,12 @@ public class GameRunner {
                 }
             }
         File gamedir = instance.getGameDirectory();
+
+        // Oryn FPS Boost: apply real Minecraft-side performance settings before
+        // the JVM starts. This reduces chunk/render/simulation workload instead
+        // of merely changing the launcher's FPS display.
+        applyOrynFpsBoost(gamedir);
+
         JVersionList.Version versionInfo = Tools.getVersionInfo(versionId);
         // We don't need the library list, the asset index, client download info for the code below
         versionInfo.libraries = null;
@@ -321,6 +327,75 @@ public class GameRunner {
 
         Tools.restartLauncherActivity(activity);
         Tools.fullyExit();
+    }
+
+    private static final String FPS_BOOST_BACKUP = ".oryn_fps_boost_backup";
+
+    private static void applyOrynFpsBoost(File gameDir) {
+        final String[] keys = {
+                "graphicsMode",
+                "renderDistance",
+                "simulationDistance",
+                "entityDistanceScaling",
+                "particles",
+                "entityShadows",
+                "ao",
+                "biomeBlendRadius",
+                "mipmapLevels",
+                "renderClouds",
+                "maxFps",
+                "enableVsync"
+        };
+
+        try {
+            MCOptionUtils.load(gameDir.getAbsolutePath());
+            File backup = new File(gameDir, FPS_BOOST_BACKUP);
+
+            if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
+                // Keep the user's original settings so disabling the feature can restore them.
+                if (!backup.exists()) {
+                    StringBuilder saved = new StringBuilder();
+                    for (String key : keys) {
+                        String value = MCOptionUtils.get(key);
+                        if (value != null) {
+                            saved.append(key).append('=').append(value).append('\n');
+                        }
+                    }
+                    Tools.write(backup.getAbsolutePath(), saved.toString());
+                }
+
+                // These are actual Minecraft options, not a fake FPS counter.
+                MCOptionUtils.set("graphicsMode", "0");              // Fast
+                MCOptionUtils.set("renderDistance", "8");
+                MCOptionUtils.set("simulationDistance", "5");
+                MCOptionUtils.set("entityDistanceScaling", "0.5");
+                MCOptionUtils.set("particles", "1");                 // Decreased
+                MCOptionUtils.set("entityShadows", "false");
+                MCOptionUtils.set("ao", "false");
+                MCOptionUtils.set("biomeBlendRadius", "0");
+                MCOptionUtils.set("mipmapLevels", "0");
+                MCOptionUtils.set("renderClouds", "false");
+                MCOptionUtils.set("maxFps", "260");
+                MCOptionUtils.set("enableVsync", "false");
+                MCOptionUtils.save();
+                Log.i("GameRunner", "Oryn FPS Boost applied to " + gameDir);
+            } else if (backup.exists()) {
+                // Restore the values that were present before FPS Boost was enabled.
+                String backupText = Tools.read(backup.getAbsolutePath());
+                for (String line : backupText.split("\\n")) {
+                    int separator = line.indexOf('=');
+                    if (separator <= 0) continue;
+                    MCOptionUtils.set(line.substring(0, separator), line.substring(separator + 1));
+                }
+                MCOptionUtils.save();
+                //noinspection ResultOfMethodCallIgnored
+                backup.delete();
+                Log.i("GameRunner", "Oryn FPS Boost settings restored");
+            }
+        } catch (Throwable e) {
+            // Never block Minecraft from launching because an optional optimization failed.
+            Log.w("GameRunner", "Failed to apply Oryn FPS Boost", e);
+        }
     }
 
     private static void disableSplash(File dir) {
