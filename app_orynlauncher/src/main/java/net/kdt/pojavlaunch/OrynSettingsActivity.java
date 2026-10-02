@@ -17,6 +17,7 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
@@ -146,7 +147,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("General", R.drawable.oryn_nav_settings, v -> showGeneral());
         addNav("Appearance", R.drawable.ic_px_image, v -> showAppearance());
         addNav("Game", R.drawable.ic_px_gamepad, v -> showGame());
-        addNav("Storage", R.drawable.ic_px_folder, v -> showStorage());
+        addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
     }
