@@ -38,7 +38,7 @@ public class MediaProjectionForegroundService extends Service {
         Notification notification = builder
                 .setContentTitle("OrynLauncher Recorder")
                 .setContentText("Recording Minecraft gameplay")
-                .setSmallIcon(net.kdt.pojavlaunch.R.mipmap.ic_launcher)
+                .setSmallIcon(git.artdeell.mojo.R.mipmap.ic_launcher)
                 .setOngoing(true)
                 .setCategory(Notification.CATEGORY_SERVICE)
                 .build();
