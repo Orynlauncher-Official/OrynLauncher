@@ -19,7 +19,8 @@ public final class OrynThemeManager {
 
     public static int getColor(Context context) {
         SharedPreferences prefs = context.getSharedPreferences("oryn_theme", Context.MODE_PRIVATE);
-        return prefs.getInt(PREF_KEY, DEFAULT_COLOR);
+        SharedPreferences custom = context.getSharedPreferences(CUSTOM_PREFS, Context.MODE_PRIVATE);
+        return custom.getInt(CUSTOM_ACCENT, prefs.getInt(PREF_KEY, DEFAULT_COLOR));
     }
 
     public static void stylePreferenceItem(Context context, View view) {
@@ -31,6 +32,8 @@ public final class OrynThemeManager {
     public static void setColor(Context context, int color) {
         context.getSharedPreferences("oryn_theme", Context.MODE_PRIVATE)
                 .edit().putInt(PREF_KEY, color).apply();
+        context.getSharedPreferences(CUSTOM_PREFS, Context.MODE_PRIVATE)
+                .edit().putInt(CUSTOM_ACCENT, color).apply();
         apply(context);
     }
 
