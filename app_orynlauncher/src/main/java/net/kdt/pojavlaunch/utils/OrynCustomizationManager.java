@@ -106,7 +106,7 @@ public final class OrynCustomizationManager {
     public static void reset(Context c) {
         prefs(c).edit().clear().apply();
         OrynThemeManager.setColor(c, DEFAULT_ACCENT);
-        apply(c);
+        if (c instanceof Activity) apply((Activity) c);
     }
 
     public static void apply(Activity activity) {
