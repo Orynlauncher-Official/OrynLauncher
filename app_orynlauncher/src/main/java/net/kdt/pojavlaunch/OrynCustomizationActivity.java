@@ -16,7 +16,6 @@ import net.kdt.pojavlaunch.utils.OrynCustomizationManager;
 
 public class OrynCustomizationActivity extends AppCompatActivity {
     private static final int PICK_BACKGROUND = 4101;
-    private static final int PICK_LOGO = 4102;
     private static final int PICK_PLAYER = 4103;
     private LinearLayout root;
 
@@ -158,16 +157,6 @@ public class OrynCustomizationActivity extends AppCompatActivity {
 
         root.addView(heading("Personalization", 18));
 
-        TextView logo = action("Choose Launcher Logo");
-        addRow("Launcher Logo", logo);
-        logo.setOnClickListener(v -> pick(PICK_LOGO));
-
-        TextView defaultLogo = action("Use Default Logo");
-        addRow("", defaultLogo);
-        defaultLogo.setOnClickListener(v -> {
-            OrynCustomizationManager.setLogoUri(this, ""); applyNow();
-        });
-
         TextView player = action("Choose Profile Image");
         addRow("Profile / Player Image", player);
         player.setOnClickListener(v -> pick(PICK_PLAYER));
@@ -257,7 +246,6 @@ public class OrynCustomizationActivity extends AppCompatActivity {
                     uri, data.getFlags() & Intent.FLAG_GRANT_READ_URI_PERMISSION);
         } catch (Exception ignored) {}
         if (request == PICK_BACKGROUND) OrynCustomizationManager.setBackgroundUri(this, uri.toString());
-        else if (request == PICK_LOGO) OrynCustomizationManager.setLogoUri(this, uri.toString());
         else if (request == PICK_PLAYER) OrynCustomizationManager.setPlayerUri(this, uri.toString());
         applyNow();
     }
