@@ -91,10 +91,11 @@
         android:layout_height="300dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="185dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.35">
 
         <ImageView
             android:id="@+id/oryn_center_logo"
