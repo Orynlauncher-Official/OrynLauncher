@@ -35,7 +35,7 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         requirePreference("resolutionRatio").setTitle("Resolution Scale");
         requirePreference("resolutionRatio").setSummary("Change the resolution scale of the game");
         SwitchPreferenceCompat fpsBoost = requirePreference("orynFpsBoost", SwitchPreferenceCompat.class);
-        fpsBoost.setChecked(LauncherPreferences.PREF_FPS_BOOST);
+        fpsBoost.setChecked(LauncherPreferences.PREF_ORYN_FPS_BOOST);
         fpsBoost.setSummary("Real Minecraft optimization: lower GPU/CPU workload for higher in-game FPS");
         requirePreference("zinkPreferSystemDriver").setTitle("Vulkan Driver");
         requirePreference("zinkPreferSystemDriver").setSummary("Use the system Vulkan driver when supported");
