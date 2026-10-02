@@ -43,6 +43,18 @@
             android:background="@android:color/transparent" android:padding="18dp"/>
     </LinearLayout>
 
+    <ImageView
+        android:id="@+id/oryn_custom_player_image"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_marginBottom="92dp"
+        android:visibility="gone"
+        android:scaleType="centerInside"
+        android:contentDescription="Custom profile image"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
     <LinearLayout android:id="@+id/oryn_launch_group" android:layout_width="260dp" android:layout_height="76dp"
         android:gravity="center" android:background="@drawable/oryn_pill"
         app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
