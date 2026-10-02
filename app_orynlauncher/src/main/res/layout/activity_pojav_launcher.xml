@@ -1,8 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/oryn_home_bg">
- <androidx.fragment.app.FragmentContainerView android:id="@+id/container_fragment" android:name="net.kdt.pojavlaunch.fragments.MainMenuFragment" android:layout_width="0dp" android:layout_height="0dp" app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toTopOf="parent" app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
- <TextView android:id="@+id/oryn_brand" android:layout_width="wrap_content" android:layout_height="48dp" android:gravity="center_vertical" android:layout_marginStart="102dp" android:layout_marginTop="16dp" android:text="◯   Oryn Launcher" android:textSize="19sp" android:textStyle="bold" android:textColor="#F4F4F5" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
- <com.kdt.mcgui.AccountSpinner android:id="@+id/account_spinner" android:layout_width="150dp" android:layout_height="48dp" android:layout_marginTop="16dp" android:layout_marginEnd="24dp" android:background="@drawable/oryn_pill" android:dropDownWidth="wrap_content" app:layout_constraintTop_toTopOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
- android:id="@+id/setting_button" android:layout_width="56dp" android:layout_height="56dp" android:layout_marginStart="44dp" android:layout_marginTop="24dp" android:background="@drawable/oryn_pill" android:src="@drawable/ic_px_sliders" android:contentDescription="Settings" android:padding="12dp" app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent"/>
- <com.kdt.mcgui.ProgressLayout android:id="@+id/progress_layout" android:layout_width="match_parent" android:layout_height="wrap_content" android:visibility="gone" app:layout_constraintBottom_toBottomOf="parent"/>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/oryn_home_bg">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/container_fragment"
+        android:name="net.kdt.pojavlaunch.fragments.MainMenuFragment"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- V4 top-left brand -->
+    <LinearLayout
+        android:id="@+id/oryn_brand"
+        android:layout_width="wrap_content"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="12dp"
+        android:elevation="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageView
+            android:layout_width="112dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_official_logo_v4"
+            android:scaleType="centerInside"
+            android:contentDescription="Oryn Launcher"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="28dp"
+            android:layout_marginStart="8dp"
+            android:gravity="center"
+            android:paddingStart="9dp"
+            android:paddingEnd="9dp"
+            android:text="v4"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#AFC0DB"
+            android:background="@drawable/oryn_version_badge"/>
+    </LinearLayout>
+
+    <!-- Existing account system, restyled as the V4 account pill. -->
+    <com.kdt.mcgui.AccountSpinner
+        android:id="@+id/account_spinner"
+        android:layout_width="176dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="24dp"
+        android:background="@drawable/oryn_account_pill"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:dropDownWidth="wrap_content"
+        android:elevation="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <!-- LauncherActivity keeps this button for non-home fragments. -->
+    <ImageButton
+        android:id="@+id/setting_button"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="invisible"
+        android:background="@android:color/transparent"
+        android:contentDescription="Settings"/>
+
+    <com.kdt.mcgui.ProgressLayout
+        android:id="@+id/progress_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
