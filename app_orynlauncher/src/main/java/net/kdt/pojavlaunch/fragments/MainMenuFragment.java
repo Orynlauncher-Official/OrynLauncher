@@ -64,6 +64,12 @@ public class MainMenuFragment extends Fragment {
         ImageButton mDownloadButton = view.findViewById(R.id.download_button);
         ImageButton mCrashButton = view.findViewById(R.id.crash_viewer_button);
         ImageButton mCosmeticsButton = view.findViewById(R.id.cosmetics_button);
+        ImageButton mFilesNavButton = view.findViewById(R.id.oryn_files_nav);
+        ImageButton mCrashNavButton = view.findViewById(R.id.oryn_crash_nav);
+        ImageButton mQuickFiles = view.findViewById(R.id.oryn_quick_files);
+        ImageButton mQuickDownloads = view.findViewById(R.id.oryn_quick_downloads);
+        ImageButton mQuickControls = view.findViewById(R.id.oryn_quick_controls);
+        ImageButton mQuickCosmetics = view.findViewById(R.id.oryn_quick_cosmetics);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -82,6 +88,12 @@ public class MainMenuFragment extends Fragment {
         mDownloadButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
         mCrashButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
         mCosmeticsButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCosmeticsActivity.class)));
+        mFilesNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynFileManagerActivity.class)));
+        mCrashNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
+        mQuickFiles.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynFileManagerActivity.class)));
+        mQuickDownloads.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
+        mQuickControls.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
+        mQuickCosmetics.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCosmeticsActivity.class)));
 
 
     }
