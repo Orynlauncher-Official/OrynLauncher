@@ -269,6 +269,21 @@
             android:padding="5dp"/>
     </LinearLayout>
 
+    <!-- Hidden compatibility controls kept for existing MainMenuFragment wiring. -->
+    <ImageButton
+        android:id="@+id/open_files_button"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:contentDescription="Files"/>
+
+    <ImageButton
+        android:id="@+id/crash_viewer_button"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:contentDescription="Crash viewer"/>
+
     <Button
         android:id="@+id/social_media_button"
         android:layout_width="1dp"
