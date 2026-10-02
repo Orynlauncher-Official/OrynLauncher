@@ -68,6 +68,7 @@ public class LauncherPreferences {
     public static boolean PREF_SKIP_NOTIFICATION_PERMISSION_CHECK = false;
     public static boolean PREF_RAPID_START = true;
     public static boolean PREF_VERIFY_FILES = true;
+    public static boolean PREF_FPS_BOOST = false;
 
     public static boolean PREF_FREEDRENO_SYSMEM = false;
     public static boolean PREF_KEYBOARD_AUTOPANNING = true;
@@ -115,6 +116,7 @@ public class LauncherPreferences {
         PREF_VERIFY_MANIFEST = DEFAULT_PREF.getBoolean("verifyManifest", true);
         PREF_SKIP_NOTIFICATION_PERMISSION_CHECK = DEFAULT_PREF.getBoolean(PREF_KEY_SKIP_NOTIFICATION_CHECK, false);
         PREF_VERIFY_FILES = DEFAULT_PREF.getBoolean("checkGameFiles", true);
+        PREF_FPS_BOOST = DEFAULT_PREF.getBoolean("orynFpsBoost", false);
         PREF_RAPID_START = DEFAULT_PREF.getBoolean("fastStartupCheck", true);
         PREF_FREEDRENO_SYSMEM = DEFAULT_PREF.getBoolean("freedrenoSysmem", false);
         PREF_KEYBOARD_AUTOPANNING = DEFAULT_PREF.getBoolean("keyboardAutoPanning", true);
