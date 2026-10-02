@@ -206,13 +206,31 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
     updateDefaultCameraPosition();
 }
 
-function setCapePreview(showBack) {
-    // Capes are mounted behind the player. The normal preview is front-facing,
-    // so the cape can be fully hidden by the player model.
-    setAzimuthAndPitch(showBack ? 180 : 0, 8, 48);
+function getPreviewDistance() {
+    // Keep the whole Minecraft player inside the launcher preview.
+    // The old fixed 48-unit distance was too close for the wide landscape
+    // cosmetics screen and clipped the legs.
+    const w = getWidth();
+    const h = getHeight();
+    const shortSide = Math.min(w, h);
+    if (shortSide <= 0) return 68;
+
+    // Slightly pull back on short preview panels, while avoiding an
+    // unnecessarily tiny player on large screens.
+    const distance = 68 * (420 / shortSide);
+    return Math.max(62, Math.min(86, distance));
 }
 
-setAzimuthAndPitch(0, 8, 48);
+let pendingCapeView = false;
+
+function setCapePreview(showBack) {
+    pendingCapeView = showBack === true;
+    // Capes are mounted behind the player. The normal preview is front-facing,
+    // so the cape can be fully hidden by the player model.
+    setAzimuthAndPitch(showBack ? 180 : 0, 7, getPreviewDistance());
+}
+
+setAzimuthAndPitch(0, 7, getPreviewDistance());
 
 // 确保 OrbitControls 也有相同的目标点，覆盖默认的 lookAt
 if (skinViewer.controls) {
@@ -332,6 +350,14 @@ function resize() {
     if (w > 0 && h > 0) {
         skinViewer.width = w;
         skinViewer.height = h;
+
+        // Re-frame after the WebView receives its real measured size.
+        // Preserve the current front/back cape view.
+        setAzimuthAndPitch(
+            pendingCapeView ? 180 : 0,
+            7,
+            getPreviewDistance()
+        );
     }
 }
 
