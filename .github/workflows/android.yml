@@ -91,14 +91,14 @@ jobs:
           mv app_orynlauncher/build/outputs/apk/full/pubRelease/app_orynlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
       - name: Gen md5sums
         run: |
-          md5sum out/app_OrynLauncherV3_debug.apk > out/app_OrynLauncherV3_debug.md5
+          md5sum out/app_OrynLauncherV4-Debug.apk > out/app_OrynLauncherV4-Debug.md5
           md5sum out/app-debug-noruntime.apk > out/app-debug-noruntime.md5
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: OrynLauncherV4-Debug
-          path: out/app_OrynLauncherV3_debug.apk
+          path: out/app_OrynLauncherV4-Debug.apk
 
       - name: Upload Debug APK (No runtime)
         uses: actions/upload-artifact@v4
