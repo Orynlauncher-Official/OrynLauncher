@@ -5,6 +5,13 @@
     <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
 
     <PreferenceCategory android:title="@string/preference_category_video" >
+        <SwitchPreference
+            android:key="oryn_fps_boost"
+            android:defaultValue="false"
+            android:title="@string/preference_oryn_fps_boost_title"
+            android:summary="@string/preference_oryn_fps_boost_description"
+            android:icon="@drawable/ic_px_dynamic"
+            />
         <androidx.preference.ListPreference
             android:title="@string/mcl_setting_category_renderer"
             android:key="renderer"
