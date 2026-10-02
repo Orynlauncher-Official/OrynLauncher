@@ -186,12 +186,17 @@ public class OrynCosmeticsActivity extends Activity {
         left.addView(new Space(this), lp(-1, 10));
         left.addView(info, lp(-1, 68));
 
-        Space push = new Space(this);
-        left.addView(push, new LinearLayout.LayoutParams(1, 0, 1));
         Button back = button("<   Back to Settings");
         back.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         left.addView(back, lp(-1, 42));
-        root.addView(left, new LinearLayout.LayoutParams(d(220), -1));
+
+        ScrollView leftScroll = new ScrollView(this);
+        leftScroll.setFillViewport(true);
+        leftScroll.setClipToPadding(false);
+        leftScroll.setVerticalScrollBarEnabled(false);
+        leftScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        leftScroll.addView(left, new ScrollView.LayoutParams(-1, -2));
+        root.addView(leftScroll, new LinearLayout.LayoutParams(d(220), -1));
 
         // ── Main preview stage ───────────────────────────────────────────
         LinearLayout center = new LinearLayout(this);
@@ -321,6 +326,14 @@ public class OrynCosmeticsActivity extends Activity {
         note.setMaxLines(2);
         note.setGravity(Gravity.CENTER_VERTICAL);
         right.addView(note, lp(-1, 30));
+
+        ScrollView rightScroll = new ScrollView(this);
+        rightScroll.setFillViewport(true);
+        rightScroll.setClipToPadding(false);
+        rightScroll.setVerticalScrollBarEnabled(false);
+        rightScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        rightScroll.addView(right, new ScrollView.LayoutParams(-1, -2));
+        root.addView(rightScroll, new LinearLayout.LayoutParams(d(320), -1));
 
         setContentView(root);
 
