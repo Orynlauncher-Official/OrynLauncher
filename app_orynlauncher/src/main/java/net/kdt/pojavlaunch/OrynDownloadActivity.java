@@ -321,11 +321,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     android.widget.ArrayAdapter<String> adapter =
                             new android.widget.ArrayAdapter<String>(
                                     this, android.R.layout.simple_spinner_dropdown_item, values);
-                    modpackVersionSpinner.setAdapter(adapter);
+                    versionSpinner.setAdapter(adapter);
                     int index = current == null ? -1 : values.indexOf(current);
                     if (index < 0) index = 0;
-                    selectedModpackMinecraftVersion = values.get(index);
-                    modpackVersionSpinner.setSelection(index);
+                    selectedMinecraftVersion = values.get(index);
+                    versionSpinner.setSelection(index);
                     updateVersionSpinnerVisibility();
                 });
             } catch (Exception e) {
@@ -337,10 +337,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         android.widget.ArrayAdapter<String> adapter =
                                 new android.widget.ArrayAdapter<String>(
                                         this, android.R.layout.simple_spinner_dropdown_item, fallback);
-                        modpackVersionSpinner.setAdapter(adapter);
-                        selectedModpackMinecraftVersion = current;
+                        versionSpinner.setAdapter(adapter);
+                        selectedMinecraftVersion = current;
                     }
-                    updateModpackVersionVisibility();
+                    updateVersionSpinnerVisibility();
                 });
             }
         });
