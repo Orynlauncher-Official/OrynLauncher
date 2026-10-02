@@ -39,50 +39,55 @@ public class CustomControls {
 	public CustomControls(Context ctx) {
 		this();
 
-		// OrynLauncher control preset based on the supplied reference.
+		// OrynLauncher control preset — matched to the supplied reference.
 		final String m = "${margin}";
-		final String gap = "dp(8)";
-		final String arrow = "44";
+		final String left = m + " + 56";
+		final String arrow = "64";
+		final String arrowGap = "22";
 
 		// Top-left keyboard/debug/chat/perspective controls.
-		this.mControlDataList.add(new ControlData("ESC", new int[]{KeyEvent.KEYCODE_ESCAPE}, m, m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F3", new int[]{KeyEvent.KEYCODE_F3}, m + " + 66", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F5", new int[]{KeyEvent.KEYCODE_F5}, m + " + 132", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("TAB", new int[]{KeyEvent.KEYCODE_TAB}, m, m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("T", new int[]{KeyEvent.KEYCODE_T}, m + " + 66", m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("Pout", new int[]{KeyEvent.KEYCODE_P}, m + " + 132", m + " + 52", 70, 36, false));
+		this.mControlDataList.add(new ControlData("ESC", new int[]{KeyEvent.KEYCODE_ESCAPE}, m + " + 34", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("F3", new int[]{KeyEvent.KEYCODE_F3}, m + " + 182", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("F5", new int[]{KeyEvent.KEYCODE_F5}, m + " + 324", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("TAB", new int[]{KeyEvent.KEYCODE_TAB}, m + " + 34", m + " + 52", 58, 36, false));
+		this.mControlDataList.add(new ControlData("T", new int[]{KeyEvent.KEYCODE_T}, m + " + 184", m + " + 52", 58, 36, false));
+		this.mControlDataList.add(new ControlData("Pout", new int[]{KeyEvent.KEYCODE_P}, m + " + 312", m + " + 52", 70, 36, false));
 
-		// Modifier controls on the left.
-		this.mControlDataList.add(new ControlData("Ctrl", new int[]{KeyEvent.KEYCODE_CTRL_LEFT}, m + " + 22", "${screen_height} * 0.46", 74, 44, false));
-		this.mControlDataList.add(new ControlData("Alt", new int[]{KeyEvent.KEYCODE_ALT_LEFT}, m + " + 104", "${screen_height} * 0.46", 74, 44, false));
+		// Modifier controls.
+		this.mControlDataList.add(new ControlData("Ctrl", new int[]{KeyEvent.KEYCODE_CTRL_LEFT}, m + " + 56", "${screen_height} * 0.31", 74, 44, false));
+		this.mControlDataList.add(new ControlData("Alt", new int[]{KeyEvent.KEYCODE_ALT_LEFT}, m + " + 256", "${screen_height} * 0.31", 74, 44, false));
 
-		// Eight-direction movement pad.
-		String leftX = m;
-		String centerX = m + " + " + arrow + " + " + gap;
-		String rightX = m + " + 2 * (" + arrow + " + " + gap + ")";
-		String bottom = "${screen_height} - " + m + " - " + arrow;
-		String mid = bottom + " - " + arrow + " - " + gap;
-		String top = mid + " - " + arrow + " - " + gap;
-		this.mControlDataList.add(new ControlData("↖", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_A}, leftX, top, 44, 44, false));
-		this.mControlDataList.add(new ControlData("↑", new int[]{KeyEvent.KEYCODE_W}, centerX, top, 44, 44, false));
-		this.mControlDataList.add(new ControlData("↗", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_D}, rightX, top, 44, 44, false));
-		this.mControlDataList.add(new ControlData("←", new int[]{KeyEvent.KEYCODE_A}, leftX, mid, 44, 44, false));
-		this.mControlDataList.add(new ControlData("→", new int[]{KeyEvent.KEYCODE_D}, rightX, mid, 44, 44, false));
-		this.mControlDataList.add(new ControlData("↙", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A}, leftX, bottom, 44, 44, false));
-		this.mControlDataList.add(new ControlData("↓", new int[]{KeyEvent.KEYCODE_S}, centerX, bottom, 44, 44, false));
-		this.mControlDataList.add(new ControlData("↘", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_D}, rightX, bottom, 44, 44, false));
+		// Eight-direction movement pad, centered vertically on the left side.
+		String leftX = left;
+		String centerX = left + " + " + arrow + " + " + arrowGap;
+		String rightX = left + " + 2 * (" + arrow + " + " + arrowGap + ")";
+		String top = "${screen_height} * 0.46";
+		String mid = "${screen_height} * 0.555";
+		String bottom = "${screen_height} * 0.65";
+		this.mControlDataList.add(new ControlData("↖", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_A}, leftX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↑", new int[]{KeyEvent.KEYCODE_W}, centerX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↗", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_D}, rightX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("←", new int[]{KeyEvent.KEYCODE_A}, leftX, mid, 64, 64, false));
+		this.mControlDataList.add(new ControlData("→", new int[]{KeyEvent.KEYCODE_D}, rightX, mid, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↙", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A}, leftX, bottom, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↓", new int[]{KeyEvent.KEYCODE_S}, centerX, bottom, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↘", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_D}, rightX, bottom, 64, 64, false));
 
-		// Mouse/scroll controls on the right edge.
-		this.mControlDataList.add(new ControlData("Mouse", new int[]{ControlData.SPECIALBTN_VIRTUALMOUSE}, "${right} - 58", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("SCROLL UP", new int[]{ControlData.SPECIALBTN_SCROLLUP}, "${right} - 58", m + " + 52", 58, 52, false));
-		this.mControlDataList.add(new ControlData("SCROLL DOWN", new int[]{ControlData.SPECIALBTN_SCROLLDOWN}, "${right} - 58", m + " + 108", 58, 52, false));
-		this.mControlDataList.add(new ControlData("PRI", new int[]{ControlData.SPECIALBTN_MOUSEPRI}, "${right} - 190", "${screen_height} * 0.48", 74, 48, false));
-		this.mControlDataList.add(new ControlData("SEC", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${right} - 104", "${screen_height} * 0.48", 74, 48, false));
-		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${right} - 58", "${screen_height} - " + m + " - 58", 58, 44, false));
+		// Right-edge mouse controls. The right expression already accounts for button width.
+		this.mControlDataList.add(new ControlData("Mouse", new int[]{ControlData.SPECIALBTN_VIRTUALMOUSE}, "${right} - " + m, m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("SCROLL UP", new int[]{ControlData.SPECIALBTN_SCROLLUP}, "${right} - " + m, m + " + 52", 58, 58, false));
+		this.mControlDataList.add(new ControlData("SCROLL DOWN", new int[]{ControlData.SPECIALBTN_SCROLLDOWN}, "${right} - " + m, m + " + 116", 58, 58, false));
+		this.mControlDataList.add(new ControlData("MOUSE MID", new int[]{ControlData.SPECIALBTN_MOUSEMID}, "${right} - " + m, m + " + 184", 58, 58, false));
 
-		// Center gear/menu control.
-		this.mControlDataList.add(new ControlData("⚙", new int[]{ControlData.SPECIALBTN_MENU}, "${screen_width} * 0.5 - 28", "${screen_height} * 0.5 - 28", 56, 56, false));
+		// Primary/secondary mouse buttons.
+		this.mControlDataList.add(new ControlData("PRI", new int[]{ControlData.SPECIALBTN_MOUSEPRI}, "${screen_width} * 0.66", "${screen_height} * 0.49", 74, 48, false));
+		this.mControlDataList.add(new ControlData("SEC", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${screen_width} * 0.785", "${screen_height} * 0.49", 74, 48, false));
 
+		// Inventory key near the lower-right middle.
+		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
+
+		// Center gear/menu button.
+		this.mControlDataList.add(new ControlData("⚙", new int[]{ControlData.SPECIALBTN_MENU}, "${screen_width} * 0.5 - 28", "${screen_height} * 0.49", 56, 56, false));
 		version = 10;
 	}
 	public void save(String path) throws IOException {
