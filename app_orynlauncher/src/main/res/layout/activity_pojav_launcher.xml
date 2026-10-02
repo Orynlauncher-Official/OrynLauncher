@@ -67,11 +67,14 @@
     <!-- LauncherActivity keeps this button for non-home fragments. -->
     <ImageButton
         android:id="@+id/setting_button"
-        android:layout_width="1dp"
-        android:layout_height="1dp"
-        android:visibility="invisible"
-        android:background="@android:color/transparent"
-        android:contentDescription="Settings"/>
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="78dp"
+        android:background="@drawable/oryn_pill"
+        android:src="@drawable/oryn_nav_home"
+        android:padding="13dp"
+        android:contentDescription="Home"/>
 
     <com.kdt.mcgui.ProgressLayout
         android:id="@+id/progress_layout"
