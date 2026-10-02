@@ -793,7 +793,7 @@ object GameRecorder {
     }
 
     private fun playRecordingStopSound_REMOVED() {
-        playRawSound(com.movtery.zalithlauncher.R.raw.recorder_end)
+        playRawSound(0)
     }
 
     private fun playRawSound(rawResId: Int) {
