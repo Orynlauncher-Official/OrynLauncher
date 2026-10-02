@@ -372,11 +372,32 @@ public interface ControlInterface extends View.OnLongClickListener, PlatformGrab
                     case MotionEvent.ACTION_MOVE:
                         if (Math.abs(event.getRawX() - downRawX) > 8 || Math.abs(event.getRawY() - downRawY) > 8)
                             mCanTriggerLongClick = false;
-                        getControlLayoutParent().adaptPanelPosition();
-                        snapAndAlign(
-                                MathUtils.clamp(event.getRawX() - downX, 0, getControlLayoutParent().getWidth() - view.getWidth()),
-                                MathUtils.clamp(event.getRawY() - downY, 0, getControlLayoutParent().getWidth() - view.getHeight())
+
+                        ControlLayout parent = getControlLayoutParent();
+                        float newX = MathUtils.clamp(
+                                event.getRawX() - downX,
+                                0,
+                                parent.getWidth() - view.getWidth()
                         );
+                        float newY = MathUtils.clamp(
+                                event.getRawY() - downY,
+                                0,
+                                parent.getHeight() - view.getHeight()
+                        );
+
+                        // The Oryn cog/settings button is a floating control.
+                        // Keep it completely free from the normal snap/align grid so
+                        // users can park it anywhere in the custom-control editor.
+                        if (getProperties().containsKeycode(ControlData.SPECIALBTN_MENU)) {
+                            view.setX(newX);
+                            view.setY(newY);
+                            getProperties().dynamicX = generateDynamicX(newX);
+                            getProperties().dynamicY = generateDynamicY(newY);
+                            setModifiedLayout(parent);
+                        } else {
+                            parent.adaptPanelPosition();
+                            snapAndAlign(newX, newY);
+                        }
                         break;
                     case MotionEvent.ACTION_UP:
                         if(mCanTriggerLongClick) onLongClick(view);
@@ -393,6 +414,11 @@ public interface ControlInterface extends View.OnLongClickListener, PlatformGrab
 
     default void injectLayoutParamBehavior() {
         getControlView().addOnLayoutChangeListener((v, l, t, r, b, ol, or, ot, ob) -> setBackground());
+    }
+
+    /** Mark a floating control position as changed without invoking the editor panel. */
+    default void setModifiedLayout(ControlLayout parent) {
+        parent.setModified(true);
     }
 
     @Override
