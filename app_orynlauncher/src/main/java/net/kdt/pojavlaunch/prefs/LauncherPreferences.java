@@ -44,8 +44,6 @@ public class LauncherPreferences {
     public static boolean PREF_SUSTAINED_PERFORMANCE = false;
     /** OrynLauncher real in-game FPS optimization mode. */
     public static boolean PREF_ORYN_FPS_BOOST = false;
-    /** OrynLauncher real in-game FPS optimization mode. */
-    public static boolean PREF_ORYN_FPS_BOOST = false;
     public static boolean PREF_VIRTUAL_MOUSE_START = false;
     public static boolean PREF_USE_ALTERNATE_SURFACE = true;
     public static boolean PREF_JAVA_SANDBOX = true;
