@@ -86,12 +86,13 @@ public class OrynCustomizationActivity extends AppCompatActivity {
         return t;
     }
 
-    private TextView action(String text) {
-        TextView b = new TextView(this);
+    private Button action(String text) {
+        Button b = new Button(this);
         b.setText(text);
         b.setTextColor(Color.WHITE);
         b.setTextSize(14);
         b.setGravity(Gravity.CENTER);
+        b.setAllCaps(false);
         b.setPadding(dp(12), dp(10), dp(12), dp(10));
         OrynCustomizationManager.stylePreview(b, this);
         return b;
