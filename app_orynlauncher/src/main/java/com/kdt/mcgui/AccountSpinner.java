@@ -128,7 +128,8 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
         setOnItemSelectedListener(this);
         reload();
 
-        setBackgroundColor(getResources().getColor(R.color.background_status_bar));
+        // V4 uses the rounded Oryn account pill instead of the legacy rectangular spinner background.
+        setBackgroundResource(R.drawable.oryn_account_pill);
         mLoginBarPaint.setColor(getResources().getColor(R.color.minebutton_color));
         mLoginBarPaint.setStrokeWidth(getResources().getDimensionPixelOffset(R.dimen._2sdp));
         mLoginStepAnimator.addUpdateListener(this);
@@ -194,6 +195,7 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
+        if ("oryn_v4".equals(getTag())) return;
         float bottom = getHeight() - mLoginBarPaint.getStrokeWidth()/2;
         float lineFillPercent = (mLoginStep / mMaxSteps);
         canvas.drawLine(0, bottom, lineFillPercent * getWidth(), bottom, mLoginBarPaint);
@@ -347,6 +349,7 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
             }
 
             textview.setText(account.username);
+            textview.setTextColor(Color.WHITE);
             textview.setCompoundDrawablesRelative(accountHead, null, authType, null);
         }
 
