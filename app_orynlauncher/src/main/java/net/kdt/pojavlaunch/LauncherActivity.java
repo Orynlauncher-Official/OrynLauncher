@@ -155,7 +155,7 @@ public class LauncherActivity extends BaseActivity {
 
         // Apply the real FPS optimization to Minecraft's options.txt before launch.
         // The preset is per-instance and restores the user's previous settings when disabled.
-        if (LauncherPreferences.PREF_FPS_BOOST) {
+        if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
             MCOptionUtils.applyOrynFpsBoost(selectedInstance.getGameDirectory().getAbsolutePath());
         } else {
             MCOptionUtils.restoreOrynFpsBoost(selectedInstance.getGameDirectory().getAbsolutePath());
