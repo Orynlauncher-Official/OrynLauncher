@@ -98,10 +98,11 @@
 
         <ImageView
             android:id="@+id/oryn_center_logo"
-            android:layout_width="120dp"
-            android:layout_height="140dp"
-            android:src="@drawable/oryn_v4_crystal"
-            android:scaleType="centerInside"
+            android:layout_width="150dp"
+            android:layout_height="110dp"
+            android:src="@drawable/oryn_official_logo_v4"
+            android:scaleType="fitCenter"
+            android:adjustViewBounds="true"
             android:contentDescription="Oryn Launcher"/>
 
         <LinearLayout
@@ -196,6 +197,7 @@
                     android:textColor="#A8BAD6"/>
 
                 <com.kdt.mcgui.mcVersionSpinner
+                    android:tag="oryn_v4"
                     android:id="@+id/mc_version_spinner"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
