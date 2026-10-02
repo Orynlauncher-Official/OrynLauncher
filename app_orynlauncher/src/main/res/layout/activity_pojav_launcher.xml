@@ -31,7 +31,7 @@
         <ImageView
             android:layout_width="54dp"
             android:layout_height="54dp"
-            android:src="@drawable/oryn_v4_crystal"
+            android:src="@drawable/oryn_official_logo_v4"
             android:scaleType="centerInside"
             android:contentDescription="Oryn"/>
 
@@ -65,6 +65,7 @@
     </LinearLayout>
 
     <com.kdt.mcgui.AccountSpinner
+        android:tag="oryn_v4"
         android:id="@+id/account_spinner"
         android:layout_width="182dp"
         android:layout_height="54dp"
