@@ -88,7 +88,14 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
 
     private void updateVisibility(){
-        requirePreference("notification_permission_request").setVisible(!getLauncherActivity().checkForPermission(33, Manifest.permission.POST_NOTIFICATIONS));
+        Preference notification = findPreference("notification_permission_request");
+        if (notification == null) return;
+        Activity activity = getActivity();
+        if (activity instanceof LauncherActivity) {
+            notification.setVisible(!((LauncherActivity) activity).checkForPermission(33, Manifest.permission.POST_NOTIFICATIONS));
+        } else {
+            notification.setVisible(false);
+        }
     }
 
     private void setupThemePreference() {
