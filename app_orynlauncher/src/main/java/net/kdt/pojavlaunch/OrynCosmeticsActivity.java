@@ -143,21 +143,14 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout brand = new LinearLayout(this);
         brand.setGravity(Gravity.CENTER_VERTICAL);
-        TextView brandMark = text("O", 22, WHITE);
-        brandMark.setGravity(Gravity.CENTER);
-        brandMark.setTypeface(null, android.graphics.Typeface.BOLD);
-        brandMark.setBackground(bg(BLUE, 12, BLUE, 1));
-        brand.addView(brandMark, lp(40, 40));
+        brand.setPadding(d(2), 0, d(2), 0);
 
-        LinearLayout brandText = new LinearLayout(this);
-        brandText.setOrientation(LinearLayout.VERTICAL);
-        brandText.setPadding(d(10), 0, 0, 0);
-        TextView brandName = text("OrynLauncher", 15, WHITE);
-        brandName.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView brandSub = text("COSMETICS  •  V3", 9, MUTED);
-        brandText.addView(brandName, lp(-1, 21));
-        brandText.addView(brandSub, lp(-1, 17));
-        brand.addView(brandText, new LinearLayout.LayoutParams(0, d(40), 1));
+        // Use the supplied Oryn Launcher wordmark instead of the temporary blue O.
+        ImageView brandLogo = new ImageView(this);
+        brandLogo.setImageResource(R.drawable.oryn_cosmetics_logo);
+        brandLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+        brandLogo.setAdjustViewBounds(true);
+        brand.addView(brandLogo, lp(-1, 44));
         left.addView(brand, lp(-1, 44));
         left.addView(new Space(this), lp(-1, 14));
 
