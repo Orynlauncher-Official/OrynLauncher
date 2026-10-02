@@ -330,15 +330,15 @@ public class OrynSettingsActivity extends BaseActivity {
         clear("Advanced", "Developer and OrynLauncher tools");
         section("Advanced", R.drawable.ic_px_sliders);
         addActivitySetting("Oryn Recorder", "Video quality, FPS and saved recordings",
-                new Intent(this, OrynCustomizationActivity.class));
+                new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Oryn Crash Viewer", "View and inspect Minecraft crash logs",
                 new Intent(this, OrynCrashViewerActivity.class));
         addActivitySetting("Oryn Customization", "Open the full Oryn customization center",
                 new Intent(this, OrynCustomizationActivity.class));
         addActivitySetting("Java / Runtime Settings", "Open the existing launcher runtime preferences",
-                null);
+                new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Experimental Settings", "Open the existing experimental preferences",
-                null);
+                new Intent(this, OrynLegacySettingsActivity.class));
     }
 
     private void addActivitySetting(String title, String subtitle, Intent intent) {
