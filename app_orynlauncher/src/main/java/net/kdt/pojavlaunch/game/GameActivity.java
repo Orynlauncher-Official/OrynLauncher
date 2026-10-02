@@ -323,15 +323,32 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void loadControls() {
+        String controlPath = instance.getLaunchControls();
+        boolean usingBuiltInDefault = !Tools.isValidString(instance.controlLayout)
+                && Tools.CTRLDEF_FILE.equals(controlPath);
+
         try {
-            // Load keys
-            mControlLayout.loadLayout(instance.getLaunchControls());
+            // Load the instance layout. When the launcher is using its built-in
+            // default, migrate older default.json layouts to the Oryn preset.
+            mControlLayout.loadLayout(controlPath);
+
+            if (usingBuiltInDefault && mControlLayout.getLayout() != null
+                    && mControlLayout.getLayout().version < 10) {
+                mControlLayout.loadLayout(new CustomControls(this));
+            }
         } catch(IOException e) {
             try {
                 Log.w("MainActivity", "Unable to load the control file, loading the default now", e);
                 mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
+
+                if (mControlLayout.getLayout() == null
+                        || mControlLayout.getLayout().version < 10) {
+                    mControlLayout.loadLayout(new CustomControls(this));
+                }
             } catch (IOException ioException) {
-                Tools.showError(this, ioException);
+                // If the built-in file is unavailable, still provide the Oryn
+                // preset instead of leaving the game without usable controls.
+                mControlLayout.loadLayout(new CustomControls(this));
             }
         } catch (Throwable th) {
             Tools.showError(this, th);
