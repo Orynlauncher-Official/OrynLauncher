@@ -242,6 +242,8 @@ object GameRecorder {
         }
     }
 
+    @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
+    @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
     @JvmStatic fun isPaused(): Boolean = _state.value == RecordingState.PAUSED
     @JvmStatic fun isMicrophoneEnabled(): Boolean = _micEnabled.value
 
