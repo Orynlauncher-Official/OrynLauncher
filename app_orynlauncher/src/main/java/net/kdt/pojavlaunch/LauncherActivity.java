@@ -52,6 +52,7 @@ import net.kdt.pojavlaunch.tasks.AsyncVersionList;
 import net.kdt.pojavlaunch.tasks.MoJsonDownloader;
 import net.kdt.pojavlaunch.utils.NotificationUtils;
 import net.kdt.pojavlaunch.utils.OrynUpdateChecker;
+import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
 
 import git.artdeell.mojo.R;
@@ -150,6 +151,14 @@ public class LauncherActivity extends BaseActivity {
         if(selectedInstance.installer != null) {
             selectedInstance.installer.start();
             return false;
+        }
+
+        // Apply the real FPS optimization to Minecraft's options.txt before launch.
+        // The preset is per-instance and restores the user's previous settings when disabled.
+        if (LauncherPreferences.PREF_FPS_BOOST) {
+            MCOptionUtils.applyOrynFpsBoost(selectedInstance.getGameDirectory().getAbsolutePath());
+        } else {
+            MCOptionUtils.restoreOrynFpsBoost(selectedInstance.getGameDirectory().getAbsolutePath());
         }
 
         if (!Tools.isValidString(selectedInstance.versionId)){
