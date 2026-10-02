@@ -152,6 +152,10 @@ public final class OrynCustomizationManager {
     }
 
     private static void applyView(View view, int accent) {
+        // The V4 home is a reference-driven surface with fixed blue colors.
+        // Keep customization accent styling for other launcher screens.
+        if (view.getId() == R.id.fragment_menu_main) return;
+        if (view.getId() == R.id.oryn_brand || view.getId() == R.id.account_spinner) return;
         if (view instanceof TextView && view.getId() != R.id.oryn_brand) {
             ((TextView) view).setTextColor(accent);
         }
