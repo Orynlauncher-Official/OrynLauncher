@@ -70,8 +70,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private TextView detailTitle;
     private TextView detailVersion;
     private android.widget.Spinner loaderSpinner;
-    private android.widget.Spinner modpackVersionSpinner;
-    private String selectedModpackMinecraftVersion;
+    private android.widget.Spinner versionSpinner;
+    private String selectedMinecraftVersion;
     private String selectedLoader;
     private TextView detailDesc;
     private ImageView detailIcon;
@@ -163,22 +163,19 @@ public class OrynDownloadActivity extends AppCompatActivity {
         else if ("forge".equals(detectedLoader)) loaderSpinner.setSelection(2);
         else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
         else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
-        modpackVersionSpinner = new android.widget.Spinner(this);
-        modpackVersionSpinner.setVisibility(View.GONE);
-        modpackVersionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+        versionSpinner = new android.widget.Spinner(this);
+        versionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
                 Object value = parent.getItemAtPosition(position);
                 if (value != null) {
-                    selectedModpackMinecraftVersion = value.toString();
-                    if (category == Category.MODPACK) {
-                        searchProjects(search.getText().toString().trim());
-                    }
+                    selectedMinecraftVersion = value.toString();
+                    if (search != null) searchProjects(search.getText().toString().trim());
                 }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
-        top.addView(modpackVersionSpinner, new LinearLayout.LayoutParams(dp(125), dp(34)));
-        loadModpackMinecraftVersions();
+        top.addView(versionSpinner, new LinearLayout.LayoutParams(dp(125), dp(34)));
+        loadMinecraftVersions();
 
         loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -290,7 +287,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         setContentView(root);
     }
 
-    private void loadModpackMinecraftVersions() {
+    private void loadMinecraftVersions() {
         executor.execute(() -> {
             try {
                 URL url = new URL("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
@@ -329,7 +326,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     if (index < 0) index = 0;
                     selectedModpackMinecraftVersion = values.get(index);
                     modpackVersionSpinner.setSelection(index);
-                    updateModpackVersionVisibility();
+                    updateVersionSpinnerVisibility();
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
@@ -349,9 +346,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         });
     }
 
-    private void updateModpackVersionVisibility() {
-        if (modpackVersionSpinner == null) return;
-        modpackVersionSpinner.setVisibility(category == Category.MODPACK ? View.VISIBLE : View.GONE);
+    private void updateVersionSpinnerVisibility() {
+        if (versionSpinner == null) return;
+        versionSpinner.setVisibility(View.VISIBLE);
     }
 
     private void addRailItem(LinearLayout parent, String text, String shortText, Category value) {
@@ -377,7 +374,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         parent.addView(item, lp);
         item.setOnClickListener(v -> {
             category = value;
-            updateModpackVersionVisibility();
+            updateVersionSpinnerVisibility();
             search.setHint("Search " + value.title.toLowerCase(Locale.ROOT));
             searchProjects(search.getText().toString().trim());
             for (int i = 1; i < parent.getChildCount() - 1; i++) {
@@ -514,7 +511,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void showProjectDetails(final String projectId, String title, String description, String iconUrl) {
         detailTitle.setText(title);
         detailVersion.setText(category.title + " • " +
-                (getSelectedMinecraftVersion() == null ? "Version will be scanned" : getSelectedMinecraftVersion()));
+                (getDownloadMinecraftVersion() == null ? "Version will be scanned" : getDownloadMinecraftVersion()));
         detailDesc.setText(description == null || description.trim().isEmpty()
                 ? "No description available." : description);
         detailDownload.setEnabled(true);
@@ -566,7 +563,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     throw new Exception("No modpack versions found");
                 }
 
-                String mcVersion = getSelectedMinecraftVersion();
+                String mcVersion = getDownloadMinecraftVersion();
                 int selected = -1;
                 for (int i = 0; i < detail.mcVersionNames.length; i++) {
                     if (mcVersion != null && mcVersion.equals(detail.mcVersionNames[i])) {
@@ -620,7 +617,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             try {
                 // Scan the selected instance first. Never download an arbitrary/latest
                 // project version: it must explicitly support this Minecraft version.
-                final String minecraftVersion = getMinecraftVersionFromInstanceId(instance.versionId);
+                final String minecraftVersion = getDownloadMinecraftVersion();
                 if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
                     throw new Exception("Could not determine the Minecraft version of this instance");
                 }
@@ -870,9 +867,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private String getDownloadMinecraftVersion() {
-        if (category == Category.MODPACK && selectedModpackMinecraftVersion != null
-                && !selectedModpackMinecraftVersion.isEmpty()) {
-            return selectedModpackMinecraftVersion;
+        if (selectedMinecraftVersion != null && !selectedMinecraftVersion.isEmpty()) {
+            return selectedMinecraftVersion;
         }
         return getSelectedMinecraftVersion();
     }
