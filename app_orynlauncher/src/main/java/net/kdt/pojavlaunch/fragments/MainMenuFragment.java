@@ -59,7 +59,7 @@ public class MainMenuFragment extends Fragment {
         Button mDiscordButton = view.findViewById(R.id.social_media_button);
         ImageButton mCustomControlButton = view.findViewById(R.id.custom_control_button);
         ImageButton mInstallJarButton = view.findViewById(R.id.install_jar_button);
-        Button mShareLogsButton = view.findViewById(R.id.share_logs_button);
+        View mShareLogsButton = view.findViewById(R.id.share_logs_button);
         ImageButton mOpenDirectoryButton = view.findViewById(R.id.open_files_button);
         ImageButton mDownloadButton = view.findViewById(R.id.download_button);
         ImageButton mCrashButton = view.findViewById(R.id.crash_viewer_button);
