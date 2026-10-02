@@ -66,6 +66,14 @@ public class OrynSettingsActivity extends BaseActivity {
         return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    private int screenW() {
+        return getResources().getDisplayMetrics().widthPixels;
+    }
+
+    private int refPx(float fraction) {
+        return Math.max(dp(1), (int) (screenW() * fraction));
+    }
+
     private GradientDrawable bg(int color, float radius) {
         GradientDrawable d = new GradientDrawable();
         d.setColor(color);
@@ -87,7 +95,7 @@ public class OrynSettingsActivity extends BaseActivity {
         LinearLayout r = new LinearLayout(this);
         r.setOrientation(LinearLayout.HORIZONTAL);
         r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setPadding(dp(18), 0, dp(12), 0);
+        r.setPadding(dp(16), 0, dp(12), 0);
         r.setBackground(bg(PANEL_2, 16));
         return r;
     }
@@ -95,8 +103,8 @@ public class OrynSettingsActivity extends BaseActivity {
     private void build() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        int sideMargin = Math.max(dp(28), (int) (getResources().getDisplayMetrics().widthPixels * 0.085f));
-        root.setPadding(sideMargin, dp(24), sideMargin, dp(24));
+        int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
+        root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
         root.setBackgroundColor(BG);
 
         LinearLayout header = new LinearLayout(this);
@@ -118,18 +126,18 @@ public class OrynSettingsActivity extends BaseActivity {
         ht.leftMargin = dp(12);
         header.addView(headerText, ht);
 
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(68)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(72)));
 
         LinearLayout body = new LinearLayout(this);
         body.setOrientation(LinearLayout.HORIZONTAL);
         body.setGravity(Gravity.TOP);
-        body.setPadding(0, dp(10), 0, 0);
+        body.setPadding(0, dp(8), 0, 0);
 
         sidebar = new LinearLayout(this);
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(10), dp(10), dp(10), dp(10));
         sidebar.setBackground(bg(PANEL, 22));
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(dp(302), -1);
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(refPx(0.195f), -1);
         body.addView(sidebar, sp);
 
         ScrollView scroll = new ScrollView(this);
@@ -137,10 +145,10 @@ public class OrynSettingsActivity extends BaseActivity {
         scroll.setClipToPadding(false);
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(18), 0, 0, dp(18));
+        content.setPadding(dp(18), 0, 0, dp(12));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -1, 1);
-        cp.leftMargin = dp(2);
+        cp.leftMargin = dp(18);
         body.addView(scroll, cp);
 
         root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
@@ -203,14 +211,14 @@ public class OrynSettingsActivity extends BaseActivity {
         ImageView i = new ImageView(this);
         i.setImageResource(icon);
         i.setPadding(dp(2), dp(2), dp(2), dp(2));
-        h.addView(i, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        h.addView(i, new LinearLayout.LayoutParams(dp(42), dp(42)));
         TextView t = text(title, 17, TEXT);
         t.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, dp(42), 1);
         tp.leftMargin = dp(10);
         h.addView(t, tp);
-        content.addView(h, new LinearLayout.LayoutParams(-1, dp(48)));
-        LinearLayout.LayoutParams sp = (LinearLayout.LayoutParams)h.getLayoutParams();
+        content.addView(h, new LinearLayout.LayoutParams(-1, dp(46)));
+        LinearLayout.LayoutParams sp = (LinearLayout.LayoutParams) h.getLayoutParams();
         sp.topMargin = dp(4);
         h.setLayoutParams(sp);
     }
@@ -226,11 +234,11 @@ public class OrynSettingsActivity extends BaseActivity {
         labels.setGravity(Gravity.CENTER_VERTICAL);
         TextView a = text(title, 14, TEXT);
         TextView b = text(subtitle, 11, MUTED);
-        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(21)));
-        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(19)));
+        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(20)));
+        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(18)));
         r.addView(labels, new LinearLayout.LayoutParams(0, dp(56), 1));
-        r.addView(control, new LinearLayout.LayoutParams(dp(180), dp(46)));
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(58));
+        r.addView(control, new LinearLayout.LayoutParams(refPx(0.115f), dp(42)));
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(56));
         rp.bottomMargin = dp(4);
         content.addView(r, rp);
     }
