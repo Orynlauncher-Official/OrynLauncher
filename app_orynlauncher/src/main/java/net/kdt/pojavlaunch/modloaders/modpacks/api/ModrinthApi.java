@@ -98,26 +98,52 @@ public class ModrinthApi implements ModpackApi{
         JsonArray response = mApiHandler.get(String.format("project/%s/version", item.id), JsonArray.class);
         if(response == null) return null;
         System.out.println(response);
-        String[] names = new String[response.size()];
-        String[] mcNames = new String[response.size()];
-        String[] urls = new String[response.size()];
-        String[] hashes = new String[response.size()];
+        // Expand each release across every Minecraft version it supports.
+        // Modrinth can list multiple game versions for one release; only reading
+        // game_versions[0] caused valid packs to fail the version selector.
+        java.util.ArrayList<String> namesList = new java.util.ArrayList<>();
+        java.util.ArrayList<String> mcNamesList = new java.util.ArrayList<>();
+        java.util.ArrayList<String> urlsList = new java.util.ArrayList<>();
+        java.util.ArrayList<String> hashesList = new java.util.ArrayList<>();
 
-        for (int i=0; i<response.size(); ++i) {
+        for (int i = 0; i < response.size(); ++i) {
             JsonObject version = response.get(i).getAsJsonObject();
-            names[i] = version.get("name").getAsString();
-            mcNames[i] = version.get("game_versions").getAsJsonArray().get(0).getAsString();
-            urls[i] = version.get("files").getAsJsonArray().get(0).getAsJsonObject().get("url").getAsString();
-            // Assume there may not be hashes, in case the API changes
-            JsonObject hashesMap = version.getAsJsonArray("files").get(0).getAsJsonObject()
-                    .get("hashes").getAsJsonObject();
-            if(hashesMap == null || hashesMap.get("sha1") == null){
-                hashes[i] = null;
-                continue;
+            if (!version.has("game_versions") || !version.get("game_versions").isJsonArray()
+                    || version.getAsJsonArray("game_versions").size() == 0) continue;
+            if (!version.has("files") || !version.get("files").isJsonArray()
+                    || version.getAsJsonArray("files").size() == 0) continue;
+
+            JsonObject file = version.getAsJsonArray("files").get(0).getAsJsonObject();
+            for (int f = 0; f < version.getAsJsonArray("files").size(); f++) {
+                JsonObject candidate = version.getAsJsonArray("files").get(f).getAsJsonObject();
+                if (candidate.has("primary") && candidate.get("primary").getAsBoolean()) {
+                    file = candidate;
+                    break;
+                }
             }
 
-            hashes[i] = hashesMap.get("sha1").getAsString();
+            String url = file.has("url") ? file.get("url").getAsString() : null;
+            if (url == null || url.isEmpty()) continue;
+
+            String hash = null;
+            if (file.has("hashes") && file.get("hashes").isJsonObject()
+                    && file.getAsJsonObject("hashes").has("sha1")) {
+                hash = file.getAsJsonObject("hashes").get("sha1").getAsString();
+            }
+
+            JsonArray gameVersions = version.getAsJsonArray("game_versions");
+            for (int v = 0; v < gameVersions.size(); v++) {
+                namesList.add(version.get("name").getAsString());
+                mcNamesList.add(gameVersions.get(v).getAsString());
+                urlsList.add(url);
+                hashesList.add(hash);
+            }
         }
+
+        String[] names = namesList.toArray(new String[0]);
+        String[] mcNames = mcNamesList.toArray(new String[0]);
+        String[] urls = urlsList.toArray(new String[0]);
+        String[] hashes = hashesList.toArray(new String[0]);
 
         return new ModDetail(item, names, mcNames, urls, hashes);
     }
