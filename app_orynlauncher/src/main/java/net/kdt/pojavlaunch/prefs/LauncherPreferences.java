@@ -55,6 +55,8 @@ public class LauncherPreferences {
     public static boolean PREF_GYRO_INVERT_Y = false;
 
     public static boolean PREF_FORCE_VSYNC = false;
+    /** Oryn FPS Boost applies game-side performance options at launch. */
+    public static boolean PREF_ORYN_FPS_BOOST = false;
 
     public static boolean PREF_USE_ANGLE = false;
 
@@ -106,6 +108,7 @@ public class LauncherPreferences {
         PREF_GYRO_INVERT_X = DEFAULT_PREF.getBoolean("gyroInvertX", false);
         PREF_GYRO_INVERT_Y = DEFAULT_PREF.getBoolean("gyroInvertY", false);
         PREF_FORCE_VSYNC = DEFAULT_PREF.getBoolean("force_vsync", isDevicePowerful);
+        PREF_ORYN_FPS_BOOST = DEFAULT_PREF.getBoolean("oryn_fps_boost", false);
         PREF_USE_ANGLE = DEFAULT_PREF.getBoolean("use_angle", false);
         PREF_BUTTON_ALL_CAPS = DEFAULT_PREF.getBoolean("buttonAllCaps", true);
         PREF_DUMP_SHADERS = DEFAULT_PREF.getBoolean("dump_shaders", false);
