@@ -34,6 +34,9 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         // Do not call setSummary() while a SummaryProvider is installed.
         requirePreference("resolutionRatio").setTitle("Resolution Scale");
         requirePreference("resolutionRatio").setSummary("Change the resolution scale of the game");
+        SwitchPreferenceCompat fpsBoost = requirePreference("orynFpsBoost", SwitchPreferenceCompat.class);
+        fpsBoost.setChecked(LauncherPreferences.PREF_FPS_BOOST);
+        fpsBoost.setSummary("Real Minecraft optimization: lower GPU/CPU workload for higher in-game FPS");
         requirePreference("zinkPreferSystemDriver").setTitle("Vulkan Driver");
         requirePreference("zinkPreferSystemDriver").setSummary("Use the system Vulkan driver when supported");
         int resolution = (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100);
