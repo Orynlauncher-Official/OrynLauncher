@@ -298,6 +298,8 @@ public class OrynSettingsActivity extends BaseActivity {
         addSetting("Animations", "Enable smooth UI animations",
                 toggle(uiPrefs.getBoolean("animations", true), (b, checked) ->
                         uiPrefs.edit().putBoolean("animations", checked).apply()));
+        addActivitySetting("Control Layout", "Customize your in-game touch controls",
+                new Intent(this, CustomControlsActivity.class));
     }
 
     private void showAppearance() {
