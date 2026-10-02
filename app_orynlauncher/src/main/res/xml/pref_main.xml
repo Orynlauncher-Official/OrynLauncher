@@ -38,13 +38,6 @@
             android:icon="@drawable/ic_px_sliders"/>
 
         <Preference
-            android:key="oryn_recorder"
-            android:title="OrynLauncher Recorder"
-            android:summary="Configure the in-game recorder"
-            android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceRecorderFragment"
-            android:icon="@drawable/ic_px_image"/>
-
-        <Preference
             android:key="oryn_crash_viewer"
             android:title="Oryn Crash Viewer"
             android:summary="View and inspect Minecraft crash logs"
