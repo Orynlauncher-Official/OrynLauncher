@@ -40,7 +40,7 @@
             android:src="@drawable/oryn_nav_cube"
             android:contentDescription="@string/oryn_download"
             android:background="@android:color/transparent"
-            android:padding="48dp"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
@@ -50,7 +50,7 @@
             android:src="@drawable/oryn_nav_gamepad"
             android:contentDescription="@string/mcl_option_customcontrol"
             android:background="@android:color/transparent"
-            android:padding="48dp"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
@@ -60,7 +60,7 @@
             android:src="@drawable/oryn_nav_cosmetics"
             android:contentDescription="Oryn Cosmetics"
             android:background="@android:color/transparent"
-            android:padding="48dp"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
@@ -70,7 +70,7 @@
             android:src="@drawable/ic_px_file"
             android:contentDescription="Files"
             android:background="@android:color/transparent"
-            android:padding="48dp"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
@@ -80,7 +80,7 @@
             android:src="@drawable/oryn_nav_crash"
             android:contentDescription="Crash Viewer"
             android:background="@android:color/transparent"
-            android:padding="48dp"
+            android:padding="12dp"
             android:layout_marginBottom="8dp"/>
 
         <ImageButton
@@ -231,7 +231,7 @@
                     android:src="@drawable/ic_px_file"
                     android:contentDescription="Files"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp""/>
+                    android:padding="13dp"/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_downloads"
@@ -241,7 +241,7 @@
                     android:src="@drawable/oryn_nav_cube"
                     android:contentDescription="Downloads"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="48dp"/>
+                    android:padding="12dp"/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_controls"
@@ -251,7 +251,7 @@
                     android:src="@drawable/oryn_nav_gamepad"
                     android:contentDescription="Controls"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp"""/>
+                    android:padding="13dp"/>
 
                 <ImageButton
                     android:id="@+id/oryn_quick_cosmetics"
@@ -261,7 +261,7 @@
                     android:src="@drawable/oryn_nav_cosmetics"
                     android:contentDescription="Cosmetics"
                     android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp""/>
+                    android:padding="13dp"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
