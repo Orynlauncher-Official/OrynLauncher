@@ -73,13 +73,24 @@ public class MainMenuFragment extends Fragment {
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
         TextView mSelectedVersion = view.findViewById(R.id.oryn_selected_version);
-        mVersionSpinner.setOnSelectionChangedListener(instance -> {
-            if (instance != null && Tools.isValidString(instance.versionId)) {
-                mSelectedVersion.setText(instance.versionId);
+        if (mVersionSpinner != null) {
+            mVersionSpinner.setOnSelectionChangedListener(instance -> {
+                if (mSelectedVersion == null) return;
+                if (instance != null && Tools.isValidString(instance.versionId)) {
+                    mSelectedVersion.setText(instance.versionId);
+                } else {
+                    mSelectedVersion.setText("1.12.2");
+                }
+            });
+        }
+        if (mSelectedVersion != null && mVersionSpinner != null) {
+            DisplayInstance current = mVersionSpinner.getSelectedInstance();
+            if (current != null && Tools.isValidString(current.versionId)) {
+                mSelectedVersion.setText(current.versionId);
             } else {
                 mSelectedVersion.setText("1.12.2");
             }
-        });
+        }
 
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
