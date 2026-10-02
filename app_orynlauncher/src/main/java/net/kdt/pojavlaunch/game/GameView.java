@@ -271,8 +271,14 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
         // Use the width and height of the View instead of display dimensions to avoid
         // getting squiched/stretched due to inconsistencies between the layout and
         // screen dimensions.
-        int newWidth = Tools.getDisplayFriendlyRes(getWidth(), LauncherPreferences.PREF_SCALE_FACTOR);
-        int newHeight = Tools.getDisplayFriendlyRes(getHeight(), LauncherPreferences.PREF_SCALE_FACTOR);
+        float renderScale = LauncherPreferences.PREF_SCALE_FACTOR;
+        // Oryn FPS Boost lowers the actual Minecraft render surface resolution to
+        // reduce GPU workload. It never increases the user's selected scale.
+        if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
+            renderScale = Math.min(renderScale, 0.75f);
+        }
+        int newWidth = Tools.getDisplayFriendlyRes(getWidth(), renderScale);
+        int newHeight = Tools.getDisplayFriendlyRes(getHeight(), renderScale);
         if (newHeight < 1 || newWidth < 1) {
             Log.e("MGLSurface", String.format("Impossible resolution : %dx%d", newWidth, newHeight));
             return;
