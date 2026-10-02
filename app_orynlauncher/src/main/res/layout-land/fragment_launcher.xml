@@ -217,52 +217,7 @@
                     android:contentDescription="Select Minecraft instance"/>
             </FrameLayout>
 
-            <LinearLayout
-                android:layout_width="265dp"
-                android:layout_height="62dp"
-                android:layout_marginTop="12dp"
-                android:orientation="horizontal"
-                android:gravity="center">
 
-                <ImageButton
-                    android:id="@+id/oryn_quick_files"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:src="@drawable/ic_px_file"
-                    android:contentDescription="Files"
-                    android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp"/>
-
-                <ImageButton
-                    android:id="@+id/oryn_quick_downloads"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginStart="6dp"
-                    android:src="@drawable/oryn_nav_cube"
-                    android:contentDescription="Downloads"
-                    android:background="@drawable/oryn_account_pill"
-                    android:padding="12dp"/>
-
-                <ImageButton
-                    android:id="@+id/oryn_quick_controls"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginStart="6dp"
-                    android:src="@drawable/oryn_nav_gamepad"
-                    android:contentDescription="Controls"
-                    android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp"/>
-
-                <ImageButton
-                    android:id="@+id/oryn_quick_cosmetics"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginStart="7dp"
-                    android:src="@drawable/oryn_nav_cosmetics"
-                    android:contentDescription="Cosmetics"
-                    android:background="@drawable/oryn_account_pill"
-                    android:padding="13dp"/>
-            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
