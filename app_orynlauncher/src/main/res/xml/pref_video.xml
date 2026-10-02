@@ -38,6 +38,14 @@
             android:icon="@drawable/ic_px_resolution"
             />
 
+        <androidx.preference.SwitchPreferenceCompat
+            android:key="orynFpsBoost"
+            android:defaultValue="false"
+            android:title="Oryn FPS Boost"
+            android:summary="Optimizes Minecraft video settings for higher real in-game FPS"
+            android:icon="@drawable/ic_px_resolution"
+            />
+
         <SwitchPreference
             android:title="@string/preference_sustained_performance_title"
             android:summary="@string/preference_sustained_performance_description"
