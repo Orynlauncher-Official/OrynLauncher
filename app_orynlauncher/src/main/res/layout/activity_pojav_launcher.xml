@@ -15,50 +15,45 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- V4 top-left brand -->
+    <!-- V3 reference brand -->
     <LinearLayout
         android:id="@+id/oryn_brand"
         android:layout_width="wrap_content"
-        android:layout_height="56dp"
+        android:layout_height="48dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginStart="28dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginStart="174dp"
+        android:layout_marginTop="20dp"
         android:elevation="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="112dp"
-            android:layout_height="42dp"
-            android:src="@drawable/oryn_official_logo_v4"
-            android:scaleType="centerInside"
-            android:contentDescription="Oryn Launcher"/>
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/oryn_top_logo_o"
+            android:contentDescription="Oryn"/>
 
         <TextView
             android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:layout_marginStart="8dp"
-            android:gravity="center"
-            android:paddingStart="9dp"
-            android:paddingEnd="9dp"
-            android:text="v4"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:textColor="#AFC0DB"
-            android:background="@drawable/oryn_version_badge"/>
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:text="Oryn Launcher"
+            android:textSize="26sp"
+            android:textStyle="normal"
+            android:textColor="#3F98FF"/>
     </LinearLayout>
 
-    <!-- Existing account system, restyled as the V4 account pill. -->
+    <!-- Existing account selector, styled to match the reference -->
     <com.kdt.mcgui.AccountSpinner
         android:id="@+id/account_spinner"
-        android:layout_width="176dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:layout_marginEnd="24dp"
+        android:layout_width="324dp"
+        android:layout_height="74dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="62dp"
         android:background="@drawable/oryn_account_pill"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
+        android:paddingStart="22dp"
+        android:paddingEnd="22dp"
         android:dropDownWidth="wrap_content"
         android:elevation="10dp"
         app:layout_constraintTop_toTopOf="parent"
@@ -69,11 +64,12 @@
         android:id="@+id/setting_button"
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:layout_marginStart="28dp"
-        android:layout_marginTop="78dp"
-        android:background="@drawable/oryn_pill"
+        android:layout_marginStart="38dp"
+        android:layout_marginTop="86dp"
+        android:background="@android:color/transparent"
         android:src="@drawable/oryn_nav_home"
         android:padding="13dp"
+        android:visibility="gone"
         android:contentDescription="Home"/>
 
     <com.kdt.mcgui.ProgressLayout
