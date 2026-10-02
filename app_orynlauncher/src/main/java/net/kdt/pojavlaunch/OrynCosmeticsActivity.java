@@ -84,7 +84,8 @@ public class OrynCosmeticsActivity extends Activity {
         b.setPadding(d(8), 0, d(8), 0);
         b.setMinHeight(0);
         b.setMinWidth(0);
-        b.setBackground(bg(CARD, 10, Color.rgb(42, 49, 62), 1));
+        b.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
+        if (android.os.Build.VERSION.SDK_INT >= 21) b.setElevation(d(1));
         return b;
     }
 
@@ -97,7 +98,7 @@ public class OrynCosmeticsActivity extends Activity {
         Button b = button(value);
         b.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         b.setPadding(d(10), 0, d(10), 0);
-        b.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
+        b.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(55, 64, 80), 1));
         return b;
     }
 
@@ -105,124 +106,230 @@ public class OrynCosmeticsActivity extends Activity {
         return new LinearLayout.LayoutParams(w == -1 ? -1 : d(w), h == -1 ? -1 : d(h));
     }
 
+    private TextView sectionLabel(String value) {
+        TextView t = text(value.toUpperCase(), 10, MUTED);
+        t.setTypeface(null, android.graphics.Typeface.BOLD);
+        t.setLetterSpacing(0.08f);
+        t.setPadding(d(4), d(6), d(4), d(4));
+        return t;
+    }
+
+    private View divider() {
+        View v = new View(this);
+        v.setBackgroundColor(Color.rgb(39, 46, 58));
+        return v;
+    }
+
+    private TextView badge(String value) {
+        TextView t = text(value, 10, Color.rgb(170, 202, 255));
+        t.setGravity(Gravity.CENTER);
+        t.setTypeface(null, android.graphics.Typeface.BOLD);
+        t.setBackground(bg(Color.rgb(22, 48, 84), 20, Color.rgb(48, 91, 145), 1));
+        return t;
+    }
+
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setPadding(d(14), d(12), d(14), d(12));
+        root.setPadding(d(16), d(14), d(16), d(14));
         root.setBackgroundColor(BG);
 
-        // Left navigation
+        // ── Left navigation rail ─────────────────────────────────────────
         LinearLayout left = new LinearLayout(this);
         left.setOrientation(LinearLayout.VERTICAL);
-        left.setPadding(d(10), d(10), d(10), d(10));
-        left.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
+        left.setPadding(d(12), d(12), d(12), d(12));
+        left.setBackground(bg(PANEL, 18, Color.rgb(35, 42, 54), 1));
+        if (android.os.Build.VERSION.SDK_INT >= 21) left.setElevation(d(3));
 
-        TextView title = text("ORYN", 22, WHITE);
-        left.addView(title, lp(-1, 30));
-        TextView sub = text("COSMETICS", 11, MUTED);
-        left.addView(sub, lp(-1, 22));
-        Space gap = new Space(this);
-        left.addView(gap, lp(-1, 10));
+        LinearLayout brand = new LinearLayout(this);
+        brand.setGravity(Gravity.CENTER_VERTICAL);
+        TextView brandMark = text("O", 22, WHITE);
+        brandMark.setGravity(Gravity.CENTER);
+        brandMark.setTypeface(null, android.graphics.Typeface.BOLD);
+        brandMark.setBackground(bg(BLUE, 12, BLUE, 1));
+        brand.addView(brandMark, lp(40, 40));
 
-        skinTab = button("👕   Skins");
-        capeTab = button("▰   Capes");
-        left.addView(skinTab, lp(-1, 48));
-        left.addView(capeTab, lp(-1, 48));
+        LinearLayout brandText = new LinearLayout(this);
+        brandText.setOrientation(LinearLayout.VERTICAL);
+        brandText.setPadding(d(10), 0, 0, 0);
+        TextView brandName = text("OrynLauncher", 15, WHITE);
+        brandName.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView brandSub = text("COSMETICS  •  V3", 9, MUTED);
+        brandText.addView(brandName, lp(-1, 21));
+        brandText.addView(brandSub, lp(-1, 17));
+        brand.addView(brandText, new LinearLayout.LayoutParams(0, d(40), 1));
+        left.addView(brand, lp(-1, 44));
+        left.addView(new Space(this), lp(-1, 14));
 
-        Space gap2 = new Space(this);
-        left.addView(gap2, lp(-1, 12));
-        Button importSkin = button("＋  Import Skin");
-        Button importCape = button("＋  Import Cape");
-        left.addView(importSkin, lp(-1, 46));
-        left.addView(importCape, lp(-1, 46));
+        left.addView(sectionLabel("Collection"), lp(-1, 24));
+
+        skinTab = button("  Skin");
+        capeTab = button("  Cape");
+        skinTab.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        capeTab.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        left.addView(skinTab, lp(-1, 46));
+        left.addView(capeTab, lp(-1, 46));
+
+        left.addView(new Space(this), lp(-1, 10));
+        left.addView(sectionLabel("Import"), lp(-1, 24));
+
+        Button importSkin = button("+   Import Skin");
+        Button importCape = button("+   Import Cape");
+        importSkin.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        importCape.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        left.addView(importSkin, lp(-1, 42));
+        left.addView(importCape, lp(-1, 42));
+
+        LinearLayout info = new LinearLayout(this);
+        info.setOrientation(LinearLayout.VERTICAL);
+        info.setPadding(d(10), d(9), d(10), d(9));
+        info.setBackground(bg(Color.rgb(12, 16, 22), 11, Color.rgb(35, 42, 53), 1));
+        TextView infoTitle = text("Personal cosmetics", 11, WHITE);
+        infoTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView infoText = text("Your imported cosmetics stay local and work offline.", 9, MUTED);
+        infoText.setMaxLines(3);
+        info.addView(infoTitle, lp(-1, 20));
+        info.addView(infoText, lp(-1, 38));
+        left.addView(new Space(this), lp(-1, 10));
+        left.addView(info, lp(-1, 68));
 
         Space push = new Space(this);
         left.addView(push, new LinearLayout.LayoutParams(1, 0, 1));
-        Button back = button("‹  Back");
-        left.addView(back, lp(-1, 44));
-        root.addView(left, new LinearLayout.LayoutParams(d(190), -1));
+        Button back = button("<   Back to Settings");
+        back.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        left.addView(back, lp(-1, 42));
+        root.addView(left, new LinearLayout.LayoutParams(d(220), -1));
 
-        // Center 3D preview
+        // ── Main preview stage ───────────────────────────────────────────
         LinearLayout center = new LinearLayout(this);
         center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(d(12), 0, d(12), 0);
+        center.setPadding(d(14), 0, d(14), 0);
 
-        LinearLayout head = new LinearLayout(this);
-        head.setGravity(Gravity.CENTER_VERTICAL);
-        tabTitle = text("Skin Preview", 17, WHITE);
-        head.addView(tabTitle, new LinearLayout.LayoutParams(0, d(36), 1));
-        TextView hint = text("Drag to rotate  •  Classic / Slim", 11, MUTED);
-        head.addView(hint, lp(-1, 42));
-        center.addView(head, lp(-1, 42));
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout headerText = new LinearLayout(this);
+        headerText.setOrientation(LinearLayout.VERTICAL);
+        tabTitle = text("Skin Preview", 20, WHITE);
+        tabTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView subtitle = text("Preview your equipped look before launching Minecraft.", 10, MUTED);
+        headerText.addView(tabTitle, lp(-1, 27));
+        headerText.addView(subtitle, lp(-1, 20));
+        header.addView(headerText, new LinearLayout.LayoutParams(0, d(48), 1));
+
+        TextView live = badge("LIVE PREVIEW");
+        header.addView(live, lp(92, 30));
+        center.addView(header, lp(-1, 52));
+
+        LinearLayout stage = new LinearLayout(this);
+        stage.setOrientation(LinearLayout.VERTICAL);
+        stage.setPadding(d(10), d(10), d(10), d(10));
+        stage.setBackground(bg(Color.rgb(11, 14, 19), 18, Color.rgb(34, 41, 53), 1));
+        if (android.os.Build.VERSION.SDK_INT >= 21) stage.setElevation(d(2));
+
+        LinearLayout stageTop = new LinearLayout(this);
+        stageTop.setGravity(Gravity.CENTER_VERTICAL);
+        TextView stageTitle = text("CHARACTER", 9, MUTED);
+        stageTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        stageTop.addView(stageTitle, new LinearLayout.LayoutParams(0, d(24), 1));
+        TextView stageHint = text("Drag to rotate", 9, MUTED);
+        stageHint.setGravity(Gravity.CENTER);
+        stageTop.addView(stageHint, lp(90, 24));
+        stage.addView(stageTop, lp(-1, 26));
 
         preview = new OrynCosmeticPreviewView(this);
-        preview.setBackground(bg(Color.rgb(11, 14, 19), 16, Color.rgb(31, 38, 49), 1));
-        center.addView(preview, new LinearLayout.LayoutParams(-1, 0, 1));
+        preview.setBackground(bg(Color.rgb(14, 18, 25), 14, Color.rgb(27, 34, 45), 1));
+        stage.addView(preview, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        status = text("Ready", 12, MUTED);
-        status.setGravity(Gravity.CENTER);
-        center.addView(status, lp(-1, 34));
+        LinearLayout equipped = new LinearLayout(this);
+        equipped.setGravity(Gravity.CENTER_VERTICAL);
+        equipped.setPadding(d(10), 0, d(10), 0);
+        equipped.setBackground(bg(Color.rgb(15, 19, 26), 10, Color.rgb(31, 38, 49), 1));
+        TextView equippedTitle = text("EQUIPPED", 9, MUTED);
+        equippedTitle.setTypeface(null, android.graphics.Typeface.BOLD);
+        equipped.addView(equippedTitle, lp(62, 34));
+        selectedSkin = text("Skin  •  None", 10, WHITE);
+        equipped.addView(selectedSkin, new LinearLayout.LayoutParams(0, d(34), 1));
+        selectedCape = text("Cape  •  None", 10, MUTED);
+        equipped.addView(selectedCape, new LinearLayout.LayoutParams(0, d(34), 1));
+        stage.addView(equipped, lp(-1, 36));
+
+        center.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        status = text("Ready", 11, MUTED);
+        status.setGravity(Gravity.CENTER_VERTICAL);
+        status.setPadding(d(4), 0, d(4), 0);
+        center.addView(status, lp(-1, 30));
         root.addView(center, new LinearLayout.LayoutParams(0, -1, 1));
 
-        // Right control panel
+        // ── Right configuration panel ────────────────────────────────────
         LinearLayout right = new LinearLayout(this);
         right.setOrientation(LinearLayout.VERTICAL);
-        right.setPadding(d(12), d(8), d(8), d(8));
-        right.setClipChildren(false);
-        right.setBackground(bg(PANEL, 14, Color.rgb(29, 35, 45), 1));
+        right.setPadding(d(14), d(12), d(12), d(12));
+        right.setBackground(bg(PANEL, 18, Color.rgb(35, 42, 54), 1));
+        if (android.os.Build.VERSION.SDK_INT >= 21) right.setElevation(d(3));
 
-        right.addView(text("Cosmetic Profile", 18, WHITE), lp(-1, 28));
+        LinearLayout rightHeader = new LinearLayout(this);
+        rightHeader.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout rightTitleBox = new LinearLayout(this);
+        rightTitleBox.setOrientation(LinearLayout.VERTICAL);
+        TextView rt = text("Appearance", 17, WHITE);
+        rt.setTypeface(null, android.graphics.Typeface.BOLD);
+        TextView rs = text("Manage profile, model and cosmetics", 9, MUTED);
+        rightTitleBox.addView(rt, lp(-1, 23));
+        rightTitleBox.addView(rs, lp(-1, 18));
+        rightHeader.addView(rightTitleBox, new LinearLayout.LayoutParams(0, d(44), 1));
+        TextView v3 = badge("V3");
+        rightHeader.addView(v3, lp(48, 28));
+        right.addView(rightHeader, lp(-1, 46));
+
+        right.addView(divider(), lp(-1, 1));
+        right.addView(sectionLabel("Profile"), lp(-1, 23));
         profiles = selectorButton("Default");
-        right.addView(profiles, lp(-1, 42));
+        right.addView(profiles, lp(-1, 40));
+        Button newProfile = button("+   New Profile");
+        newProfile.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        right.addView(newProfile, lp(-1, 34));
 
-        Button newProfile = button("＋  New Profile");
-        right.addView(newProfile, lp(-1, 36));
-
-        right.addView(text("SKIN", 10, MUTED), lp(-1, 20));
+        right.addView(sectionLabel("Cosmetics"), lp(-1, 24));
         skins = selectorButton("None");
-        right.addView(skins, lp(-1, 40));
-
-        right.addView(text("CAPE", 10, MUTED), lp(-1, 20));
         capes = selectorButton("None");
-        right.addView(capes, lp(-1, 40));
+        right.addView(skins, lp(-1, 38));
+        right.addView(capes, lp(-1, 38));
 
-        right.addView(text("PLAYER MODEL", 10, MUTED), lp(-1, 20));
+        right.addView(sectionLabel("Player Model"), lp(-1, 24));
         models = selectorButton("Classic (Steve)");
-        right.addView(models, lp(-1, 40));
+        right.addView(models, lp(-1, 38));
 
-        selectedSkin = text("Skin: None", 11, MUTED);
-        selectedCape = text("Cape: None", 11, MUTED);
-        right.addView(selectedSkin, lp(-1, 20));
-        right.addView(selectedCape, lp(-1, 20));
+        right.addView(new Space(this), new LinearLayout.LayoutParams(1, 0, 1));
 
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setPadding(0, d(2), 0, d(2));
         applyButton = button("Apply Skin");
         saveButton = button("Save Skin");
         primary(applyButton);
-        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(40), 1));
-        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(40), 1));
-        right.addView(actions, lp(-1, 40));
+        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(42), 1));
+        Space actionGap = new Space(this);
+        actions.addView(actionGap, lp(8, 1));
+        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(42), 1));
+        right.addView(actions, lp(-1, 46));
 
         LinearLayout actions2 = new LinearLayout(this);
         actions2.setOrientation(LinearLayout.HORIZONTAL);
         removeButton = button("Remove Skin");
         unequipButton = button("Unequip Cape");
-        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(36), 1));
-        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(36), 1));
-        right.addView(actions2, lp(-1, 36));
+        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(34), 1));
+        Space actionGap2 = new Space(this);
+        actions2.addView(actionGap2, lp(8, 1));
+        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(34), 1));
+        right.addView(actions2, lp(-1, 38));
 
-        TextView note = text("Local cosmetics work offline. Official capes are only shown when owned by the account.", 9, MUTED);
-        note.setGravity(Gravity.BOTTOM);
-        right.addView(note, new LinearLayout.LayoutParams(-1, 0, 1));
-        root.addView(right, new LinearLayout.LayoutParams(d(365), -1));
+        TextView note = text("PNG cosmetics are stored locally. Existing account, instances and game data are not changed.", 8, MUTED);
+        note.setMaxLines(2);
+        note.setGravity(Gravity.CENTER_VERTICAL);
+        right.addView(note, lp(-1, 30));
 
         setContentView(root);
-
-        skinTab.setClickable(true);
-        skinTab.setFocusable(true);
-        capeTab.setClickable(true);
-        capeTab.setFocusable(true);
 
         skinTab.setOnClickListener(v -> setTab(false));
         capeTab.setOnClickListener(v -> setTab(true));
@@ -236,7 +343,11 @@ public class OrynCosmeticsActivity extends Activity {
             input.setHint("Profile name");
             input.setTextColor(WHITE);
             input.setHintTextColor(MUTED);
-            new AlertDialog.Builder(this).setTitle("New Cosmetic Profile").setView(input)
+            input.setPadding(d(10), 0, d(10), 0);
+            input.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
+            new AlertDialog.Builder(this)
+                    .setTitle("New Cosmetic Profile")
+                    .setView(input)
                     .setNegativeButton("Cancel", null)
                     .setPositiveButton("Create", (dialog, which) -> {
                         String n = input.getText().toString().trim();
@@ -318,9 +429,7 @@ public class OrynCosmeticsActivity extends Activity {
             });
         });
 
-        applyButton.setOnClickListener(v -> {
-            saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin"));
-        });
+        applyButton.setOnClickListener(v -> saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin")));
         saveButton.setOnClickListener(v -> saveCurrent(capeTabSelected ? "Cape saved" : "Skin saved"));
         removeButton.setOnClickListener(v -> removeSelected());
         unequipButton.setOnClickListener(v -> {
