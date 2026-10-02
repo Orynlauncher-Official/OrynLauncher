@@ -83,14 +83,6 @@ public class MainMenuFragment extends Fragment {
                 }
             });
         }
-        if (mSelectedVersion != null && mVersionSpinner != null) {
-            DisplayInstance current = mVersionSpinner.getSelectedInstance();
-            if (current != null && Tools.isValidString(current.versionId)) {
-                mSelectedVersion.setText(current.versionId);
-            } else {
-                mSelectedVersion.setText("1.12.2");
-            }
-        }
 
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
