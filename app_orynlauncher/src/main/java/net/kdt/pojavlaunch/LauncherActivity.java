@@ -126,7 +126,7 @@ public class LauncherActivity extends BaseActivity {
         if(manager.isStateSaved()) return;
         Fragment fragment = manager.findFragmentById(mFragmentView.getId());
         if(fragment instanceof MainMenuFragment){
-            Tools.swapFragment(this, LauncherPreferenceFragment.class, SETTING_FRAGMENT_TAG, null);
+            startActivity(new Intent(this, OrynSettingsActivity.class));
         } else{
             // The setting button doubles as a home button now
             Tools.backToMainMenu(this);
