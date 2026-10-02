@@ -87,21 +87,32 @@ public class MCOptionUtils {
 
     /**
      * Apply OrynLauncher FPS Boost directly to Minecraft's options.txt.
+     * Only options that already exist in the instance are changed, which keeps
+     * this safe across legacy and modern Minecraft option formats.
      * Original values are backed up per instance and restored when disabled.
      */
     public static void applyOrynFpsBoost(@NonNull String folderPath) {
-        final String[] keys = {
-                "enableVsync", "renderDistance", "simulationDistance",
-                "entityDistanceScaling", "particles", "entityShadows",
-                "biomeBlendRadius", "mipmapLevels", "ao", "renderClouds",
-                "cloudStatus", "graphicsMode", "graphicsPreset",
-                "prioritizeChunkUpdates", "maxFps", "screenEffectScale",
-                "fovEffectScale"
-        };
-        final String[] values = {
-                "false", "8", "6", "0.5", "2", "false", "0", "0", "false",
-                "false", "fast", "0", "fast", "0", "260", "0.0", "0.5"
-        };
+        final Map<String, String> targets = new LinkedHashMap<>();
+        targets.put("enableVsync", "false");
+        targets.put("renderDistance", "8");
+        targets.put("simulationDistance", "6");
+        targets.put("entityDistanceScaling", "0.5");
+        targets.put("particles", "2");
+        targets.put("entityShadows", "false");
+        targets.put("biomeBlendRadius", "0");
+        targets.put("mipmapLevels", "0");
+        targets.put("ao", "0");
+        targets.put("fancyGraphics", "false");
+        targets.put("graphicsMode", "0");
+        targets.put("graphicsPreset", "fast");
+        targets.put("clouds", "false");
+        targets.put("renderClouds", "false");
+        targets.put("cloudStatus", "fast");
+        targets.put("prioritizeChunkUpdates", "0");
+        targets.put("maxFps", "260");
+        targets.put("screenEffectScale", "0.0");
+        targets.put("fovEffectScale", "0.5");
+
         File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
         try {
             load(folderPath);
@@ -109,17 +120,24 @@ public class MCOptionUtils {
                 File parent = backup.getParentFile();
                 if (parent != null) parent.mkdirs();
                 Properties saved = new Properties();
-                for (String key : keys) {
+                for (String key : targets.keySet()) {
                     String current = get(key);
-                    saved.setProperty(key, current == null ? "__ORYN_MISSING__" : current);
+                    if (current != null) saved.setProperty(key, current);
                 }
                 try (FileOutputStream out = new FileOutputStream(backup)) {
                     saved.store(out, "OrynLauncher FPS Boost backup");
                 }
             }
-            for (int i = 0; i < keys.length; i++) set(keys[i], values[i]);
-            save();
-            Log.i("MCOptionUtils", "Oryn FPS Boost applied");
+
+            boolean changed = false;
+            for (Map.Entry<String, String> entry : targets.entrySet()) {
+                if (get(entry.getKey()) != null) {
+                    set(entry.getKey(), entry.getValue());
+                    changed = true;
+                }
+            }
+            if (changed) save();
+            Log.i("MCOptionUtils", "Oryn FPS Boost applied to " + folderPath);
         } catch (Throwable e) {
             Log.e("MCOptionUtils", "Failed to apply Oryn FPS Boost", e);
         }
@@ -128,24 +146,14 @@ public class MCOptionUtils {
     public static void restoreOrynFpsBoost(@NonNull String folderPath) {
         File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
         if (!backup.exists()) return;
-        final String[] keys = {
-                "enableVsync", "renderDistance", "simulationDistance",
-                "entityDistanceScaling", "particles", "entityShadows",
-                "biomeBlendRadius", "mipmapLevels", "ao", "renderClouds",
-                "cloudStatus", "graphicsMode", "graphicsPreset",
-                "prioritizeChunkUpdates", "maxFps", "screenEffectScale",
-                "fovEffectScale"
-        };
         try {
             load(folderPath);
             Properties saved = new Properties();
             try (FileInputStream in = new FileInputStream(backup)) {
                 saved.load(in);
             }
-            for (String key : keys) {
-                String value = saved.getProperty(key, "__ORYN_MISSING__");
-                if ("__ORYN_MISSING__".equals(value)) remove(key);
-                else set(key, value);
+            for (String key : saved.stringPropertyNames()) {
+                set(key, saved.getProperty(key));
             }
             save();
             //noinspection ResultOfMethodCallIgnored
