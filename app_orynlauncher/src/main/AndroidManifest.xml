@@ -58,6 +58,11 @@
             android:screenOrientation="landscape"
             android:label="Oryn Cosmetics"
             android:exported="false" />
+        <activity
+            android:name="net.kdt.pojavlaunch.OrynCustomizationActivity"
+            android:screenOrientation="landscape"
+            android:label="Oryn Customization"
+            android:exported="false" />
 
         <activity
             android:name="net.kdt.pojavlaunch.MissingStorageActivity"
