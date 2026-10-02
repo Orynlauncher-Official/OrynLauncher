@@ -121,6 +121,10 @@ object GameRecorder {
 
     fun start(context: Context, projection: MediaProjection) {
         if (_state.value != RecordingState.IDLE) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            Log.w(TAG, "Playback audio capture requires Android 10+")
+            return
+        }
 
         val view = GameSurfaceRegistry.getView()
         if (view == null) {
