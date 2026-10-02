@@ -42,6 +42,11 @@
         android:enableOnBackInvokedCallback="false"
         tools:ignore="UnusedAttribute">
         <activity
+            android:name="net.kdt.pojavlaunch.OrynSettingsActivity"
+            android:screenOrientation="landscape"
+            android:label="Oryn Settings"
+            android:exported="false" />
+        <activity
             android:name="net.kdt.pojavlaunch.OrynFileManagerActivity"
             android:screenOrientation="landscape"
             android:label="Oryn File Manager" />
