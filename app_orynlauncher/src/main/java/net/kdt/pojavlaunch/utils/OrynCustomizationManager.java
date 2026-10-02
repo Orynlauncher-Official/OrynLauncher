@@ -118,14 +118,17 @@ public final class OrynCustomizationManager {
         applyView(content, accent);
 
         View home = activity.findViewById(R.id.fragment_menu_main);
+        if (home == null) home = content;
         if (home != null) {
-            home.setBackgroundColor(getBackgroundColor(activity));
+            if (home != content || getBackgroundUri(activity).length() == 0) {
+                home.setBackgroundColor(getBackgroundColor(activity));
+            }
             applyBackgroundAsync(activity, home);
             float scale = getUiScale(activity) / 100f;
             home.setScaleX(scale);
             home.setScaleY(scale);
             applyHomeLayout(activity);
-            applyAnimatedBackground(activity, home, accent);
+            if (home instanceof ViewGroup) applyAnimatedBackground(activity, home, accent);
         }
 
         View brand = activity.findViewById(R.id.oryn_brand);
