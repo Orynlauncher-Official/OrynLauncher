@@ -193,6 +193,10 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
     const controls = skinViewer.controls;
     const target = controls.target;
 
+    // Center the camera around the player's body instead of the old origin.
+    // This prevents the legs from falling below the bottom edge of the preview.
+    target.set(0, -5.6, 0);
+
     const azimuth = azimuthDeg * Math.PI / 180;
     const pitch = pitchDeg * Math.PI / 180;
 
@@ -207,18 +211,16 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
 }
 
 function getPreviewDistance() {
-    // Keep the whole Minecraft player inside the launcher preview.
-    // The old fixed 48-unit distance was too close for the wide landscape
-    // cosmetics screen and clipped the legs.
+    // The cosmetics stage is wide but relatively short. Keep the complete
+    // Minecraft player visible with comfortable space above the head and
+    // below the feet, including when the bottom "EQUIPPED" bar is present.
     const w = getWidth();
     const h = getHeight();
     const shortSide = Math.min(w, h);
-    if (shortSide <= 0) return 68;
+    if (shortSide <= 0) return 92;
 
-    // Slightly pull back on short preview panels, while avoiding an
-    // unnecessarily tiny player on large screens.
-    const distance = 68 * (420 / shortSide);
-    return Math.max(62, Math.min(86, distance));
+    const distance = 92 * (420 / shortSide);
+    return Math.max(82, Math.min(112, distance));
 }
 
 let pendingCapeView = false;
