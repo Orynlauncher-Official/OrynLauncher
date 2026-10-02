@@ -403,12 +403,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 String minecraftVersion = getDownloadMinecraftVersion();
                 String loader = getSelectedLoader();
                 StringBuilder facets = new StringBuilder("[[\"project_type:")
-                        .append(category.projectType).append("\"]");
+        .append(category.projectType).append("\"]");
                 if (minecraftVersion != null) {
-                    facets.append(",\"versions:").append(minecraftVersion).append("\"");
+                    facets.append(",[\"versions:").append(minecraftVersion).append("\"]");
                 }
                 if (loader != null && category == Category.MOD) {
-                    facets.append(",\"categories:").append(loader).append("\"");
+                    facets.append(",[\"categories:").append(loader).append("\"]");
                 }
                 facets.append("]]");
                 params.put("facets", facets.toString());
