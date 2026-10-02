@@ -99,7 +99,8 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     }
 
     private void setupThemePreference() {
-        Preference preference = requirePreference("theme_color");
+        Preference preference = findPreference("theme_color");
+        if (preference == null) return;
         preference.setOnPreferenceClickListener(p -> {
             OrynColorPickerDialog.show(requireContext());
             return true;
