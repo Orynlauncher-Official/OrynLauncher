@@ -82,6 +82,7 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         setupNotificationRequestPreference();
         setupThemePreference();
         setupCustomizationPreference();
+        setupOrynV3Preferences();
     }
 
     private int dp(float value) { return (int)(value * getResources().getDisplayMetrics().density + .5f); }
@@ -102,6 +103,29 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
         Preference preference = requirePreference("oryn_customization");
         preference.setOnPreferenceClickListener(p -> {
             startActivity(new android.content.Intent(requireContext(), OrynCustomizationActivity.class));
+            return true;
+        });
+    }
+
+    private void setupOrynV3Preferences() {
+        Preference cosmetics = findPreference("oryn_cosmetics");
+        if (cosmetics != null) cosmetics.setOnPreferenceClickListener(p -> {
+            startActivity(new android.content.Intent(requireContext(), net.kdt.pojavlaunch.OrynCosmeticsActivity.class));
+            return true;
+        });
+        Preference crash = findPreference("oryn_crash_viewer");
+        if (crash != null) crash.setOnPreferenceClickListener(p -> {
+            startActivity(new android.content.Intent(requireContext(), net.kdt.pojavlaunch.OrynCrashViewerActivity.class));
+            return true;
+        });
+        Preference files = findPreference("oryn_files");
+        if (files != null) files.setOnPreferenceClickListener(p -> {
+            startActivity(new android.content.Intent(requireContext(), net.kdt.pojavlaunch.OrynFileManagerActivity.class));
+            return true;
+        });
+        Preference downloads = findPreference("oryn_downloads");
+        if (downloads != null) downloads.setOnPreferenceClickListener(p -> {
+            startActivity(new android.content.Intent(requireContext(), net.kdt.pojavlaunch.OrynDownloadActivity.class));
             return true;
         });
     }
