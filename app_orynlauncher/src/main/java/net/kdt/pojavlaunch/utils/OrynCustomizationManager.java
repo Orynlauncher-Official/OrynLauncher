@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.Drawable;
+import android.widget.FrameLayout;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
@@ -83,8 +84,6 @@ public final class OrynCustomizationManager {
     public static void setUiScale(Context c, int v) { prefs(c).edit().putInt(KEY_UI_SCALE, Math.max(80, Math.min(120, v))).apply(); }
     public static String getHomeLayout(Context c) { return prefs(c).getString(KEY_HOME_LAYOUT, "Default"); }
     public static void setHomeLayout(Context c, String v) { prefs(c).edit().putString(KEY_HOME_LAYOUT, v).apply(); }
-    public static String getLogoUri(Context c) { return prefs(c).getString(KEY_LOGO_URI, ""); }
-    public static void setLogoUri(Context c, String v) { prefs(c).edit().putString(KEY_LOGO_URI, v == null ? "" : v).apply(); }
     public static String getPlayerUri(Context c) { return prefs(c).getString(KEY_PLAYER_URI, ""); }
     public static void setPlayerUri(Context c, String v) { prefs(c).edit().putString(KEY_PLAYER_URI, v == null ? "" : v).apply(); }
     public static String getPageAnimation(Context c) { return prefs(c).getString(KEY_PAGE_ANIMATION, "Fade"); }
@@ -118,32 +117,15 @@ public final class OrynCustomizationManager {
         applyView(content, accent);
 
         View home = activity.findViewById(R.id.fragment_menu_main);
-        if (home == null) home = content;
+        if (home == null) home = findLauncherHome(content);
         if (home != null) {
-            if (home != content || getBackgroundUri(activity).length() == 0) {
-                home.setBackgroundColor(getBackgroundColor(activity));
-            }
-            applyBackgroundAsync(activity, home);
+            if (getBackgroundUri(activity).length() == 0) home.setBackgroundColor(getBackgroundColor(activity));
+            else applyBackgroundAsync(activity, home);
             float scale = getUiScale(activity) / 100f;
             home.setScaleX(scale);
             home.setScaleY(scale);
             applyHomeLayout(activity);
             if (home instanceof ViewGroup) applyAnimatedBackground(activity, home, accent);
-        }
-
-        View brand = activity.findViewById(R.id.oryn_brand);
-        if (brand instanceof TextView) {
-            loadOptionalImage(activity, getLogoUri(activity), bitmap -> {
-                if (bitmap != null) {
-                    Drawable d = new BitmapDrawable(activity.getResources(), bitmap);
-                    int size = (int)(30 * activity.getResources().getDisplayMetrics().density);
-                    d.setBounds(0, 0, size, size);
-                    ((TextView) brand).setCompoundDrawables(d, null, null, null);
-                    ((TextView) brand).setCompoundDrawablePadding(10);
-                } else {
-                    ((TextView) brand).setCompoundDrawables(null, null, null, null);
-                }
-            });
         }
 
         View player = activity.findViewById(R.id.oryn_custom_player_image);
@@ -153,6 +135,20 @@ public final class OrynCustomizationManager {
                 player.setVisibility(bitmap == null ? View.GONE : View.VISIBLE);
             });
         }
+    }
+
+
+    private static View findLauncherHome(View content) {
+        if (content == null) return null;
+        if (content.getId() == R.id.fragment_menu_main) return content;
+        if (content instanceof ViewGroup) {
+            ViewGroup group = (ViewGroup) content;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                View found = findLauncherHome(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
     }
 
     private static void applyView(View view, int accent) {
@@ -203,11 +199,11 @@ public final class OrynCustomizationManager {
 
     private static void applyAnimatedBackground(Activity a, View home, int accent) {
         View old = (View) home.getTag(ANIMATION_TAG);
-        if (old != null) {
-            ((ViewGroup) home).removeView(old);
+        if (old != null && old.getParent() instanceof ViewGroup) {
+            ((ViewGroup) old.getParent()).removeView(old);
             old.animate().cancel();
         }
-        if (!isAnimatedBackground(a) || !isGeneralAnimation(a) || !isAnimationSafe(a)) return;
+        if (!isAnimatedBackground(a) || !isGeneralAnimation(a)) return;
         final View overlay = new View(a);
         GradientDrawable glow = new GradientDrawable(GradientDrawable.Orientation.TL_BR,
                 new int[]{Color.argb(0, Color.red(accent), Color.green(accent), Color.blue(accent)),
@@ -216,6 +212,7 @@ public final class OrynCustomizationManager {
         overlay.setBackground(glow);
         overlay.setClickable(false);
         overlay.setAlpha(0f);
+        if (!(home instanceof ViewGroup)) return;
         ((ViewGroup) home).addView(overlay, 0, new ViewGroup.LayoutParams(-1, -1));
         home.setTag(ANIMATION_TAG, overlay);
         long duration = "Low".equals(getAnimationIntensity(a)) ? 4200L : ("High".equals(getAnimationIntensity(a)) ? 1800L : 2800L);
@@ -242,6 +239,10 @@ public final class OrynCustomizationManager {
             MAIN.post(() -> {
                 if (bitmap == null || target.getWindowToken() == null) return;
                 BitmapDrawable drawable = new BitmapDrawable(c.getResources(), bitmap);
+                String mode = getBackgroundMode(c);
+                if ("Fit".equals(mode)) drawable.setGravity(android.view.Gravity.CENTER);
+                else if ("Center".equals(mode)) drawable.setGravity(android.view.Gravity.CENTER);
+                else drawable.setGravity(android.view.Gravity.FILL);
                 drawable.setAlpha((int)(255f * getBackgroundOpacity(c) / 100f));
                 target.setBackground(drawable);
             });
