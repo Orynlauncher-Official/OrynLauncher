@@ -86,8 +86,19 @@ public class CustomControls {
 		// Inventory key near the lower-right middle.
 		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
 
-		// Center gear/menu button.
-		this.mControlDataList.add(new ControlData("⚙", new int[]{ControlData.SPECIALBTN_MENU}, "${screen_width} * 0.5 - 28", "${screen_height} * 0.49", 56, 56, false));
+		// Floating gear/menu button. It is intentionally circular and uses the
+		// free-positioning path in ControlInterface instead of snapping to other controls.
+		ControlData floatingMenu = new ControlData(
+				"⚙",
+				new int[]{ControlData.SPECIALBTN_MENU},
+				"${screen_width} * 0.5 - 28",
+				"${screen_height} * 0.49",
+				56,
+				56,
+				false
+		);
+		floatingMenu.cornerRadius = 50;
+		this.mControlDataList.add(floatingMenu);
 		version = 10;
 	}
 	public void save(String path) throws IOException {
