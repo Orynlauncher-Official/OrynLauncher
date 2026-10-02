@@ -194,11 +194,11 @@
             android:textSize="17sp"
             android:textColor="#4B9FFF"/>
 
-        <ImageButton
+        <Button
             android:id="@+id/share_logs_button"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:src="@drawable/oryn_external"
+            android:drawableTop="@drawable/oryn_external"
             android:contentDescription="Open"
             android:background="@android:color/transparent"
             android:padding="10dp"/>
