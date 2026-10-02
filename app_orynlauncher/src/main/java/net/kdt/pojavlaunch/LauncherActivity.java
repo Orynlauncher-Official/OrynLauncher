@@ -384,7 +384,7 @@ public class LauncherActivity extends BaseActivity {
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
         mOrynBrand = findViewById(R.id.oryn_brand);
-        mAccountHeader = findViewById(R.id.oryn_account_header);
+        mAccountHeader = findViewById(R.id.account_spinner);
         mProgressLayout = findViewById(R.id.progress_layout);
     }
 }
