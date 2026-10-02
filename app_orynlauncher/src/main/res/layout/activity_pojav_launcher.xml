@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/oryn_home_bg">
+    android:background="@drawable/oryn_v4_bg">
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/container_fragment"
@@ -15,57 +15,76 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- V3 reference brand -->
+    <!-- V4 reference header -->
     <LinearLayout
         android:id="@+id/oryn_brand"
         android:layout_width="wrap_content"
-        android:layout_height="48dp"
+        android:layout_height="58dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginStart="174dp"
-        android:layout_marginTop="20dp"
-        android:elevation="10dp"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="12dp"
+        android:elevation="12dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:src="@drawable/oryn_top_logo_o"
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:src="@drawable/oryn_v4_crystal"
+            android:scaleType="centerInside"
             android:contentDescription="Oryn"/>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:text="Oryn Launcher"
-            android:textSize="26sp"
-            android:textStyle="normal"
-            android:textColor="#3F98FF"/>
+            android:layout_marginStart="12dp"
+            android:text="Oryn "
+            android:textSize="27sp"
+            android:textStyle="bold"
+            android:textColor="#F2F5FA"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Launcher"
+            android:textSize="27sp"
+            android:textStyle="bold"
+            android:textColor="#168FFF"/>
+
+        <TextView
+            android:layout_width="38dp"
+            android:layout_height="28dp"
+            android:layout_marginStart="12dp"
+            android:gravity="center"
+            android:text="v4"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="#AFC0DB"
+            android:background="@drawable/oryn_version_badge"/>
     </LinearLayout>
 
-    <!-- Existing account selector, styled to match the reference -->
     <com.kdt.mcgui.AccountSpinner
         android:id="@+id/account_spinner"
-        android:layout_width="324dp"
-        android:layout_height="74dp"
-        android:layout_marginTop="18dp"
-        android:layout_marginEnd="62dp"
+        android:layout_width="182dp"
+        android:layout_height="54dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="30dp"
         android:background="@drawable/oryn_account_pill"
-        android:paddingStart="22dp"
-        android:paddingEnd="22dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="14dp"
         android:dropDownWidth="wrap_content"
-        android:elevation="10dp"
+        android:elevation="12dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
 
-    <!-- LauncherActivity keeps this button for non-home fragments. -->
+    <!-- LauncherActivity keeps this view for non-home fragments. -->
     <ImageButton
         android:id="@+id/setting_button"
         android:layout_width="52dp"
         android:layout_height="52dp"
-        android:layout_marginStart="38dp"
-        android:layout_marginTop="86dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="82dp"
         android:background="@android:color/transparent"
         android:src="@drawable/oryn_nav_home"
         android:padding="13dp"
