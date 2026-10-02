@@ -147,7 +147,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         // Use the supplied Oryn Launcher wordmark instead of the temporary blue O.
         ImageView brandLogo = new ImageView(this);
-        brandLogo.setImageResource(R.drawable.oryn_cosmetics_logo);
+        brandLogo.setImageResource(getResources().getIdentifier("oryn_cosmetics_logo", "drawable", getPackageName()));
         brandLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
         brandLogo.setAdjustViewBounds(true);
         brand.addView(brandLogo, lp(-1, 44));
