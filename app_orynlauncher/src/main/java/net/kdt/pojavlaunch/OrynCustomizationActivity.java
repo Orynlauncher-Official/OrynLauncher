@@ -4,6 +4,10 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Build;
+import android.view.Window;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,13 +26,36 @@ public class OrynCustomizationActivity extends AppCompatActivity {
 
     @Override protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        enterFullscreen();
+        buildUi();
+    }
 
-        // Full-screen customization editor: use the entire landscape display.
-        getWindow().setFlags(
+    @Override protected void onResume() {
+        super.onResume();
+        enterFullscreen();
+        OrynCustomizationManager.apply(this);
+    }
+
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) enterFullscreen();
+    }
+
+    /**
+     * Keep the customization editor genuinely immersive.
+     * Legacy flags cover older Android versions while Android 11+ uses the
+     * WindowInsetsController API so system bars stay hidden after focus changes
+     * and after returning from the document picker.
+     */
+    private void enterFullscreen() {
+        Window window = getWindow();
+        window.setFlags(
                 android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN
         );
-        getWindow().getDecorView().setSystemUiVisibility(
+
+        View decor = window.getDecorView();
+        decor.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -37,12 +64,15 @@ public class OrynCustomizationActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         );
 
-        buildUi();
-    }
-
-    @Override protected void onResume() {
-        super.onResume();
-        OrynCustomizationManager.apply(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            WindowInsetsController controller = window.getInsetsController();
+            if (controller != null) {
+                controller.hide(WindowInsets.Type.systemBars());
+                controller.setSystemBarsBehavior(
+                        WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                );
+            }
+        }
     }
 
     private int dp(int v) { return (int)(v * getResources().getDisplayMetrics().density + .5f); }
