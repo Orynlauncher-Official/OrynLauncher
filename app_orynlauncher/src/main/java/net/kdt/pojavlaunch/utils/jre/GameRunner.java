@@ -230,12 +230,6 @@ public class GameRunner {
 
         GameOptionsUtils.fixOptions(isLtw);
 
-        // Oryn FPS Boost: apply conservative Minecraft-side settings that reduce
-        // CPU/GPU work in the actual game, not just in the launcher UI.
-        if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
-            applyOrynFpsBoost(gamedir);
-        }
-
         if(isLtw && GpuUtils.getGlInfo().forcedMsaa) {
             if(showDialog(activity, R.string.ltw_4x_msaa_warning_msg)) return;
         }
@@ -401,36 +395,6 @@ public class GameRunner {
         } catch (Throwable e) {
             // Never block Minecraft from launching because an optional optimization failed.
             Log.w("GameRunner", "Failed to apply Oryn FPS Boost", e);
-        }
-    }
-
-    /** Apply Oryn's real in-game performance profile before Minecraft starts. */
-    private static void applyOrynFpsBoost(File gameDir) {
-        try {
-            MCOptionUtils.load(gameDir.getAbsolutePath());
-            setIfHigher("renderDistance", "6", 6);
-            setIfHigher("simulationDistance", "5", 5);
-            MCOptionUtils.set("graphics", "fast");
-            MCOptionUtils.set("clouds", "off");
-            MCOptionUtils.set("entityShadows", "false");
-            MCOptionUtils.set("particles", "decreased");
-            MCOptionUtils.set("biomeBlendRadius", "0");
-            MCOptionUtils.set("mipmapLevels", "0");
-            MCOptionUtils.set("entityDistanceScaling", "0.5");
-            MCOptionUtils.set("distortionEffectScale", "0.0");
-            MCOptionUtils.save();
-            Log.i("OrynFPS", "Applied Oryn FPS Boost profile");
-        } catch (Throwable t) {
-            Log.w("OrynFPS", "Could not apply all FPS Boost options; continuing with renderer optimization", t);
-        }
-    }
-
-    private static void setIfHigher(String key, String value, int max) {
-        try {
-            int current = GameOptionsUtils.parseIntDefault(MCOptionUtils.get(key), max);
-            if (current > max) MCOptionUtils.set(key, value);
-        } catch (Throwable ignored) {
-            MCOptionUtils.set(key, value);
         }
     }
 
