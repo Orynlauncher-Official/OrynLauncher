@@ -15,6 +15,11 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -74,6 +79,81 @@ public class MCOptionUtils {
 
     public static void set(String key, String value) {
         sParameterMap.put(key,value);
+    }
+
+    public static void remove(String key) {
+        sParameterMap.remove(key);
+    }
+
+    /**
+     * Apply OrynLauncher FPS Boost directly to Minecraft's options.txt.
+     * Original values are backed up per instance and restored when disabled.
+     */
+    public static void applyOrynFpsBoost(@NonNull String folderPath) {
+        final String[] keys = {
+                "enableVsync", "renderDistance", "simulationDistance",
+                "entityDistanceScaling", "particles", "entityShadows",
+                "biomeBlendRadius", "mipmapLevels", "ao", "renderClouds",
+                "cloudStatus", "graphicsMode", "graphicsPreset",
+                "prioritizeChunkUpdates", "maxFps", "screenEffectScale",
+                "fovEffectScale"
+        };
+        final String[] values = {
+                "false", "8", "6", "0.5", "2", "false", "0", "0", "false",
+                "false", "fast", "0", "fast", "0", "260", "0.0", "0.5"
+        };
+        File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
+        try {
+            load(folderPath);
+            if (!backup.exists()) {
+                File parent = backup.getParentFile();
+                if (parent != null) parent.mkdirs();
+                Properties saved = new Properties();
+                for (String key : keys) {
+                    String current = get(key);
+                    saved.setProperty(key, current == null ? "__ORYN_MISSING__" : current);
+                }
+                try (FileOutputStream out = new FileOutputStream(backup)) {
+                    saved.store(out, "OrynLauncher FPS Boost backup");
+                }
+            }
+            for (int i = 0; i < keys.length; i++) set(keys[i], values[i]);
+            save();
+            Log.i("MCOptionUtils", "Oryn FPS Boost applied");
+        } catch (Throwable e) {
+            Log.e("MCOptionUtils", "Failed to apply Oryn FPS Boost", e);
+        }
+    }
+
+    public static void restoreOrynFpsBoost(@NonNull String folderPath) {
+        File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
+        if (!backup.exists()) return;
+        final String[] keys = {
+                "enableVsync", "renderDistance", "simulationDistance",
+                "entityDistanceScaling", "particles", "entityShadows",
+                "biomeBlendRadius", "mipmapLevels", "ao", "renderClouds",
+                "cloudStatus", "graphicsMode", "graphicsPreset",
+                "prioritizeChunkUpdates", "maxFps", "screenEffectScale",
+                "fovEffectScale"
+        };
+        try {
+            load(folderPath);
+            Properties saved = new Properties();
+            try (FileInputStream in = new FileInputStream(backup)) {
+                saved.load(in);
+            }
+            for (String key : keys) {
+                String value = saved.getProperty(key, "__ORYN_MISSING__");
+                if ("__ORYN_MISSING__".equals(value)) remove(key);
+                else set(key, value);
+            }
+            save();
+            //noinspection ResultOfMethodCallIgnored
+            backup.delete();
+            Log.i("MCOptionUtils", "Oryn FPS Boost settings restored");
+        } catch (Throwable e) {
+            Log.e("MCOptionUtils", "Failed to restore Oryn FPS Boost", e);
+        }
     }
 
     /** Set an array of String, instead of a simple value. Not supported on all options */
