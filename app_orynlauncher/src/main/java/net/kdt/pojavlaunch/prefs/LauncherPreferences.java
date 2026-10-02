@@ -44,6 +44,8 @@ public class LauncherPreferences {
     public static boolean PREF_SUSTAINED_PERFORMANCE = false;
     /** OrynLauncher real in-game FPS optimization mode. */
     public static boolean PREF_ORYN_FPS_BOOST = false;
+    /** OrynLauncher real in-game FPS optimization mode. */
+    public static boolean PREF_ORYN_FPS_BOOST = false;
     public static boolean PREF_VIRTUAL_MOUSE_START = false;
     public static boolean PREF_USE_ALTERNATE_SURFACE = true;
     public static boolean PREF_JAVA_SANDBOX = true;
@@ -57,8 +59,6 @@ public class LauncherPreferences {
     public static boolean PREF_GYRO_INVERT_Y = false;
 
     public static boolean PREF_FORCE_VSYNC = false;
-    /** Oryn FPS Boost applies game-side performance options at launch. */
-    public static boolean PREF_ORYN_FPS_BOOST = false;
 
     public static boolean PREF_USE_ANGLE = false;
 
@@ -72,7 +72,6 @@ public class LauncherPreferences {
     public static boolean PREF_SKIP_NOTIFICATION_PERMISSION_CHECK = false;
     public static boolean PREF_RAPID_START = true;
     public static boolean PREF_VERIFY_FILES = true;
-    public static boolean PREF_FPS_BOOST = false;
 
     public static boolean PREF_FREEDRENO_SYSMEM = false;
     public static boolean PREF_KEYBOARD_AUTOPANNING = true;
@@ -99,7 +98,7 @@ public class LauncherPreferences {
         PREF_RAM_ALLOCATION = DEFAULT_PREF.getInt("allocation", findBestRAMAllocation(ctx));
         PREF_CUSTOM_JAVA_ARGS = DEFAULT_PREF.getString("javaArgs", "");
         PREF_SUSTAINED_PERFORMANCE = DEFAULT_PREF.getBoolean("sustainedPerformance", isDevicePowerful);
-        PREF_ORYN_FPS_BOOST = DEFAULT_PREF.getBoolean("oryn_fps_boost", false);
+        PREF_ORYN_FPS_BOOST = DEFAULT_PREF.getBoolean("orynFpsBoost", false);
         PREF_VIRTUAL_MOUSE_START = DEFAULT_PREF.getBoolean("mouse_start", false);
         PREF_USE_ALTERNATE_SURFACE = DEFAULT_PREF.getBoolean("alternate_surface", isDevicePowerful);
         PREF_JAVA_SANDBOX = DEFAULT_PREF.getBoolean("java_sandbox", true);
@@ -111,7 +110,6 @@ public class LauncherPreferences {
         PREF_GYRO_INVERT_X = DEFAULT_PREF.getBoolean("gyroInvertX", false);
         PREF_GYRO_INVERT_Y = DEFAULT_PREF.getBoolean("gyroInvertY", false);
         PREF_FORCE_VSYNC = DEFAULT_PREF.getBoolean("force_vsync", isDevicePowerful);
-        PREF_ORYN_FPS_BOOST = DEFAULT_PREF.getBoolean("oryn_fps_boost", false);
         PREF_USE_ANGLE = DEFAULT_PREF.getBoolean("use_angle", false);
         PREF_BUTTON_ALL_CAPS = DEFAULT_PREF.getBoolean("buttonAllCaps", true);
         PREF_DUMP_SHADERS = DEFAULT_PREF.getBoolean("dump_shaders", false);
@@ -122,7 +120,6 @@ public class LauncherPreferences {
         PREF_VERIFY_MANIFEST = DEFAULT_PREF.getBoolean("verifyManifest", true);
         PREF_SKIP_NOTIFICATION_PERMISSION_CHECK = DEFAULT_PREF.getBoolean(PREF_KEY_SKIP_NOTIFICATION_CHECK, false);
         PREF_VERIFY_FILES = DEFAULT_PREF.getBoolean("checkGameFiles", true);
-        PREF_FPS_BOOST = DEFAULT_PREF.getBoolean("orynFpsBoost", false);
         PREF_RAPID_START = DEFAULT_PREF.getBoolean("fastStartupCheck", true);
         PREF_FREEDRENO_SYSMEM = DEFAULT_PREF.getBoolean("freedrenoSysmem", false);
         PREF_KEYBOARD_AUTOPANNING = DEFAULT_PREF.getBoolean("keyboardAutoPanning", true);
