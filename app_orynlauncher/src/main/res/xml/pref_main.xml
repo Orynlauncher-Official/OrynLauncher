@@ -9,12 +9,6 @@
 
     <net.kdt.pojavlaunch.prefs.BackButtonPreference/>
 
-    <Preference
-        android:key="theme_color"
-        android:title="Theme Color"
-        android:summary="Choose a launcher accent color — changes apply instantly"
-        android:icon="@drawable/ic_px_sliders"/>
-
     <PreferenceCategory
         android:title="OrynLauncher V3"
         android:key="oryn_v3_category">
