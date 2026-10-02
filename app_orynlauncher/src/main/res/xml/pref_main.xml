@@ -15,21 +15,57 @@
         android:summary="Choose a launcher accent color — changes apply instantly"
         android:icon="@drawable/ic_px_sliders"/>
 
-    <Preference
-        android:key="oryn_customization"
-        android:title="Oryn Customization"
-        android:summary="Themes, backgrounds, colors, buttons, animations and home personalization"
-        android:icon="@drawable/ic_px_sliders"/>
-
     <PreferenceCategory
-        android:title="@string/preference_category_main_categories"
-        >
+        android:title="OrynLauncher V3"
+        android:key="oryn_v3_category">
+
+        <Preference
+            android:key="oryn_customization"
+            android:title="Oryn Customization"
+            android:summary="Themes, backgrounds, colors, buttons, animations and home personalization"
+            android:icon="@drawable/ic_px_sliders"/>
+
+        <Preference
+            android:key="oryn_cosmetics"
+            android:title="Oryn Cosmetics"
+            android:summary="Manage your existing Skin and Cape"
+            android:icon="@drawable/ic_px_image"/>
 
         <SwitchPreference
             android:key="orynFpsBoost"
             android:title="Oryn FPS Boost"
-            android:summary="Real in-game optimization: lower render workload, reduce effects and enable sustained performance"
+            android:summary="Real in-game optimization for lower rendering workload"
             android:icon="@drawable/ic_px_sliders"/>
+
+        <Preference
+            android:key="oryn_recorder"
+            android:title="OrynLauncher Recorder"
+            android:summary="Configure the in-game recorder"
+            android:fragment="net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceRecorderFragment"
+            android:icon="@drawable/ic_px_image"/>
+
+        <Preference
+            android:key="oryn_crash_viewer"
+            android:title="Oryn Crash Viewer"
+            android:summary="View and inspect Minecraft crash logs"
+            android:icon="@drawable/oryn_nav_crash"/>
+
+        <Preference
+            android:key="oryn_files"
+            android:title="Oryn Files"
+            android:summary="Browse and manage launcher files"
+            android:icon="@drawable/ic_px_file"/>
+
+        <Preference
+            android:key="oryn_downloads"
+            android:title="Oryn Downloads"
+            android:summary="Mods, resource packs and shaders"
+            android:icon="@drawable/ic_px_file_dl"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/preference_category_main_categories"
+        >
 
         <Preference
             android:key="recorder_screen_setting"
