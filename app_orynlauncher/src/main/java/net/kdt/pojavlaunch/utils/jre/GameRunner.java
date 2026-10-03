@@ -503,7 +503,11 @@ public class GameRunner {
         varArgMap.put("assets_index_name", versionInfo.assets);
         varArgMap.put("game_assets", Tools.ASSETS_PATH);
         varArgMap.put("game_directory", gameDir.getAbsolutePath());
-        varArgMap.put("user_properties", localCosmeticsProperties == null ? "{}" : localCosmeticsProperties);
+        String cosmeticsProperties = localCosmeticsProperties == null ? "{}" : localCosmeticsProperties;
+        // Older Minecraft versions read textures from userProperties/profileProperties.
+        // Keep both populated so the same cosmetic payload reaches the GameProfile path.
+        varArgMap.put("user_properties", cosmeticsProperties);
+        varArgMap.put("profile_properties", cosmeticsProperties);
         varArgMap.put("user_type", userType);
         varArgMap.put("version_name", versionName);
         varArgMap.put("version_type", versionInfo.type);
