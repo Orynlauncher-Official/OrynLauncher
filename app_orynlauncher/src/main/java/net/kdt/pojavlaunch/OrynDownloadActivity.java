@@ -782,7 +782,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonArray depVersions = api.get(
                         "project/" + URLEncoder.encode(depProjectId, "UTF-8") + "/version",
                         JsonArray.class);
-                String minecraftVersion = instance.versionId;
+                String minecraftVersion = getMinecraftVersionFromInstanceId(instance.versionId);
                 String loader = getModrinthLoader(instance);
 
                 for (int j = 0; depVersions != null && j < depVersions.size(); j++) {
@@ -920,6 +920,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         if (category == Category.RESOURCEPACK || category == Category.SHADER || category == Category.MODPACK) {
             return "minecraft";
         }
+
+        String profileId = instance.versionId == null ? "" : instance.versionId.toLowerCase(Locale.ROOT);
+        if (profileId.contains("neoforge")) return "neoforge";
+        if (profileId.contains("forge")) return "forge";
+        if (profileId.contains("fabric")) return "fabric";
+        if (profileId.contains("quilt")) return "quilt";
 
         if (instance.installer != null) {
             String url = instance.installer.installerDownloadUrl;
