@@ -126,10 +126,24 @@ public final class OrynLocalCosmeticsServer {
             String request = reader.readLine();
             if (request == null) return;
 
+            // Strip the query string so cache-busting URLs such as
+            // /skin.png?v=123 are still served by the local texture server.
+            String[] requestParts = request.split(" ");
+            if (requestParts.length < 2 || !"GET".equals(requestParts[0])) {
+                writeResponse(s, 405, null);
+                return;
+            }
+
+            String path = requestParts[1];
+            int queryIndex = path.indexOf('?');
+            if (queryIndex >= 0) {
+                path = path.substring(0, queryIndex);
+            }
+
             File file;
-            if (request.startsWith("GET /skin.png ")) {
+            if ("/skin.png".equals(path)) {
                 file = skinFile;
-            } else if (request.startsWith("GET /cape.png ")) {
+            } else if ("/cape.png".equals(path)) {
                 file = capeFile;
             } else {
                 writeResponse(s, 404, null);
