@@ -58,19 +58,35 @@ public class ApiHandler {
 
     public static String getRaw(Map<String, String> headers, String url) {
         Log.d("ApiHandler", url);
+        HttpURLConnection conn = null;
         try {
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setConnectTimeout(12000);
+            conn.setReadTimeout(20000);
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent", Tools.APP_NAME);
+            conn.setRequestProperty("Accept", "application/json");
             addHeaders(conn, headers);
-            InputStream inputStream = conn.getInputStream();
-            String data = Tools.read(inputStream);
+            conn.connect();
+
+            int responseCode = conn.getResponseCode();
+            InputStream stream = responseCode >= 400 ? conn.getErrorStream() : conn.getInputStream();
+            String data = stream == null ? "" : Tools.read(stream);
+            if (stream != null) stream.close();
+
+            if (responseCode < 200 || responseCode >= 300) {
+                String suffix = data == null || data.trim().isEmpty() ? "" : ": " + data;
+                throw new IOException("HTTP " + responseCode + suffix);
+            }
+
             Log.d(ApiHandler.class.toString(), data);
-            inputStream.close();
-            conn.disconnect();
             return data;
         } catch (IOException e) {
-            e.printStackTrace();
+            Log.e("ApiHandler", "Request failed: " + url, e);
+            throw new RuntimeException("Network request failed: " + e.getMessage(), e);
+        } finally {
+            if (conn != null) conn.disconnect();
         }
-        return null;
     }
 
     public static String postRaw(String url, String body) {
