@@ -358,7 +358,7 @@ object GameRecorder {
                     break
                 }
             }
-            val audioTrack = mux.addTrack(audio.format!!)
+            val audioTrack = mux.addTrack(audio.getFormat()!!)
             mux.start()
 
             val info = MediaCodec.BufferInfo()
