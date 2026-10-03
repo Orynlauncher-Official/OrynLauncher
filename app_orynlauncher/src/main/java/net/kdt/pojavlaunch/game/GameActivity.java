@@ -15,6 +15,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
@@ -321,14 +322,37 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         }
     }
 
+    private static final String BUILTIN_CONTROL_LAYOUT_REVISION = "oryn-v4-control-layout-2";
+
+    /**
+     * The built-in control asset is copied to user storage on first setup. Refresh it once
+     * when Oryn ships a new built-in layout, while leaving later user edits untouched.
+     */
+    private void migrateBuiltInControlLayout(String controlPath, boolean usingBuiltInDefault) {
+        if (!usingBuiltInDefault) return;
+
+        SharedPreferences prefs = getSharedPreferences("oryn_control_layout", MODE_PRIVATE);
+        if (BUILTIN_CONTROL_LAYOUT_REVISION.equals(prefs.getString("revision", null))) return;
+
+        try {
+            Tools.copyAssetFile(getAssets(), "default.json", new File(controlPath), true);
+            prefs.edit().putString("revision", BUILTIN_CONTROL_LAYOUT_REVISION).apply();
+            Log.i("OrynControls", "Applied Oryn V4 built-in control layout");
+        } catch (IOException e) {
+            Log.w("OrynControls", "Unable to refresh built-in control layout", e);
+        }
+    }
+
     private void loadControls() {
         String controlPath = instance.getLaunchControls();
         boolean usingBuiltInDefault = !Tools.isValidString(instance.controlLayout)
                 && Tools.CTRLDEF_FILE.equals(controlPath);
 
+        migrateBuiltInControlLayout(controlPath, usingBuiltInDefault);
+
         try {
-            // Load the instance layout. When the launcher is using its built-in
-            // default, migrate older default.json layouts to the Oryn preset.
+            // Load the instance layout. The built-in default is refreshed once per shipped
+            // layout revision, so existing installs actually receive the new Oryn controls.
             mControlLayout.loadLayout(controlPath);
 
             if (usingBuiltInDefault && mControlLayout.getLayout() != null
