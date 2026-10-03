@@ -304,7 +304,9 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
             launcherGLView.setSurfaceReadyListener(() -> {
                 try {
-                    Tools.runOnUiThread(() -> launcherGLView.mCursorView.setVisibility(View.VISIBLE));
+                    Tools.runOnUiThread(() -> launcherGLView.mCursorView.setVisibility(
+                            PREF_VIRTUAL_MOUSE_START ? View.VISIBLE : View.GONE
+                    ));
                     if(version == null || classpath == null) {
                         Tools.runOnUiThread(()->{
                             Toast.makeText(this, R.string.main_please_restart, Toast.LENGTH_LONG).show();
