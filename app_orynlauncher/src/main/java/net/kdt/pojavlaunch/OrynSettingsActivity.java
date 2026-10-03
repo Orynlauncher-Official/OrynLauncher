@@ -419,7 +419,7 @@ public class OrynSettingsActivity extends BaseActivity {
         cosmetics.setOnClickListener(v -> startActivity(new Intent(this, OrynCosmeticsActivity.class)));
         addSetting("Oryn Cosmetics", "Manage your existing Skin and Cape", cosmetics);
                 addActivitySetting("Oryn Recorder", "Video quality, FPS and saved recordings",
-                new Intent(this, OrynLegacySettingsActivity.class));
+                new Intent(this, OrynRecorderActivity.class));
     }
 
     private void showPrivacy() {
