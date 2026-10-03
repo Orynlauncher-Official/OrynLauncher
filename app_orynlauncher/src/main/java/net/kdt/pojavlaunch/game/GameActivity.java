@@ -560,18 +560,27 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 MediaProjectionManager manager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
                 if (manager != null) {
                     try {
+                        // Android 14+ requires the media-projection foreground service
+                        // to be running before getMediaProjection() is called.
+                        // The capture consent intent was already shown and approved above.
+                        startOrynProjectionService();
                         mOrynAudioProjection = manager.getMediaProjection(resultCode, data);
                         if (mOrynAudioProjection == null) {
                             stopOrynProjectionService();
                             Toast.makeText(this, "Oryn Recorder could not obtain game capture permission. Please try again.", Toast.LENGTH_LONG).show();
                             return;
                         }
-                        startOrynProjectionService();
                         startRecordingWhenSurfaceReady(0);
                     } catch (SecurityException ex) {
                         stopOrynProjectionService();
+                        mOrynAudioProjection = null;
                         Toast.makeText(this, "Oryn Recorder could not start audio capture. Please try again.", Toast.LENGTH_LONG).show();
                         Log.e("OrynRecorder", "Unable to create MediaProjection", ex);
+                    } catch (RuntimeException ex) {
+                        stopOrynProjectionService();
+                        mOrynAudioProjection = null;
+                        Toast.makeText(this, "Oryn Recorder could not start audio capture. Please try again.", Toast.LENGTH_LONG).show();
+                        Log.e("OrynRecorder", "Unable to start recorder projection service", ex);
                     }
                 }
             } else {
