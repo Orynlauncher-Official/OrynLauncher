@@ -25,6 +25,7 @@ import androidx.annotation.Nullable;
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
+import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
 
 /**
  * Oryn V4 settings UI.
@@ -317,10 +318,8 @@ public class OrynSettingsActivity extends BaseActivity {
         Switch animations = toggle(uiPrefs.getBoolean("animations", true), (b,c) ->
                 uiPrefs.edit().putBoolean("animations", c).apply());
         addSetting("Animations", "Enable smooth UI animations", animations);
-        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b,c) -> {
-            LauncherPreferences.PREF_ORYN_FPS_BOOST = c;
-            LauncherPreferences.DEFAULT_PREF.edit().putBoolean("orynFpsBoost", c).apply();
-        });
+        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b,c) ->
+                OrynFpsBoostUtils.setEnabled(c));
         addSetting("Oryn FPS Boost", "Apply real Minecraft rendering optimizations before launch", boost);
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
@@ -331,10 +330,8 @@ public class OrynSettingsActivity extends BaseActivity {
         clear("Video", "Minecraft graphics and display settings");
         section("Video", R.drawable.ic_px_image);
 
-        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b, checked) -> {
-            LauncherPreferences.PREF_ORYN_FPS_BOOST = checked;
-            LauncherPreferences.DEFAULT_PREF.edit().putBoolean("orynFpsBoost", checked).apply();
-        });
+        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b, checked) ->
+                OrynFpsBoostUtils.setEnabled(checked));
         addSetting("Oryn FPS Boost", "Optimize Minecraft rendering before launch", boost);
 
         int scale = Math.max(25, Math.min(100, (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100)));
@@ -343,7 +340,7 @@ public class OrynSettingsActivity extends BaseActivity {
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 int value = position == 0 ? 25 : position == 1 ? 50 : position == 2 ? 75 : 100;
                 LauncherPreferences.PREF_SCALE_FACTOR = value / 100f;
-                LauncherPreferences.DEFAULT_PREF.edit().putFloat("resolutionRatio", value / 100f).apply();
+                LauncherPreferences.DEFAULT_PREF.edit().putInt("resolutionRatio", value).apply();
             }
             public void onNothingSelected(AdapterView<?> parent) {}
         });
