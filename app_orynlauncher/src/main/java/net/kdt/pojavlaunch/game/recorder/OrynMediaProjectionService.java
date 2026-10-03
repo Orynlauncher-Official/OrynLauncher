@@ -9,8 +9,6 @@ import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 
-import net.kdt.pojavlaunch.R;
-
 /**
  * Holds the required Android 14+ mediaProjection foreground-service state while
  * OrynLauncher uses MediaProjection only for game playback-audio capture.
