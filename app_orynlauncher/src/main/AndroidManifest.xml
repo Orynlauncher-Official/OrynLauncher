@@ -170,6 +170,7 @@
         </provider>
         <service android:name="net.kdt.pojavlaunch.game.recorder.OrynMediaProjectionService"
             android:exported="false"
+            android:process=":game"
             android:foregroundServiceType="mediaProjection" />
         <service android:name="net.kdt.pojavlaunch.services.ProgressService"
             android:foregroundServiceType="dataSync"/>
