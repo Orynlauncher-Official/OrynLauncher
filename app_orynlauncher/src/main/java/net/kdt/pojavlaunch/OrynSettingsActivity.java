@@ -194,8 +194,9 @@ public class OrynSettingsActivity extends BaseActivity {
 
     private void clear(String title, String subtitle) {
         content.removeAllViews();
-        pageTitle.setText(title);
-        pageSubtitle.setText(subtitle);
+        // Keep the page header identical to the reference design.
+        pageTitle.setText("Settings");
+        pageSubtitle.setText("Customize your launcher experience");
     }
 
     private LinearLayout sectionCard(String title, int icon) {
