@@ -19,6 +19,7 @@ import android.view.PixelCopy
 import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
+import android.view.View
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -73,15 +74,22 @@ object GameRecorder {
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
 
     @JvmStatic
-    fun start(context: Context): Boolean = start(context, null)
+    fun start(context: Context): Boolean = start(context, null, null)
 
     @JvmStatic
-    fun start(context: Context, projection: MediaProjection?): Boolean {
+    fun start(context: Context, projection: MediaProjection?): Boolean =
+        start(context, projection, null)
+
+    /**
+     * Starts recording from the exact Minecraft render view currently owned by GameActivity.
+     * Passing the view directly avoids a lifecycle race where the weak registry reference
+     * has not been refreshed yet even though Minecraft is visibly rendering.
+     */
+    @JvmStatic
+    fun start(context: Context, projection: MediaProjection?, requestedSource: View?): Boolean {
         if (!isIdle()) return false
-        val source = GameSurfaceRegistry.getView()
-        // The registry flag can briefly lag behind SurfaceView/TextureView lifecycle callbacks.
-        // A live, attached surface with a valid size is sufficient to start capture.
-        if (source == null || !source.isAttachedToWindow || source.width < 2 || source.height < 2) {
+        val source = requestedSource ?: GameSurfaceRegistry.getView()
+        if (source == null || source.width < 2 || source.height < 2) {
             Log.e(TAG, "Game surface is not ready")
             return false
         }
