@@ -481,8 +481,21 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     private void startRecordingWhenSurfaceReady(int attempt) {
         if (!GameRecorder.isIdle()) return;
-        if (GameRecorder.INSTANCE.start(this, mOrynAudioProjection,
-                launcherGLView != null ? launcherGLView.mSurface : null)) {
+
+        android.view.View gameSurface =
+                launcherGLView != null ? launcherGLView.mSurface : null;
+
+        if (gameSurface == null || gameSurface.getWidth() < 2 || gameSurface.getHeight() < 2) {
+            if (attempt < 80) {
+                Tools.MAIN_HANDLER.postDelayed(() -> startRecordingWhenSurfaceReady(attempt + 1), 250L);
+            } else {
+                stopOrynProjectionService();
+                Toast.makeText(this, "Oryn Recorder could not find the Minecraft render surface.", Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+
+        if (GameRecorder.INSTANCE.start(this, mOrynAudioProjection, gameSurface)) {
             updateRecordingMenuLabel();
             Toast.makeText(this, "OrynLauncher recording started with game audio", Toast.LENGTH_SHORT).show();
             return;
