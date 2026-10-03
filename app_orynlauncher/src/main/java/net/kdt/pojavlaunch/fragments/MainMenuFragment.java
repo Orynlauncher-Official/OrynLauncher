@@ -85,7 +85,9 @@ public class MainMenuFragment extends Fragment {
 
         mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
-        mInstallJarButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), LauncherPreferenceFragment.class, LauncherActivity.SETTING_FRAGMENT_TAG, null));
+        // V4 Settings sidebar must open the new Settings dashboard, not the legacy PreferenceFragment.
+        mInstallJarButton.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), net.kdt.pojavlaunch.OrynSettingsActivity.class)));
         mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
         mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
