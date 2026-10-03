@@ -17,6 +17,7 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.AdapterView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -152,6 +153,8 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("General", R.drawable.oryn_nav_settings, v -> showGeneral());
         addNav("Appearance", R.drawable.ic_px_image, v -> showAppearance());
         addNav("Game", R.drawable.ic_px_gamepad, v -> showGame());
+        addNav("Video", R.drawable.ic_px_image, v -> showVideo());
+        addNav("Renderer", R.drawable.ic_px_image_renderer, v -> showRenderer());
         addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
@@ -279,9 +282,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addGap();
 
         section("Game", R.drawable.ic_px_gamepad);
-        addSetting("Max FPS (Launcher)", "Limit the launcher framerate (0 = Uncapped)",
-                spinner(new String[]{"30 FPS", "60 FPS", "90 FPS", "120 FPS", "Uncapped"}, 1));
-        addSetting("Animations", "Enable smooth UI animations",
+        addSetting("Animations",
                 toggle(uiPrefs.getBoolean("animations", true), (b, checked) ->
                         uiPrefs.edit().putBoolean("animations", checked).apply()));
         addActivitySetting("Control Layout", "Customize your in-game touch controls",
@@ -324,6 +325,85 @@ public class OrynSettingsActivity extends BaseActivity {
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
         addSetting("Game Controls", "Configure the existing in-game control layout", controls);
+    }
+
+    private void showVideo() {
+        clear("Video", "Minecraft graphics and display settings");
+        section("Video", R.drawable.ic_px_image);
+
+        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b, checked) -> {
+            LauncherPreferences.PREF_ORYN_FPS_BOOST = checked;
+            LauncherPreferences.DEFAULT_PREF.edit().putBoolean("orynFpsBoost", checked).apply();
+        });
+        addSetting("Oryn FPS Boost", "Optimize Minecraft rendering before launch", boost);
+
+        int scale = Math.max(25, Math.min(100, (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100)));
+        Spinner resolution = spinner(new String[]{"25%", "50%", "75%", "100%"}, scale >= 90 ? 3 : scale >= 62 ? 2 : scale >= 37 ? 1 : 0);
+        resolution.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int value = position == 0 ? 25 : position == 1 ? 50 : position == 2 ? 75 : 100;
+                LauncherPreferences.PREF_SCALE_FACTOR = value / 100f;
+                LauncherPreferences.DEFAULT_PREF.edit().putFloat("resolutionRatio", value / 100f).apply();
+            }
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        addSetting("Resolution Scale", "Change the Minecraft render resolution", resolution);
+
+        Switch notch = toggle(LauncherPreferences.PREF_IGNORE_NOTCH, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("ignoreNotch", checked).apply());
+        addSetting("Ignore Display Cutout", "Use the full screen area when supported", notch);
+
+        Switch surface = toggle(LauncherPreferences.PREF_USE_ALTERNATE_SURFACE, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("alternate_surface", checked).apply());
+        addSetting("Alternate Surface", "Use the alternate Android game surface", surface);
+
+        Switch vsync = toggle(LauncherPreferences.PREF_FORCE_VSYNC, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("force_vsync", checked).apply());
+        addSetting("Force VSync", "Synchronize rendering to the display", vsync);
+
+        Switch sustained = toggle(LauncherPreferences.PREF_SUSTAINED_PERFORMANCE, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("sustainedPerformance", checked).apply());
+        addSetting("Sustained Performance", "Request sustained device performance mode", sustained);
+    }
+
+    private void showRenderer() {
+        clear("Renderer", "Choose the Minecraft graphics backend");
+        section("Renderer", R.drawable.ic_px_image_renderer);
+
+        net.kdt.pojavlaunch.game.renderer.RendererCache cache =
+                net.kdt.pojavlaunch.game.renderer.RendererCache.getCompatibleRenderers(this);
+
+        String[] names = cache.rendererDisplayNames;
+        int selected = 0;
+        String current = LauncherPreferences.PREF_RENDERER;
+        for (int i = 0; i < cache.rendererIds.size(); i++) {
+            if (cache.rendererIds.get(i).equals(current)) {
+                selected = i;
+                break;
+            }
+        }
+
+        Spinner renderer = spinner(names, selected);
+        renderer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position >= 0 && position < cache.rendererIds.size()) {
+                    LauncherPreferences.PREF_RENDERER = cache.rendererIds.get(position);
+                    LauncherPreferences.DEFAULT_PREF.edit()
+                            .putString("renderer", cache.rendererIds.get(position))
+                            .apply();
+                }
+            }
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        addSetting("Global Renderer", "Select the graphics backend used by Minecraft", renderer);
+
+        Switch angle = toggle(LauncherPreferences.PREF_USE_ANGLE, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("use_angle", checked).apply());
+        addSetting("ANGLE", "Use ANGLE when an ANGLE provider is available", angle);
+
+        Switch zink = toggle(LauncherPreferences.PREF_ZINK_PREFER_SYSTEM_DRIVER, (b, checked) ->
+                LauncherPreferences.DEFAULT_PREF.edit().putBoolean("zinkPreferSystemDriver", checked).apply());
+        addSetting("Vulkan Driver", "Prefer the system Vulkan driver when supported", zink);
     }
 
     private void showStorage() {
