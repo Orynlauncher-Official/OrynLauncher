@@ -13,12 +13,14 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.Preference;
+import androidx.preference.SwitchPreferenceCompat;
 import androidx.preference.PreferenceFragmentCompat;
 
 import net.kdt.pojavlaunch.LauncherActivity;
 import net.kdt.pojavlaunch.OrynCustomizationActivity;
 import net.kdt.pojavlaunch.utils.OrynColorPickerDialog;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
+import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 
@@ -116,6 +118,15 @@ public class LauncherPreferenceFragment extends PreferenceFragmentCompat impleme
     }
 
     private void setupOrynV3Preferences() {
+        SwitchPreferenceCompat fpsBoost = findPreference("orynFpsBoost");
+        if (fpsBoost != null) {
+            fpsBoost.setChecked(LauncherPreferences.PREF_ORYN_FPS_BOOST);
+            fpsBoost.setOnPreferenceChangeListener((preference, newValue) -> {
+                OrynFpsBoostUtils.setEnabled(Boolean.TRUE.equals(newValue));
+                return true;
+            });
+        }
+
         Preference cosmetics = findPreference("oryn_cosmetics");
         if (cosmetics != null) cosmetics.setOnPreferenceClickListener(p -> {
             startActivity(new android.content.Intent(requireContext(), net.kdt.pojavlaunch.OrynCosmeticsActivity.class));
