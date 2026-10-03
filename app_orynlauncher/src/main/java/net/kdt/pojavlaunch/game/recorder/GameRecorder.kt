@@ -8,6 +8,7 @@ import android.media.MediaCodecInfo
 import android.media.MediaExtractor
 import android.media.MediaFormat
 import android.media.MediaMuxer
+import android.media.projection.MediaProjection
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -66,16 +67,26 @@ object GameRecorder {
     private var nextFrameNs = 0L
     private val frameBusy = AtomicBoolean(false)
     private val stopRequested = AtomicBoolean(false)
+    private var audioCapture: GameAudioCapture? = null
 
     @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
 
     @JvmStatic
-    fun start(context: Context): Boolean {
+    fun start(context: Context): Boolean = start(context, null)
+
+    @JvmStatic
+    fun start(context: Context, projection: MediaProjection?): Boolean {
         if (!isIdle()) return false
         val source = GameSurfaceRegistry.getView()
-        if (!GameSurfaceRegistry.isReady() || source == null || source.width < 2 || source.height < 2) {
+        // The registry flag can briefly lag behind SurfaceView/TextureView lifecycle callbacks.
+        // A live, attached surface with a valid size is sufficient to start capture.
+        if (source == null || !source.isAttachedToWindow || source.width < 2 || source.height < 2) {
             Log.e(TAG, "Game surface is not ready")
+            return false
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && projection == null) {
+            Log.e(TAG, "Game-audio capture projection is not available")
             return false
         }
 
@@ -109,6 +120,10 @@ object GameRecorder {
             codec!!.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             encoderSurface = codec!!.createInputSurface()
             codec!!.start()
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && projection != null) {
+                audioCapture = GameAudioCapture(context, projection).also { it.start() }
+            }
 
             captureThread = android.os.HandlerThread("OrynGameRecorder").also { it.start() }
             captureHandler = android.os.Handler(captureThread!!.looper)
@@ -297,24 +312,76 @@ object GameRecorder {
 
             val file = tempFile
             val context = appContext
+            val audio = audioCapture
+            audioCapture = null
+            audio?.stopAndWait()
             if (file == null || !file.exists() || file.length() <= 0L || context == null) {
                 throw IOException("Recorder produced no MP4")
             }
             if (!validVideo(file)) throw IOException("Recorder produced an invalid MP4")
 
+            val mergedFile = if (audio != null && audio.hasUsableAudio()) {
+                val merged = File(context!!.cacheDir, "oryn_game_recording_merged_" + System.currentTimeMillis() + ".mp4")
+                muxVideoAndAudio(file, audio, merged)
+                merged
+            } else file
+
             val name = "OrynLauncher_Recording_" +
                 SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault()).format(Date()) + ".mp4"
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                publishMediaStore(context, file, name)
+                publishMediaStore(context, mergedFile, name)
             } else {
-                publishLegacy(context, file, name)
+                publishLegacy(context, mergedFile, name)
             }
+            if (mergedFile !== file) runCatching { file.delete() }
             Log.i(TAG, "Recording saved: " + name)
         } catch (t: Throwable) {
             Log.e(TAG, "Recording save failed", t)
         } finally {
             cleanup()
+        }
+    }
+
+    private fun muxVideoAndAudio(videoFile: File, audio: GameAudioCapture, output: File) {
+        val videoExtractor = MediaExtractor()
+        val mux = MediaMuxer(output.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+        try {
+            videoExtractor.setDataSource(videoFile.absolutePath)
+            var videoTrack = -1
+            for (i in 0 until videoExtractor.trackCount) {
+                val format = videoExtractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+                if (mime.startsWith("video/")) {
+                    videoExtractor.selectTrack(i)
+                    videoTrack = mux.addTrack(format)
+                    break
+                }
+            }
+            val audioTrack = mux.addTrack(audio.format!!)
+            mux.start()
+
+            val info = MediaCodec.BufferInfo()
+            val buffer = java.nio.ByteBuffer.allocateDirect(1024 * 1024)
+            if (videoTrack >= 0) {
+                while (true) {
+                    val size = videoExtractor.readSampleData(buffer, 0)
+                    if (size < 0) break
+                    info.offset = 0
+                    info.size = size
+                    info.presentationTimeUs = videoExtractor.sampleTime
+                    info.flags = videoExtractor.sampleFlags
+                    buffer.position(0)
+                    buffer.limit(size)
+                    mux.writeSampleData(videoTrack, buffer, info)
+                    videoExtractor.advance()
+                }
+            }
+            audio.writeSamplesTo(mux, audioTrack)
+            mux.stop()
+        } finally {
+            runCatching { videoExtractor.release() }
+            runCatching { mux.release() }
         }
     }
 
@@ -399,6 +466,7 @@ object GameRecorder {
         bitmap = null
         runCatching { tempFile?.delete() }
         tempFile = null
+        audioCapture = null
         appContext = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
