@@ -17,6 +17,7 @@ import android.util.Log
 import android.view.PixelCopy
 import android.view.Surface
 import android.view.SurfaceView
+import android.view.View
 import android.view.TextureView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -71,10 +72,14 @@ object OrynGameRecorder {
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
 
     @JvmStatic
-    fun start(context: Context): Boolean {
+    fun start(context: Context): Boolean = start(context, GameSurfaceRegistry.getView())
+
+    /** Start using the live Minecraft render view supplied by GameActivity. */
+    @JvmStatic
+    fun start(context: Context, liveSource: View?): Boolean {
         if (!isIdle()) return false
-        val source = GameSurfaceRegistry.getView()
-        if (!GameSurfaceRegistry.isReady() || source == null || source.width < 2 || source.height < 2) {
+        val source = liveSource ?: GameSurfaceRegistry.getView()
+        if (source == null || source.width < 2 || source.height < 2) {
             Log.e(TAG, "Game surface is not ready")
             return false
         }
@@ -89,6 +94,7 @@ object OrynGameRecorder {
         height = even((source.height * quality).toInt().coerceAtLeast(2))
 
         try {
+            activeSource = source
             appContext = context.applicationContext
             tempFile = File(context.cacheDir, "oryn_game_recording_" + System.currentTimeMillis() + ".mp4")
             muxer = MediaMuxer(tempFile!!.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
@@ -212,7 +218,7 @@ object OrynGameRecorder {
             return
         }
 
-        val source = GameSurfaceRegistry.getView()
+        val source = activeSource ?: GameSurfaceRegistry.getView()
         val handler = captureHandler
         if (source == null || handler == null) {
             frameBusy.set(false)
@@ -400,6 +406,7 @@ object OrynGameRecorder {
         runCatching { tempFile?.delete() }
         tempFile = null
         appContext = null
+        activeSource = null
         _elapsedMs.value = 0L
         _state.value = RecordingState.IDLE
     }
