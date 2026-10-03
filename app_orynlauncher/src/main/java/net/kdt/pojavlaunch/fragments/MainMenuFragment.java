@@ -73,14 +73,13 @@ public class MainMenuFragment extends Fragment {
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
         TextView mSelectedVersion = view.findViewById(R.id.oryn_selected_version);
+        TextView mStatusVersion = view.findViewById(R.id.oryn_status_version);
         if (mVersionSpinner != null) {
             mVersionSpinner.setOnSelectionChangedListener(instance -> {
-                if (mSelectedVersion == null) return;
-                if (instance != null && Tools.isValidString(instance.versionId)) {
-                    mSelectedVersion.setText(instance.versionId);
-                } else {
-                    mSelectedVersion.setText("1.12.2");
-                }
+                String version = (instance != null && Tools.isValidString(instance.versionId))
+                        ? instance.versionId : "1.12.2";
+                if (mSelectedVersion != null) mSelectedVersion.setText(version);
+                if (mStatusVersion != null) mStatusVersion.setText(version);
             });
         }
 
