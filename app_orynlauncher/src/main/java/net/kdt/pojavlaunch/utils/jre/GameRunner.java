@@ -21,6 +21,7 @@ import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.multirt.Runtime;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
+import net.kdt.pojavlaunch.cosmetics.OrynLocalCosmeticsServer;
 import net.kdt.pojavlaunch.game.renderer.RenderSpec;
 import net.kdt.pojavlaunch.utils.DateUtils;
 import net.kdt.pojavlaunch.utils.FileUtils;
@@ -184,6 +185,10 @@ public class GameRunner {
                 }
             }
         File gamedir = instance.getGameDirectory();
+
+        // Feed locally imported Oryn skin/cape textures to vanilla Minecraft through
+        // user_properties. The texture server is bound to localhost, so this works offline.
+        OrynLocalCosmeticsServer.prepare(activity, account);
 
         // Oryn FPS Boost: apply real Minecraft-side performance settings before
         // the JVM starts. This reduces chunk/render/simulation workload instead
@@ -470,6 +475,15 @@ public class GameRunner {
         return JSONUtils.insertJSONValueList(clientVmArgs, varArgMap);
     }
 
+    private static String getLocalCosmeticsProperties(Account account) {
+        try {
+            return OrynLocalCosmeticsServer.prepare(PojavApplication.getContext(), account);
+        } catch (Exception e) {
+            Log.w("GameRunner", "Could not attach local cosmetics", e);
+            return "{}";
+        }
+    }
+
     private static List<String> getMoJsonClientArgs(Account profile, JVersionList.Version versionInfo, File gameDir) {
         String username = profile.username;
         String versionName = versionInfo.id;
@@ -501,7 +515,7 @@ public class GameRunner {
         varArgMap.put("assets_index_name", versionInfo.assets);
         varArgMap.put("game_assets", Tools.ASSETS_PATH);
         varArgMap.put("game_directory", gameDir.getAbsolutePath());
-        varArgMap.put("user_properties", "{}");
+        varArgMap.put("user_properties", getLocalCosmeticsProperties(profile));
         varArgMap.put("user_type", userType);
         varArgMap.put("version_name", versionName);
         varArgMap.put("version_type", versionInfo.type);
