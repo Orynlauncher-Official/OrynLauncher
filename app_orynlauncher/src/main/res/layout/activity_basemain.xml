@@ -75,7 +75,7 @@
 					android:id="@+id/main_cursorview"
 					android:focusable="false"
 					android:translationZ="1dp"
-					android:visibility="visible"
+					android:visibility="gone"
 					app:defaultCursorDrawable="@drawable/ic_mouse_pointer"/>
 
 			</net.kdt.pojavlaunch.game.GameView>
