@@ -18,6 +18,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -310,8 +311,10 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
 
             ExtendedTextView textview = view.findViewById(R.id.account_item);
             ImageView deleteButton = view.findViewById(R.id.delete_account_button);
+            TextView accountType = view.findViewById(R.id.account_type);
 
             if(position == 0) {
+                accountType.setVisibility(View.GONE);
                 // "Add account" button
                 Drawable plusDrawable = ResourcesCompat.getDrawable(resources, R.drawable.ic_add, theme);
                 textview.setCompoundDrawables(plusDrawable, null, null, null);
@@ -351,6 +354,13 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
             textview.setText(account.username);
             textview.setTextColor(Color.WHITE);
             textview.setCompoundDrawablesRelative(accountHead, null, authType, null);
+
+            // Show the account provider as a compact secondary badge.
+            accountType.setVisibility(View.VISIBLE);
+            String provider = account.authType == null
+                    ? "ACCOUNT"
+                    : account.authType.name().replace("_", " ");
+            accountType.setText(provider);
         }
 
         private void showDeleteDialog(Context context, int position) {
