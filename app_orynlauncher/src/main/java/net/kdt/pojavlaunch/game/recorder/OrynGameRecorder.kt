@@ -67,6 +67,7 @@ object OrynGameRecorder {
     private var nextFrameNs = 0L
     private val frameBusy = AtomicBoolean(false)
     private val stopRequested = AtomicBoolean(false)
+    private var activeSource: View? = null
 
     @JvmStatic fun isRecording(): Boolean = _state.value == RecordingState.RECORDING
     @JvmStatic fun isIdle(): Boolean = _state.value == RecordingState.IDLE
