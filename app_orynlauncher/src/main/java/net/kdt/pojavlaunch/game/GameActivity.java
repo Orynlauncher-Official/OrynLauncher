@@ -526,7 +526,16 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private void dialogSendCustomKey() {
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setTitle(R.string.control_customkey);
-        dialog.setItems(KeycodeUtils.generateKeyName(), (dInterface, position) -> KeycodeUtils.execKeyIndex(position));
+        dialog.setMessage(R.string.control_customkey_subtitle);
+        dialog.setItems(KeycodeUtils.generateKeyName(), (dInterface, position) -> {
+            KeycodeUtils.execKeyIndex(position);
+            Toast.makeText(
+                    this,
+                    KeycodeUtils.generateKeyName()[position] + " sent",
+                    Toast.LENGTH_SHORT
+            ).show();
+        });
+        dialog.setNegativeButton(android.R.string.cancel, null);
         dialog.show();
     }
 
