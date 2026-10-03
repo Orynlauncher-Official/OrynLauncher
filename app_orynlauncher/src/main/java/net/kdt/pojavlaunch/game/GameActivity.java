@@ -505,6 +505,12 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         Logger.appendToLog("--------- Starting game with Launcher Debug!");
         Tools.printLauncherInfo(versionId, instance.getLaunchArgs(), mGameRenderer.getCurrentRenderer(), this);
         JREUtils.redirectAndPrintJRELog();
+        // Apply the real Minecraft-side FPS preset immediately before launch.
+        if (PREF_ORYN_FPS_BOOST) {
+            MCOptionUtils.applyOrynFpsBoost(instance.getGameDirectory().getAbsolutePath());
+        } else {
+            MCOptionUtils.restoreOrynFpsBoost(instance.getGameDirectory().getAbsolutePath());
+        }
         GameRunner.launchGame(this, account, instance, versionId, classpath, mGameRenderer);
         Tools.runOnUiThread(()-> mServiceBinder.isActive = false);
     }

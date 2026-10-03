@@ -103,7 +103,9 @@ public class LauncherPreferences {
         PREF_VIRTUAL_MOUSE_START = DEFAULT_PREF.getBoolean("mouse_start", false);
         PREF_USE_ALTERNATE_SURFACE = DEFAULT_PREF.getBoolean("alternate_surface", isDevicePowerful);
         PREF_JAVA_SANDBOX = DEFAULT_PREF.getBoolean("java_sandbox", true);
-        PREF_SCALE_FACTOR = getIntPreference("resolutionRatio", findBestResolution(ctx, isDevicePowerful))/100f;
+        final int savedResolutionRatio = getIntPreference("resolutionRatio", findBestResolution(ctx, isDevicePowerful));
+        // FPS Boost deliberately renders Minecraft at 75% internal resolution.
+        PREF_SCALE_FACTOR = PREF_ORYN_FPS_BOOST ? 0.75f : savedResolutionRatio / 100f;
         PREF_ENABLE_GYRO = DEFAULT_PREF.getBoolean("enableGyro", false);
         PREF_GYRO_SENSITIVITY = ((float)getIntPreference("gyroSensitivity", 100))/100f;
         PREF_GYRO_SAMPLE_RATE = getIntPreference("gyroSampleRate", 16);
