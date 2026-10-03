@@ -45,7 +45,7 @@ public class OrynSettingsActivity extends BaseActivity {
     private LinearLayout sidebar;
     private TextView pageTitle;
     private TextView pageSubtitle;
-    private Button activeNav;
+    private View activeNav;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -364,6 +364,39 @@ public class OrynSettingsActivity extends BaseActivity {
                 new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Experimental Settings", "Open the existing experimental preferences",
                 new Intent(this, OrynLegacySettingsActivity.class));
+    }
+
+    private Spinner spinner(String[] values, int selected) {
+        Spinner s = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_dropdown_item, values);
+        s.setAdapter(adapter);
+        if (selected >= 0 && selected < values.length) s.setSelection(selected);
+        s.setBackground(bg(PANEL_2, 12));
+        s.setPadding(dp(8), 0, dp(8), 0);
+        return s;
+    }
+
+    private Switch toggle(boolean checked, android.widget.CompoundButton.OnCheckedChangeListener listener) {
+        Switch s = new Switch(this);
+        s.setChecked(checked);
+        s.setText("");
+        s.setGravity(Gravity.CENTER);
+        s.setButtonTintList(null);
+        s.setOnCheckedChangeListener(listener);
+        return s;
+    }
+
+    private Button textButton(String label) {
+        Button b = new Button(this);
+        b.setText(label);
+        b.setTextColor(TEXT);
+        b.setTextSize(12);
+        b.setAllCaps(false);
+        b.setGravity(Gravity.CENTER);
+        b.setPadding(dp(8), 0, dp(8), 0);
+        b.setBackground(bg(BLUE, 12));
+        return b;
     }
 
     private void addActivitySetting(String title, String subtitle, Intent intent) {
