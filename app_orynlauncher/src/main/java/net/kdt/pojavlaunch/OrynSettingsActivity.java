@@ -310,10 +310,10 @@ public class OrynSettingsActivity extends BaseActivity {
     }
 
     private void showGame() {
-        clear("Game", "Minecraft and launcher performance");
+        clear("Game", "Minecraft performance and controls");
         section("Game", R.drawable.ic_px_gamepad);
-        Spinner fps = spinner(new String[]{"30 FPS", "60 FPS", "90 FPS", "120 FPS", "Uncapped"}, 1);
-        addSetting("Max FPS (Launcher)", "Limit the launcher framerate (0 = Uncapped)", fps);
+        // Do not impose an artificial launcher FPS cap here.
+        // The launcher UI should follow the device display refresh rate.
         Switch animations = toggle(uiPrefs.getBoolean("animations", true), (b,c) ->
                 uiPrefs.edit().putBoolean("animations", c).apply());
         addSetting("Animations", "Enable smooth UI animations", animations);
