@@ -493,7 +493,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     private void startRecordingWhenSurfaceReady(int attempt) {
         if (!GameRecorder.isIdle()) return;
-        if (GameRecorder.INSTANCE.start(this, mOrynAudioProjection)) {
+        if (GameRecorder.INSTANCE.start(this, mOrynAudioProjection, launcherGLView != null ? launcherGLView.mSurface : null)) {
             updateRecordingMenuLabel();
             Toast.makeText(this, "OrynLauncher recording started with game audio", Toast.LENGTH_SHORT).show();
             return;
