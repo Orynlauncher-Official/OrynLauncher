@@ -76,8 +76,22 @@ jobs:
 
       - name: Build Debug .apk
         run: |
-          # Build the launcher
-          gradle :app_orynlauncher:assembleFullDebug
+          # Build the launcher. The bundled JRE8 asset is hosted on GitHub Releases
+          # and can occasionally return a transient HTTP 500; retry the whole Gradle
+          # invocation so the download task gets another chance.
+          set -e
+          for attempt in 1 2 3; do
+            echo "Build attempt $attempt/3"
+            if gradle :app_orynlauncher:assembleFullDebug; then
+              break
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Gradle build failed after 3 attempts."
+              exit 1
+            fi
+            echo "Transient build/download failure; retrying in 15 seconds..."
+            sleep 15
+          done
           mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/app_OrynLauncherV4-Debug.apk
 
       - name: Build Debug .apk (No runtime)
