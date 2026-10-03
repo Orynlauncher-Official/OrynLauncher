@@ -488,6 +488,91 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 1 && resultCode == RESULT_OK) {
+            if(!Tools.checkStorageRoot(this)) return;
+            LauncherPreferences.loadPreferences(getApplicationContext());
+            try {
+                mControlLayout.loadLayout(LauncherPreferences.PREF_DEFAULTCTRL_PATH);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void runCraft(String versionId, File[] classpath) throws Throwable {
+        Logger.appendToLog("--------- Starting game with Launcher Debug!");
+        Tools.printLauncherInfo(versionId, instance.getLaunchArgs(), mGameRenderer.getCurrentRenderer(), this);
+        JREUtils.redirectAndPrintJRELog();
+        GameRunner.launchGame(this, account, instance, versionId, classpath, mGameRenderer);
+        Tools.runOnUiThread(()-> mServiceBinder.isActive = false);
+    }
+
+    private void dialogSendCustomKey() {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setTitle(R.string.control_customkey);
+        dialog.setItems(KeycodeUtils.generateKeyName(), (dInterface, position) -> KeycodeUtils.execKeyIndex(position));
+        dialog.show();
+    }
+
+    boolean isInEditor;
+    private void openCustomControls() {
+        if(ingameControlsEditorListener == null || ingameControlsEditorArrayAdapter == null) return;
+        mControlLayout.setModifiable(true);
+        navDrawer.setAdapter(ingameControlsEditorArrayAdapter);
+        navDrawer.setOnItemClickListener(ingameControlsEditorListener);
+        mDrawerPullButton.setVisibility(View.VISIBLE);
+        isInEditor = true;
+    }
+
+    private void openLogOutput() {
+        loggerView.setVisibility(View.VISIBLE);
+    }
+
+    private void openQuickSettings() {
+        if(mQuickSettingSideDialog == null) {
+            mQuickSettingSideDialog = new QuickSettingSideDialog(this, mControlLayout) {
+                @Override
+                public void onResolutionChanged() {
+                    launcherGLView.refreshSize();
+                    mHotbarView.onResolutionChanged();
+                }
+                @Override
+                public void onGyroStateChanged() {
+                    mGyroControl.updateOrientation();
+                    if (PREF_ENABLE_GYRO) mGyroControl.enable();
+                    else mGyroControl.disable();
+                }
+                @Override
+                public void onButtonTransparencyChanged() {
+                    mControlLayout.updateButtonOpacity();
+                }
+            };
+        }
+        mQuickSettingSideDialog.appear(true);
+    }
+
+    public static void toggleMouse(Context ctx) {
+        if (Platform.isGrabbing()) return;
+        GameCursorView cursorView = Tools.getWeakReference(weakCursor);
+        if(cursorView == null) return;
+        int toastString = 0;
+        switch (cursorView.getVisibility()) {
+            case View.GONE:
+            case View.INVISIBLE:
+                toastString = R.string.control_mouseon;
+                cursorView.setVisibility(View.VISIBLE);
+                break;
+            case View.VISIBLE:
+                toastString = R.string.control_mouseoff;
+                cursorView.setVisibility(View.GONE);
+                break;
+        }
+        if(toastString != 0) Toast.makeText(ctx, toastString, Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if(isInEditor) {
             if(event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
