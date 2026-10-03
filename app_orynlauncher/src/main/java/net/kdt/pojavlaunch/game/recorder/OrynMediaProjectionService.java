@@ -23,7 +23,6 @@ public class OrynMediaProjectionService extends Service {
     public void onCreate() {
         super.onCreate();
         createNotificationChannel();
-        startAsForeground();
     }
 
     private void startAsForeground() {
@@ -70,7 +69,10 @@ public class OrynMediaProjectionService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // onCreate() already promoted the service to the required FGS type.
+        // Promote immediately from onStartCommand. The service runs in the
+        // already-running game process so this happens well within Android's
+        // foreground-service startup deadline.
+        startAsForeground();
         return START_NOT_STICKY;
     }
 
