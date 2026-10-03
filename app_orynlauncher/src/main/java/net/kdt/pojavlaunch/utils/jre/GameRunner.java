@@ -186,10 +186,6 @@ public class GameRunner {
             }
         File gamedir = instance.getGameDirectory();
 
-        // Feed locally imported Oryn skin/cape textures to vanilla Minecraft through
-        // user_properties. The texture server is bound to localhost, so this works offline.
-        OrynLocalCosmeticsServer.prepare(activity, account);
-
         // Oryn FPS Boost: apply real Minecraft-side performance settings before
         // the JVM starts. This reduces chunk/render/simulation workload instead
         // of merely changing the launcher's FPS display.
