@@ -24,6 +24,9 @@ object GameRecorder {
     fun start(context: Context): Boolean = OrynGameRecorder.start(context)
 
     @JvmStatic
+    fun start(context: Context, liveSource: android.view.View?): Boolean = OrynGameRecorder.start(context, liveSource)
+
+    @JvmStatic
     fun stopAndSave(context: Context) = OrynGameRecorder.stopAndSave(context)
 
     @JvmStatic
