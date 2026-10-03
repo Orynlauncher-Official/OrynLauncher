@@ -470,7 +470,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             return;
         }
         if (mOrynAudioProjection == null) {
-            startOrynProjectionService();
             MediaProjectionManager manager = (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
             if (manager != null) {
                 startActivityForResult(manager.createScreenCaptureIntent(), ORYN_AUDIO_PROJECTION_REQUEST);
