@@ -124,7 +124,7 @@
     <string name="control_forceclose">Force Close</string>
     <string name="control_viewout">Game Log</string>
     <string name="control_adebug">Input Debug</string>
-    <string name="control_customkey">Send Keycode</string>
+    <string name="control_customkey">Send custom keycode</string>
 
     <!-- ImportControlActivity Strings -->
     <string name="import_control_label">Import controls</string>
@@ -536,5 +536,4 @@
     <string name="oryn_crash_select">Select a crash report to view it here.</string>
     <string name="oryn_crash_none">No crash reports found for this instance.</string>
     <string name="oryn_crash_read_failed">Failed to read crash report: %s</string>
-    <string name="control_customkey_subtitle">Choose a key to send to the running game.</string>
 </resources>
