@@ -282,7 +282,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addGap();
 
         section("Game", R.drawable.ic_px_gamepad);
-        addSetting("Animations",
+        addSetting("Animations", "Enable smooth UI animations",
                 toggle(uiPrefs.getBoolean("animations", true), (b, checked) ->
                         uiPrefs.edit().putBoolean("animations", checked).apply()));
         addActivitySetting("Control Layout", "Customize your in-game touch controls",
