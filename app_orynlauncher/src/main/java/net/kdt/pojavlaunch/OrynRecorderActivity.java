@@ -194,8 +194,8 @@ public class OrynRecorderActivity extends BaseActivity {
     private void addSpinnerRow(LinearLayout parent, String title, String subtitle,
                                String key, String[] labels, String[] values, String def) {
         LinearLayout row = row();
-        LinearLayout labels = labels(title, subtitle);
-        row.addView(labels, new LinearLayout.LayoutParams(0, dp(58), 1));
+        LinearLayout labelBox = labels(title, subtitle);
+        row.addView(labelBox, new LinearLayout.LayoutParams(0, dp(58), 1));
 
         Spinner spinner = new Spinner(this);
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
