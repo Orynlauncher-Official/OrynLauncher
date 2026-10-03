@@ -94,10 +94,10 @@ public class MCOptionUtils {
     public static void applyOrynFpsBoost(@NonNull String folderPath) {
         final Map<String, String> targets = new LinkedHashMap<>();
         targets.put("enableVsync", "false");
-        targets.put("renderDistance", "8");
-        targets.put("simulationDistance", "6");
-        targets.put("entityDistanceScaling", "0.5");
-        targets.put("particles", "2");
+        targets.put("renderDistance", "2");
+        targets.put("simulationDistance", "2");
+        targets.put("entityDistanceScaling", "0.25");
+        targets.put("particles", "0");
         targets.put("entityShadows", "false");
         targets.put("biomeBlendRadius", "0");
         targets.put("mipmapLevels", "0");
