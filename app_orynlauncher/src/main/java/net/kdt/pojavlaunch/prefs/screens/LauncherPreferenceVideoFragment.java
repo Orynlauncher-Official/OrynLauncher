@@ -21,6 +21,7 @@ import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
+import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 
@@ -60,34 +61,10 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
 
         fpsBoost.setOnPreferenceChangeListener((preference, newValue) -> {
             boolean enabled = Boolean.TRUE.equals(newValue);
-            SharedPreferences.Editor editor = pOrDefaultPreferences().edit();
-
-            if (enabled) {
-                // Preserve the user's manual resolution for when FPS Boost is disabled.
-                if (!pOrDefaultPreferences().contains("orynFpsBoostPreviousResolution")) {
-                    editor.putInt("orynFpsBoostPreviousResolution",
-                            getCurrentResolutionPreference());
-                }
-                editor.putInt("resolutionRatio", 75);
-                editor.apply();
-
-                LauncherPreferences.PREF_ORYN_FPS_BOOST = true;
-                LauncherPreferences.PREF_SCALE_FACTOR = 0.75f;
-                resolutionSeekbar.setValue(75);
-                resolutionSeekbar.setEnabled(false);
-            } else {
-                int restored = pOrDefaultPreferences().getInt("orynFpsBoostPreviousResolution", 100);
-                editor.putInt("resolutionRatio", restored);
-                editor.remove("orynFpsBoostPreviousResolution");
-                editor.apply();
-
-                LauncherPreferences.PREF_ORYN_FPS_BOOST = false;
-                LauncherPreferences.PREF_SCALE_FACTOR = restored / 100f;
-                resolutionSeekbar.setValue(Math.max(25, restored));
-                resolutionSeekbar.setEnabled(true);
-            }
-
-            applyFpsBoostToSelectedInstance(enabled);
+            OrynFpsBoostUtils.setEnabled(enabled);
+            int currentResolution = enabled ? 75 : getCurrentResolutionPreference();
+            resolutionSeekbar.setValue(Math.max(25, currentResolution));
+            resolutionSeekbar.setEnabled(!enabled);
             fpsBoost.setSummary(enabled
                     ? "Active • 75% resolution • 2 render distance • performance preset"
                     : "Applies a real Minecraft performance profile when enabled");
