@@ -20,6 +20,9 @@ import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.utils.GpuUtils;
+import net.kdt.pojavlaunch.utils.GameOptionsUtils;
+import net.kdt.pojavlaunch.instances.Instance;
+import net.kdt.pojavlaunch.instances.Instances;
 
 /**
  * Fragment for any settings video related
@@ -39,7 +42,9 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         fpsBoost.setSummary("Real Minecraft optimization: lower GPU/CPU workload for higher in-game FPS");
         requirePreference("zinkPreferSystemDriver").setTitle("Vulkan Driver");
         requirePreference("zinkPreferSystemDriver").setSummary("Use the system Vulkan driver when supported");
-        int resolution = (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100);
+        int resolution = LauncherPreferences.PREF_ORYN_FPS_BOOST
+                ? 75
+                : (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100);
 
         CustomSeekBarPreference resolutionSeekbar = requirePreference("resolutionRatio",
                 CustomSeekBarPreference.class);
@@ -51,6 +56,43 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         } else {
             resolutionSeekbar.setValue(resolution);
         }
+        resolutionSeekbar.setEnabled(!LauncherPreferences.PREF_ORYN_FPS_BOOST);
+
+        fpsBoost.setOnPreferenceChangeListener((preference, newValue) -> {
+            boolean enabled = Boolean.TRUE.equals(newValue);
+            SharedPreferences.Editor editor = pOrDefaultPreferences().edit();
+
+            if (enabled) {
+                // Preserve the user's manual resolution for when FPS Boost is disabled.
+                if (!pOrDefaultPreferences().contains("orynFpsBoostPreviousResolution")) {
+                    editor.putInt("orynFpsBoostPreviousResolution",
+                            getCurrentResolutionPreference());
+                }
+                editor.putInt("resolutionRatio", 75);
+                editor.apply();
+
+                LauncherPreferences.PREF_ORYN_FPS_BOOST = true;
+                LauncherPreferences.PREF_SCALE_FACTOR = 0.75f;
+                resolutionSeekbar.setValue(75);
+                resolutionSeekbar.setEnabled(false);
+            } else {
+                int restored = pOrDefaultPreferences().getInt("orynFpsBoostPreviousResolution", 100);
+                editor.putInt("resolutionRatio", restored);
+                editor.remove("orynFpsBoostPreviousResolution");
+                editor.apply();
+
+                LauncherPreferences.PREF_ORYN_FPS_BOOST = false;
+                LauncherPreferences.PREF_SCALE_FACTOR = restored / 100f;
+                resolutionSeekbar.setValue(Math.max(25, restored));
+                resolutionSeekbar.setEnabled(true);
+            }
+
+            applyFpsBoostToSelectedInstance(enabled);
+            fpsBoost.setSummary(enabled
+                    ? "Active • 75% resolution • 2 render distance • performance preset"
+                    : "Applies a real Minecraft performance profile when enabled");
+            return true;
+        });
 
         // Sustained performance is only available since Nougat
         SwitchPreference sustainedPerfSwitch = requirePreference("sustainedPerformance",
@@ -82,6 +124,37 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
         rendererListPreference.setEntryValues(list.rendererIds.toArray(new String[0]));
 
         computeVisibility();
+    }
+
+    private SharedPreferences pOrDefaultPreferences() {
+        return LauncherPreferences.DEFAULT_PREF;
+    }
+
+    private int getCurrentResolutionPreference() {
+        Object value = pOrDefaultPreferences().getAll().get("resolutionRatio");
+        if (value instanceof Number) return ((Number) value).intValue();
+        if (value instanceof String) {
+            try {
+                return Math.round(Float.parseFloat((String) value));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return Math.max(25, (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100));
+    }
+
+    private void applyFpsBoostToSelectedInstance(boolean enabled) {
+        try {
+            Instance instance = Instances.loadSelectedInstance();
+            if (instance == null) return;
+            String gameDir = instance.getGameDirectory().getAbsolutePath();
+            if (enabled) {
+                GameOptionsUtils.applyOrynFpsBoost(gameDir);
+            } else {
+                GameOptionsUtils.restoreOrynFpsBoost(gameDir);
+            }
+        } catch (Throwable e) {
+            android.util.Log.w("OrynFPS", "Could not update Minecraft options immediately", e);
+        }
     }
 
     @Override
