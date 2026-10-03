@@ -87,26 +87,26 @@ public class LauncherPreferences {
         if (!DEFAULT_PREF.contains("buttonscale")) {
             DEFAULT_PREF.edit().putInt("buttonscale", 115).apply();
         }
-        PREF_BUTTONSIZE = DEFAULT_PREF.getInt("buttonscale", 115);
-        PREF_MOUSESCALE = DEFAULT_PREF.getInt("mousescale", 100)/100f;
-        PREF_MOUSESPEED = ((float)DEFAULT_PREF.getInt("mousespeed",100))/100f;
+        PREF_BUTTONSIZE = getIntPreference("buttonscale", 115);
+        PREF_MOUSESCALE = getIntPreference("mousescale", 100)/100f;
+        PREF_MOUSESPEED = ((float)getIntPreference("mousespeed",100))/100f;
         PREF_IGNORE_NOTCH = DEFAULT_PREF.getBoolean("ignoreNotch", false);
-		PREF_LONGPRESS_TRIGGER = DEFAULT_PREF.getInt("timeLongPressTrigger", 300);
+		PREF_LONGPRESS_TRIGGER = getIntPreference("timeLongPressTrigger", 300);
 		PREF_DEFAULTCTRL_PATH = DEFAULT_PREF.getString("defaultCtrl", Tools.CTRLDEF_FILE);
         PREF_FORCE_ENGLISH = DEFAULT_PREF.getBoolean("force_english", false);
         PREF_DISABLE_GESTURES = DEFAULT_PREF.getBoolean("disableGestures",false);
         PREF_DISABLE_SWAP_HAND = DEFAULT_PREF.getBoolean("disableDoubleTap", false);
-        PREF_RAM_ALLOCATION = DEFAULT_PREF.getInt("allocation", findBestRAMAllocation(ctx));
+        PREF_RAM_ALLOCATION = getIntPreference("allocation", findBestRAMAllocation(ctx));
         PREF_CUSTOM_JAVA_ARGS = DEFAULT_PREF.getString("javaArgs", "");
         PREF_SUSTAINED_PERFORMANCE = DEFAULT_PREF.getBoolean("sustainedPerformance", isDevicePowerful);
         PREF_ORYN_FPS_BOOST = DEFAULT_PREF.getBoolean("orynFpsBoost", false);
         PREF_VIRTUAL_MOUSE_START = DEFAULT_PREF.getBoolean("mouse_start", false);
         PREF_USE_ALTERNATE_SURFACE = DEFAULT_PREF.getBoolean("alternate_surface", isDevicePowerful);
         PREF_JAVA_SANDBOX = DEFAULT_PREF.getBoolean("java_sandbox", true);
-        PREF_SCALE_FACTOR = DEFAULT_PREF.getInt("resolutionRatio", findBestResolution(ctx, isDevicePowerful))/100f;
+        PREF_SCALE_FACTOR = getIntPreference("resolutionRatio", findBestResolution(ctx, isDevicePowerful))/100f;
         PREF_ENABLE_GYRO = DEFAULT_PREF.getBoolean("enableGyro", false);
-        PREF_GYRO_SENSITIVITY = ((float)DEFAULT_PREF.getInt("gyroSensitivity", 100))/100f;
-        PREF_GYRO_SAMPLE_RATE = DEFAULT_PREF.getInt("gyroSampleRate", 16);
+        PREF_GYRO_SENSITIVITY = ((float)getIntPreference("gyroSensitivity", 100))/100f;
+        PREF_GYRO_SAMPLE_RATE = getIntPreference("gyroSampleRate", 16);
         PREF_GYRO_SMOOTHING = DEFAULT_PREF.getBoolean("gyroSmoothing", true);
         PREF_GYRO_INVERT_X = DEFAULT_PREF.getBoolean("gyroInvertX", false);
         PREF_GYRO_INVERT_Y = DEFAULT_PREF.getBoolean("gyroInvertY", false);
@@ -114,7 +114,7 @@ public class LauncherPreferences {
         PREF_USE_ANGLE = DEFAULT_PREF.getBoolean("use_angle", false);
         PREF_BUTTON_ALL_CAPS = DEFAULT_PREF.getBoolean("buttonAllCaps", true);
         PREF_DUMP_SHADERS = DEFAULT_PREF.getBoolean("dump_shaders", false);
-        PREF_DEADZONE_SCALE = ((float) DEFAULT_PREF.getInt("gamepad_deadzone_scale", 100))/100f;
+        PREF_DEADZONE_SCALE = ((float) getIntPreference("gamepad_deadzone_scale", 100))/100f;
         PREF_BIG_CORE_AFFINITY = DEFAULT_PREF.getBoolean("bigCoreAffinity", false);
         PREF_ZINK_PREFER_SYSTEM_DRIVER = DEFAULT_PREF.getBoolean("zinkPreferSystemDriver", false);
         PREF_DOWNLOAD_SOURCE = DEFAULT_PREF.getString("downloadSource", "default");
@@ -127,7 +127,7 @@ public class LauncherPreferences {
         PREF_MIGRATION_NOTICE = DEFAULT_PREF.getBoolean("migrationNotice", true);
         PREF_ALSOFT_FORCE_OPENSL = DEFAULT_PREF.getBoolean("alsoftForceOpenSL", false);
         PREF_SHOW_MEMORY_WARNING_DIALOG = DEFAULT_PREF.getBoolean("showMemoryWarning", true);
-        PREF_BUTTON_TRANSPARENCY = (short) DEFAULT_PREF.getInt("buttonTransparency", 100);
+        PREF_BUTTON_TRANSPARENCY = (short) getIntPreference("buttonTransparency", 100);
 
         String argLwjglLibname = "-Dorg.lwjgl.opengl.libname=";
         for (String arg : JREUtils.parseJavaArguments(PREF_CUSTOM_JAVA_ARGS)) {
@@ -147,6 +147,24 @@ public class LauncherPreferences {
             PREF_DEFAULT_RUNTIME = MultiRTUtils.getRuntimes().get(0).name;
             LauncherPreferences.DEFAULT_PREF.edit().putString("defaultRuntime",LauncherPreferences.PREF_DEFAULT_RUNTIME).apply();
         }
+    }
+
+    /**
+     * Reads an integer preference safely even if an older/newer settings UI
+     * stored the value as Float, Long, or String instead of Integer.
+     */
+    private static int getIntPreference(String key, int defaultValue) {
+        Object value = DEFAULT_PREF.getAll().get(key);
+        if (value == null) return defaultValue;
+        if (value instanceof Number) return ((Number) value).intValue();
+        if (value instanceof String) {
+            try {
+                return Math.round(Float.parseFloat((String) value));
+            } catch (NumberFormatException ignored) {
+                return defaultValue;
+            }
+        }
+        return defaultValue;
     }
 
     /**
