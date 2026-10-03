@@ -427,8 +427,16 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private void toggleGameRecording() {
         if (GameRecorder.isRecording()) {
             GameRecorder.INSTANCE.stopAndSave(this);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
+                // The projection token is only needed for this recording session.
+                MediaProjection projection = mOrynAudioProjection;
+                mOrynAudioProjection = null;
+                Tools.MAIN_HANDLER.postDelayed(() -> {
+                    try { projection.stop(); } catch (Throwable ignored) {}
+                }, 500L);
+            }
             updateRecordingMenuLabel();
-            Toast.makeText(this, "Saving OrynLauncher recording…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Saving OrynLauncher recording with game audio…", Toast.LENGTH_SHORT).show();
             return;
         }
         if (GameRecorder.isIdle()) {
@@ -485,6 +493,10 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
     @Override
     protected void onDestroy() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
+            try { mOrynAudioProjection.stop(); } catch (Throwable ignored) {}
+            mOrynAudioProjection = null;
+        }
         super.onDestroy();
         ContextExecutor.clearActivity();
     }
