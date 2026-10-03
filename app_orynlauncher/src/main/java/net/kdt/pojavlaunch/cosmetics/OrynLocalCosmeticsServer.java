@@ -54,7 +54,7 @@ public final class OrynLocalCosmeticsServer {
             JSONObject textures = new JSONObject();
             if (skinFile != null) {
                 JSONObject skinObject = new JSONObject();
-                skinObject.put("url", "http://127.0.0.1:" + serverSocket.getLocalPort() + "/skin.png");
+                skinObject.put("url", "http://127.0.0.1:" + serverSocket.getLocalPort() + "/skin.png?v=" + System.currentTimeMillis());
                 if (slim) {
                     JSONObject metadata = new JSONObject();
                     metadata.put("model", "slim");
@@ -64,7 +64,7 @@ public final class OrynLocalCosmeticsServer {
             }
             if (capeFile != null) {
                 JSONObject capeObject = new JSONObject();
-                capeObject.put("url", "http://127.0.0.1:" + serverSocket.getLocalPort() + "/cape.png");
+                capeObject.put("url", "http://127.0.0.1:" + serverSocket.getLocalPort() + "/cape.png?v=" + System.currentTimeMillis());
                 textures.put("CAPE", capeObject);
             }
 
