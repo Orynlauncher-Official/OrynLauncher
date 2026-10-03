@@ -15,6 +15,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -92,7 +93,7 @@ final class GameAudioCapture {
     }
 
     private void captureLoop(int bufferSize) {
-        try (DataOutputStream out = new DataOutputStream(sampleFile.outputStream())) {
+        try (DataOutputStream out = new DataOutputStream(new FileOutputStream(sampleFile))) {
             short[] pcm = new short[bufferSize / 2];
             long samples = 0L;
             boolean eosQueued = false;
