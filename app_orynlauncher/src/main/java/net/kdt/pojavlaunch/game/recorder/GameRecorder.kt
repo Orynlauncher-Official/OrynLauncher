@@ -785,7 +785,7 @@ object GameRecorder {
         mediaProjection = null
 
         appContext?.stopService(
-            android.content.Intent(appContext, MediaProjectionForegroundService::class.java)
+            android.content.Intent(appContext, OrynMediaProjectionService::class.java)
         )
         appContext = null
 
