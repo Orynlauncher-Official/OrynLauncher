@@ -548,6 +548,12 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 if (manager != null) {
                     try {
                         mOrynAudioProjection = manager.getMediaProjection(resultCode, data);
+                        if (mOrynAudioProjection == null) {
+                            stopOrynProjectionService();
+                            Toast.makeText(this, "Oryn Recorder could not obtain game capture permission. Please try again.", Toast.LENGTH_LONG).show();
+                            return;
+                        }
+                        startOrynProjectionService();
                         startRecordingWhenSurfaceReady(0);
                     } catch (SecurityException ex) {
                         stopOrynProjectionService();
