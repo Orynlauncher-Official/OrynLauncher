@@ -23,6 +23,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
     <uses-permission android:name="android.permission.VIBRATE"/>
 
     <application
@@ -169,6 +170,10 @@
         </provider>
         <service android:name="net.kdt.pojavlaunch.services.ProgressService"
             android:foregroundServiceType="dataSync"/>
+        <service
+            android:name="net.kdt.pojavlaunch.game.recorder.OrynMediaProjectionService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
         <service android:name="net.kdt.pojavlaunch.services.GameService" android:process=":game"
             android:foregroundServiceType="specialUse">
             <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
