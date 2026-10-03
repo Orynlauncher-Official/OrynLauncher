@@ -246,7 +246,8 @@ public class GameRunner {
 
         // Pre-process specific files
         disableSplash(gamedir);
-        List<String> launchArgs = getMoJsonClientArgs(account, versionInfo, gamedir);
+        String localCosmeticsProperties = OrynLocalCosmeticsServer.prepare(activity, account);
+        List<String> launchArgs = getMoJsonClientArgs(account, versionInfo, gamedir, localCosmeticsProperties);
 
         // Select the appropriate openGL version
         OldVersionsUtils.selectOpenGlVersion(versionInfo);
@@ -475,16 +476,7 @@ public class GameRunner {
         return JSONUtils.insertJSONValueList(clientVmArgs, varArgMap);
     }
 
-    private static String getLocalCosmeticsProperties(Account account) {
-        try {
-            return OrynLocalCosmeticsServer.prepare(PojavApplication.getContext(), account);
-        } catch (Exception e) {
-            Log.w("GameRunner", "Could not attach local cosmetics", e);
-            return "{}";
-        }
-    }
-
-    private static List<String> getMoJsonClientArgs(Account profile, JVersionList.Version versionInfo, File gameDir) {
+        private static List<String> getMoJsonClientArgs(Account profile, JVersionList.Version versionInfo, File gameDir, String localCosmeticsProperties) {
         String username = profile.username;
         String versionName = versionInfo.id;
         if (versionInfo.inheritsFrom != null) {
@@ -515,7 +507,7 @@ public class GameRunner {
         varArgMap.put("assets_index_name", versionInfo.assets);
         varArgMap.put("game_assets", Tools.ASSETS_PATH);
         varArgMap.put("game_directory", gameDir.getAbsolutePath());
-        varArgMap.put("user_properties", getLocalCosmeticsProperties(profile));
+        varArgMap.put("user_properties", localCosmeticsProperties == null ? "{}" : localCosmeticsProperties);
         varArgMap.put("user_type", userType);
         varArgMap.put("version_name", versionName);
         varArgMap.put("version_type", versionInfo.type);
