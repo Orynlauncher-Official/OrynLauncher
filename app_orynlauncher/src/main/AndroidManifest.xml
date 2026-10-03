@@ -168,12 +168,6 @@
                 <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
             </intent-filter>
         </provider>
-
-        <service
-            android:name="net.kdt.pojavlaunch.game.recorder.MediaProjectionForegroundService"
-            android:exported="false"
-            android:foregroundServiceType="mediaProjection" />
-
         <service android:name="net.kdt.pojavlaunch.services.ProgressService"
             android:foregroundServiceType="dataSync"/>
         <service android:name="net.kdt.pojavlaunch.services.GameService" android:process=":game"
