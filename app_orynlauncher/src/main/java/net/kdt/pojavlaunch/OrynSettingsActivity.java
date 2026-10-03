@@ -418,6 +418,8 @@ public class OrynSettingsActivity extends BaseActivity {
         Button cosmetics = textButton("Open");
         cosmetics.setOnClickListener(v -> startActivity(new Intent(this, OrynCosmeticsActivity.class)));
         addSetting("Oryn Cosmetics", "Manage your existing Skin and Cape", cosmetics);
+                addActivitySetting("Oryn Recorder", "Video quality, FPS and saved recordings",
+                new Intent(this, OrynLegacySettingsActivity.class));
     }
 
     private void showPrivacy() {
@@ -434,8 +436,6 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showAdvanced() {
         clear("Advanced", "Developer and OrynLauncher tools");
         section("Advanced", R.drawable.ic_px_sliders);
-        addActivitySetting("Oryn Recorder", "Video quality, FPS and saved recordings",
-                new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Oryn Crash Viewer", "View and inspect Minecraft crash logs",
                 new Intent(this, OrynCrashViewerActivity.class));
         addActivitySetting("Oryn Customization", "Open the full Oryn customization center",
