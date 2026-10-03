@@ -65,6 +65,11 @@
             android:label="Advanced Settings"
             android:exported="false" />
         <activity
+            android:name="net.kdt.pojavlaunch.OrynRecorderActivity"
+            android:screenOrientation="landscape"
+            android:label="Oryn Recorder"
+            android:exported="false" />
+        <activity
             android:name="net.kdt.pojavlaunch.OrynSettingsActivity"
             android:screenOrientation="landscape"
             android:label="Oryn Settings"
