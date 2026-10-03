@@ -50,7 +50,7 @@ public class AndroidPointerCapture implements ViewTreeObserver.OnWindowFocusChan
         float relX = motionEvent.getAxisValue(axisX),
                 relY = motionEvent.getAxisValue(axisY);
 
-        if(motionEvent.getHistorySize() > 1) for(int i = 0; i < motionEvent.getHistorySize(); i++) {
+        if(motionEvent.getHistorySize() > 0) for(int i = 0; i < motionEvent.getHistorySize(); i++) {
             relX += motionEvent.getHistoricalAxisValue(axisX, i);
             relY += motionEvent.getHistoricalAxisValue(axisY, i);
         }
@@ -65,21 +65,15 @@ public class AndroidPointerCapture implements ViewTreeObserver.OnWindowFocusChan
         // Yes, we actually not only receive relative mouse events here, but also absolute touchpad ones!
         // Therefore, we need to know when it's a touchpad and when it's a mouse.
 
-        if((event.getSource() & InputDevice.SOURCE_CLASS_TRACKBALL) != 0) {
-            // If the source claims to be a relative device by belonging to the trackball class,
-            // use its coordinates directly.
-            if(mDeviceSupportsRelativeAxis) {
-                // If some OEM decides to do a funny and make an absolute touchpad report itself as
-                // a trackball, we will at least have semi-valid relative positions
-                accumulateHistoricalValues(event, MotionEvent.AXIS_RELATIVE_X, MotionEvent.AXIS_RELATIVE_Y);
-            }else {
-                // Otherwise trust the OS, i guess??
-                accumulateHistoricalValues(event, MotionEvent.AXIS_X, MotionEvent.AXIS_Y);
-            }
-        }else {
-            // If it's not a trackball, it's likely a touchpad and needs tracking like a touchscreen.
+        // Captured mice can expose movement through AXIS_RELATIVE_X/Y even though
+        // their source is SOURCE_MOUSE (not SOURCE_CLASS_TRACKBALL). Prefer those
+        // relative axes whenever the device supports them; otherwise fall back to
+        // the normal pointer tracker for absolute/touchpad input.
+        if (mDeviceSupportsRelativeAxis) {
+            accumulateHistoricalValues(event, MotionEvent.AXIS_RELATIVE_X, MotionEvent.AXIS_RELATIVE_Y);
+        } else {
             mPointerTracker.trackEvent(event);
-            // The relative position will already be written down into the mVector variable.
+            // The relative position will already be written down into mVector.
         }
 
         // Avoid going through the JNI each time.
