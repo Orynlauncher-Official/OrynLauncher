@@ -93,25 +93,34 @@ public class MCOptionUtils {
      */
     public static void applyOrynFpsBoost(@NonNull String folderPath) {
         final Map<String, String> targets = new LinkedHashMap<>();
+        // Lowest practical vanilla workload. Minecraft's render-distance minimum
+        // is 2 chunks; simulation-distance is 5 chunks on modern Java versions.
         targets.put("enableVsync", "false");
         targets.put("renderDistance", "2");
-        targets.put("simulationDistance", "2");
-        targets.put("entityDistanceScaling", "0.25");
-        targets.put("particles", "0");
+        targets.put("simulationDistance", "5");
+        targets.put("entityDistanceScaling", "0.5");
+        targets.put("particles", "2");
         targets.put("entityShadows", "false");
         targets.put("biomeBlendRadius", "0");
         targets.put("mipmapLevels", "0");
-        targets.put("ao", "0");
+        targets.put("ao", "false");
         targets.put("fancyGraphics", "false");
         targets.put("graphicsMode", "0");
         targets.put("graphicsPreset", "fast");
         targets.put("clouds", "false");
         targets.put("renderClouds", "false");
         targets.put("cloudStatus", "fast");
+        targets.put("cloudRange", "2");
         targets.put("prioritizeChunkUpdates", "0");
-        targets.put("maxFps", "260");
+        targets.put("textureFiltering", "0");
+        targets.put("maxAnisotropyBit", "1");
+        targets.put("improvedTransparency", "false");
+        targets.put("cutoutLeaves", "false");
+        targets.put("chunkSectionFadeInTime", "0");
+        targets.put("darknessEffectScale", "0.0");
         targets.put("screenEffectScale", "0.0");
         targets.put("fovEffectScale", "0.5");
+        targets.put("maxFps", "260");
 
         File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
         try {
