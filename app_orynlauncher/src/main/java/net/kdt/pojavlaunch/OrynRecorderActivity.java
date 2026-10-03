@@ -46,6 +46,7 @@ public class OrynRecorderActivity extends BaseActivity {
 
     private LinearLayout recordingsList;
     private SharedPreferences prefs;
+    private SharedPreferences recorderSettings;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -54,6 +55,8 @@ public class OrynRecorderActivity extends BaseActivity {
                 android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 android.view.WindowManager.LayoutParams.FLAG_FULLSCREEN);
         prefs = getSharedPreferences("oryn_recorder_library", MODE_PRIVATE);
+        recorderSettings = LauncherPreferences.DEFAULT_PREF != null
+                ? LauncherPreferences.DEFAULT_PREF : prefs;
         buildUi();
         loadRecordings();
     }
@@ -202,7 +205,7 @@ public class OrynRecorderActivity extends BaseActivity {
                 android.R.layout.simple_spinner_dropdown_item, labels);
         spinner.setAdapter(adapter);
 
-        String current = prefs.getString(key, def);
+        String current = recorderSettings.getString(key, def);
         int selected = 0;
         for (int i = 0; i < values.length; i++) {
             if (values[i].equals(current)) {
@@ -213,7 +216,7 @@ public class OrynRecorderActivity extends BaseActivity {
         spinner.setSelection(selected);
         spinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             public void onItemSelected(android.widget.AdapterView<?> p, View v, int position, long id) {
-                prefs.edit().putString(key, values[position]).apply();
+                recorderSettings.edit().putString(key, values[position]).apply();
             }
             public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
