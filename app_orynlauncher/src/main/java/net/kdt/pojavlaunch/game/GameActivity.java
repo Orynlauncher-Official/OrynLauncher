@@ -21,10 +21,6 @@ import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
-import android.Manifest;
-import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -53,7 +49,6 @@ import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.game.recorder.GameRecorder;
-import net.kdt.pojavlaunch.game.recorder.OrynMediaProjectionService;
 import net.kdt.pojavlaunch.game.recorder.GameSurfaceRegistry;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
@@ -421,98 +416,46 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         super.onStop();
     }
 
-    private static final int ORYN_AUDIO_PERMISSION_REQUEST = 9041;
-    private static final int ORYN_AUDIO_PROJECTION_REQUEST = 9042;
-    private MediaProjection mOrynAudioProjection;
-
-    private void startOrynProjectionService() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ContextCompat.startForegroundService(
-                    this,
-                    new Intent(this, OrynMediaProjectionService.class)
-            );
-        }
-    }
-
-    private void stopOrynProjectionService() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                stopService(new Intent(this, OrynMediaProjectionService.class));
-            } catch (Throwable ignored) {}
-        }
-    }
-
     private void toggleGameRecording() {
         if (GameRecorder.isRecording()) {
             GameRecorder.INSTANCE.stopAndSave(this);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
-                // The projection token is only needed for this recording session.
-                MediaProjection projection = mOrynAudioProjection;
-                mOrynAudioProjection = null;
-                Tools.MAIN_HANDLER.postDelayed(() -> {
-                    try { projection.stop(); } catch (Throwable ignored) {}
-                    stopOrynProjectionService();
-                }, 500L);
-            }
             updateRecordingMenuLabel();
-            Toast.makeText(this, "Saving OrynLauncher recording with game audio…", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Saving OrynLauncher recording…", Toast.LENGTH_SHORT).show();
             return;
         }
         if (GameRecorder.isIdle()) {
             Toast.makeText(this, "Preparing OrynLauncher Recorder…", Toast.LENGTH_SHORT).show();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                requestOrynGameAudioCapture();
-            } else {
-                startRecordingWhenSurfaceReady(0);
-            }
-        }
-    }
-
-    private void requestOrynGameAudioCapture() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             startRecordingWhenSurfaceReady(0);
-            return;
         }
-        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, ORYN_AUDIO_PERMISSION_REQUEST);
-            return;
-        }
-        if (mOrynAudioProjection == null) {
-            // Android 14+ requires the mediaProjection foreground service to be
-            // running before getMediaProjection() can create the projection token.
-            startOrynProjectionService();
-            MediaProjectionManager manager =
-                    (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-            if (manager != null) {
-                startActivityForResult(manager.createScreenCaptureIntent(), ORYN_AUDIO_PROJECTION_REQUEST);
-                return;
-            }
-        }
-        startRecordingWhenSurfaceReady(0);
     }
 
     private void startRecordingWhenSurfaceReady(int attempt) {
         if (!GameRecorder.isIdle()) return;
-        if (GameRecorder.INSTANCE.start(this, mOrynAudioProjection, launcherGLView != null ? launcherGLView.mSurface : null)) {
+        if (GameRecorder.INSTANCE.start(this)) {
             updateRecordingMenuLabel();
-            Toast.makeText(this, "OrynLauncher recording started with game audio", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "OrynLauncher recording started", Toast.LENGTH_SHORT).show();
             return;
         }
-        if (attempt < 40) {
+        if (attempt < 20) {
             Tools.MAIN_HANDLER.postDelayed(() -> startRecordingWhenSurfaceReady(attempt + 1), 250L);
         } else {
-            Toast.makeText(this, "OrynLauncher game surface is not ready. Wait until Minecraft is fully rendered, then try again.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "OrynLauncher game surface is not ready. Start after Minecraft is fully loaded.", Toast.LENGTH_LONG).show();
         }
     }
 
     private void updateRecordingMenuLabel() {
-        if (navDrawer == null || gameActionArrayAdapter == null) return;
+        if (navDrawer == null) return;
+
+        if (gameActionArrayAdapter == null) return;
+
         gameActionArrayAdapter.setText(6, GameRecorder.isRecording()
                 ? "⏹ Stop OrynLauncher Recording"
                 : "🎥 Start OrynLauncher Recording");
+
         navDrawer.setAdapter(gameActionArrayAdapter);
         navDrawer.setOnItemClickListener(gameActionClickListener);
     }
+
     @Override
     protected void onDestroy() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
