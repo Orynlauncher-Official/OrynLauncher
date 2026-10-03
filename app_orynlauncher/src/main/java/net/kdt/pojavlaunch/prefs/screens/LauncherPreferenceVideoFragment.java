@@ -20,7 +20,7 @@ import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.utils.GpuUtils;
-import net.kdt.pojavlaunch.utils.GameOptionsUtils;
+import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 
@@ -148,9 +148,9 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
             if (instance == null) return;
             String gameDir = instance.getGameDirectory().getAbsolutePath();
             if (enabled) {
-                GameOptionsUtils.applyOrynFpsBoost(gameDir);
+                MCOptionUtils.applyOrynFpsBoost(gameDir);
             } else {
-                GameOptionsUtils.restoreOrynFpsBoost(gameDir);
+                MCOptionUtils.restoreOrynFpsBoost(gameDir);
             }
         } catch (Throwable e) {
             android.util.Log.w("OrynFPS", "Could not update Minecraft options immediately", e);
