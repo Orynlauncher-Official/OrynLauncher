@@ -103,8 +103,8 @@ public class OrynSettingsActivity extends BaseActivity {
     private void build() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
-        root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
+        int sideMargin = Math.max(dp(34), (int) (screenW() * 0.085f));
+        root.setPadding(sideMargin, dp(18), sideMargin, dp(18));
         root.setBackgroundColor(BG);
 
         LinearLayout header = new LinearLayout(this);
@@ -112,33 +112,30 @@ public class OrynSettingsActivity extends BaseActivity {
 
         ImageView gear = new ImageView(this);
         gear.setImageResource(R.drawable.oryn_nav_settings);
-        gear.setPadding(dp(2), dp(2), dp(2), dp(2));
-        header.addView(gear, new LinearLayout.LayoutParams(dp(54), dp(54)));
+        gear.setPadding(dp(3), dp(3), dp(3), dp(3));
+        header.addView(gear, new LinearLayout.LayoutParams(dp(48), dp(48)));
 
         LinearLayout headerText = new LinearLayout(this);
         headerText.setOrientation(LinearLayout.VERTICAL);
-        pageTitle = text("Settings", 25, TEXT);
+        pageTitle = text("Settings", 26, TEXT);
         pageTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         pageSubtitle = text("Customize your launcher experience", 12, MUTED);
-        headerText.addView(pageTitle, new LinearLayout.LayoutParams(-1, dp(31)));
-        headerText.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, dp(23)));
-        LinearLayout.LayoutParams ht = new LinearLayout.LayoutParams(0, dp(58), 1);
+        headerText.addView(pageTitle, new LinearLayout.LayoutParams(-1, dp(30)));
+        headerText.addView(pageSubtitle, new LinearLayout.LayoutParams(-1, dp(20)));
+        LinearLayout.LayoutParams ht = new LinearLayout.LayoutParams(0, dp(54), 1);
         ht.leftMargin = dp(12);
         header.addView(headerText, ht);
-
-        root.addView(header, new LinearLayout.LayoutParams(-1, dp(72)));
+        root.addView(header, new LinearLayout.LayoutParams(-1, dp(66)));
 
         LinearLayout body = new LinearLayout(this);
         body.setOrientation(LinearLayout.HORIZONTAL);
         body.setGravity(Gravity.TOP);
-        body.setPadding(0, dp(8), 0, 0);
 
         sidebar = new LinearLayout(this);
         sidebar.setOrientation(LinearLayout.VERTICAL);
-        sidebar.setPadding(dp(10), dp(10), dp(10), dp(10));
-        sidebar.setBackground(bg(PANEL, 22));
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(refPx(0.195f), -1);
-        body.addView(sidebar, sp);
+        sidebar.setPadding(dp(8), dp(8), dp(8), dp(8));
+        sidebar.setBackground(bg(Color.rgb(8, 16, 27), 18));
+        body.addView(sidebar, new LinearLayout.LayoutParams(refPx(0.195f), -1));
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -148,9 +145,7 @@ public class OrynSettingsActivity extends BaseActivity {
         content.setPadding(dp(18), 0, 0, dp(12));
         scroll.addView(content, new ScrollView.LayoutParams(-1, -2));
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, -1, 1);
-        cp.leftMargin = dp(18);
         body.addView(scroll, cp);
-
         root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
 
@@ -162,40 +157,38 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
     }
 
-    private Button textButton(String label) {
-        Button b = new Button(this);
-        b.setText(label);
-        b.setTextSize(12);
-        b.setTextColor(TEXT);
-        b.setAllCaps(false);
-        b.setBackground(bg(PANEL_2, 14));
-        return b;
-    }
-
     private void addNav(String label, int icon, View.OnClickListener listener) {
-        Button b = new Button(this);
-        b.setText(label);
-        b.setTextSize(15);
-        b.setTextColor(TEXT);
-        b.setAllCaps(false);
-        b.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-        b.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
-        b.setCompoundDrawablePadding(dp(16));
-        b.setPadding(dp(18), 0, dp(10), 0);
-        b.setBackground(bg(PANEL, 14));
-        b.setOnClickListener(v -> {
-            if (activeNav != null) activeNav.setBackground(bg(PANEL, 14));
-            activeNav = b;
-            b.setBackground(bg(Color.rgb(31, 48, 71), 14));
+        LinearLayout item = new LinearLayout(this);
+        item.setOrientation(LinearLayout.HORIZONTAL);
+        item.setGravity(Gravity.CENTER_VERTICAL);
+        item.setPadding(dp(12), 0, dp(10), 0);
+
+        ImageView image = new ImageView(this);
+        image.setImageResource(icon);
+        image.setPadding(dp(3), dp(3), dp(3), dp(3));
+        item.addView(image, new LinearLayout.LayoutParams(dp(34), dp(34)));
+
+        TextView title = text(label, 14, TEXT);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, dp(48), 1);
+        tp.leftMargin = dp(10);
+        item.addView(title, tp);
+
+        item.setBackground(bg(Color.TRANSPARENT, 12));
+        item.setOnClickListener(v -> {
+            if (activeNav != null) activeNav.setBackground(bg(Color.TRANSPARENT, 12));
+            activeNav = item;
+            item.setBackground(bg(Color.rgb(31, 48, 71), 12));
             listener.onClick(v);
         });
-        sidebar.addView(b, new LinearLayout.LayoutParams(-1, dp(58)));
-        LinearLayout.LayoutParams p = (LinearLayout.LayoutParams) b.getLayoutParams();
-        p.bottomMargin = dp(4);
-        b.setLayoutParams(p);
+
+        sidebar.addView(item, new LinearLayout.LayoutParams(-1, dp(52)));
+        LinearLayout.LayoutParams p = (LinearLayout.LayoutParams) item.getLayoutParams();
+        p.bottomMargin = dp(3);
+        item.setLayoutParams(p);
+
         if (activeNav == null && "General".equals(label)) {
-            activeNav = b;
-            b.setBackground(bg(Color.rgb(31, 48, 71), 14));
+            activeNav = item;
+            item.setBackground(bg(Color.rgb(31, 48, 71), 12));
         }
     }
 
@@ -205,70 +198,62 @@ public class OrynSettingsActivity extends BaseActivity {
         pageSubtitle.setText(subtitle);
     }
 
-    private void section(String title, int icon) {
-        LinearLayout h = new LinearLayout(this);
-        h.setGravity(Gravity.CENTER_VERTICAL);
+    private LinearLayout sectionCard(String title, int icon) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setBackground(bg(Color.rgb(7, 15, 25), 14));
+        card.setPadding(dp(12), dp(8), dp(12), dp(8));
+
+        LinearLayout header = new LinearLayout(this);
+        header.setGravity(Gravity.CENTER_VERTICAL);
         ImageView i = new ImageView(this);
         i.setImageResource(icon);
-        i.setPadding(dp(2), dp(2), dp(2), dp(2));
-        h.addView(i, new LinearLayout.LayoutParams(dp(42), dp(42)));
-        TextView t = text(title, 17, TEXT);
+        i.setPadding(dp(3), dp(3), dp(3), dp(3));
+        header.addView(i, new LinearLayout.LayoutParams(dp(34), dp(34)));
+        TextView t = text(title, 16, TEXT);
         t.setTypeface(null, android.graphics.Typeface.BOLD);
-        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, dp(42), 1);
-        tp.leftMargin = dp(10);
-        h.addView(t, tp);
-        content.addView(h, new LinearLayout.LayoutParams(-1, dp(46)));
-        LinearLayout.LayoutParams sp = (LinearLayout.LayoutParams) h.getLayoutParams();
-        sp.topMargin = dp(4);
-        h.setLayoutParams(sp);
+        LinearLayout.LayoutParams tp = new LinearLayout.LayoutParams(0, dp(34), 1);
+        tp.leftMargin = dp(8);
+        header.addView(t, tp);
+        card.addView(header, new LinearLayout.LayoutParams(-1, dp(40)));
+        content.addView(card, new LinearLayout.LayoutParams(-1, -2));
+        return card;
     }
 
     private void addGap() {
-        content.addView(new View(this), new LinearLayout.LayoutParams(1, dp(12)));
+        content.addView(new View(this), new LinearLayout.LayoutParams(1, dp(14)));
     }
 
-    private void addSetting(String title, String subtitle, View control) {
-        LinearLayout r = row();
+    private void addSettingToCard(LinearLayout card, String title, String subtitle, View control) {
+        LinearLayout r = new LinearLayout(this);
+        r.setOrientation(LinearLayout.HORIZONTAL);
+        r.setGravity(Gravity.CENTER_VERTICAL);
+        r.setPadding(dp(10), 0, dp(8), 0);
+        r.setBackground(bg(Color.rgb(9, 18, 29), 10));
+
         LinearLayout labels = new LinearLayout(this);
         labels.setOrientation(LinearLayout.VERTICAL);
         labels.setGravity(Gravity.CENTER_VERTICAL);
-        TextView a = text(title, 14, TEXT);
-        TextView b = text(subtitle, 11, MUTED);
-        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(20)));
-        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(18)));
-        r.addView(labels, new LinearLayout.LayoutParams(0, dp(56), 1));
-        r.addView(control, new LinearLayout.LayoutParams(refPx(0.115f), dp(42)));
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(56));
-        rp.bottomMargin = dp(4);
-        content.addView(r, rp);
+        TextView a = text(title, 13, TEXT);
+        TextView b = text(subtitle, 10, MUTED);
+        labels.addView(a, new LinearLayout.LayoutParams(-1, dp(19)));
+        labels.addView(b, new LinearLayout.LayoutParams(-1, dp(16)));
+        r.addView(labels, new LinearLayout.LayoutParams(0, dp(50), 1));
+        r.addView(control, new LinearLayout.LayoutParams(refPx(0.12f), dp(40)));
+
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(52));
+        rp.bottomMargin = dp(3);
+        card.addView(r, rp);
     }
 
-    private Switch toggle(boolean checked, android.widget.CompoundButton.OnCheckedChangeListener l) {
-        Switch s = new Switch(this);
-        s.setChecked(checked);
-        s.setOnCheckedChangeListener(l);
-        return s;
+    private void section(String title, int icon) {
+        sectionCard(title, icon);
     }
 
-    private Spinner spinner(String[] values, int selected) {
-        Spinner s = new Spinner(this);
-        ArrayAdapter<String> a = new ArrayAdapter<String>(this,
-                android.R.layout.simple_spinner_dropdown_item, values) {
-            @Override public View getView(int position, View convertView, android.view.ViewGroup parent) {
-                TextView v = (TextView) super.getView(position, convertView, parent);
-                v.setTextColor(TEXT);
-                v.setTextSize(13);
-                v.setGravity(Gravity.CENTER_VERTICAL);
-                v.setPadding(dp(14), 0, dp(10), 0);
-                return v;
-            }
-        };
-        s.setAdapter(a);
-        s.setSelection(Math.max(0, Math.min(selected, values.length - 1)));
-        s.setBackground(bg(PANEL_2, 14));
-        return s;
+    private void addSetting(String title, String subtitle, View control) {
+        LinearLayout card = (LinearLayout) content.getChildAt(content.getChildCount() - 1);
+        if (card != null) addSettingToCard(card, title, subtitle, control);
     }
-
     private void showGeneral() {
         clear("Settings", "Customize your launcher experience");
 
