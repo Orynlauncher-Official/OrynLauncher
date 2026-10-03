@@ -16,10 +16,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
-import android.media.AudioAttributes;
-import android.media.AudioManager;
-import android.media.projection.MediaProjection;
-import android.media.projection.MediaProjectionManager;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
@@ -117,8 +113,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private GameService.LocalBinder mServiceBinder;
 
     private QuickSettingSideDialog mQuickSettingSideDialog;
-    private static final int REQUEST_ORYN_RECORDING_PROJECTION = 9007;
-    private MediaProjection pendingRecordingProjection;
 
     public static int mForcedPanningHeight = 0;
     public static int mImeHeight = 0;
@@ -148,16 +142,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         initLayout(R.layout.activity_basemain);
 
         Platform.initialize(this, launcherGLView);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                AudioManager audioManager = (AudioManager) getSystemService(AUDIO_SERVICE);
-                if (audioManager != null) {
-                    audioManager.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
-                }
-            } catch (Throwable t) {
-                Log.w("OrynRecorder", "Could not enable playback capture policy", t);
-            }
-        }
 
         mGyroControl = new GyroControl(this);
 
@@ -311,8 +295,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                      case 4: openCustomControls(); break;
                      case 5: startActivity(new Intent(GameActivity.this, OrynFileManagerActivity.class)); break;
                      case 6: toggleGameRecording(); break;
-                     case 7: toggleRecordingPause(); break;
-                     case 8: toggleRecordingMicrophone(); break;
                 }
                 drawerLayout.closeDrawers();
             };
@@ -322,7 +304,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
             launcherGLView.setSurfaceReadyListener(() -> {
                 try {
-                    Tools.runOnUiThread(() -> { if(PREF_VIRTUAL_MOUSE_START) launcherGLView.mCursorView.setVisibility(View.VISIBLE); });
+                    Tools.runOnUiThread(() -> launcherGLView.mCursorView.setVisibility(View.VISIBLE));
                     if(version == null || classpath == null) {
                         Tools.runOnUiThread(()->{
                             Toast.makeText(this, R.string.main_please_restart, Toast.LENGTH_LONG).show();
@@ -433,68 +415,37 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void toggleGameRecording() {
-        if (GameRecorder.isRecording() || GameRecorder.isPaused()) {
+        if (GameRecorder.isRecording()) {
             GameRecorder.INSTANCE.stopAndSave(this);
             updateRecordingMenuLabel();
             Toast.makeText(this, "Saving OrynLauncher recording…", Toast.LENGTH_SHORT).show();
             return;
         }
         if (GameRecorder.isIdle()) {
-            Toast.makeText(this, "Allow screen/audio capture to record game sound.", Toast.LENGTH_SHORT).show();
-            MediaProjectionManager manager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
-            if (manager == null) {
-                Toast.makeText(this, "Screen capture is unavailable on this device.", Toast.LENGTH_LONG).show();
-                return;
-            }
-            startActivityForResult(manager.createScreenCaptureIntent(), REQUEST_ORYN_RECORDING_PROJECTION);
+            Toast.makeText(this, "Preparing OrynLauncher Recorder…", Toast.LENGTH_SHORT).show();
+            startRecordingWhenSurfaceReady(0);
         }
     }
 
-    private void beginRecordingWithProjection(MediaProjection projection, int attempt) {
-        if (projection == null || !GameRecorder.isIdle()) return;
-        if (!GameSurfaceRegistry.isReady()) {
-            if (attempt < 20) {
-                Tools.MAIN_HANDLER.postDelayed(() -> beginRecordingWithProjection(projection, attempt + 1), 250L);
-            } else {
-                projection.stop();
-                Toast.makeText(this, "Minecraft game surface is not ready yet.", Toast.LENGTH_LONG).show();
-            }
-            return;
-        }
-        GameRecorder.INSTANCE.start(this, projection);
-        if (GameRecorder.isRecording()) {
+    private void startRecordingWhenSurfaceReady(int attempt) {
+        if (!GameRecorder.isIdle()) return;
+        if (GameRecorder.INSTANCE.start(this)) {
             updateRecordingMenuLabel();
-            Toast.makeText(this, "OrynLauncher recording started with game audio.", Toast.LENGTH_SHORT).show();
-        } else {
-            projection.stop();
-            Toast.makeText(this, "Recorder could not start. Check capture permission.", Toast.LENGTH_LONG).show();
-        }
-    }
-
-    private void toggleRecordingPause() {
-        if (GameRecorder.isRecording()) GameRecorder.INSTANCE.pause();
-        else if (GameRecorder.isPaused()) GameRecorder.INSTANCE.resume();
-        else Toast.makeText(this, "Start a recording first.", Toast.LENGTH_SHORT).show();
-        updateRecordingMenuLabel();
-    }
-
-    private void toggleRecordingMicrophone() {
-        if (!GameRecorder.isRecording() && !GameRecorder.isPaused()) {
-            Toast.makeText(this, "Start a recording first.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "OrynLauncher recording started", Toast.LENGTH_SHORT).show();
             return;
         }
-        GameRecorder.INSTANCE.toggleMicrophone();
-        updateRecordingMenuLabel();
-        Toast.makeText(this, GameRecorder.isMicrophoneEnabled() ? "Microphone ON" : "Microphone OFF", Toast.LENGTH_SHORT).show();
+        if (attempt < 20) {
+            Tools.MAIN_HANDLER.postDelayed(() -> startRecordingWhenSurfaceReady(attempt + 1), 250L);
+        } else {
+            Toast.makeText(this, "OrynLauncher game surface is not ready. Start after Minecraft is fully loaded.", Toast.LENGTH_LONG).show();
+        }
     }
 
     private void updateRecordingMenuLabel() {
         if (navDrawer == null || gameActionArrayAdapter == null) return;
-        gameActionArrayAdapter.setText(6, GameRecorder.isRecording() || GameRecorder.isPaused()
-                ? "⏹ Stop OrynLauncher Recording" : "🎥 Start OrynLauncher Recording");
-        gameActionArrayAdapter.setText(7, GameRecorder.isPaused()
-                ? "▶ Resume OrynLauncher Recording" : "⏸ Pause OrynLauncher Recording");
-        gameActionArrayAdapter.setText(8, "🎙 Microphone: " + (GameRecorder.isMicrophoneEnabled() ? "ON" : "OFF"));
+        gameActionArrayAdapter.setText(6, GameRecorder.isRecording()
+                ? "⏹ Stop OrynLauncher Recording"
+                : "🎥 Start OrynLauncher Recording");
         navDrawer.setAdapter(gameActionArrayAdapter);
         navDrawer.setOnItemClickListener(gameActionClickListener);
     }
@@ -533,29 +484,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == REQUEST_ORYN_RECORDING_PROJECTION) {
-            if (resultCode != RESULT_OK || data == null) {
-                Toast.makeText(this, "Recording permission cancelled.", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            try {
-                ContextCompat.startForegroundService(this, new Intent(this, net.kdt.pojavlaunch.game.recorder.MediaProjectionForegroundService.class));
-                MediaProjectionManager manager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
-                pendingRecordingProjection = manager != null ? manager.getMediaProjection(resultCode, data) : null;
-                if (pendingRecordingProjection == null) {
-                    Toast.makeText(this, "Could not create audio capture projection.", Toast.LENGTH_LONG).show();
-                    return;
-                }
-                beginRecordingWithProjection(pendingRecordingProjection, 0);
-                pendingRecordingProjection = null;
-            } catch (Throwable t) {
-                Log.e("OrynRecorder", "Failed to initialize MediaProjection", t);
-                if (pendingRecordingProjection != null) pendingRecordingProjection.stop();
-                pendingRecordingProjection = null;
-                Toast.makeText(this, "Recorder initialization failed: " + t.getMessage(), Toast.LENGTH_LONG).show();
-            }
-            return;
-        }
         if (requestCode == 1 && resultCode == RESULT_OK) {
             // Reload PREF_DEFAULTCTRL_PATH
             // If the storage root got unmounted/unreadable we won't be able to load the file anyway,
