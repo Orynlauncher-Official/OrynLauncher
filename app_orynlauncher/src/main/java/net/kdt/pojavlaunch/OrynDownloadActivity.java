@@ -109,17 +109,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
         root.setPadding(dp(0), dp(0), dp(0), dp(0));
-        root.setBackgroundColor(Color.rgb(18, 19, 23));
+        root.setBackgroundColor(Color.rgb(13, 14, 18));
 
         // Old ZalithLauncher-inspired layout: slim category rail + results + detail panel.
         LinearLayout rail = new LinearLayout(this);
         rail.setOrientation(LinearLayout.VERTICAL);
         rail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        rail.setPadding(dp(8), dp(14), dp(8), dp(10));
-        rail.setBackgroundColor(Color.rgb(25, 26, 31));
-        root.addView(rail, new LinearLayout.LayoutParams(dp(122), -1));
+        rail.setPadding(dp(10), dp(16), dp(10), dp(12));
+        rail.setBackgroundColor(Color.rgb(20, 21, 26));
+        root.addView(rail, new LinearLayout.LayoutParams(dp(132), -1));
 
-        TextView railTitle = label("DOWNLOAD", 10);
+        TextView railTitle = label("ORYN  •  DOWNLOAD", 10);
         railTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         railTitle.setTextColor(0xFF8F93A0);
         railTitle.setGravity(Gravity.CENTER);
@@ -139,12 +139,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         LinearLayout center = new LinearLayout(this);
         center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(dp(12), dp(10), dp(8), dp(8));
+        center.setPadding(dp(16), dp(14), dp(10), dp(10));
         root.addView(center, new LinearLayout.LayoutParams(0, -1, 6.5f));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = label("Download", 22);
+        TextView title = label("Download Center", 23);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
@@ -198,8 +198,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         search.setTextColor(Color.WHITE);
         search.setTextSize(13);
         search.setInputType(InputType.TYPE_CLASS_TEXT);
-        search.setPadding(dp(12), 0, dp(12), 0);
-        search.setBackground(roundBg(0xFF292B32, dp(9)));
+        search.setPadding(dp(16), 0, dp(16), 0);
+        search.setBackground(roundBg(0xFF22252D, dp(12)));
         searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         Button searchButton = new Button(this);
@@ -207,9 +207,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         searchButton.setTextColor(Color.WHITE);
         searchButton.setTextSize(12);
         searchButton.setAllCaps(false);
-        searchButton.setBackground(roundBg(0xFF343740, dp(9)));
+        searchButton.setBackground(roundBg(0xFF353947, dp(12)));
         LinearLayout.LayoutParams sbLp = new LinearLayout.LayoutParams(dp(82), dp(42));
-        sbLp.leftMargin = dp(7);
+        sbLp.leftMargin = dp(8);
         searchRow.addView(searchButton, sbLp);
         center.addView(searchRow);
 
@@ -233,14 +233,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout detail = new LinearLayout(this);
         detail.setOrientation(LinearLayout.VERTICAL);
         detail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        detail.setPadding(dp(14), dp(16), dp(14), dp(10));
-        detail.setBackgroundColor(Color.rgb(25, 26, 31));
+        detail.setPadding(dp(18), dp(18), dp(18), dp(14));
+        detail.setBackgroundColor(Color.rgb(20, 21, 26));
         root.addView(detail, new LinearLayout.LayoutParams(0, -1, 3f));
 
         ImageView detailIcon = new ImageView(this);
         detailIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
         detailIcon.setImageResource(R.drawable.oryn_download_mod);
-        detail.addView(detailIcon, new LinearLayout.LayoutParams(dp(76), dp(76)));
+        detail.addView(detailIcon, new LinearLayout.LayoutParams(dp(84), dp(84)));
 
         TextView detailTitle = label("Select a project", 17);
         detailTitle.setTypeface(null, android.graphics.Typeface.BOLD);
@@ -268,7 +268,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDownload.setTextSize(13);
         detailDownload.setAllCaps(false);
         detailDownload.setEnabled(false);
-        detailDownload.setBackground(roundBg(0xFF3A3D48, dp(9)));
+        detailDownload.setBackground(roundBg(0xFF3A3F50, dp(12)));
         detail.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(44)));
 
         searchButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim()));
@@ -387,7 +387,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void searchProjects(final String query) {
         progress.setVisibility(View.VISIBLE);
-        status.setText("Searching…");
+        status.setText("Finding projects…");
         results.removeAllViews();
 
         executor.execute(() -> {
@@ -410,7 +410,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 if (loader != null && category == Category.MOD) {
                     facets.append(",[\"categories:").append(loader).append("\"]");
                 }
-                facets.append("]]");
+                facets.append("]");
                 params.put("facets", facets.toString());
 
                 JsonObject response = api.get("search", params, JsonObject.class);
@@ -444,7 +444,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-                    status.setText("Search failed. Check your Internet connection.");
+                    status.setText("Couldn’t load results. Tap Search to try again.");
                     Toast.makeText(this, e.getMessage() == null ? "Download service error" : e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
             }
