@@ -7,6 +7,7 @@
     android:layout_height="wrap_content"
     android:paddingHorizontal="@dimen/padding_moderate"
     android:paddingVertical="@dimen/padding_moderate"
+    android:background="@drawable/background_card"
     app:layout_optimizationLevel="standard|dimensions|chains">
 
     <!-- Resolution settings -->
@@ -15,7 +16,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/_5sdp"
-        android:gravity="center"
+        android:gravity="center_vertical"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
+        android:textStyle="bold"
         android:paddingEnd="5dp"
         android:text="@string/mcl_setting_title_resolution_scaler"
 
@@ -26,6 +30,8 @@
         android:id="@+id/editResolution_seekbar"
         android:layout_width="0dp"
         android:layout_height="@dimen/_36sdp"
+        android:paddingStart="@dimen/_4sdp"
+        android:paddingEnd="@dimen/_4sdp"
         android:min="@integer/resolution_seekbar_min"
         app:seekBarIncrement="@integer/resolution_seekbar_increment"
 
@@ -52,6 +58,12 @@
         android:layout_height="@dimen/_36sdp"
         android:text="@string/preference_enable_gyro_title"
 
+        android:paddingStart="@dimen/_8sdp"
+        android:paddingEnd="@dimen/_8sdp"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
+        android:background="@drawable/background_card"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/editResolution_seekbar"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
@@ -62,6 +74,12 @@
         android:layout_height="@dimen/_36sdp"
         android:text="@string/preference_gyro_invert_x_axis"
 
+        android:paddingStart="@dimen/_8sdp"
+        android:paddingEnd="@dimen/_8sdp"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
+        android:background="@drawable/background_card"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/checkboxGyro"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
@@ -71,6 +89,12 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/_36sdp"
         android:text="@string/preference_gyro_invert_y_axis"
+
+        android:paddingStart="@dimen/_8sdp"
+        android:paddingEnd="@dimen/_8sdp"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
+        android:background="@drawable/background_card"
 
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/checkboxGyroX"
@@ -93,6 +117,8 @@
         android:id="@+id/editGyro_seekbar"
         android:layout_width="0dp"
         android:layout_height="@dimen/_36sdp"
+        android:paddingStart="@dimen/_4sdp"
+        android:paddingEnd="@dimen/_4sdp"
 
         android:min="@integer/gyro_speed_seekbar_min"
         android:max="@integer/gyro_speed_seekbar_max"
@@ -132,6 +158,8 @@
         android:id="@+id/editMouseSpeed_seekbar"
         android:layout_width="0dp"
         android:layout_height="@dimen/_36sdp"
+        android:paddingStart="@dimen/_4sdp"
+        android:paddingEnd="@dimen/_4sdp"
 
         android:min="@integer/mouse_speed_seekbar_min"
         android:max="@integer/mouse_speed_seekbar_max"
@@ -160,6 +188,12 @@
         android:layout_height="@dimen/_36sdp"
         android:text="@string/mcl_disable_gestures"
 
+        android:paddingStart="@dimen/_8sdp"
+        android:paddingEnd="@dimen/_8sdp"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
+        android:background="@drawable/background_card"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/editMouseSpeed_seekbar"
         tools:ignore="UseSwitchCompatOrMaterialXml" />
@@ -181,6 +215,8 @@
         android:id="@+id/editGestureDelay_seekbar"
         android:layout_width="0dp"
         android:layout_height="@dimen/_36sdp"
+        android:paddingStart="@dimen/_4sdp"
+        android:paddingEnd="@dimen/_4sdp"
 
         android:min="@integer/gesture_delay_seekbar_min"
         android:max="@integer/gesture_delay_seekbar_max"
@@ -219,6 +255,8 @@
         android:id="@+id/buttonTransparency_seekBar"
         android:layout_width="0dp"
         android:layout_height="@dimen/_36sdp"
+        android:paddingStart="@dimen/_4sdp"
+        android:paddingEnd="@dimen/_4sdp"
 
         android:min="0"
         android:max="100"
