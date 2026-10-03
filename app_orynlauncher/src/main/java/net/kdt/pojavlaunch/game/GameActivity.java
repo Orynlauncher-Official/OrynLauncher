@@ -201,7 +201,8 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         ingameControlsEditorArrayAdapter = new ArrayAdapter<>(this,
                 android.R.layout.simple_list_item_1, getResources().getStringArray(R.array.menu_customcontrol));
         ingameControlsEditorListener = (parent, view, position, id) -> {
-            switch(position) {
+            int menuPosition = position - navDrawer.getHeaderViewsCount();
+            switch(menuPosition) {
                 case 0: mControlLayout.addControlButton(new ControlData("New")); break;
                 case 1: mControlLayout.addDrawer(new ControlDrawerData()); break;
                 case 2: mControlLayout.addJoystickButton(new ControlJoystickData()); break;
@@ -286,7 +287,8 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                     }
             );
             gameActionClickListener = (parent, view, position, id) -> {
-                switch(position) {
+                int menuPosition = position - navDrawer.getHeaderViewsCount();
+                switch(menuPosition) {
                      case 0: dialogForceClose(GameActivity.this); break;
                      case 1: openLogOutput(); break;
                      case 2: dialogSendCustomKey(); break;
@@ -296,6 +298,14 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 }
                 drawerLayout.closeDrawers();
             };
+
+            if (navDrawer.getHeaderViewsCount() == 0) {
+                View menuHeader = getLayoutInflater().inflate(R.layout.header_game_menu, navDrawer, false);
+                navDrawer.addHeaderView(menuHeader, null, false);
+                navDrawer.setDivider(null);
+                navDrawer.setVerticalScrollBarEnabled(false);
+                navDrawer.setClipToPadding(false);
+            }
             navDrawer.setAdapter(gameActionArrayAdapter);
             navDrawer.setOnItemClickListener(gameActionClickListener);
             drawerLayout.closeDrawers();
