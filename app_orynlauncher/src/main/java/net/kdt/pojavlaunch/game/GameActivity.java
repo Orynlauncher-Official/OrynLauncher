@@ -50,7 +50,6 @@ import net.kdt.pojavlaunch.BaseActivity;
 import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
-import net.kdt.pojavlaunch.game.recorder.GameSurfaceRegistry;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
 import net.kdt.pojavlaunch.Logger;
@@ -429,11 +428,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     @Override
     protected void onDestroy() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
-            try { mOrynAudioProjection.stop(); } catch (Throwable ignored) {}
-            mOrynAudioProjection = null;
-            stopOrynProjectionService();
-        }
         super.onDestroy();
         ContextExecutor.clearActivity();
     }
