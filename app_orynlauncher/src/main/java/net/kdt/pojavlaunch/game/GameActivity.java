@@ -53,6 +53,7 @@ import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.game.recorder.GameRecorder;
+import net.kdt.pojavlaunch.game.recorder.OrynMediaProjectionService;
 import net.kdt.pojavlaunch.game.recorder.GameSurfaceRegistry;
 import net.kdt.pojavlaunch.utils.GpuUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
@@ -424,6 +425,23 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private static final int ORYN_AUDIO_PROJECTION_REQUEST = 9042;
     private MediaProjection mOrynAudioProjection;
 
+    private void startOrynProjectionService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContextCompat.startForegroundService(
+                    this,
+                    new Intent(this, OrynMediaProjectionService.class)
+            );
+        }
+    }
+
+    private void stopOrynProjectionService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                stopService(new Intent(this, OrynMediaProjectionService.class));
+            } catch (Throwable ignored) {}
+        }
+    }
+
     private void toggleGameRecording() {
         if (GameRecorder.isRecording()) {
             GameRecorder.INSTANCE.stopAndSave(this);
@@ -433,6 +451,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 mOrynAudioProjection = null;
                 Tools.MAIN_HANDLER.postDelayed(() -> {
                     try { projection.stop(); } catch (Throwable ignored) {}
+                    stopOrynProjectionService();
                 }, 500L);
             }
             updateRecordingMenuLabel();
@@ -459,6 +478,9 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             return;
         }
         if (mOrynAudioProjection == null) {
+            // Android 14+ requires the mediaProjection foreground service to be
+            // running before getMediaProjection() can create the projection token.
+            startOrynProjectionService();
             MediaProjectionManager manager =
                     (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
             if (manager != null) {
@@ -496,6 +518,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && mOrynAudioProjection != null) {
             try { mOrynAudioProjection.stop(); } catch (Throwable ignored) {}
             mOrynAudioProjection = null;
+            stopOrynProjectionService();
         }
         super.onDestroy();
         ContextExecutor.clearActivity();
@@ -535,10 +558,17 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 MediaProjectionManager manager =
                         (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
                 if (manager != null) {
-                    mOrynAudioProjection = manager.getMediaProjection(resultCode, data);
-                    startRecordingWhenSurfaceReady(0);
+                    try {
+                        mOrynAudioProjection = manager.getMediaProjection(resultCode, data);
+                        startRecordingWhenSurfaceReady(0);
+                    } catch (SecurityException e) {
+                        stopOrynProjectionService();
+                        Toast.makeText(this, "Oryn Recorder could not start audio capture. Please try again.", Toast.LENGTH_LONG).show();
+                        Log.e("OrynRecorder", "Unable to create MediaProjection", e);
+                    }
                 }
             } else {
+                stopOrynProjectionService();
                 Toast.makeText(this, "Game audio permission was denied. Recording cancelled.", Toast.LENGTH_LONG).show();
             }
             return;
@@ -549,6 +579,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                     checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                 requestOrynGameAudioCapture();
             } else {
+                stopOrynProjectionService();
                 Toast.makeText(this, "Audio permission is required for game sound in recordings.", Toast.LENGTH_LONG).show();
             }
             return;
