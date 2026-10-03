@@ -334,9 +334,9 @@ public class GameRunner {
     private static void applyOrynFpsBoost(File gameDir) {
         try {
             if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
-                GameOptionsUtils.applyOrynFpsBoost(gameDir.getAbsolutePath());
+                MCOptionUtils.applyOrynFpsBoost(gameDir.getAbsolutePath());
             } else {
-                GameOptionsUtils.restoreOrynFpsBoost(gameDir.getAbsolutePath());
+                MCOptionUtils.restoreOrynFpsBoost(gameDir.getAbsolutePath());
             }
         } catch (Throwable e) {
             // Never block Minecraft from launching because an optional optimization failed.
