@@ -28,6 +28,8 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 
+import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
