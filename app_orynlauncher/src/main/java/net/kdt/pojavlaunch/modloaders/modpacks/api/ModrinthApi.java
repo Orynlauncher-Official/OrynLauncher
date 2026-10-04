@@ -6,6 +6,8 @@ import com.kdt.mcgui.ProgressLayout;
 
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.Tools;
+import net.kdt.pojavlaunch.instances.Instance;
+import net.kdt.pojavlaunch.instances.InstanceInstaller;
 import net.kdt.pojavlaunch.downloader.Downloader;
 import net.kdt.pojavlaunch.downloader.TaskMetadata;
 import net.kdt.pojavlaunch.mirrors.DownloadMirror;
@@ -149,6 +151,32 @@ public class ModrinthApi implements ModpackApi{
     }
 
     @Override
+    /** Install an already-downloaded .mrpack into an existing launcher instance. */
+    public LoaderInstaller installMrpackIntoExistingInstance(File modpackFile, Instance instance, String icon) throws IOException {
+        if (instance == null) throw new IOException("No target instance selected");
+        LoaderInstaller loaderInstaller = null;
+        try {
+            loaderInstaller = installMrpack(modpackFile, instance.getGameDirectory());
+            if (loaderInstaller == null) throw new IOException("Unknown modpack mod loader information");
+            if (loaderInstaller.requiresGuiInstallation()) {
+                InstanceInstaller instanceInstaller = loaderInstaller.createInstaller();
+                if (instanceInstaller == null) throw new IOException("Failed to prepare data for instance installation");
+                instance.installer = instanceInstaller;
+            } else {
+                String versionId = loaderInstaller.installHeadlessly();
+                if (versionId == null) throw new IOException("Unknown mod loader version");
+                instance.versionId = versionId;
+            }
+            instance.write();
+            ModIconCache.writeInstanceImage(instance, icon);
+            if (loaderInstaller.requiresGuiInstallation()) instance.installer.start();
+            return loaderInstaller;
+        } finally {
+            if (modpackFile != null) modpackFile.delete();
+            ProgressLayout.clearProgress(ProgressLayout.INSTALL_MODPACK);
+        }
+    }
+
     public LoaderInstaller installModpack(ModDetail modDetail, int selectedVersion) throws IOException{
         //TODO considering only modpacks for now
         return ModpackInstaller.downloadModpack(modDetail, selectedVersion, this::installMrpack);
