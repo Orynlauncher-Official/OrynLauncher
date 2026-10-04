@@ -92,8 +92,8 @@ public final class OrynDiscordPresence {
                 + "\"args\":{"
                 + "\"pid\":" + android.os.Process.myPid() + ","
                 + "\"activity\":{"
-                + "\"details\":\"Minecraft " + escape(minecraftVersion) + "\","
-                + "\"state\":\"Playing OrynLauncher V4\","
+                + "\"details\":\"Playing Minecraft " + escape(minecraftVersion) + "\","
+                + "\"state\":\"Minecraft " + escape(minecraftVersion) + "\",
                 + "\"timestamps\":{\"start\":" + System.currentTimeMillis() + "},"
                 + "\"assets\":{"
                 + "\"large_image\":\"orynlauncher\","
