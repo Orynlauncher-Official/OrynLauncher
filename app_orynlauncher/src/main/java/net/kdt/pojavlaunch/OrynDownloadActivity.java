@@ -764,8 +764,6 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                             JsonObject sf = selectedFiles.get(fi).getAsJsonObject();
                                             if (sf.has("primary") && sf.get("primary").getAsBoolean()) {
                                                 forcedModpackFileUrl = sf.has("url") ? sf.get("url").getAsString() : null;
-                                            forcedModpackFileHash = readSha1(sf);
-                                            forcedModpackFileName = sf.has("filename") ? new File(sf.get("filename").getAsString()).getName() : null;
                                                 forcedModpackFileHash = readSha1(sf);
                                                 forcedModpackFileName = sf.has("filename") ? new File(sf.get("filename").getAsString()).getName() : null;
                                                 break;
@@ -774,9 +772,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                         if (forcedModpackFileUrl == null && selectedFiles.size() > 0) {
                                             JsonObject sf = selectedFiles.get(0).getAsJsonObject();
                                             forcedModpackFileUrl = sf.has("url") ? sf.get("url").getAsString() : null;
+                                            forcedModpackFileHash = readSha1(sf);
+                                            forcedModpackFileName = sf.has("filename") ? new File(sf.get("filename").getAsString()).getName() : null;
                                         }
                                     }
-                                    installModpack(projectId, projectTitle, iconUrl, button);
+                                    showInstallLocationChooser(projectId, projectTitle, button);
                                 } else {
                                     showInstallLocationChooser(projectId, projectTitle, button);
                                 }
