@@ -78,6 +78,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     /** Optional exact Modrinth version selected from the Zalith-style version picker. */
     private String forcedVersionId;
     private String forcedModpackFileUrl;
+    private Instance pendingInstallInstance;
     private TextView detailDesc;
     private ImageView detailIcon;
     private Button detailDownload;
@@ -826,31 +827,95 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void showInstallLocationChooser(final String projectId,
                                             final String projectTitle,
                                             final Button button) {
-        final Instance instance = Instances.loadSelectedInstance();
-        if (instance == null) {
+        final Instance current = Instances.loadSelectedInstance();
+        if (current == null) {
             Toast.makeText(this, "Select an instance first", Toast.LENGTH_LONG).show();
             return;
         }
 
-        final File gameDir = instance.getGameDirectory();
+        final String[] choices = new String[]{
+                "Current instance",
+                "Choose another instance",
+                "Cancel"
+        };
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Where do you want to add it?")
+                .setItems(choices, (dialog, which) -> {
+                    if (which == 0) {
+                        pendingInstallInstance = current;
+                        confirmInstallTarget(projectId, projectTitle, button, current);
+                    } else if (which == 1) {
+                        chooseInstallInstance(projectId, projectTitle, button);
+                    }
+                })
+                .show();
+    }
+
+    private void chooseInstallInstance(final String projectId,
+                                       final String projectTitle,
+                                       final Button button) {
+        executor.execute(() -> {
+            try {
+                final java.util.List<Instance> all = Instances.loadAllInstances();
+                if (all == null || all.isEmpty()) {
+                    runOnUiThread(() ->
+                            Toast.makeText(this, "No other instances found", Toast.LENGTH_LONG).show());
+                    return;
+                }
+
+                final String[] names = new String[all.size()];
+                for (int i = 0; i < all.size(); i++) {
+                    Instance item = all.get(i);
+                    names[i] = item.name == null || item.name.trim().isEmpty()
+                            ? item.versionId : item.name;
+                }
+
+                runOnUiThread(() -> new android.app.AlertDialog.Builder(this)
+                        .setTitle("Choose instance")
+                        .setItems(names, (dialog, which) -> {
+                            if (which >= 0 && which < all.size()) {
+                                pendingInstallInstance = all.get(which);
+                                confirmInstallTarget(projectId, projectTitle, button, all.get(which));
+                            }
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show());
+            } catch (Exception e) {
+                runOnUiThread(() ->
+                        Toast.makeText(this, "Could not load instances", Toast.LENGTH_LONG).show());
+            }
+        });
+    }
+
+    private void confirmInstallTarget(final String projectId,
+                                      final String projectTitle,
+                                      final Button button,
+                                      final Instance targetInstance) {
+        final File gameDir = targetInstance.getGameDirectory();
         final String folder = category.folder;
         final File target = folder.isEmpty() ? gameDir : new File(gameDir, folder);
 
         new android.app.AlertDialog.Builder(this)
-                .setTitle("Where do you want to install it?")
+                .setTitle("Installation location")
                 .setMessage(projectTitle + "\n\n"
                         + "Instance:\n" + gameDir.getAbsolutePath()
                         + "\n\nDestination:\n" + target.getAbsolutePath())
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Install here", (dialog, which) -> {
                     status.setText("Installing to " + target.getAbsolutePath());
-                    downloadProject(projectId, projectTitle, button);
+                    if (category == Category.MODPACK) {
+                        installModpack(projectId, projectTitle, null, button);
+                    } else {
+                        downloadProject(projectId, projectTitle, button);
+                    }
                 })
                 .show();
     }
 
     private void downloadProject(final String projectId, final String projectTitle, final Button button) {
-        Instance instance = Instances.loadSelectedInstance();
+        Instance instance = pendingInstallInstance != null ? pendingInstallInstance : Instances.loadSelectedInstance();
+        pendingInstallInstance = null;
         if (instance == null) {
             Toast.makeText(this, R.string.no_instance, Toast.LENGTH_LONG).show();
             return;
