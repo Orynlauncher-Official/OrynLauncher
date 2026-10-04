@@ -452,7 +452,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     fallback.put("query", requestedQuery);
                     fallback.put("limit", 50);
                     fallback.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
-                    fallback.put("facets", "[[\\"project_type:" + requestedCategory.projectType + "\\"]]");
+                    fallback.put("facets", String.format("[[\"project_type:%s\"]]", requestedCategory.projectType));
                     response = api.get("search", fallback, JsonObject.class);
                 }
 
@@ -505,20 +505,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private String buildSearchFacets(Category requestedCategory, String minecraftVersion, String loader) {
-        StringBuilder facets = new StringBuilder("[[\\"project_type:")
-                .append(requestedCategory.projectType)
-                .append("\\"],[\\"versions:")
-                .append(minecraftVersion)
-                .append("\\"]");
+        StringBuilder facets = new StringBuilder(
+                String.format("[[\"project_type:%s\"],[\"versions:%s\"]]",
+                        requestedCategory.projectType, minecraftVersion));
 
-        // Loader tags are represented through the categories facet in Modrinth
-        // search. Resource packs/shaders use the minecraft loader at version level,
-        // so only mods need an explicit loader discovery facet.
+        // Modrinth search treats loaders as categories for project discovery.
+        // The final version endpoint still performs the authoritative loader check.
         if (requestedCategory == Category.MOD && loader != null && !loader.isEmpty()) {
-            facets.append(",[\\"categories:").append(loader).append("\\"]");
+            facets.setLength(facets.length() - 1);
+            facets.append(String.format(",[\"categories:%s\"]]", loader));
         }
-
-        facets.append("]");
         return facets.toString();
     }
 
