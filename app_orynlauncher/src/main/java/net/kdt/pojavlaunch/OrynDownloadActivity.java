@@ -935,7 +935,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             try {
                 // Scan the selected instance first. Never download an arbitrary/latest
                 // project version: it must explicitly support this Minecraft version.
-                final String minecraftVersion = getDownloadMinecraftVersion();
+                final String minecraftVersion = getMinecraftVersionFromInstanceId(instance.versionId);
                 if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
                     throw new Exception("Could not determine the Minecraft version of this instance");
                 }
