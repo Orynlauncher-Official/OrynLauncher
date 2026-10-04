@@ -1,128 +1,177 @@
 <div align="center">
 
-# ⚡ ORYNLAUNCHER
+<img src="docs/orynlauncher-logo.svg" width="150" alt="OrynLauncher Logo">
 
-### **THE NEXT GENERATION OF MINECRAFT ON ANDROID**
+# ⚡ OrynLauncher
 
-*Fast. Clean. Powerful. Built for players who want more.*
+### **Minecraft: Java Edition on Android — Reimagined.**
 
-[![Android](https://img.shields.io/badge/Android-15%2B-0d1117?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Orynlauncher-Official/OrynLauncher)
-[![Build](https://img.shields.io/github/actions/workflow/status/Orynlauncher-Official/OrynLauncher/android.yml?style=for-the-badge&label=BUILD&logo=github)](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
-[![License](https://img.shields.io/badge/LICENSE-LGPL--3.0-0d1117?style=for-the-badge)](./LICENSE)
+Clean UI • Performance • Instances • Renderers • Customization
 
-[![v2.0.0 Downloads](https://img.shields.io/github/downloads/Orynlauncher-Official/OrynLauncher/v2.0.0/app-OrynLauncher-debug-full.apk?style=for-the-badge&label=V2.0.0%20DOWNLOADS)](https://github.com/Orynlauncher-Official/OrynLauncher/releases/tag/v2.0.0)
-[![Total Downloads](https://img.shields.io/github/downloads/Orynlauncher-Official/OrynLauncher/total?style=for-the-badge&label=TOTAL%20DOWNLOADS)](https://github.com/Orynlauncher-Official/OrynLauncher/releases)
+<br>
 
-### [⬇️ DOWNLOAD](https://github.com/Orynlauncher-Official/OrynLauncher/releases) · [⚙️ ACTION BUILDS](https://github.com/Orynlauncher-Official/OrynLauncher/actions) · [💬 ISSUES](https://github.com/Orynlauncher-Official/OrynLauncher/issues)
+[![V4](https://img.shields.io/badge/OrynLauncher-V4-111111?style=for-the-badge&logo=android&logoColor=white)](https://github.com/Orynlauncher-Official/OrynLauncher/tree/OrynLauncherV4)
+[![Build](https://img.shields.io/github/actions/workflow/status/Orynlauncher-Official/OrynLauncher/android.yml?branch=OrynLauncherV4&style=for-the-badge&label=BUILD&logo=github)](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
+[![License](https://img.shields.io/badge/License-LGPL--3.0-111111?style=for-the-badge)](./LICENSE)
+
+<br>
+
+**[⬇ DOWNLOAD V4](https://github.com/Orynlauncher-Official/OrynLauncher/releases)** · **[💬 Discord](https://discord.gg/PwNYmrCKtu)** · **[▶ YouTube](https://www.youtube.com/@orynlauncher)**
 
 </div>
 
 ---
 
-## ◈ WHAT IS ORYNLAUNCHER?
+## ✦ What is OrynLauncher?
 
-**OrynLauncher** is a Minecraft: Java Edition launcher for Android, focused on a clean experience, performance, customization and modern launcher features.
+**OrynLauncher** is a modern Minecraft: Java Edition launcher for Android, built around a simple idea:
 
-> **One launcher. Your instances. Your Minecraft.**
+> **Your Minecraft. Your instances. Your way.**
 
----
-
-## ✦ FEATURES
-
-| 🎮 **PLAY** | ⚙️ **CUSTOMIZE** | 🚀 **PERFORMANCE** |
-|:---:|:---:|:---:|
-| Multiple Minecraft versions | Custom themes | OpenGL ES renderers |
-| Fabric / Forge support | Instance management | MobileGlues support |
-| Modpack imports | Clean modern UI | Zink / Vulkan integration |
-| Java Edition on Android | Account support | Native optimizations |
+OrynLauncher focuses on a clean launcher experience while keeping the powerful parts players actually need — Minecraft versions, instances, modpacks, Java runtimes, renderers, customization and performance tools.
 
 ---
 
-## 🎨 ORYN EXPERIENCE
+## 🚀 Why OrynLauncher?
 
-- 🔵 **Custom Oryn theme system**
-- 🧩 **Instance & modpack management**
-- 🖥️ **Multiple renderer options**
-- 📱 **Mobile-first interface**
-- 🔔 **Oryn-branded notifications**
-- 🛠️ **Active development & testing**
-
----
-
-## 📦 DOWNLOAD
-
-### Latest Builds
-
-**Stable releases:**  
-👉 [GitHub Releases](https://github.com/Orynlauncher-Official/OrynLauncher/releases)
-
-**Development / debug builds:**  
-👉 [GitHub Actions](https://github.com/Orynlauncher-Official/OrynLauncher/actions)
-
-> [!IMPORTANT]
-> Debug builds are intended for testing. Compatibility can vary depending on your Android device, GPU, Minecraft version and selected renderer.
-
-### 📊 DOWNLOAD COUNTER
-
-The counters above are powered by GitHub's release-asset download statistics. GitHub exposes a download count for each release asset, so the **v2.0.0 counter** tracks the APK downloads and **Total Downloads** tracks release assets across the repository. citeturn0search0turn0search1
+| | |
+|---|---|
+| 🎮 **Minecraft Java** | Launch Minecraft: Java Edition directly on Android |
+| 📦 **Instances** | Keep different Minecraft setups separated and organized |
+| 🧩 **Mods & Modpacks** | Version-aware downloading and modpack management |
+| ⚙️ **Java Runtime** | Manage and select installed Java runtimes |
+| 🎨 **Modern UI** | A dark, clean Oryn interface designed for mobile |
+| 🖥️ **Renderers** | Multiple renderer options for different devices |
+| ⚡ **Performance** | Oryn performance tools focused on real runtime optimization |
+| 📁 **File Manager** | Manage Minecraft files directly from the launcher |
 
 ---
 
-## 🛠️ BUILD FROM SOURCE
+## ⚡ Oryn V4
+
+V4 is focused on making the launcher feel **faster, cleaner and more premium** without turning the interface into a mess.
+
+### V4 highlights
+
+- ✦ Refined OrynLauncher home screen
+- ✦ Cleaner settings experience
+- ✦ Modern full-screen file manager
+- ✦ Instance and modpack workflow improvements
+- ✦ Version-aware downloads
+- ✦ Java runtime management
+- ✦ Renderer support
+- ✦ Adaptive JVM performance engine
+- ✦ Discord Rich Presence
+- ✦ Oryn-branded UI and launcher experience
+
+---
+
+## 🧠 Performance Engine
+
+OrynLauncher includes an adaptive performance system designed to optimize the Java runtime used by Minecraft.
+
+It focuses on **runtime/JVM-side optimization** rather than secretly changing your Minecraft graphics settings.
+
+> No forced resolution scaling.  
+> No forced render-distance reduction.  
+> No fake FPS counter.
+
+Actual FPS and stability still depend on the device, Minecraft version, renderer, mods and GPU.
+
+---
+
+## 🎨 Built for a Clean Experience
+
+OrynLauncher keeps the interface intentionally simple:
+
+**Dark. Minimal. Fast.**
+
+No unnecessary panels covering the launcher. No overloaded home screen. The important actions stay easy to reach while advanced tools remain available when you need them.
+
+---
+
+## 📥 Download
+
+### Stable releases
+**[Download OrynLauncher from GitHub Releases →](https://github.com/Orynlauncher-Official/OrynLauncher/releases)**
+
+### Development builds
+**[View GitHub Actions builds →](https://github.com/Orynlauncher-Official/OrynLauncher/actions)**
+
+> [!WARNING]
+> Development/debug builds may contain unfinished changes. Device compatibility can vary depending on Android version, GPU, Minecraft version, Java runtime and renderer.
+
+---
+
+## 🛠️ Build From Source
 
 Clone the repository:
 
-```bash
-git clone https://github.com/Orynlauncher-Official/OrynLauncher.git
-cd OrynLauncher
-```
+    git clone https://github.com/Orynlauncher-Official/OrynLauncher.git
+    cd OrynLauncher
 
-Build the debug APK:
+Build the full debug APK:
 
-```bash
-./gradlew :app_orynlauncher:assembleFullDebug
-```
+    ./gradlew :app_orynlauncher:assembleFullDebug
 
 Windows:
 
-```bat
-gradlew.bat :app_orynlauncher:assembleFullDebug
-```
+    gradlew.bat :app_orynlauncher:assembleFullDebug
 
 ---
 
-## 🗺️ ROADMAP
+## 🗺️ Roadmap
 
-- [x] Modern Oryn interface
-- [x] Theme customization
-- [x] Instance system
-- [x] Modpack import
-- [x] MobileGlues renderer integration
-- [x] Oryn notification branding
+### ✅ Current
+
+- [x] OrynLauncher V4 UI
+- [x] Instance management
+- [x] Modpack support
+- [x] Version-aware downloads
+- [x] Java runtime management
+- [x] Renderer support
+- [x] Oryn File Manager
+- [x] Discord Rich Presence
+- [x] Adaptive JVM performance engine
+
+### 🔜 Coming
+
 - [ ] More renderer improvements
-- [ ] Improved mod management
+- [ ] Better mod management
 - [ ] More device-specific optimizations
-- [ ] Additional launcher customization
+- [ ] More launcher customization
+- [ ] Future OrynLauncher features
 
 ---
 
-## 🤝 CONTRIBUTING
+## 🤝 Community
 
-Found a bug? Have an idea? Want to help develop OrynLauncher?
+Found a bug, have an idea, or want to follow OrynLauncher development?
 
-**Open an issue or submit a pull request.**
+**[💬 Join Discord](https://discord.gg/PwNYmrCKtu) · [▶ YouTube](https://www.youtube.com/@orynlauncher) · [🐙 GitHub](https://github.com/Orynlauncher-Official/OrynLauncher)**
 
-Please include:
-- What changed
-- Device / Android version
+---
+
+## 🐛 Bug Reports
+
+When reporting an issue, please include:
+
+- Android version
+- Device model
 - Minecraft version
-- Steps to reproduce, if reporting a bug
+- Java runtime
+- Renderer
+- Installed mods, if relevant
+- Steps to reproduce
+- Crash log or screenshot when available
+
+**[Open an issue →](https://github.com/Orynlauncher-Official/OrynLauncher/issues)**
 
 ---
 
-## 🧾 CREDITS
+## 🧾 Credits
 
-OrynLauncher incorporates and builds upon open-source technologies and projects.
+OrynLauncher builds upon open-source technologies and projects.
 
 Special thanks to the developers and communities behind:
 
@@ -132,16 +181,16 @@ Special thanks to the developers and communities behind:
 - [GLFW](https://www.glfw.org/)
 - [SDL](https://www.libsdl.org/)
 
-All third-party copyrights and licenses remain with their respective authors.
+All third-party copyrights, licenses and attributions remain with their respective authors.
 
 ---
 
 <div align="center">
 
-## ⚡ ORYNLAUNCHER
+<img src="docs/orynlauncher-logo.svg" width="72" alt="OrynLauncher">
 
 ### **PLAY. CREATE. PUSH LIMITS.**
 
-*Built for Minecraft: Java Edition on Android.*
+**OrynLauncher V4**
 
 </div>
