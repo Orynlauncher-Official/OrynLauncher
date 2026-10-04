@@ -118,34 +118,50 @@ public final class OrynDiscordPresence {
     }
 
     public void stop() {
-        mainHandler.post(() -> {
-            RpcConnection current = connection;
-            connection = null;
+        // GameActivity calls this from the main thread when the game is really closing.
+        // Clear synchronously so the RPC frame is sent before the Activity disconnects.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            clearAndDisconnect();
+        } else {
+            mainHandler.post(this::clearAndDisconnect);
+        }
+    }
 
-            if (current != null) {
-                try {
-                    String clear =
-                            "{"
-                            + "\"cmd\":\"SET_ACTIVITY\","
-                            + "\"args\":{\"pid\":" + android.os.Process.myPid()
-                            + ",\"activity\":null},"
-                            + "\"nonce\":\"" + UUID.randomUUID() + "\""
-                            + "}";
-                    current.sendFrame(clear);
-                    current.disconnect();
-                } catch (RemoteException ignored) {
-                }
+    private void clearAndDisconnect() {
+        RpcConnection current = connection;
+        connection = null;
+
+        if (current != null) {
+            String clear =
+                    "{"
+                    + "\"cmd\":\"SET_ACTIVITY\","
+                    + "\"args\":{\"pid\":" + android.os.Process.myPid()
+                    + ",\"activity\":null},"
+                    + "\"nonce\":\"" + UUID.randomUUID() + "\""
+                    + "}";
+            try {
+                // Send the clear first; only disconnect after Discord has received
+                // the SET_ACTIVITY frame.
+                current.sendFrame(clear);
+                current.sendFrame(clear);
+            } catch (RemoteException e) {
+                Log.d(TAG, "Unable to clear Discord Rich Presence", e);
             }
 
-            service = null;
-            if (bound) {
-                try {
-                    activity.unbindService(serviceConnection);
-                } catch (IllegalArgumentException ignored) {
-                }
-                bound = false;
+            try {
+                current.disconnect();
+            } catch (RemoteException ignored) {
             }
-        });
+        }
+
+        service = null;
+        if (bound) {
+            try {
+                activity.unbindService(serviceConnection);
+            } catch (IllegalArgumentException ignored) {
+            }
+            bound = false;
+        }
     }
 
     private boolean isDiscordInstalled() {
