@@ -446,6 +446,15 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     @Override
     protected void onStop() {
         PLATFORM.setVisible(false);
+
+        // When the game Activity is actually leaving, immediately clear Discord
+        // Rich Presence instead of waiting for onDestroy (which is not guaranteed
+        // to run promptly on every Android lifecycle path).
+        if (isFinishing() && mDiscordPresence != null) {
+            mDiscordPresence.stop();
+            mDiscordPresence = null;
+        }
+
         super.onStop();
     }
 
