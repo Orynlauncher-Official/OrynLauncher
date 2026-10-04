@@ -189,7 +189,7 @@ public class GameRunner {
 
         // Oryn Performance Engine: optimize the process/JVM launch path without
         // changing Minecraft resolution, render distance, simulation distance, or graphics.
-        OrynFpsBoostUtils.prepareForGameLaunch();
+        OrynFpsBoostUtils.prepareForGameLaunch(activity);
 
         JVersionList.Version versionInfo = Tools.getVersionInfo(versionId);
         // We don't need the library list, the asset index, client download info for the code below
