@@ -101,7 +101,7 @@ public final class OrynDiscordPresence {
                 + "\"cmd\":\"SET_ACTIVITY\","
                 + "\"args\":{"
                 + "\"pid\":" + android.os.Process.myPid() + ","
-                + "\"activity\":{\"name\":\"OrynLauncher\",
+                + "\"activity\":{\"name\":\"OrynLauncher\","
                 + "\"details\":\"Playing Minecraft " + escape(minecraftVersion) + "\","
                 + "\"state\":\"Minecraft " + escape(minecraftVersion) + "\","
                 + "\"timestamps\":{\"start\":" + System.currentTimeMillis() + "},"
