@@ -641,14 +641,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
         executor.execute(() -> {
             try {
                 HashMap<String, Object> versionParams = new HashMap<>();
-                if (minecraftVersionForRequest() != null) {
-                    versionParams.put("game_versions", "[\\"" + minecraftVersionForRequest() + "\\"]");
+                String minecraftVersionRequest = minecraftVersionForRequest();
+                if (minecraftVersionRequest != null && !minecraftVersionRequest.isEmpty()) {
+                    versionParams.put("game_versions",
+                            String.format("[\"%s\"]", minecraftVersionRequest));
                 }
                 String loaderForRequest = getSelectedLoader();
                 if (category == Category.MOD && loaderForRequest != null && !loaderForRequest.isEmpty()) {
-                    versionParams.put("loaders", "[\\"" + loaderForRequest + "\\"]");
+                    versionParams.put("loaders",
+                            String.format("[\"%s\"]", loaderForRequest));
                 } else if (category == Category.RESOURCEPACK || category == Category.SHADER) {
-                    versionParams.put("loaders", "[\\"minecraft\\"]");
+                    versionParams.put("loaders", "[\"minecraft\"]");
                 }
                 versionParams.put("include_changelog", false);
                 JsonArray versions = api.get(
