@@ -333,7 +333,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addSetting("Animations", "Enable smooth UI animations", animations);
         Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b,c) ->
                 OrynFpsBoostUtils.setEnabled(c));
-        addSetting("Oryn FPS Boost", "75% render scale + lowest Minecraft graphics + reduced render/simulation workload", boost);
+        addSetting("Oryn FPS Boost", "Extreme JVM/process optimization without changing resolution or Minecraft video settings", boost);
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
         addSetting("Game Controls", "Configure the existing in-game control layout", controls);
