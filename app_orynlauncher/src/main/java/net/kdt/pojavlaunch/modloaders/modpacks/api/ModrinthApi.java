@@ -150,7 +150,6 @@ public class ModrinthApi implements ModpackApi{
         return new ModDetail(item, names, mcNames, urls, hashes);
     }
 
-    @Override
     /** Install an already-downloaded .mrpack into an existing launcher instance. */
     public LoaderInstaller installMrpackIntoExistingInstance(File modpackFile, Instance instance, String icon) throws IOException {
         if (instance == null) throw new IOException("No target instance selected");
