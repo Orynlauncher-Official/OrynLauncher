@@ -98,7 +98,7 @@ public class MCOptionUtils {
         targets.put("enableVsync", "false");
         targets.put("renderDistance", "2");
         targets.put("simulationDistance", "5");
-        targets.put("entityDistanceScaling", "0.5");
+        targets.put("entityDistanceScaling", "0.25");
         targets.put("distortionEffectScale", "0.0");
         targets.put("glintSpeed", "0.0");
         targets.put("glintStrength", "0.0");
@@ -106,7 +106,7 @@ public class MCOptionUtils {
         targets.put("damageTiltStrength", "0.0");
         targets.put("darknessEffectScale", "0.0");
         targets.put("screenEffectScale", "0.0");
-        targets.put("particles", "0");
+        targets.put("particles", "2");
         targets.put("entityShadows", "false");
         targets.put("biomeBlendRadius", "0");
         targets.put("mipmapLevels", "0");
@@ -124,8 +124,15 @@ public class MCOptionUtils {
         targets.put("improvedTransparency", "false");
         targets.put("cutoutLeaves", "false");
         targets.put("chunkSectionFadeInTime", "0");
-        targets.put("fovEffectScale", "0.5");
+        targets.put("fovEffectScale", "0.0");
         targets.put("maxFps", "260");
+        // Additional low-end safeguards. These are written even when an older\n        // options.txt did not contain the key yet, so FPS Boost cannot silently\n        // leave a high-end value such as renderDistance:8 behind.\n        targets.put("entityShadows", "false");
+        targets.put("ao", "false");
+        targets.put("mipmapLevels", "0");
+        targets.put("biomeBlendRadius", "0");
+        targets.put("clouds", "false");
+        targets.put("renderDistance", "2");
+        targets.put("simulationDistance", "5");
 
         File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
         try {
@@ -145,10 +152,9 @@ public class MCOptionUtils {
 
             boolean changed = false;
             for (Map.Entry<String, String> entry : targets.entrySet()) {
-                if (get(entry.getKey()) != null) {
-                    set(entry.getKey(), entry.getValue());
-                    changed = true;
-                }
+                set(entry.getKey(), entry.getValue());
+                if (!Objects.equals(get(entry.getKey()), entry.getValue())) changed = true;
+                else changed = true;
             }
             if (changed) save();
             Log.i("MCOptionUtils", "Oryn FPS Boost applied to " + folderPath);
