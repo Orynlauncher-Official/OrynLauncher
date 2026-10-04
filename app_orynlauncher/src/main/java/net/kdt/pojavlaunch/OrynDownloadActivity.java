@@ -146,7 +146,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         versionHint.setTextColor(0xFF686D78);
         sidebar.addView(versionHint, new LinearLayout.LayoutParams(-1, dp(20)));
 
-        TextView instanceVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 12);
+        TextView instanceVersion = label(getSelectedMinecraftVersion() == null ? "Select an instance" : getSelectedMinecraftVersion(), 12);
         instanceVersion.setTextColor(0xFFD7D9DE);
         sidebar.addView(instanceVersion, new LinearLayout.LayoutParams(-1, dp(28)));
 
@@ -159,6 +159,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         top.setGravity(Gravity.CENTER_VERTICAL);
         TextView title = label(category.title, 25);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
+        this.categoryTitleView = title;
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         versionSpinner = new android.widget.Spinner(this);
@@ -378,16 +379,23 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(68));
         lp.topMargin = dp(4);
+        item.setTag(value);
         parent.addView(item, lp);
         item.setOnClickListener(v -> {
             category = value;
+            if (categoryTitleView != null) categoryTitleView.setText(value.title);
             updateVersionSpinnerVisibility();
             search.setHint("Search " + value.title.toLowerCase(Locale.ROOT));
             searchProjects(search.getText().toString().trim());
-            for (int i = 1; i < parent.getChildCount() - 1; i++) {
+            for (int i = 0; i < parent.getChildCount(); i++) {
                 View child = parent.getChildAt(i);
-                child.setBackground(roundBg(i == (value == Category.MOD ? 1 : value == Category.RESOURCEPACK ? 2 : 3)
-                        ? 0xFF363943 : 0x00252529, dp(9)));
+                Object tag = child.getTag();
+                boolean selected = tag instanceof Category && tag == value;
+                if (selected) {
+                    child.setBackground(roundBg(0xFF363943, dp(9)));
+                } else if (tag instanceof Category) {
+                    child.setBackground(roundBg(0x00252529, dp(9)));
+                }
             }
         });
     }
@@ -395,80 +403,110 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void searchProjects(final String query) {
         if (progress == null || status == null || results == null) return;
 
-        progress.setVisibility(View.VISIBLE);
-        status.setText("Finding " + category.title.toLowerCase(Locale.ROOT) + "…");
-        results.removeAllViews();
-
+        final int requestId = ++searchGeneration;
         final Category requestedCategory = category;
+        final String requestedQuery = query == null ? "" : query.trim();
         final String requestedVersion = getDownloadMinecraftVersion();
         final String requestedLoader = getSelectedLoader();
 
+        progress.setVisibility(View.VISIBLE);
+        status.setText("Loading " + requestedCategory.title.toLowerCase(Locale.ROOT) + "…");
+        results.removeAllViews();
+
+        Instance selectedInstance = null;
+        try {
+            selectedInstance = Instances.loadSelectedInstance();
+        } catch (Throwable ignored) {}
+
+        if (selectedInstance == null) {
+            progress.setVisibility(View.GONE);
+            status.setText("Select an instance first");
+            return;
+        }
+
         executor.execute(() -> {
             try {
-                /*
-                 * Discovery is intentionally broader than the final download check.
-                 * Modrinth's search facets are not consistent across every project
-                 * type/version, so an overly strict facet query can return zero
-                 * projects even though compatible versions exist.
-                 *
-                 * We therefore search by project type first, then let
-                 * chooseCompatibleVersion() perform the authoritative Minecraft/
-                 * loader compatibility check before downloading.
-                 */
-                HashMap<String, Object> params = new HashMap<>();
-                params.put("query", query == null ? "" : query);
-                params.put("limit", 30);
-                params.put("index", "relevance");
-                params.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
-                
-                JsonObject response = api.get("search", params, JsonObject.class);
-                JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
+                JsonArray hits = null;
+                Exception firstError = null;
 
-                /*
-                 * If Modrinth rejects/returns nothing for the typed search, retry
-                 * with a broad project-type query. This keeps all four tabs usable
-                 * even with an empty search box or unusual query text.
-                 */
+                // First try the precise Modrinth facet query.
+                try {
+                    HashMap<String, Object> params = new HashMap<>();
+                    params.put("query", requestedQuery);
+                    params.put("limit", 30);
+                    params.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
+                    params.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
+                    JsonObject response = api.get("search", params, JsonObject.class);
+                    hits = response == null ? null : response.getAsJsonArray("hits");
+                } catch (Exception e) {
+                    firstError = e;
+                }
+
+                // Reliable fallback: search without facets and filter the returned
+                // project metadata locally. This avoids empty categories when a
+                // Modrinth facet request is rejected or temporarily behaves oddly.
                 if (hits == null || hits.size() == 0) {
                     HashMap<String, Object> fallback = new HashMap<>();
-                    fallback.put("query", "");
-                    fallback.put("limit", 30);
-                    fallback.put("index", "downloads");
-                    fallback.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
-                    response = api.get("search", fallback, JsonObject.class);
-                    hits = response == null ? null : response.getAsJsonArray("hits");
+                    fallback.put("query", requestedQuery);
+                    fallback.put("limit", 50);
+                    fallback.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
+                    JsonObject response = api.get("search", fallback, JsonObject.class);
+                    JsonArray raw = response == null ? null : response.getAsJsonArray("hits");
+
+                    java.util.ArrayList<JsonObject> filtered = new java.util.ArrayList<>();
+                    if (raw != null) {
+                        for (int i = 0; i < raw.size(); i++) {
+                            JsonObject hit = raw.get(i).getAsJsonObject();
+                            String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
+                                    ? hit.get("project_type").getAsString() : "";
+                            if (requestedCategory.projectType.equalsIgnoreCase(type)) {
+                                filtered.add(hit);
+                            }
+                        }
+                    }
+
+                    hits = new JsonArray();
+                    for (JsonObject hit : filtered) {
+                        hits.add(hit);
+                        if (hits.size() >= 30) break;
+                    }
                 }
 
                 final JsonArray searchHits = hits;
+                final Exception requestError = firstError;
+
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
 
-                    // Ignore a stale response if the user switched categories while
-                    // the network request was running.
-                    if (category != requestedCategory) return;
+                    if (requestId != searchGeneration || category != requestedCategory) return;
 
                     if (searchHits == null || searchHits.size() == 0) {
-                        status.setText("No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found.");
+                        status.setText(requestedQuery.isEmpty()
+                                ? "No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found"
+                                : "No results found");
+                        if (requestError != null) {
+                            Toast.makeText(this, "Modrinth search failed. Tap Search to retry.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
                         return;
                     }
 
                     status.setText(searchHits.size() + " projects • "
-                            + (requestedVersion == null ? "version auto" : requestedVersion)
+                            + (requestedVersion == null ? "Select Minecraft version" : requestedVersion)
                             + (requestedCategory == Category.MOD && requestedLoader != null
                             ? " • " + requestedLoader : ""));
 
                     for (int i = 0; i < searchHits.size(); i++) {
-                        JsonObject hit = searchHits.get(i).getAsJsonObject();
-                        addResult(hit);
+                        addResult(searchHits.get(i).getAsJsonObject());
                     }
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-                    if (category != requestedCategory) return;
-                    status.setText("Download service unavailable. Tap Search to retry.");
+                    if (requestId != searchGeneration || category != requestedCategory) return;
+                    status.setText("Unable to connect to Modrinth");
                     Toast.makeText(this,
-                            e.getMessage() == null ? "Could not load projects" : e.getMessage(),
+                            e.getMessage() == null ? "Network request failed" : e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
             }
@@ -477,10 +515,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void addResult(JsonObject hit) {
         final String projectId = hit.has("project_id") ? hit.get("project_id").getAsString() : "";
+        if (projectId.isEmpty()) return;
+
         final String title = hit.has("title") ? hit.get("title").getAsString() : "Unknown";
         final String description = hit.has("description") ? hit.get("description").getAsString() : "";
         final String iconUrl = hit.has("icon_url") && !hit.get("icon_url").isJsonNull()
                 ? hit.get("icon_url").getAsString() : null;
+        final long downloads = hit.has("downloads") && !hit.get("downloads").isJsonNull()
+                ? hit.get("downloads").getAsLong() : -1L;
+        final String author = hit.has("author") && !hit.get("author").isJsonNull()
+                ? hit.get("author").getAsString() : "";
 
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
@@ -499,14 +543,20 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout info = new LinearLayout(this);
         info.setOrientation(LinearLayout.VERTICAL);
         info.setPadding(dp(10), 0, dp(8), 0);
+
         TextView name = label(title, 14);
         name.setTypeface(null, android.graphics.Typeface.BOLD);
         info.addView(name, new LinearLayout.LayoutParams(-1, dp(22)));
+
         TextView desc = label(description, 10);
         desc.setTextColor(0xFFAEB1BA);
         desc.setMaxLines(2);
-        info.addView(desc, new LinearLayout.LayoutParams(-1, dp(32)));
-        TextView type = label(category.title + " • " + (getDownloadMinecraftVersion() == null ? "Any version" : getDownloadMinecraftVersion()), 9);
+        info.addView(desc, new LinearLayout.LayoutParams(-1, dp(30)));
+
+        StringBuilder meta = new StringBuilder(category.title);
+        if (!author.isEmpty()) meta.append(" • ").append(author);
+        if (downloads >= 0) meta.append(" • ").append(formatDownloads(downloads));
+        TextView type = label(meta.toString(), 9);
         type.setTextColor(0xFF7F8490);
         info.addView(type, new LinearLayout.LayoutParams(-1, dp(18)));
         card.addView(info, new LinearLayout.LayoutParams(0, dp(68), 1));
@@ -523,6 +573,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         View.OnClickListener select = v -> showProjectDetails(projectId, title, description, iconUrl);
         card.setOnClickListener(select);
         if (iconUrl != null) loadImage(icon, iconUrl);
+    }
+
+    private String formatDownloads(long value) {
+        if (value >= 1000000L) return String.format(Locale.ROOT, "%.1fM downloads", value / 1000000.0);
+        if (value >= 1000L) return String.format(Locale.ROOT, "%.1fk downloads", value / 1000.0);
+        return value + " downloads";
     }
 
     private android.graphics.drawable.Drawable roundBg(int color, int radius) {
@@ -591,7 +647,18 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     if (!supportsMinecraftAndLoader(candidate, minecraftVersion,
                             category == Category.MOD ? loader : null)) continue;
                     compatible.add(candidate);
-                    if (compatible.size() >= 20) break;
+                }
+
+                java.util.Collections.sort(compatible, (left, right) -> {
+                    String lt = left.has("version_type") ? left.get("version_type").getAsString() : "release";
+                    String rt = right.has("version_type") ? right.get("version_type").getAsString() : "release";
+                    int lp = "release".equalsIgnoreCase(lt) ? 0 : "beta".equalsIgnoreCase(lt) ? 1 : 2;
+                    int rp = "release".equalsIgnoreCase(rt) ? 0 : "beta".equalsIgnoreCase(rt) ? 1 : 2;
+                    if (lp != rp) return Integer.compare(lp, rp);
+                    return 0;
+                });
+                if (compatible.size() > 20) {
+                    compatible.subList(20, compatible.size()).clear();
                 }
 
                 runOnUiThread(() -> {
@@ -617,7 +684,15 @@ public class OrynDownloadActivity extends AppCompatActivity {
                             JsonArray ls = v.getAsJsonArray("loaders");
                             if (ls.size() > 0) loaderLabel = " • " + ls.get(0).getAsString();
                         }
-                        labels[i] = name + "\n" + mc + loaderLabel;
+                        String type = v.has("version_type") ? v.get("version_type").getAsString() : "release";
+                        String fileInfo = "";
+                        if (v.has("files") && v.get("files").isJsonArray() && v.getAsJsonArray("files").size() > 0) {
+                            JsonObject firstFile = v.getAsJsonArray("files").get(0).getAsJsonObject();
+                            String fn = firstFile.has("filename") ? firstFile.get("filename").getAsString() : "";
+                            long size = firstFile.has("size") ? firstFile.get("size").getAsLong() : -1L;
+                            if (!fn.isEmpty()) fileInfo = "\n" + fn + (size > 0 ? " • " + formatFileSize(size) : "");
+                        }
+                        labels[i] = name + " • " + type + "\n" + mc + loaderLabel + fileInfo;
                     }
 
                     new android.app.AlertDialog.Builder(this)
@@ -1175,6 +1250,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         }
 
         throw last == null ? new Exception("Download failed") : last;
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes >= 1024L * 1024L) return String.format(Locale.ROOT, "%.1f MB", bytes / 1048576.0);
+        if (bytes >= 1024L) return String.format(Locale.ROOT, "%.0f KB", bytes / 1024.0);
+        return bytes + " B";
     }
 
     private String toHex(byte[] bytes) {
