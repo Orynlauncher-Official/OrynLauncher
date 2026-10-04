@@ -128,32 +128,39 @@ public final class OrynDiscordPresence {
     }
 
     private void clearAndDisconnect() {
-        RpcConnection current = connection;
+        final RpcConnection current = connection;
         connection = null;
 
         if (current != null) {
+            // Discord's RPC clear is SET_ACTIVITY with no activity object.
+            // Keep the RPC connection alive briefly after sending the clear so
+            // Discord has time to process it before the Binder connection closes.
             String clear =
                     "{"
                     + "\"cmd\":\"SET_ACTIVITY\","
-                    + "\"args\":{\"pid\":" + android.os.Process.myPid()
-                    + ",\"activity\":null},"
+                    + "\"args\":{\"pid\":" + android.os.Process.myPid() + "},"
                     + "\"nonce\":\"" + UUID.randomUUID() + "\""
                     + "}";
             try {
-                // Send the clear first; only disconnect after Discord has received
-                // the SET_ACTIVITY frame.
                 current.sendFrame(clear);
-                current.sendFrame(clear);
+                Log.d(TAG, "Discord Rich Presence clear sent");
             } catch (RemoteException e) {
                 Log.d(TAG, "Unable to clear Discord Rich Presence", e);
             }
 
-            try {
-                current.disconnect();
-            } catch (RemoteException ignored) {
-            }
+            mainHandler.postDelayed(() -> {
+                try {
+                    current.disconnect();
+                } catch (RemoteException ignored) {
+                }
+                unbindDiscord();
+            }, 750);
+        } else {
+            unbindDiscord();
         }
+    }
 
+    private void unbindDiscord() {
         service = null;
         if (bound) {
             try {
@@ -163,7 +170,6 @@ public final class OrynDiscordPresence {
             bound = false;
         }
     }
-
     private boolean isDiscordInstalled() {
         try {
             activity.getPackageManager().getPackageInfo(DISCORD_PACKAGE, 0);
