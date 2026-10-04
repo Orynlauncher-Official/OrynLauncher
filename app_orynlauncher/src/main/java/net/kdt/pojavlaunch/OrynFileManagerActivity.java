@@ -5,6 +5,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
@@ -47,6 +48,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
     private File rootDir;
     private File pendingCopy;
     private boolean pendingCut;
+    private TextView itemCountView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -89,26 +91,28 @@ public class OrynFileManagerActivity extends AppCompatActivity {
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(14), dp(10), dp(14), dp(10));
-        root.setBackgroundColor(Color.rgb(16, 16, 18));
+        root.setPadding(dp(18), dp(14), dp(18), dp(14));
+        root.setBackgroundColor(Color.BLACK);
 
         LinearLayout toolbar = new LinearLayout(this);
         toolbar.setGravity(Gravity.CENTER_VERTICAL);
 
         upButton = actionButton("↑");
         upButton.setOnClickListener(v -> goUp());
-        toolbar.addView(upButton, new LinearLayout.LayoutParams(dp(48), dp(44)));
+        toolbar.addView(upButton, new LinearLayout.LayoutParams(dp(48), dp(46)));
 
         pathView = new TextView(this);
         pathView.setTextColor(Color.WHITE);
         pathView.setTextSize(15);
+        pathView.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         pathView.setSingleLine(true);
         pathView.setGravity(Gravity.CENTER_VERTICAL);
         pathView.setPadding(dp(12), 0, dp(12), 0);
-        toolbar.addView(pathView, new LinearLayout.LayoutParams(0, dp(44), 1));
+        toolbar.addView(pathView, new LinearLayout.LayoutParams(0, dp(46), 1));
 
         Button newFolder = actionButton("+ Folder");
         newFolder.setOnClickListener(v -> createFolder());
+        newFolder.setText("＋ Folder");
         toolbar.addView(newFolder, new LinearLayout.LayoutParams(dp(100), dp(44)));
 
         pasteButton = actionButton("Paste");
@@ -117,8 +121,23 @@ public class OrynFileManagerActivity extends AppCompatActivity {
 
         root.addView(toolbar);
 
+        LinearLayout info = new LinearLayout(this);
+        info.setGravity(Gravity.CENTER_VERTICAL);
+        info.setPadding(dp(4), dp(12), dp(4), dp(10));
+        TextView title = new TextView(this);
+        title.setText("Oryn Files");
+        title.setTextColor(Color.WHITE);
+        title.setTextSize(22);
+        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        info.addView(title, new LinearLayout.LayoutParams(0, dp(34), 1));
+        itemCountView = new TextView(this);
+        itemCountView.setTextColor(Color.rgb(160,160,160));
+        itemCountView.setTextSize(12);
+        info.addView(itemCountView, new LinearLayout.LayoutParams(-2, dp(34)));
+        root.addView(info);
+
         TextView hint = new TextView(this);
-        hint.setText("Tap a folder to open • Long-press a file/folder for actions");
+        hint.setText("Tap to open • Long-press for actions • Copy/Paste supported");
         hint.setTextColor(Color.rgb(155, 155, 160));
         hint.setTextSize(12);
         hint.setPadding(dp(4), dp(5), 0, dp(8));
@@ -135,7 +154,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
     }
 
     private void refresh() {
-        pathView.setText(currentDir.getAbsolutePath());
+        pathView.setText(displayPath(currentDir));
         upButton.setEnabled(!sameFile(currentDir, rootDir) && currentDir.getParentFile() != null);
         pasteButton.setEnabled(pendingCopy != null && pendingCopy.exists());
 
@@ -151,6 +170,8 @@ public class OrynFileManagerActivity extends AppCompatActivity {
             return a.getName().compareToIgnoreCase(b.getName());
         });
 
+        if (itemCountView != null) itemCountView.setText(children.length + (children.length == 1 ? " item" : " items"));
+
         if (children.length == 0) {
             emptyMessage("This folder is empty.");
             return;
@@ -163,10 +184,11 @@ public class OrynFileManagerActivity extends AppCompatActivity {
         LinearLayout row = new LinearLayout(this);
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(dp(10), dp(7), dp(10), dp(7));
-        row.setBackgroundColor(Color.rgb(28, 28, 31));
+        row.setBackgroundColor(Color.rgb(14, 14, 14));
 
         TextView icon = new TextView(this);
-        icon.setText(file.isDirectory() ? "📁" : "📄");
+        icon.setText(file.isDirectory() ? "▣" : "□");
+        icon.setTextColor(Color.WHITE);
         icon.setTextSize(22);
         row.addView(icon, new LinearLayout.LayoutParams(dp(42), dp(48)));
 
@@ -201,7 +223,7 @@ public class OrynFileManagerActivity extends AppCompatActivity {
         });
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, dp(62));
-        params.setMargins(0, 0, 0, dp(2));
+        params.setMargins(0, 0, 0, dp(4));
         list.addView(row, params);
     }
 
@@ -402,6 +424,14 @@ public class OrynFileManagerActivity extends AppCompatActivity {
         }
     }
 
+    private String displayPath(File dir) {
+        String rootPath = rootDir.getAbsolutePath();
+        String path = dir.getAbsolutePath();
+        if (path.equals(rootPath)) return "OrynLauncher / Files";
+        if (path.startsWith(rootPath + File.separator)) return "OrynLauncher / Files / " + path.substring(rootPath.length() + 1).replace(File.separatorChar, '/');
+        return path;
+    }
+
     private void emptyMessage(String message) {
         TextView empty = new TextView(this);
         empty.setText(message);
@@ -417,7 +447,8 @@ public class OrynFileManagerActivity extends AppCompatActivity {
         b.setTextColor(Color.WHITE);
         b.setAllCaps(false);
         b.setTextSize(12);
-        b.setBackgroundColor(Color.rgb(42, 42, 46));
+        b.setBackgroundColor(Color.rgb(22, 22, 22));
+        b.setPadding(dp(6), 0, dp(6), 0);
         return b;
     }
 
