@@ -24,6 +24,9 @@ import androidx.annotation.Nullable;
 
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
+import net.kdt.pojavlaunch.contracts.OpenDocumentWithExtension;
+import net.kdt.pojavlaunch.multirt.MultiRTConfigDialog;
+import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.utils.OrynThemeManager;
 import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
 
@@ -48,6 +51,11 @@ public class OrynSettingsActivity extends BaseActivity {
     private TextView pageTitle;
     private TextView pageSubtitle;
     private View activeNav;
+    private MultiRTConfigDialog runtimeDialog;
+    private final androidx.activity.result.ActivityResultLauncher<Object> runtimeInstallLauncher =
+            registerForActivityResult(new OpenDocumentWithExtension("xz"), data -> {
+                if (data != null) Tools.installRuntimeFromUri(this, data);
+            });
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -158,6 +166,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("Renderer", R.drawable.ic_px_image_renderer, v -> showRenderer());
         addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
+        addNav("Java", R.drawable.ic_px_runtime_mgr, v -> showJava());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
     }
 
@@ -428,6 +437,45 @@ public class OrynSettingsActivity extends BaseActivity {
         addSetting("Data", "Launcher settings are stored locally on this device", reset);
     }
 
+    private void showJava() {
+        clear("Java Runtime", "Manage the Java runtimes used by Minecraft");
+        section("Java Runtime", R.drawable.ic_px_runtime_mgr);
+
+        String current = LauncherPreferences.PREF_DEFAULT_RUNTIME;
+        if (current == null || current.trim().isEmpty()) current = "Automatic / recommended";
+        addSetting("Current Runtime", current, textButton("Manage"));
+        LinearLayout card = (LinearLayout) content.getChildAt(content.getChildCount() - 1);
+        if (card != null) {
+            View row = card.getChildAt(card.getChildCount() - 1);
+            if (row instanceof LinearLayout) {
+                View control = ((LinearLayout) row).getChildAt(1);
+                if (control != null) control.setOnClickListener(v -> openRuntimeManager());
+            }
+        }
+
+        Button manage = textButton("Open Runtime Manager");
+        manage.setOnClickListener(v -> openRuntimeManager());
+        addSetting("Installed Runtimes", "Install, remove, or choose the default Java runtime", manage);
+
+        StringBuilder installed = new StringBuilder();
+        try {
+            for (net.kdt.pojavlaunch.multirt.Runtime rt : MultiRTUtils.getRuntimes()) {
+                if (installed.length() > 0) installed.append(" • ");
+                installed.append(rt.name.replace(".tar.xz", ""));
+            }
+        } catch (Throwable ignored) {}
+        if (installed.length() == 0) installed.append("No managed runtimes detected");
+        addSetting("Detected Runtimes", installed.toString(), textButton("Refresh"));
+    }
+
+    private void openRuntimeManager() {
+        if (runtimeDialog == null) {
+            runtimeDialog = new MultiRTConfigDialog();
+            runtimeDialog.prepare(this, runtimeInstallLauncher);
+        }
+        runtimeDialog.show();
+    }
+
     private void showAdvanced() {
         clear("Advanced", "Developer and OrynLauncher tools");
         section("Advanced", R.drawable.ic_px_sliders);
@@ -435,8 +483,9 @@ public class OrynSettingsActivity extends BaseActivity {
                 new Intent(this, OrynCrashViewerActivity.class));
         addActivitySetting("Oryn Customization", "Open the full Oryn customization center",
                 new Intent(this, OrynCustomizationActivity.class));
-        addActivitySetting("Java / Runtime Settings", "Open the existing launcher runtime preferences",
-                new Intent(this, OrynLegacySettingsActivity.class));
+        Button runtime = textButton("Open");
+        runtime.setOnClickListener(v -> openRuntimeManager());
+        addSetting("Java / Runtime", "Manage installed Java runtimes and choose the default", runtime);
         addActivitySetting("Experimental Settings", "Open the existing experimental preferences",
                 new Intent(this, OrynLegacySettingsActivity.class));
     }
