@@ -74,6 +74,8 @@
         <com.kdt.mcgui.mcVersionSpinner android:id="@+id/mc_version_spinner" android:tag="oryn_v4" android:layout_width="match_parent" android:layout_height="match_parent" android:alpha="0.01" android:background="@android:color/transparent" android:contentDescription="Select Minecraft instance"/>
     </FrameLayout>
 
+    <View android:id="@+id/share_logs_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone"/>
+    <TextView android:id="@+id/oryn_status_version" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:text="1.12.2"/>
     <ImageView android:id="@+id/oryn_custom_player_image" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:contentDescription="Custom profile image"/>
     <ImageButton android:id="@+id/edit_profile_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" android:contentDescription="Edit instance"/>
     <LinearLayout android:id="@+id/oryn_status_card" android:layout_width="220dp" android:layout_height="48dp" android:visibility="gone"/>
