@@ -99,7 +99,14 @@ public class MCOptionUtils {
         targets.put("renderDistance", "2");
         targets.put("simulationDistance", "5");
         targets.put("entityDistanceScaling", "0.5");
-        targets.put("particles", "2");
+        targets.put("distortionEffectScale", "0.0");
+        targets.put("glintSpeed", "0.0");
+        targets.put("glintStrength", "0.0");
+        targets.put("bobView", "false");
+        targets.put("damageTiltStrength", "0.0");
+        targets.put("darknessEffectScale", "0.0");
+        targets.put("screenEffectScale", "0.0");
+        targets.put("particles", "0");
         targets.put("entityShadows", "false");
         targets.put("biomeBlendRadius", "0");
         targets.put("mipmapLevels", "0");
@@ -117,8 +124,6 @@ public class MCOptionUtils {
         targets.put("improvedTransparency", "false");
         targets.put("cutoutLeaves", "false");
         targets.put("chunkSectionFadeInTime", "0");
-        targets.put("darknessEffectScale", "0.0");
-        targets.put("screenEffectScale", "0.0");
         targets.put("fovEffectScale", "0.5");
         targets.put("maxFps", "260");
 
