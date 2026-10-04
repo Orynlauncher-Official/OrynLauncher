@@ -20,10 +20,7 @@ import net.kdt.pojavlaunch.prefs.CustomSeekBarPreference;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.utils.GpuUtils;
-import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
-import net.kdt.pojavlaunch.instances.Instance;
-import net.kdt.pojavlaunch.instances.Instances;
 
 /**
  * Fragment for any settings video related
@@ -117,21 +114,6 @@ public class LauncherPreferenceVideoFragment extends LauncherPreferenceFragment 
             }
         }
         return Math.max(25, (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100));
-    }
-
-    private void applyFpsBoostToSelectedInstance(boolean enabled) {
-        try {
-            Instance instance = Instances.loadSelectedInstance();
-            if (instance == null) return;
-            String gameDir = instance.getGameDirectory().getAbsolutePath();
-            if (enabled) {
-                MCOptionUtils.applyOrynFpsBoost(gameDir);
-            } else {
-                MCOptionUtils.restoreOrynFpsBoost(gameDir);
-            }
-        } catch (Throwable e) {
-            android.util.Log.w("OrynFPS", "Could not update Minecraft options immediately", e);
-        }
     }
 
     @Override
