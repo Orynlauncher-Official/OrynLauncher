@@ -83,7 +83,15 @@ public class MainMenuFragment extends Fragment {
             });
         }
 
-        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
+        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/5KPABsEB"));
+        ImageButton mYoutubeButton = view.findViewById(R.id.oryn_youtube_button);
+        ImageButton mDiscordSocialButton = view.findViewById(R.id.oryn_discord_button);
+        if (mYoutubeButton != null) {
+            mYoutubeButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://youtube.com/@orynlauncher"));
+        }
+        if (mDiscordSocialButton != null) {
+            mDiscordSocialButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/5KPABsEB"));
+        }
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         // V4 Settings sidebar must open the new Settings dashboard, not the legacy PreferenceFragment.
         mInstallJarButton.setOnClickListener(v ->
