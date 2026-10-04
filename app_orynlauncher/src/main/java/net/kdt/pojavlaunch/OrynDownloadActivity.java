@@ -447,16 +447,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
                 JsonObject response;
                 try {
-                    response = api.get("search", params, JsonObject.class);
+                    response = searchModrinthProjects(requestedQuery, requestedCategory, requestedVersion, requestedLoader, true);
                 } catch (Exception preciseError) {
-                    // Network/API fallback: search by project type only, then let
-                    // the version picker perform the authoritative compatibility check.
-                    HashMap<String, Object> fallback = new HashMap<>();
-                    fallback.put("query", requestedQuery);
-                    fallback.put("limit", 50);
-                    fallback.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
-                    fallback.put("facets", String.format("[[\"project_type:%s\"]]", requestedCategory.projectType));
-                    response = api.get("search", fallback, JsonObject.class);
+                    response = searchModrinthProjects(requestedQuery, requestedCategory, requestedVersion, requestedLoader, false);
                 }
 
                 JsonArray rawHits = response == null ? null : response.getAsJsonArray("hits");
@@ -521,6 +514,37 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return facets.toString();
     }
 
+    private JsonObject searchModrinthProjects(String query, Category requestedCategory,
+                                                String minecraftVersion, String loader,
+                                                boolean includeCompatibilityFacets) throws Exception {
+        String facets = includeCompatibilityFacets
+                ? buildSearchFacets(requestedCategory, minecraftVersion, loader)
+                : String.format(Locale.ROOT, "[[\\"project_type:%s\\"]]", requestedCategory.projectType);
+        StringBuilder urlBuilder = new StringBuilder("https://api.modrinth.com/v2/search");
+        urlBuilder.append("?query=").append(URLEncoder.encode(query == null ? "" : query, "UTF-8"));
+        urlBuilder.append("&limit=50");
+        urlBuilder.append("&index=").append(URLEncoder.encode(query == null || query.isEmpty() ? "downloads" : "relevance", "UTF-8"));
+        urlBuilder.append("&facets=").append(URLEncoder.encode(facets, "UTF-8"));
+        HttpURLConnection connection = (HttpURLConnection) new URL(urlBuilder.toString()).openConnection();
+        connection.setConnectTimeout(12000);
+        connection.setReadTimeout(20000);
+        connection.setInstanceFollowRedirects(true);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", "OrynLauncher/4.0");
+        int code = connection.getResponseCode();
+        InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
+        if (stream == null) throw new Exception("Modrinth returned HTTP " + code);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        try (InputStream in = new BufferedInputStream(stream)) {
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+        } finally { connection.disconnect(); }
+        if (code < 200 || code >= 300) throw new Exception("Modrinth returned HTTP " + code);
+        return new com.google.gson.JsonParser().parse(new String(out.toByteArray(), "UTF-8")).getAsJsonObject();
+    }
+
     private void addResult(JsonObject hit) {
         final String projectId = hit.has("project_id") ? hit.get("project_id").getAsString() : "";
         if (projectId.isEmpty()) return;
@@ -562,6 +586,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         info.addView(desc, new LinearLayout.LayoutParams(-1, dp(30)));
 
         StringBuilder meta = new StringBuilder(category.title);
+        String compatibleVersion = getDownloadMinecraftVersion();
+        if (compatibleVersion != null && !compatibleVersion.isEmpty()) meta.append(" • MC ").append(compatibleVersion);
+        if (category == Category.MOD && getSelectedLoader() != null) meta.append(" • ").append(getSelectedLoader());
         if (!author.isEmpty()) meta.append(" • ").append(author);
         if (downloads >= 0) meta.append(" • ").append(formatDownloads(downloads));
         TextView type = label(meta.toString(), 9);
@@ -729,12 +756,18 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                 forcedVersionId = selected.has("id") ? selected.get("id").getAsString() : null;
                                 if (category == Category.MODPACK) {
                                     forcedModpackFileUrl = null;
+                                    forcedModpackFileHash = null;
+                                    forcedModpackFileName = null;
                                     if (selected.has("files") && selected.get("files").isJsonArray()) {
                                         JsonArray selectedFiles = selected.getAsJsonArray("files");
                                         for (int fi = 0; fi < selectedFiles.size(); fi++) {
                                             JsonObject sf = selectedFiles.get(fi).getAsJsonObject();
                                             if (sf.has("primary") && sf.get("primary").getAsBoolean()) {
                                                 forcedModpackFileUrl = sf.has("url") ? sf.get("url").getAsString() : null;
+                                            forcedModpackFileHash = readSha1(sf);
+                                            forcedModpackFileName = sf.has("filename") ? new File(sf.get("filename").getAsString()).getName() : null;
+                                                forcedModpackFileHash = readSha1(sf);
+                                                forcedModpackFileName = sf.has("filename") ? new File(sf.get("filename").getAsString()).getName() : null;
                                                 break;
                                             }
                                         }
@@ -755,6 +788,47 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
                     Toast.makeText(this, e.getMessage() == null ? "Could not load versions" : e.getMessage(),
                             Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
+    private void installModpackIntoExistingInstance(final String projectId, final String projectTitle,
+                                                     final Instance targetInstance, final Button button) {
+        if (forcedModpackFileUrl == null || forcedModpackFileUrl.trim().isEmpty()) {
+            Toast.makeText(this, "No selected modpack file", Toast.LENGTH_LONG).show();
+            return;
+        }
+        button.setEnabled(false);
+        button.setText("Downloading modpack…");
+        executor.execute(() -> {
+            File cacheFile = null;
+            try {
+                String safeName = forcedModpackFileName == null || forcedModpackFileName.isEmpty()
+                        ? projectId + ".mrpack" : forcedModpackFileName;
+                cacheFile = new File(Tools.DIR_CACHE, safeName);
+                downloadFile(forcedModpackFileUrl, cacheFile, forcedModpackFileHash, -1L, button, projectTitle);
+                File finalCacheFile = cacheFile;
+                runOnUiThread(() -> {
+                    status.setText("Installing " + projectTitle + " into " + targetInstance.name);
+                    button.setText("Installing…");
+                });
+                modrinthModpackApi.installMrpackIntoExistingInstance(finalCacheFile, targetInstance, null);
+                runOnUiThread(() -> {
+                    button.setEnabled(true);
+                    button.setText("Installed");
+                    Toast.makeText(this, "Installed " + projectTitle + " into " + targetInstance.name, Toast.LENGTH_LONG).show();
+                    forcedVersionId = null;
+                    forcedModpackFileUrl = null;
+                    forcedModpackFileHash = null;
+                    forcedModpackFileName = null;
+                });
+            } catch (Exception e) {
+                if (cacheFile != null && cacheFile.isFile()) cacheFile.delete();
+                runOnUiThread(() -> {
+                    button.setEnabled(true);
+                    button.setText("Install Modpack");
+                    Toast.makeText(this, e.getMessage() == null ? "Modpack installation failed" : e.getMessage(), Toast.LENGTH_LONG).show();
                 });
             }
         });
@@ -833,11 +907,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
             return;
         }
 
-        final String[] choices = new String[]{
-                "Current instance",
-                "Choose another instance",
-                "Cancel"
-        };
+        final String[] choices = category == Category.MODPACK
+                ? new String[]{"Current instance", "Choose another instance", "Create new instance", "Cancel"}
+                : new String[]{"Current instance", "Choose another instance", "Cancel"};
 
         new android.app.AlertDialog.Builder(this)
                 .setTitle("Where do you want to add it?")
@@ -847,6 +919,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         confirmInstallTarget(projectId, projectTitle, button, current);
                     } else if (which == 1) {
                         chooseInstallInstance(projectId, projectTitle, button);
+                    } else if (category == Category.MODPACK && which == 2) {
+                        installModpack(projectId, projectTitle, null, button);
                     }
                 })
                 .show();
@@ -905,7 +979,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 .setPositiveButton("Install here", (dialog, which) -> {
                     status.setText("Installing to " + target.getAbsolutePath());
                     if (category == Category.MODPACK) {
-                        installModpack(projectId, projectTitle, null, button);
+                        installModpackIntoExistingInstance(projectId, projectTitle, targetInstance, button);
                     } else {
                         downloadProject(projectId, projectTitle, button);
                     }
@@ -1277,6 +1351,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     if (lower.contains("quilt")) return "quilt";
                 }
             }
+        }
+        return null;
+    }
+
+    private String readSha1(JsonObject file) {
+        if (file != null && file.has("hashes") && file.get("hashes").isJsonObject()
+                && file.getAsJsonObject("hashes").has("sha1")) {
+            return file.getAsJsonObject("hashes").get("sha1").getAsString();
         }
         return null;
     }
