@@ -109,63 +109,58 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void buildUi() {
+        // V4 Download Center: clean Zalith-style three-pane layout.
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setPadding(dp(0), dp(0), dp(0), dp(0));
-        root.setBackgroundColor(Color.rgb(13, 14, 18));
+        root.setBackgroundColor(Color.rgb(11, 12, 15));
 
-        // Old ZalithLauncher-inspired layout: slim category rail + results + detail panel.
-        LinearLayout rail = new LinearLayout(this);
-        rail.setOrientation(LinearLayout.VERTICAL);
-        rail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        rail.setPadding(dp(10), dp(16), dp(10), dp(12));
-        rail.setBackgroundColor(Color.rgb(20, 21, 26));
-        root.addView(rail, new LinearLayout.LayoutParams(dp(132), -1));
+        LinearLayout sidebar = new LinearLayout(this);
+        sidebar.setOrientation(LinearLayout.VERTICAL);
+        sidebar.setPadding(dp(14), dp(18), dp(14), dp(14));
+        sidebar.setBackgroundColor(Color.rgb(18, 19, 23));
+        root.addView(sidebar, new LinearLayout.LayoutParams(dp(190), -1));
 
-        TextView railTitle = label("ORYN  •  DOWNLOAD", 10);
-        railTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        railTitle.setTextColor(0xFF8F93A0);
-        railTitle.setGravity(Gravity.CENTER);
-        rail.addView(railTitle, new LinearLayout.LayoutParams(-1, dp(28)));
+        TextView brand = label("ORYNLAUNCHER", 12);
+        brand.setTypeface(null, android.graphics.Typeface.BOLD);
+        brand.setTextColor(0xFFBFC3CC);
+        sidebar.addView(brand, new LinearLayout.LayoutParams(-1, dp(34)));
 
-        addRailItem(rail, "Mods", "MODS", Category.MOD);
-        addRailItem(rail, "Resource Packs", "PACKS", Category.RESOURCEPACK);
-        addRailItem(rail, "Shaders", "SHADERS", Category.SHADER);
-        addRailItem(rail, "Modpacks", "MODPACKS", Category.MODPACK);
+        TextView heading = label("Download", 24);
+        heading.setTypeface(null, android.graphics.Typeface.BOLD);
+        sidebar.addView(heading, new LinearLayout.LayoutParams(-1, dp(48)));
 
-        TextView version = label("", 10);
-        version.setTextColor(0xFF777B86);
-        version.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams versionLp = new LinearLayout.LayoutParams(-1, dp(30));
-        versionLp.topMargin = dp(12);
-        rail.addView(version, versionLp);
+        TextView sub = label("Discover content for your instance", 11);
+        sub.setTextColor(0xFF858A95);
+        sub.setMaxLines(2);
+        sidebar.addView(sub, new LinearLayout.LayoutParams(-1, dp(42)));
 
-        LinearLayout center = new LinearLayout(this);
-        center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(dp(16), dp(14), dp(10), dp(10));
-        root.addView(center, new LinearLayout.LayoutParams(0, -1, 6.5f));
+        addRailItem(sidebar, "Mods", "MODS", Category.MOD);
+        addRailItem(sidebar, "Resource Packs", "PACKS", Category.RESOURCEPACK);
+        addRailItem(sidebar, "Shaders", "SHADERS", Category.SHADER);
+        addRailItem(sidebar, "Modpacks", "MODPACKS", Category.MODPACK);
+
+        TextView spacer = label("", 1);
+        sidebar.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
+
+        TextView versionHint = label("SELECTED INSTANCE", 9);
+        versionHint.setTextColor(0xFF686D78);
+        sidebar.addView(versionHint, new LinearLayout.LayoutParams(-1, dp(20)));
+
+        TextView instanceVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 12);
+        instanceVersion.setTextColor(0xFFD7D9DE);
+        sidebar.addView(instanceVersion, new LinearLayout.LayoutParams(-1, dp(28)));
+
+        LinearLayout main = new LinearLayout(this);
+        main.setOrientation(LinearLayout.VERTICAL);
+        main.setPadding(dp(20), dp(16), dp(12), dp(12));
+        root.addView(main, new LinearLayout.LayoutParams(0, -1, 1));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = label("Download Center", 23);
+        TextView title = label(category.title, 25);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
-        TextView mcVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 11);
-        mcVersion.setTextColor(0xFF9FA3AE);
-        mcVersion.setGravity(Gravity.CENTER);
-        top.addView(mcVersion, new LinearLayout.LayoutParams(dp(100), dp(34)));
-        loaderSpinner = new android.widget.Spinner(this);
-        String[] loaderChoices = new String[]{"Auto", "Fabric", "Forge", "NeoForge", "Quilt"};
-        android.widget.ArrayAdapter<String> loaderAdapter = new android.widget.ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_dropdown_item, loaderChoices);
-        loaderSpinner.setAdapter(loaderAdapter);
-        String detectedLoader = getModrinthLoader(Instances.loadSelectedInstance());
-        selectedLoader = detectedLoader;
-        if ("fabric".equals(detectedLoader)) loaderSpinner.setSelection(1);
-        else if ("forge".equals(detectedLoader)) loaderSpinner.setSelection(2);
-        else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
-        else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
         versionSpinner = new android.widget.Spinner(this);
         versionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -177,93 +172,101 @@ public class OrynDownloadActivity extends AppCompatActivity {
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
-        top.addView(versionSpinner, new LinearLayout.LayoutParams(dp(125), dp(34)));
-        loadMinecraftVersions();
+        top.addView(versionSpinner, new LinearLayout.LayoutParams(dp(125), dp(38)));
 
+        loaderSpinner = new android.widget.Spinner(this);
+        String[] loaderChoices = new String[]{"Auto", "Fabric", "Forge", "NeoForge", "Quilt"};
+        loaderSpinner.setAdapter(new android.widget.ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_dropdown_item, loaderChoices));
+        String detectedLoader = getModrinthLoader(Instances.loadSelectedInstance());
+        selectedLoader = detectedLoader;
+        if ("fabric".equals(detectedLoader)) loaderSpinner.setSelection(1);
+        else if ("forge".equals(detectedLoader)) loaderSpinner.setSelection(2);
+        else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
+        else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
         loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                selectedLoader = position == 1 ? "fabric" :
-                        position == 2 ? "forge" :
-                        position == 3 ? "neoforge" :
-                        position == 4 ? "quilt" : getModrinthLoader(Instances.loadSelectedInstance());
+                selectedLoader = position == 1 ? "fabric" : position == 2 ? "forge" :
+                        position == 3 ? "neoforge" : position == 4 ? "quilt" :
+                        getModrinthLoader(Instances.loadSelectedInstance());
+                searchProjects(search == null ? "" : search.getText().toString().trim());
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
-        top.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(105), dp(34)));
-        center.addView(top);
+        top.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(105), dp(38)));
+        main.addView(top);
 
-        LinearLayout searchRow = new LinearLayout(this);
-        searchRow.setGravity(Gravity.CENTER_VERTICAL);
+        LinearLayout searchBar = new LinearLayout(this);
+        searchBar.setGravity(Gravity.CENTER_VERTICAL);
         search = new EditText(this);
         search.setSingleLine(true);
-        search.setHint("Search " + category.title.toLowerCase(Locale.ROOT));
-        search.setHintTextColor(0xFF777B86);
+        search.setHint("Search " + category.title.toLowerCase(Locale.ROOT) + "…");
+        search.setHintTextColor(0xFF747984);
         search.setTextColor(Color.WHITE);
         search.setTextSize(13);
         search.setInputType(InputType.TYPE_CLASS_TEXT);
-        search.setPadding(dp(16), 0, dp(16), 0);
-        search.setBackground(roundBg(0xFF22252D, dp(12)));
-        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1));
+        search.setPadding(dp(16), 0, dp(12), 0);
+        search.setBackground(roundBg(0xFF1D1F25, dp(10)));
+        searchBar.addView(search, new LinearLayout.LayoutParams(0, dp(44), 1));
 
         Button searchButton = new Button(this);
         searchButton.setText("Search");
         searchButton.setTextColor(Color.WHITE);
         searchButton.setTextSize(12);
         searchButton.setAllCaps(false);
-        searchButton.setBackground(roundBg(0xFF353947, dp(12)));
-        LinearLayout.LayoutParams sbLp = new LinearLayout.LayoutParams(dp(82), dp(42));
-        sbLp.leftMargin = dp(8);
-        searchRow.addView(searchButton, sbLp);
-        center.addView(searchRow);
+        searchButton.setBackground(roundBg(0xFF343843, dp(10)));
+        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(dp(86), dp(44));
+        searchLp.leftMargin = dp(8);
+        searchBar.addView(searchButton, searchLp);
+        main.addView(searchBar);
 
         progress = new ProgressBar(this);
         progress.setVisibility(View.GONE);
-        center.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
+        main.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
 
-        status = label("Select a category and search for content.", 11);
-        status.setTextColor(0xFF8F93A0);
-        status.setGravity(Gravity.CENTER_VERTICAL);
-        center.addView(status, new LinearLayout.LayoutParams(-1, dp(28)));
+        status = label("Loading content…", 11);
+        status.setTextColor(0xFF858A95);
+        main.addView(status, new LinearLayout.LayoutParams(-1, dp(28)));
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
         results = new LinearLayout(this);
         results.setOrientation(LinearLayout.VERTICAL);
-        results.setPadding(0, dp(2), dp(4), dp(10));
+        results.setPadding(0, dp(4), dp(8), dp(12));
         scroll.addView(results);
-        center.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
+        main.addView(scroll, new LinearLayout.LayoutParams(0, 0, 1));
 
-        LinearLayout detail = new LinearLayout(this);
-        detail.setOrientation(LinearLayout.VERTICAL);
-        detail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        detail.setPadding(dp(18), dp(18), dp(18), dp(14));
-        detail.setBackgroundColor(Color.rgb(20, 21, 26));
-        root.addView(detail, new LinearLayout.LayoutParams(0, -1, 3f));
+        LinearLayout details = new LinearLayout(this);
+        details.setOrientation(LinearLayout.VERTICAL);
+        details.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
+        details.setPadding(dp(20), dp(22), dp(20), dp(18));
+        details.setBackgroundColor(Color.rgb(18, 19, 23));
+        root.addView(details, new LinearLayout.LayoutParams(dp(300), -1));
 
         ImageView detailIcon = new ImageView(this);
         detailIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
         detailIcon.setImageResource(R.drawable.oryn_download_mod);
-        detail.addView(detailIcon, new LinearLayout.LayoutParams(dp(84), dp(84)));
+        details.addView(detailIcon, new LinearLayout.LayoutParams(dp(96), dp(96)));
 
-        TextView detailTitle = label("Select a project", 17);
+        TextView detailTitle = label("Select a project", 19);
         detailTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         detailTitle.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams dtLp = new LinearLayout.LayoutParams(-1, -2);
-        dtLp.topMargin = dp(10);
-        detail.addView(detailTitle, dtLp);
+        LinearLayout.LayoutParams detailTitleLp = new LinearLayout.LayoutParams(-1, -2);
+        detailTitleLp.topMargin = dp(14);
+        details.addView(detailTitle, detailTitleLp);
 
         TextView detailVersion = label("", 10);
-        detailVersion.setTextColor(0xFF8F93A0);
+        detailVersion.setTextColor(0xFF858A95);
         detailVersion.setGravity(Gravity.CENTER);
-        detail.addView(detailVersion, new LinearLayout.LayoutParams(-1, dp(24)));
+        details.addView(detailVersion, new LinearLayout.LayoutParams(-1, dp(26)));
 
-        TextView detailDesc = label("Choose a result to view its details and install it into the selected Minecraft instance.", 12);
-        detailDesc.setTextColor(0xFFB6B8C0);
+        TextView detailDesc = label("Choose a project to see its compatible version and install it into the selected instance.", 12);
+        detailDesc.setTextColor(0xFFB4B7BF);
         detailDesc.setGravity(Gravity.CENTER);
-        detailDesc.setMaxLines(8);
-        LinearLayout.LayoutParams ddLp = new LinearLayout.LayoutParams(-1, 0, 1);
-        ddLp.topMargin = dp(8);
-        detail.addView(detailDesc, ddLp);
+        detailDesc.setMaxLines(10);
+        LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(-1, 0, 1);
+        descLp.topMargin = dp(10);
+        details.addView(detailDesc, descLp);
 
         Button detailDownload = new Button(this);
         detailDownload.setText("Download");
@@ -271,8 +274,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDownload.setTextSize(13);
         detailDownload.setAllCaps(false);
         detailDownload.setEnabled(false);
-        detailDownload.setBackground(roundBg(0xFF3A3F50, dp(12)));
-        detail.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(44)));
+        detailDownload.setBackground(roundBg(0xFF3B4050, dp(10)));
+        details.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(46)));
 
         searchButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim()));
         search.setOnEditorActionListener((v, actionId, event) -> {
@@ -288,6 +291,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
+        loadMinecraftVersions();
     }
 
     private void loadMinecraftVersions() {
