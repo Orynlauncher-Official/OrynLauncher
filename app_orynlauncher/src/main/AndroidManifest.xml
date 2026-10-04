@@ -171,6 +171,7 @@
         </service>
     </application>
     <queries>
+        <package android:name="com.discord"/>
         <package android:name="git.mojo.ffmpeg"/>
         <package android:name="git.mojo.angle"/>
         <package android:name="git.mojo.zink"/>
