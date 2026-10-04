@@ -49,9 +49,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
-
-        <ImageView android:id="@+id/oryn_center_logo" android:layout_width="92dp" android:layout_height="72dp" android:src="@drawable/oryn_official_logo_v4" android:scaleType="fitCenter" android:contentDescription="Oryn Launcher"/>
-
         <Button android:id="@+id/play_button" android:layout_width="230dp" android:layout_height="52dp" android:layout_marginTop="0dp" android:text="▶   Launch" android:textAllCaps="false" android:textSize="16sp" android:textStyle="bold" android:textColor="#FFFFFF" android:background="@drawable/oryn_launch_button" android:elevation="3dp"/>
     </LinearLayout>
 
