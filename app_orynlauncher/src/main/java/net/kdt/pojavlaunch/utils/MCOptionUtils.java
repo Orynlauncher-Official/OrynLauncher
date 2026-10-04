@@ -15,11 +15,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,105 +78,6 @@ public class MCOptionUtils {
 
     public static void remove(String key) {
         sParameterMap.remove(key);
-    }
-
-    /**
-     * Apply OrynLauncher FPS Boost directly to Minecraft's options.txt.
-     * Only options that already exist in the instance are changed, which keeps
-     * this safe across legacy and modern Minecraft option formats.
-     * Original values are backed up per instance and restored when disabled.
-     */
-    public static void applyOrynFpsBoost(@NonNull String folderPath) {
-        final Map<String, String> targets = new LinkedHashMap<>();
-        // Lowest practical vanilla workload. Minecraft's render-distance minimum
-        // is 2 chunks; simulation-distance is 5 chunks on modern Java versions.
-        targets.put("enableVsync", "false");
-        targets.put("renderDistance", "2");
-        targets.put("simulationDistance", "5");
-        targets.put("entityDistanceScaling", "0.25");
-        targets.put("distortionEffectScale", "0.0");
-        targets.put("glintSpeed", "0.0");
-        targets.put("glintStrength", "0.0");
-        targets.put("bobView", "false");
-        targets.put("damageTiltStrength", "0.0");
-        targets.put("darknessEffectScale", "0.0");
-        targets.put("screenEffectScale", "0.0");
-        targets.put("particles", "2");
-        targets.put("entityShadows", "false");
-        targets.put("biomeBlendRadius", "0");
-        targets.put("mipmapLevels", "0");
-        targets.put("ao", "false");
-        targets.put("fancyGraphics", "false");
-        targets.put("graphicsMode", "0");
-        targets.put("graphicsPreset", "fast");
-        targets.put("clouds", "false");
-        targets.put("renderClouds", "false");
-        targets.put("cloudStatus", "fast");
-        targets.put("cloudRange", "2");
-        targets.put("prioritizeChunkUpdates", "0");
-        targets.put("textureFiltering", "0");
-        targets.put("maxAnisotropyBit", "1");
-        targets.put("improvedTransparency", "false");
-        targets.put("cutoutLeaves", "false");
-        targets.put("chunkSectionFadeInTime", "0");
-        targets.put("fovEffectScale", "0.0");
-        targets.put("maxFps", "260");
-        // Additional low-end safeguards. These are written even when an older\n        // options.txt did not contain the key yet, so FPS Boost cannot silently\n        // leave a high-end value such as renderDistance:8 behind.\n        targets.put("entityShadows", "false");
-        targets.put("ao", "false");
-        targets.put("mipmapLevels", "0");
-        targets.put("biomeBlendRadius", "0");
-        targets.put("clouds", "false");
-        targets.put("renderDistance", "2");
-        targets.put("simulationDistance", "5");
-
-        File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
-        try {
-            load(folderPath);
-            if (!backup.exists()) {
-                File parent = backup.getParentFile();
-                if (parent != null) parent.mkdirs();
-                Properties saved = new Properties();
-                for (String key : targets.keySet()) {
-                    String current = get(key);
-                    if (current != null) saved.setProperty(key, current);
-                }
-                try (FileOutputStream out = new FileOutputStream(backup)) {
-                    saved.store(out, "OrynLauncher FPS Boost backup");
-                }
-            }
-
-            boolean changed = false;
-            for (Map.Entry<String, String> entry : targets.entrySet()) {
-                set(entry.getKey(), entry.getValue());
-                if (!Objects.equals(get(entry.getKey()), entry.getValue())) changed = true;
-                else changed = true;
-            }
-            if (changed) save();
-            Log.i("MCOptionUtils", "Oryn FPS Boost applied to " + folderPath);
-        } catch (Throwable e) {
-            Log.e("MCOptionUtils", "Failed to apply Oryn FPS Boost", e);
-        }
-    }
-
-    public static void restoreOrynFpsBoost(@NonNull String folderPath) {
-        File backup = new File(folderPath, ".oryn/fps_boost_backup.properties");
-        if (!backup.exists()) return;
-        try {
-            load(folderPath);
-            Properties saved = new Properties();
-            try (FileInputStream in = new FileInputStream(backup)) {
-                saved.load(in);
-            }
-            for (String key : saved.stringPropertyNames()) {
-                set(key, saved.getProperty(key));
-            }
-            save();
-            //noinspection ResultOfMethodCallIgnored
-            backup.delete();
-            Log.i("MCOptionUtils", "Oryn FPS Boost settings restored");
-        } catch (Throwable e) {
-            Log.e("MCOptionUtils", "Failed to restore Oryn FPS Boost", e);
-        }
     }
 
     /** Set an array of String, instead of a simple value. Not supported on all options */
