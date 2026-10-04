@@ -78,6 +78,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     /** Optional exact Modrinth version selected from the Zalith-style version picker. */
     private String forcedVersionId;
     private String forcedModpackFileUrl;
+    private String forcedModpackFileHash;
+    private String forcedModpackFileName;
     private Instance pendingInstallInstance;
     private TextView detailDesc;
     private ImageView detailIcon;
