@@ -75,6 +75,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private String selectedLoader;
     /** Optional exact Modrinth version selected from the Zalith-style version picker. */
     private String forcedVersionId;
+    private String forcedModpackFileUrl;
     private TextView detailDesc;
     private ImageView detailIcon;
     private Button detailDownload;
@@ -609,6 +610,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                 JsonObject selected = compatible.get(checked);
                                 forcedVersionId = selected.has("id") ? selected.get("id").getAsString() : null;
                                 if (category == Category.MODPACK) {
+                                    forcedModpackFileUrl = null;
+                                    if (selected.has("files") && selected.get("files").isJsonArray()) {
+                                        JsonArray selectedFiles = selected.getAsJsonArray("files");
+                                        for (int fi = 0; fi < selectedFiles.size(); fi++) {
+                                            JsonObject sf = selectedFiles.get(fi).getAsJsonObject();
+                                            if (sf.has("primary") && sf.get("primary").getAsBoolean()) {
+                                                forcedModpackFileUrl = sf.has("url") ? sf.get("url").getAsString() : null;
+                                                break;
+                                            }
+                                        }
+                                        if (forcedModpackFileUrl == null && selectedFiles.size() > 0) {
+                                            JsonObject sf = selectedFiles.get(0).getAsJsonObject();
+                                            forcedModpackFileUrl = sf.has("url") ? sf.get("url").getAsString() : null;
+                                        }
+                                    }
                                     installModpack(projectId, projectTitle, iconUrl, button);
                                 } else {
                                     downloadProject(projectId, projectTitle, button);
@@ -640,9 +656,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
                 String mcVersion = getDownloadMinecraftVersion();
                 int selected = -1;
-                if (forcedVersionId != null) {
+                if (forcedModpackFileUrl != null) {
                     for (int i = 0; i < detail.versionUrls.length; i++) {
-                        if (forcedVersionId.equals(detail.versionUrls[i])) {
+                        if (forcedModpackFileUrl.equals(detail.versionUrls[i])) {
                             selected = i;
                             break;
                         }
@@ -670,6 +686,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     Toast.makeText(this, "Installing " + projectTitle + " for Minecraft "
                             + detail.mcVersionNames[versionIndex], Toast.LENGTH_LONG).show();
                     forcedVersionId = null;
+                    forcedModpackFileUrl = null;
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
@@ -678,6 +695,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     Toast.makeText(this, e.getMessage() == null ? "Modpack installation failed" : e.getMessage(),
                             Toast.LENGTH_LONG).show();
                     forcedVersionId = null;
+                    forcedModpackFileUrl = null;
                 });
             }
         });
