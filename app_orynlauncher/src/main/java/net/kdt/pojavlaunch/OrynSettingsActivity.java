@@ -166,7 +166,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("Renderer", R.drawable.ic_px_image_renderer, v -> showRenderer());
         addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
-        addNav("Java", R.drawable.ic_px_runtime_mgr, v -> showJava());
+        addNav("JVM", R.drawable.ic_px_runtime_mgr, v -> showJava());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
     }
 
@@ -434,12 +434,12 @@ public class OrynSettingsActivity extends BaseActivity {
     }
 
     private void showJava() {
-        clear("Java Runtime", "Manage the Java runtimes used by Minecraft");
-        section("Java Runtime", R.drawable.ic_px_runtime_mgr);
+        clear("JVM / Java Runtime", "Choose and manage the Java Virtual Machine used by Minecraft");
+        section("JVM / Java Runtime", R.drawable.ic_px_runtime_mgr);
 
         String current = LauncherPreferences.PREF_DEFAULT_RUNTIME;
         if (current == null || current.trim().isEmpty()) current = "Automatic / recommended";
-        addSetting("Current Runtime", current, textButton("Manage"));
+        addSetting("JVM Runtime", current, textButton("Manage"));
         LinearLayout card = (LinearLayout) content.getChildAt(content.getChildCount() - 1);
         if (card != null) {
             View row = card.getChildAt(card.getChildCount() - 1);
@@ -451,7 +451,7 @@ public class OrynSettingsActivity extends BaseActivity {
 
         Button manage = textButton("Open Runtime Manager");
         manage.setOnClickListener(v -> openRuntimeManager());
-        addSetting("Installed Runtimes", "Install, remove, or choose the default Java runtime", manage);
+        addSetting("Installed JVM Runtimes", "Install Java 8/17/21 runtimes, remove runtimes, or choose the default JVM", manage);
 
         StringBuilder installed = new StringBuilder();
         try {
