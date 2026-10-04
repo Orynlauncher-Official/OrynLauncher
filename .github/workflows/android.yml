@@ -92,12 +92,12 @@ jobs:
             echo "Transient build/download failure; retrying in 15 seconds..."
             sleep 15
           done
-          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/app_OrynLauncherV4-Debug.apk
+          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/orynlauncher-x64armb.apk
 
       - name: Build Debug .apk (No runtime)
         run: |
           gradle :app_orynlauncher:assembleNoruntimeDebug
-          mv app_orynlauncher/build/outputs/apk/noruntime/debug/app_orynlauncher-noruntime-debug.apk out/app-debug-noruntime.apk
+          mv app_orynlauncher/build/outputs/apk/noruntime/debug/app_orynlauncher-noruntime-debug.apk out/orynlauncher-x64armb-noruntime.apk
       - name: Build Nightly Release .apk
         if: github.repository_owner == 'MojoLauncher' && github.ref_name == 'v3_openjdk'
         run: |
@@ -105,19 +105,19 @@ jobs:
           mv app_orynlauncher/build/outputs/apk/full/pubRelease/app_orynlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
       - name: Gen md5sums
         run: |
-          md5sum out/app_OrynLauncherV4-Debug.apk > out/app_OrynLauncherV4-Debug.md5
+          md5sum out/app_OrynLauncherV4-Debug.apk > out/orynlauncher-x64armb.md5
           md5sum out/app-debug-noruntime.apk > out/app-debug-noruntime.md5
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: OrynLauncherV4-Debug
+          name: orynlauncher-x64armb
           path: out/app_OrynLauncherV4-Debug.apk
 
       - name: Upload Debug APK (No runtime)
         uses: actions/upload-artifact@v4
         with:
-          name: OrynLauncher-noruntime
+          name: orynlauncher-x64armb-noruntime
           path: out/app-debug-noruntime.apk
 
       - name: Release Nightly APK
