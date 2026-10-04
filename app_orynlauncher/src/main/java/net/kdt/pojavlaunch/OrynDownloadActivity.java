@@ -419,7 +419,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 params.put("query", query == null ? "" : query);
                 params.put("limit", 30);
                 params.put("index", "relevance");
-                params.put("facets", "[[\\\"project_type:" + requestedCategory.projectType + "\\"]]");
+                params.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
                 
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
