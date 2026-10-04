@@ -10,6 +10,7 @@ import static net.kdt.pojavlaunch.Tools.shareLog;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -83,14 +84,14 @@ public class MainMenuFragment extends Fragment {
             });
         }
 
-        mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/5KPABsEB"));
+        mDiscordButton.setOnClickListener(v -> openSocialUrl("https://discord.com/invite/5KPABsEB"));
         ImageButton mYoutubeButton = view.findViewById(R.id.oryn_youtube_button);
         ImageButton mDiscordSocialButton = view.findViewById(R.id.oryn_discord_button);
         if (mYoutubeButton != null) {
-            mYoutubeButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://youtube.com/@orynlauncher"));
+            mYoutubeButton.setOnClickListener(v -> openSocialUrl("https://www.youtube.com/@orynlauncher"));
         }
         if (mDiscordSocialButton != null) {
-            mDiscordSocialButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/5KPABsEB"));
+            mDiscordSocialButton.setOnClickListener(v -> openSocialUrl("https://discord.com/invite/5KPABsEB"));
         }
         mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         // V4 Settings sidebar must open the new Settings dashboard, not the legacy PreferenceFragment.
@@ -110,6 +111,15 @@ public class MainMenuFragment extends Fragment {
         mCrashNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
 
 
+    }
+
+    private void openSocialUrl(String url) {
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(requireContext(), "No browser or app available to open this link", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void openGameDirectory(Context context) {
