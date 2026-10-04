@@ -31,6 +31,7 @@ import net.kdt.pojavlaunch.utils.JREUtils;
 import net.kdt.pojavlaunch.utils.JSONUtils;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.utils.OldVersionsUtils;
+import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -186,10 +187,9 @@ public class GameRunner {
             }
         File gamedir = instance.getGameDirectory();
 
-        // Oryn FPS Boost: apply real Minecraft-side performance settings before
-        // the JVM starts. This reduces chunk/render/simulation workload instead
-        // of merely changing the launcher's FPS display.
-        applyOrynFpsBoost(gamedir);
+        // Oryn Performance Engine: optimize the process/JVM launch path without
+        // changing Minecraft resolution, render distance, simulation distance, or graphics.
+        OrynFpsBoostUtils.prepareForGameLaunch();
 
         JVersionList.Version versionInfo = Tools.getVersionInfo(versionId);
         // We don't need the library list, the asset index, client download info for the code below
@@ -297,6 +297,10 @@ public class GameRunner {
 
         javaArgList.addAll(JREUtils.parseJavaArguments(instance.getLaunchArgs()));
 
+        // Add Oryn's device-adaptive JVM performance profile. It never touches
+        // Minecraft's video options; it only targets GC/compiler behavior.
+        javaArgList.addAll(OrynFpsBoostUtils.getJvmArgs(requiredJavaVersion));
+
         // TODO: this should be decoupled from GameRunner completely
         gameRenderer.setupEnvironment(activity);
         JREUtils.setGameEnvironment(activity);
@@ -329,19 +333,6 @@ public class GameRunner {
 
         Tools.restartLauncherActivity(activity);
         Tools.fullyExit();
-    }
-
-    private static void applyOrynFpsBoost(File gameDir) {
-        try {
-            if (LauncherPreferences.PREF_ORYN_FPS_BOOST) {
-                MCOptionUtils.applyOrynFpsBoost(gameDir.getAbsolutePath());
-            } else {
-                MCOptionUtils.restoreOrynFpsBoost(gameDir.getAbsolutePath());
-            }
-        } catch (Throwable e) {
-            // Never block Minecraft from launching because an optional optimization failed.
-            Log.w("GameRunner", "Failed to apply Oryn FPS Boost", e);
-        }
     }
 
     private static void disableSplash(File dir) {
