@@ -186,7 +186,7 @@ public final class OrynDiscordPresence {
                 data.writeInterfaceToken(SERVICE_DESCRIPTOR);
                 data.writeLong(applicationId);
                 data.writeString(version);
-                data.writeStrongBinder(callback.asBinder());
+                data.writeStrongBinder(callback);
                 binder.transact(1, data, reply, 0);
                 reply.readException();
                 IBinder connectionBinder = reply.readStrongBinder();
