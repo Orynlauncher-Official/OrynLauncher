@@ -1,0 +1,53 @@
+name: GitHub Star → Discord
+
+on:
+  watch:
+    types: [started]
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    if: github.event.repository.full_name == 'Orynlauncher-Official/OrynLauncher'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send star notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          STAR_USER: ${{ github.event.sender.login }}
+          STAR_COUNT: ${{ github.event.repository.stargazers_count }}
+          REPO_URL: ${{ github.event.repository.html_url }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "DISCORD_WEBHOOK_URL secret is not configured; skipping Discord notification."
+            exit 0
+          fi
+
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          payload = {
+              "embeds": [{
+                  "title": "⭐ OrynLauncher got a new GitHub Star!",
+                  "description": f"**{os.environ['STAR_USER']}** starred OrynLauncher.",
+                  "url": os.environ["REPO_URL"],
+                  "color": 5793266,
+                  "fields": [
+                      {"name": "Total Stars", "value": os.environ["STAR_COUNT"], "inline": True},
+                      {"name": "Repository", "value": "OrynLauncher V4", "inline": True}
+                  ],
+                  "footer": {"text": "OrynLauncher • GitHub"}
+              }]
+          }
+
+          data = json.dumps(payload).encode("utf-8")
+          request = urllib.request.Request(
+              os.environ["DISCORD_WEBHOOK_URL"],
+              data=data,
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+          with urllib.request.urlopen(request, timeout=15) as response:
+              print("Discord webhook status:", response.status)
+          PY
