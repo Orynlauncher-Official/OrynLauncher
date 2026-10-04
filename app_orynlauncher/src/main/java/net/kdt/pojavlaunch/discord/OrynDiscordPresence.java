@@ -107,7 +107,7 @@ public final class OrynDiscordPresence {
                 + "\"timestamps\":{\"start\":" + System.currentTimeMillis() + "},"
                 + "\"assets\":{"
                 + "\"large_image\":\"orynlauncher\","
-                + "\"large_text\":\"OrynLauncher V4\""
+                + "\"large_text\":\"OrynLauncher\""
                 + "}"
                 + "}"
                 + "},"
