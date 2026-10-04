@@ -519,7 +519,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                                 boolean includeCompatibilityFacets) throws Exception {
         String facets = includeCompatibilityFacets
                 ? buildSearchFacets(requestedCategory, minecraftVersion, loader)
-                : String.format(Locale.ROOT, "[[\\"project_type:%s\\"]]", requestedCategory.projectType);
+                : String.format(Locale.ROOT, "[[\"project_type:%s\"]]", requestedCategory.projectType);
         StringBuilder urlBuilder = new StringBuilder("https://api.modrinth.com/v2/search");
         urlBuilder.append("?query=").append(URLEncoder.encode(query == null ? "" : query, "UTF-8"));
         urlBuilder.append("&limit=50");
