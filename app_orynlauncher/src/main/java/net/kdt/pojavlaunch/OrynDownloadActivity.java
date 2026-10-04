@@ -744,7 +744,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                     }
                                     installModpack(projectId, projectTitle, iconUrl, button);
                                 } else {
-                                    downloadProject(projectId, projectTitle, button);
+                                    showInstallLocationChooser(projectId, projectTitle, button);
                                 }
                             }).show();
                 });
@@ -816,6 +816,37 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    /**
+     * Explicit install-location confirmation.
+     * The selected instance and the correct Minecraft content folder remain the
+     * default destination, but nothing is downloaded until the user confirms.
+     */
+    private void showInstallLocationChooser(final String projectId,
+                                            final String projectTitle,
+                                            final Button button) {
+        final Instance instance = Instances.loadSelectedInstance();
+        if (instance == null) {
+            Toast.makeText(this, "Select an instance first", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        final File gameDir = instance.getGameDirectory();
+        final String folder = category.folder;
+        final File target = folder.isEmpty() ? gameDir : new File(gameDir, folder);
+
+        new android.app.AlertDialog.Builder(this)
+                .setTitle("Where do you want to install it?")
+                .setMessage(projectTitle + "\n\n"
+                        + "Instance:\n" + gameDir.getAbsolutePath()
+                        + "\n\nDestination:\n" + target.getAbsolutePath())
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Install here", (dialog, which) -> {
+                    status.setText("Installing to " + target.getAbsolutePath());
+                    downloadProject(projectId, projectTitle, button);
+                })
+                .show();
     }
 
     private void downloadProject(final String projectId, final String projectTitle, final Button button) {
