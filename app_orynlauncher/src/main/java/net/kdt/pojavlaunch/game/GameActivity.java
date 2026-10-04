@@ -51,6 +51,7 @@ import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.CallbackBridge;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
 import net.kdt.pojavlaunch.utils.GpuUtils;
+import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.utils.KeycodeUtils;
 import net.kdt.pojavlaunch.Logger;
 import net.kdt.pojavlaunch.Tools;
