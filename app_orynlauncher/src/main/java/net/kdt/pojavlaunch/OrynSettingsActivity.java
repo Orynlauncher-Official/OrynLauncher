@@ -169,7 +169,6 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("Game", R.drawable.ic_px_gamepad, v -> showGame());
         addNav("Video", R.drawable.ic_px_image, v -> showVideo());
         addNav("Renderer", R.drawable.ic_px_image_renderer, v -> showRenderer());
-        addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
         addNav("JVM", R.drawable.ic_px_runtime_mgr, v -> showJava());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
