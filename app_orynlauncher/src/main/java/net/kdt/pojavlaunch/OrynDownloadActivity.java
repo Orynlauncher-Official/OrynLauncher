@@ -63,6 +63,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private final ApiHandler api = new ApiHandler("https://api.modrinth.com/v2");
     private final ModrinthApi modrinthModpackApi = new ModrinthApi();
     private Category category = Category.MOD;
+    private TextView categoryTitleView;
+    private int searchGeneration = 0;
     private EditText search;
     private LinearLayout results;
     private TextView status;
