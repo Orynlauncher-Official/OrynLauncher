@@ -39,6 +39,7 @@ public final class OrynDiscordPresence {
     private RpcConnection connection;
     private boolean bound;
     private String pendingVersion = "Unknown";
+    private Runnable pendingDisconnect;
 
     public OrynDiscordPresence(Activity activity) {
         this.activity = activity;
@@ -47,7 +48,10 @@ public final class OrynDiscordPresence {
     public void start(String minecraftVersion) {
         pendingVersion = minecraftVersion == null ? "Unknown" : minecraftVersion;
         mainHandler.post(() -> {
-            if (bound || !isDiscordInstalled()) return;
+            if (!isDiscordInstalled()) return;
+            if (pendingDisconnect != null) { mainHandler.removeCallbacks(pendingDisconnect); pendingDisconnect = null; }
+            if (connection != null) { sendActivity(pendingVersion); return; }
+            if (bound) unbindDiscord();
 
             Intent intent = new Intent(RPC_ACTION);
             intent.setPackage(DISCORD_PACKAGE);
@@ -148,19 +152,20 @@ public final class OrynDiscordPresence {
                 Log.d(TAG, "Unable to clear Discord Rich Presence", e);
             }
 
-            mainHandler.postDelayed(() -> {
-                try {
-                    current.disconnect();
-                } catch (RemoteException ignored) {
-                }
+            pendingDisconnect = () -> {
+                if (connection != null && connection != current) return;
+                try { current.disconnect(); } catch (RemoteException ignored) { }
                 unbindDiscord();
-            }, 750);
+                pendingDisconnect = null;
+            };
+            mainHandler.postDelayed(pendingDisconnect, 750);
         } else {
             unbindDiscord();
         }
     }
 
     private void unbindDiscord() {
+        if (pendingDisconnect != null) { mainHandler.removeCallbacks(pendingDisconnect); pendingDisconnect = null; }
         service = null;
         if (bound) {
             try {
