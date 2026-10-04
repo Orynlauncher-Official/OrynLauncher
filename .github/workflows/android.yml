@@ -105,20 +105,20 @@ jobs:
           mv app_orynlauncher/build/outputs/apk/full/pubRelease/app_orynlauncher-full-pubRelease.apk out/MojoLauncher-release.apk
       - name: Gen md5sums
         run: |
-          md5sum out/app_OrynLauncherV4-Debug.apk > out/orynlauncher-x64armb.md5
-          md5sum out/app-debug-noruntime.apk > out/app-debug-noruntime.md5
+          md5sum out/orynlauncher-x64armb.apk > out/orynlauncher-x64armb.md5
+          md5sum out/orynlauncher-x64armb-noruntime.apk > out/orynlauncher-x64armb-noruntime.md5
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: orynlauncher-x64armb
-          path: out/app_OrynLauncherV4-Debug.apk
+          path: out/orynlauncher-x64armb.apk
 
       - name: Upload Debug APK (No runtime)
         uses: actions/upload-artifact@v4
         with:
           name: orynlauncher-x64armb-noruntime
-          path: out/app-debug-noruntime.apk
+          path: out/orynlauncher-x64armb-noruntime.apk
 
       - name: Release Nightly APK
         if: github.repository_owner == 'MojoLauncher' && github.ref_name == 'v3_openjdk'
