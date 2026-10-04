@@ -78,6 +78,7 @@ import net.kdt.pojavlaunch.tasks.AsyncAssetManager;
 import net.kdt.pojavlaunch.utils.JREUtils;
 import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.discord.OrynDiscordPresence;
 import net.kdt.pojavlaunch.utils.jre.GameRunner;
 
 import java.io.File;
@@ -103,6 +104,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private HotbarView mHotbarView;
     private View mLoadingScreen;
     private GameRenderer mGameRenderer;
+    private OrynDiscordPresence mDiscordPresence;
 
     Instance instance;
     Account account;
@@ -462,6 +464,10 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     @Override
     protected void onDestroy() {
+        if (mDiscordPresence != null) {
+            mDiscordPresence.stop();
+            mDiscordPresence = null;
+        }
         super.onDestroy();
         ContextExecutor.clearActivity();
     }
@@ -510,6 +516,9 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     }
 
     private void runCraft(String versionId, File[] classpath) throws Throwable {
+        if (mDiscordPresence == null) mDiscordPresence = new OrynDiscordPresence(this);
+        mDiscordPresence.start(versionId);
+
         Logger.appendToLog("--------- Starting game with Launcher Debug!");
         Tools.printLauncherInfo(versionId, instance.getLaunchArgs(), mGameRenderer.getCurrentRenderer(), this);
         JREUtils.redirectAndPrintJRELog();
