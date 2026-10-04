@@ -329,7 +329,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addSetting("Animations", "Enable smooth UI animations", animations);
         Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b,c) ->
                 OrynFpsBoostUtils.setEnabled(c));
-        addSetting("Oryn FPS Boost", "Apply real Minecraft rendering optimizations before launch", boost);
+        addSetting("Oryn FPS Boost", "75% render scale + lowest Minecraft graphics + reduced render/simulation workload", boost);
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
         addSetting("Game Controls", "Configure the existing in-game control layout", controls);
@@ -338,10 +338,6 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showVideo() {
         clear("Video", "Minecraft graphics and display settings");
         section("Video", R.drawable.ic_px_image);
-
-        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b, checked) ->
-                OrynFpsBoostUtils.setEnabled(checked));
-        addSetting("Oryn FPS Boost", "Optimize Minecraft rendering before launch", boost);
 
         int scale = Math.max(25, Math.min(100, (int) (LauncherPreferences.PREF_SCALE_FACTOR * 100)));
         Spinner resolution = spinner(new String[]{"25%", "50%", "75%", "100%"}, scale >= 90 ? 3 : scale >= 62 ? 2 : scale >= 37 ? 1 : 0);
