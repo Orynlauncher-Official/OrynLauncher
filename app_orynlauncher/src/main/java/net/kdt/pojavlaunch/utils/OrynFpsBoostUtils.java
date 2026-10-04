@@ -7,7 +7,6 @@ import android.os.Process;
 import android.util.Log;
 
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
-import net.kdt.pojavlaunch.utils.JREUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,10 +14,8 @@ import java.util.List;
 /**
  * OrynLauncher FPS Engine.
  *
- * This engine improves CPU/JVM-side Minecraft performance without changing the
- * player's Minecraft video settings. It does NOT modify resolution scale,
- * render distance, simulation distance, particles, graphics mode, VSync or
- * the Minecraft FPS limit.
+ * FPS Boost uses an ultra-low Minecraft video profile plus JVM/runtime tuning.
+ * It intentionally does NOT change resolution scale.
  */
 public final class OrynFpsBoostUtils {
     private static final String KEY_ENABLED = "orynFpsBoost";
@@ -33,11 +30,6 @@ public final class OrynFpsBoostUtils {
         LauncherPreferences.PREF_ORYN_FPS_BOOST = enabled;
     }
 
-    /**
-     * Prepare the process and inject the actual JVM performance arguments used by
-     * Minecraft's Java runtime. This is intentionally limited to JVM/runtime
-     * optimization and never rewrites Minecraft video options.
-     */
     public static void prepareForGameLaunch(Context context) {
         if (!LauncherPreferences.PREF_ORYN_FPS_BOOST) {
             removeInjectedJvmArgs();
@@ -45,7 +37,6 @@ public final class OrynFpsBoostUtils {
         }
 
         try {
-            // Give the thread handing off to the game a foreground/display priority.
             Process.setThreadPriority(Process.THREAD_PRIORITY_DISPLAY);
         } catch (Throwable ignored) {
         }
@@ -55,24 +46,62 @@ public final class OrynFpsBoostUtils {
                 ActivityManager am =
                         (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
                 if (am != null && am.isLowRamDevice()) {
-                    // Clean launcher-side garbage before the memory-heavy game starts.
                     System.gc();
                 }
             } catch (Throwable ignored) {
             }
         }
 
-        // These arguments are deliberately Java 8-compatible so they also work when
-        // the selected Minecraft runtime is Java 8, 17 or 21.
+        // Apply the in-game low graphics profile before Minecraft starts.
+        applyUltraLowGraphicsProfile();
+
+        // Keep the JVM-side optimizations as well.
         applyInjectedJvmArgs();
 
-        Log.i(TAG, "FPS Engine enabled: JVM optimizations injected; Minecraft video settings untouched");
+        Log.i(TAG, "FPS Boost enabled: ultra-low Minecraft profile + JVM optimizations");
     }
 
     /**
-     * Inject the optimization flags into the same custom-JVM-argument preference
-     * consumed by the launcher Java runtime. Existing user arguments are preserved.
+     * Forces the Minecraft options that have the biggest graphics/GPU/CPU cost
+     * to their lowest practical values. Resolution/render scale is deliberately
+     * left alone so the game is not made blurry.
      */
+    private static void applyUltraLowGraphicsProfile() {
+        try {
+            MCOptionUtils.load();
+
+            // Core graphics quality.
+            MCOptionUtils.set("graphics", "0");              // Fast
+            MCOptionUtils.set("renderDistance", "2");       // Minimum practical
+            MCOptionUtils.set("simulationDistance", "5");   // Minimum supported by modern MC
+            MCOptionUtils.set("particles", "2");            // Minimal
+            MCOptionUtils.set("clouds", "false");
+            MCOptionUtils.set("entityShadows", "false");
+            MCOptionUtils.set("entityDistanceScaling", "0.5");
+            MCOptionUtils.set("biomeBlendRadius", "0");
+            MCOptionUtils.set("mipmapLevels", "0");
+            MCOptionUtils.set("ao", "0");
+            MCOptionUtils.set("enableVsync", "false");
+
+            // Let Minecraft render as fast as possible instead of imposing a
+            // launcher-side FPS cap.
+            MCOptionUtils.set("maxFps", "260");
+
+            // Expensive visual effects.
+            MCOptionUtils.set("bobView", "false");
+            MCOptionUtils.set("darknessEffectScale", "0.0");
+            MCOptionUtils.set("glintSpeed", "0.0");
+            MCOptionUtils.set("glintStrength", "0.0");
+            MCOptionUtils.set("screenEffectScale", "0.0");
+            MCOptionUtils.set("damageTiltStrength", "0.0");
+            MCOptionUtils.set("highContrast", "false");
+
+            MCOptionUtils.save();
+        } catch (Throwable t) {
+            Log.w(TAG, "Could not apply ultra-low Minecraft graphics profile", t);
+        }
+    }
+
     private static void applyInjectedJvmArgs() {
         if (LauncherPreferences.DEFAULT_PREF == null) return;
 
@@ -80,13 +109,12 @@ public final class OrynFpsBoostUtils {
         List<String> userArgs = new ArrayList<>();
 
         try {
-            for (String arg : JREUtils.parseJavaArguments(current)) {
+            for (String arg : net.kdt.pojavlaunch.utils.JREUtils.parseJavaArguments(current)) {
                 if (!isOrynJvmArg(arg)) {
                     userArgs.add(arg);
                 }
             }
         } catch (Throwable ignored) {
-            // If an older argument string cannot be parsed, do not destroy it.
             return;
         }
 
@@ -104,17 +132,13 @@ public final class OrynFpsBoostUtils {
         LauncherPreferences.PREF_CUSTOM_JAVA_ARGS = value;
     }
 
-    /**
-     * Remove only arguments owned by Oryn FPS Boost, leaving the user's custom
-     * Java arguments untouched when the feature is disabled.
-     */
     private static void removeInjectedJvmArgs() {
         if (LauncherPreferences.DEFAULT_PREF == null) return;
 
         String current = LauncherPreferences.DEFAULT_PREF.getString("javaArgs", "");
         try {
             List<String> remaining = new ArrayList<>();
-            for (String arg : JREUtils.parseJavaArguments(current)) {
+            for (String arg : net.kdt.pojavlaunch.utils.JREUtils.parseJavaArguments(current)) {
                 if (!isOrynJvmArg(arg)) {
                     remaining.add(arg);
                 }
@@ -147,31 +171,21 @@ public final class OrynFpsBoostUtils {
                 || arg.equals("-XX:+UseDynamicNumberOfGCThreads");
     }
 
-    /**
-     * Build a device-adaptive JVM performance profile.
-     *
-     * These options target garbage collection and JIT compilation overhead.
-     * They do not lower Minecraft graphics quality.
-     */
     public static List<String> getJvmArgs(int javaMajor) {
         ArrayList<String> args = new ArrayList<>();
         if (!LauncherPreferences.PREF_ORYN_FPS_BOOST) return args;
 
         final int cores = Math.max(1, Runtime.getRuntime().availableProcessors());
 
-        // G1 is well suited to Minecraft's allocation-heavy workload and helps
-        // reduce long GC pauses that appear as FPS/stutter drops.
         args.add("-XX:+UseG1GC");
         args.add("-XX:MaxGCPauseMillis=20");
         args.add("-XX:+ParallelRefProcEnabled");
         args.add("-XX:+DisableExplicitGC");
 
-        // Reduce duplicate String memory/allocation pressure.
         if (javaMajor >= 8) {
             args.add("-XX:+UseStringDeduplication");
         }
 
-        // Scale JIT compiler threads with CPU count instead of creating a thread storm.
         int compilerThreads;
         if (cores <= 2) compilerThreads = 1;
         else if (cores <= 4) compilerThreads = 2;
@@ -179,7 +193,6 @@ public final class OrynFpsBoostUtils {
         else compilerThreads = 4;
         args.add("-XX:CICompilerCount=" + compilerThreads);
 
-        // Keep class unloading active to control memory growth during long sessions.
         args.add("-XX:+ClassUnloadingWithConcurrentMark");
 
         if (javaMajor >= 9) {
