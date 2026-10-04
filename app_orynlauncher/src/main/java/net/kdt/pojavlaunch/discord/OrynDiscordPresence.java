@@ -142,7 +142,7 @@ public final class OrynDiscordPresence {
             String clear =
                     "{"
                     + "\"cmd\":\"SET_ACTIVITY\","
-                    + "\"args\":{\"pid\":" + android.os.Process.myPid() + "},"
+                    + "\"args\":{\"pid\":" + android.os.Process.myPid() + ",\"activity\":null},"
                     + "\"nonce\":\"" + UUID.randomUUID() + "\""
                     + "}";
             try {
