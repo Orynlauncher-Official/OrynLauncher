@@ -393,45 +393,48 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void searchProjects(final String query) {
+        if (progress == null || status == null || results == null) return;
+
         progress.setVisibility(View.VISIBLE);
-        status.setText("Finding projects…");
+        status.setText("Finding " + category.title.toLowerCase(Locale.ROOT) + "…");
         results.removeAllViews();
+
+        final Category requestedCategory = category;
+        final String requestedVersion = getDownloadMinecraftVersion();
+        final String requestedLoader = getSelectedLoader();
 
         executor.execute(() -> {
             try {
+                /*
+                 * Discovery is intentionally broader than the final download check.
+                 * Modrinth's search facets are not consistent across every project
+                 * type/version, so an overly strict facet query can return zero
+                 * projects even though compatible versions exist.
+                 *
+                 * We therefore search by project type first, then let
+                 * chooseCompatibleVersion() perform the authoritative Minecraft/
+                 * loader compatibility check before downloading.
+                 */
                 HashMap<String, Object> params = new HashMap<>();
-                params.put("query", query);
+                params.put("query", query == null ? "" : query);
                 params.put("limit", 30);
                 params.put("index", "relevance");
-
-                // ZalithLauncher-style Modrinth search: filter the project list
-                // itself by the selected Minecraft version and, for mods, the
-                // selected instance loader.
-                String minecraftVersion = getDownloadMinecraftVersion();
-                String loader = getSelectedLoader();
-                StringBuilder facets = new StringBuilder("[[\"project_type:")
-        .append(category.projectType).append("\"]");
-                if (minecraftVersion != null) {
-                    facets.append(",[\"versions:").append(minecraftVersion).append("\"]");
-                }
-                if (loader != null && category == Category.MOD) {
-                    facets.append(",[\"categories:").append(loader).append("\"]");
-                }
-                facets.append("]");
-                params.put("facets", facets.toString());
-
+                params.put("facets", "[[\\\"project_type:" + requestedCategory.projectType + "\\"]]");
+                
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
 
-                // Some Modrinth projects do not expose loader/version facets consistently.
-                // Fall back progressively so the browser still shows content; the actual
-                // download step remains strict and checks the selected Minecraft version.
+                /*
+                 * If Modrinth rejects/returns nothing for the typed search, retry
+                 * with a broad project-type query. This keeps all four tabs usable
+                 * even with an empty search box or unusual query text.
+                 */
                 if (hits == null || hits.size() == 0) {
                     HashMap<String, Object> fallback = new HashMap<>();
-                    fallback.put("query", query);
+                    fallback.put("query", "");
                     fallback.put("limit", 30);
-                    fallback.put("index", "relevance");
-                    fallback.put("facets", "[[\"project_type:" + category.projectType + "\"]]");
+                    fallback.put("index", "downloads");
+                    fallback.put("facets", "[[\\\"project_type:" + requestedCategory.projectType + "\\"]]");
                     response = api.get("search", fallback, JsonObject.class);
                     hits = response == null ? null : response.getAsJsonArray("hits");
                 }
@@ -439,20 +442,34 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 final JsonArray searchHits = hits;
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
+
+                    // Ignore a stale response if the user switched categories while
+                    // the network request was running.
+                    if (category != requestedCategory) return;
+
                     if (searchHits == null || searchHits.size() == 0) {
-                        status.setText("No " + category.title.toLowerCase() + " found.");
+                        status.setText("No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found.");
                         return;
                     }
-                    status.setText(searchHits.size() + " results");
+
+                    status.setText(searchHits.size() + " projects • "
+                            + (requestedVersion == null ? "version auto" : requestedVersion)
+                            + (requestedCategory == Category.MOD && requestedLoader != null
+                            ? " • " + requestedLoader : ""));
+
                     for (int i = 0; i < searchHits.size(); i++) {
-                        addResult(searchHits.get(i).getAsJsonObject());
+                        JsonObject hit = searchHits.get(i).getAsJsonObject();
+                        addResult(hit);
                     }
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-                    status.setText("Couldn’t load results. Tap Search to try again.");
-                    Toast.makeText(this, e.getMessage() == null ? "Download service error" : e.getMessage(), Toast.LENGTH_SHORT).show();
+                    if (category != requestedCategory) return;
+                    status.setText("Download service unavailable. Tap Search to retry.");
+                    Toast.makeText(this,
+                            e.getMessage() == null ? "Could not load projects" : e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
                 });
             }
         });
