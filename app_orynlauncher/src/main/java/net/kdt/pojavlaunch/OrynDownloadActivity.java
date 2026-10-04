@@ -73,6 +73,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private android.widget.Spinner versionSpinner;
     private String selectedMinecraftVersion;
     private String selectedLoader;
+    /** Optional exact Modrinth version selected from the Zalith-style version picker. */
+    private String forcedVersionId;
     private TextView detailDesc;
     private ImageView detailIcon;
     private Button detailDownload;
@@ -517,11 +519,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDownload.setEnabled(true);
         detailDownload.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
         detailDownload.setOnClickListener(v -> {
-            if (category == Category.MODPACK) {
-                installModpack(projectId, title, iconUrl, detailDownload);
-            } else {
-                downloadProject(projectId, title, detailDownload);
-            }
+            // ZalithLauncher-style flow: never silently pick an arbitrary/latest
+            // file. Let the user inspect compatible project versions first.
+            chooseCompatibleVersion(projectId, title, iconUrl, detailDownload);
         });
         if (iconUrl != null) {
             loadImage(detailIcon, iconUrl);
@@ -551,6 +551,81 @@ public class OrynDownloadActivity extends AppCompatActivity {
         });
     }
 
+    private void chooseCompatibleVersion(final String projectId, final String projectTitle,
+                                          final String iconUrl, final Button button) {
+        button.setEnabled(false);
+        button.setText("Checking versions…");
+        executor.execute(() -> {
+            try {
+                JsonArray versions = api.get(
+                        "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
+                        JsonArray.class);
+                final String minecraftVersion = getDownloadMinecraftVersion();
+                final String loader = getSelectedLoader();
+                final java.util.ArrayList<JsonObject> compatible = new java.util.ArrayList<>();
+
+                for (int i = 0; versions != null && i < versions.size(); i++) {
+                    JsonObject candidate = versions.get(i).getAsJsonObject();
+                    if (!supportsMinecraftAndLoader(candidate, minecraftVersion,
+                            category == Category.MOD ? loader : null)) continue;
+                    compatible.add(candidate);
+                    if (compatible.size() >= 20) break;
+                }
+
+                runOnUiThread(() -> {
+                    button.setEnabled(true);
+                    button.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
+                    if (compatible.isEmpty()) {
+                        Toast.makeText(this,
+                                "No compatible versions found for Minecraft " +
+                                        (minecraftVersion == null ? "" : minecraftVersion),
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    String[] labels = new String[compatible.size()];
+                    for (int i = 0; i < compatible.size(); i++) {
+                        JsonObject v = compatible.get(i);
+                        String name = v.has("name") && !v.get("name").isJsonNull()
+                                ? v.get("name").getAsString()
+                                : v.has("version_number") ? v.get("version_number").getAsString() : "Version";
+                        String mc = minecraftVersion == null ? "Minecraft" : minecraftVersion;
+                        String loaderLabel = "";
+                        if (category == Category.MOD && v.has("loaders") && v.get("loaders").isJsonArray()) {
+                            JsonArray ls = v.getAsJsonArray("loaders");
+                            if (ls.size() > 0) loaderLabel = " • " + ls.get(0).getAsString();
+                        }
+                        labels[i] = name + "\n" + mc + loaderLabel;
+                    }
+
+                    new android.app.AlertDialog.Builder(this)
+                            .setTitle(category.title + " versions")
+                            .setSingleChoiceItems(labels, 0, null)
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton(category == Category.MODPACK ? "Install" : "Download", (dialog, which) -> {
+                                android.app.AlertDialog alert = (android.app.AlertDialog) dialog;
+                                int checked = alert.getListView().getCheckedItemPosition();
+                                if (checked < 0 || checked >= compatible.size()) checked = 0;
+                                JsonObject selected = compatible.get(checked);
+                                forcedVersionId = selected.has("id") ? selected.get("id").getAsString() : null;
+                                if (category == Category.MODPACK) {
+                                    installModpack(projectId, projectTitle, iconUrl, button);
+                                } else {
+                                    downloadProject(projectId, projectTitle, button);
+                                }
+                            }).show();
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    button.setEnabled(true);
+                    button.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
+                    Toast.makeText(this, e.getMessage() == null ? "Could not load versions" : e.getMessage(),
+                            Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+
     private void installModpack(final String projectId, final String projectTitle, final String iconUrl, final Button button) {
         button.setEnabled(false);
         button.setText("Checking version…");
@@ -565,10 +640,20 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
                 String mcVersion = getDownloadMinecraftVersion();
                 int selected = -1;
-                for (int i = 0; i < detail.mcVersionNames.length; i++) {
-                    if (mcVersion != null && mcVersion.equals(detail.mcVersionNames[i])) {
-                        selected = i;
-                        break;
+                if (forcedVersionId != null) {
+                    for (int i = 0; i < detail.versionUrls.length; i++) {
+                        if (forcedVersionId.equals(detail.versionUrls[i])) {
+                            selected = i;
+                            break;
+                        }
+                    }
+                }
+                if (selected < 0) {
+                    for (int i = 0; i < detail.mcVersionNames.length; i++) {
+                        if (mcVersion != null && mcVersion.equals(detail.mcVersionNames[i])) {
+                            selected = i;
+                            break;
+                        }
                     }
                 }
                 if (selected < 0) {
@@ -584,6 +669,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setText("Install started");
                     Toast.makeText(this, "Installing " + projectTitle + " for Minecraft "
                             + detail.mcVersionNames[versionIndex], Toast.LENGTH_LONG).show();
+                    forcedVersionId = null;
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
@@ -591,6 +677,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setText("Install Modpack");
                     Toast.makeText(this, e.getMessage() == null ? "Modpack installation failed" : e.getMessage(),
                             Toast.LENGTH_LONG).show();
+                    forcedVersionId = null;
                 });
             }
         });
@@ -650,6 +737,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         }
                     }
                     if (!gameMatch) continue;
+
+                    if (forcedVersionId != null && candidate.has("id")
+                            && forcedVersionId.equals(candidate.get("id").getAsString())) {
+                        version = candidate;
+                        break;
+                    }
 
                     if (loader != null && category == Category.MOD) {
                         boolean loaderMatch = false;
@@ -721,6 +814,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     button.setText("Downloaded");
                     Toast.makeText(this, projectTitle + " saved to " + category.folder + "/", Toast.LENGTH_LONG).show();
+                    forcedVersionId = null;
                 });
             } catch (Exception e) {
                 if (output != null && output.isFile()) output.delete();
@@ -729,6 +823,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     button.setEnabled(true);
                     button.setText("Download");
                     Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                    forcedVersionId = null;
                 });
             }
         });
