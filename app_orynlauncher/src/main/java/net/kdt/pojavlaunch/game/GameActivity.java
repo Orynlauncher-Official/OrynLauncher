@@ -4,7 +4,6 @@ package net.kdt.pojavlaunch.game;
 import static net.kdt.pojavlaunch.Tools.dialogForceClose;
 import static net.kdt.pojavlaunch.game.platform.Platform.PLATFORM;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_ENABLE_GYRO;
-import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_ORYN_FPS_BOOST;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_SUSTAINED_PERFORMANCE;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_USE_ALTERNATE_SURFACE;
 import static net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_VIRTUAL_MOUSE_START;
@@ -76,7 +75,6 @@ import net.kdt.pojavlaunch.prefs.QuickSettingSideDialog;
 import net.kdt.pojavlaunch.services.GameService;
 import net.kdt.pojavlaunch.tasks.AsyncAssetManager;
 import net.kdt.pojavlaunch.utils.JREUtils;
-import net.kdt.pojavlaunch.utils.MCOptionUtils;
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
 import net.kdt.pojavlaunch.discord.OrynDiscordPresence;
 import net.kdt.pojavlaunch.utils.jre.GameRunner;
@@ -154,7 +152,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
         // Set the sustained performance mode for available APIs
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            getWindow().setSustainedPerformanceMode(PREF_SUSTAINED_PERFORMANCE || PREF_ORYN_FPS_BOOST);
+            getWindow().setSustainedPerformanceMode(PREF_SUSTAINED_PERFORMANCE || net.kdt.pojavlaunch.prefs.LauncherPreferences.PREF_ORYN_FPS_BOOST);
 
         // This is required on Android 10 for the insets listener
         // https://issuetracker.google.com/issues/266331465
@@ -503,12 +501,6 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         Logger.appendToLog("--------- Starting game with Launcher Debug!");
         Tools.printLauncherInfo(versionId, instance.getLaunchArgs(), mGameRenderer.getCurrentRenderer(), this);
         JREUtils.redirectAndPrintJRELog();
-        // Apply the real Minecraft-side FPS preset immediately before launch.
-        if (PREF_ORYN_FPS_BOOST) {
-            MCOptionUtils.applyOrynFpsBoost(instance.getGameDirectory().getAbsolutePath());
-        } else {
-            MCOptionUtils.restoreOrynFpsBoost(instance.getGameDirectory().getAbsolutePath());
-        }
         GameRunner.launchGame(this, account, instance, versionId, classpath, mGameRenderer);
         Tools.runOnUiThread(()-> mServiceBinder.isActive = false);
     }
