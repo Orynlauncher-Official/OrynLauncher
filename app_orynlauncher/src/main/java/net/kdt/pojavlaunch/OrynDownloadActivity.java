@@ -424,75 +424,66 @@ public class OrynDownloadActivity extends AppCompatActivity {
             return;
         }
 
+        if (requestedVersion == null || requestedVersion.trim().isEmpty()) {
+            progress.setVisibility(View.GONE);
+            status.setText("Select a Minecraft version");
+            return;
+        }
+
         executor.execute(() -> {
             try {
-                JsonArray hits = null;
-                Exception firstError = null;
+                HashMap<String, Object> params = new HashMap<>();
+                params.put("query", requestedQuery);
+                params.put("limit", 30);
+                params.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
 
-                // First try the precise Modrinth facet query.
+                // Modrinth supports project_type and versions as search facets.
+                // Use the selected Minecraft version for discovery so incompatible
+                // projects do not flood the result list.
+                params.put("facets", buildSearchFacets(requestedCategory, requestedVersion, requestedLoader));
+
+                JsonObject response;
                 try {
-                    HashMap<String, Object> params = new HashMap<>();
-                    params.put("query", requestedQuery);
-                    params.put("limit", 30);
-                    params.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
-                    params.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
-                    JsonObject response = api.get("search", params, JsonObject.class);
-                    hits = response == null ? null : response.getAsJsonArray("hits");
-                } catch (Exception e) {
-                    firstError = e;
-                }
-
-                // Reliable fallback: search without facets and filter the returned
-                // project metadata locally. This avoids empty categories when a
-                // Modrinth facet request is rejected or temporarily behaves oddly.
-                if (hits == null || hits.size() == 0) {
+                    response = api.get("search", params, JsonObject.class);
+                } catch (Exception preciseError) {
+                    // Network/API fallback: search by project type only, then let
+                    // the version picker perform the authoritative compatibility check.
                     HashMap<String, Object> fallback = new HashMap<>();
                     fallback.put("query", requestedQuery);
                     fallback.put("limit", 50);
                     fallback.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
-                    JsonObject response = api.get("search", fallback, JsonObject.class);
-                    JsonArray raw = response == null ? null : response.getAsJsonArray("hits");
-
-                    java.util.ArrayList<JsonObject> filtered = new java.util.ArrayList<>();
-                    if (raw != null) {
-                        for (int i = 0; i < raw.size(); i++) {
-                            JsonObject hit = raw.get(i).getAsJsonObject();
-                            String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
-                                    ? hit.get("project_type").getAsString() : "";
-                            if (requestedCategory.projectType.equalsIgnoreCase(type)) {
-                                filtered.add(hit);
-                            }
-                        }
-                    }
-
-                    hits = new JsonArray();
-                    for (JsonObject hit : filtered) {
-                        hits.add(hit);
-                        if (hits.size() >= 30) break;
-                    }
+                    fallback.put("facets", "[[\\"project_type:" + requestedCategory.projectType + "\\"]]");
+                    response = api.get("search", fallback, JsonObject.class);
                 }
 
-                final JsonArray searchHits = hits;
-                final Exception requestError = firstError;
+                JsonArray rawHits = response == null ? null : response.getAsJsonArray("hits");
+                JsonArray searchHits = new JsonArray();
+
+                if (rawHits != null) {
+                    for (int i = 0; i < rawHits.size(); i++) {
+                        JsonObject hit = rawHits.get(i).getAsJsonObject();
+                        String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
+                                ? hit.get("project_type").getAsString() : "";
+                        if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
+                        searchHits.add(hit);
+                        if (searchHits.size() >= 30) break;
+                    }
+                }
 
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
 
                     if (requestId != searchGeneration || category != requestedCategory) return;
 
-                    if (searchHits == null || searchHits.size() == 0) {
+                    if (searchHits.size() == 0) {
                         status.setText(requestedQuery.isEmpty()
-                                ? "No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found"
-                                : "No results found");
-                        if (requestError != null) {
-                            Toast.makeText(this, "Modrinth search failed. Tap Search to retry.",
-                                    Toast.LENGTH_SHORT).show();
-                        }
+                                ? "No compatible " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found"
+                                : "No compatible results found");
                         return;
                     }
 
-                    status.setText(searchHits.size() + " projects • "
-                            + (requestedVersion == null ? "Select Minecraft version" : requestedVersion)
+                    status.setText(searchHits.size() + " compatible projects • "
+                            + requestedVersion
                             + (requestedCategory == Category.MOD && requestedLoader != null
                             ? " • " + requestedLoader : ""));
 
@@ -504,13 +495,31 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
                     if (requestId != searchGeneration || category != requestedCategory) return;
-                    status.setText("Unable to connect to Modrinth");
+                    status.setText("Unable to connect to Modrinth • Tap Search to retry");
                     Toast.makeText(this,
-                            e.getMessage() == null ? "Network request failed" : e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
+                            e.getMessage() == null ? "Modrinth request failed" : e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                 });
             }
         });
+    }
+
+    private String buildSearchFacets(Category requestedCategory, String minecraftVersion, String loader) {
+        StringBuilder facets = new StringBuilder("[[\\"project_type:")
+                .append(requestedCategory.projectType)
+                .append("\\"],[\\"versions:")
+                .append(minecraftVersion)
+                .append("\\"]");
+
+        // Loader tags are represented through the categories facet in Modrinth
+        // search. Resource packs/shaders use the minecraft loader at version level,
+        // so only mods need an explicit loader discovery facet.
+        if (requestedCategory == Category.MOD && loader != null && !loader.isEmpty()) {
+            facets.append(",[\\"categories:").append(loader).append("\\"]");
+        }
+
+        facets.append("]");
+        return facets.toString();
     }
 
     private void addResult(JsonObject hit) {
@@ -635,9 +644,20 @@ public class OrynDownloadActivity extends AppCompatActivity {
         button.setText("Checking versions…");
         executor.execute(() -> {
             try {
+                HashMap<String, Object> versionParams = new HashMap<>();
+                if (minecraftVersionForRequest() != null) {
+                    versionParams.put("game_versions", "[\\"" + minecraftVersionForRequest() + "\\"]");
+                }
+                String loaderForRequest = getSelectedLoader();
+                if (category == Category.MOD && loaderForRequest != null && !loaderForRequest.isEmpty()) {
+                    versionParams.put("loaders", "[\\"" + loaderForRequest + "\\"]");
+                } else if (category == Category.RESOURCEPACK || category == Category.SHADER) {
+                    versionParams.put("loaders", "[\\"minecraft\\"]");
+                }
+                versionParams.put("include_changelog", false);
                 JsonArray versions = api.get(
                         "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
-                        JsonArray.class);
+                        versionParams, JsonArray.class);
                 final String minecraftVersion = getDownloadMinecraftVersion();
                 final String loader = getSelectedLoader();
                 final java.util.ArrayList<JsonObject> compatible = new java.util.ArrayList<>();
@@ -1073,6 +1093,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
             if (loader.equalsIgnoreCase(loaders.get(i).getAsString())) return true;
         }
         return false;
+    }
+
+    private String minecraftVersionForRequest() {
+        return getDownloadMinecraftVersion();
     }
 
     private String getDownloadMinecraftVersion() {
