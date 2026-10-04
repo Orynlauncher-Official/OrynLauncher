@@ -37,13 +37,13 @@ import net.kdt.pojavlaunch.utils.OrynFpsBoostUtils;
  * existing feature activities and preference storage remain unchanged.
  */
 public class OrynSettingsActivity extends BaseActivity {
-    private static final int BG = Color.rgb(5, 12, 20);
-    private static final int PANEL = Color.rgb(11, 20, 31);
-    private static final int PANEL_2 = Color.rgb(14, 25, 39);
-    private static final int BORDER = Color.rgb(25, 40, 59);
-    private static final int TEXT = Color.rgb(235, 241, 250);
-    private static final int MUTED = Color.rgb(126, 148, 178);
-    private static final int BLUE = Color.rgb(35, 145, 255);
+    private static final int BG = Color.BLACK;
+    private static final int PANEL = Color.rgb(12, 12, 12);
+    private static final int PANEL_2 = Color.rgb(18, 18, 18);
+    private static final int BORDER = Color.rgb(48, 48, 48);
+    private static final int TEXT = Color.WHITE;
+    private static final int MUTED = Color.rgb(160, 160, 160);
+    private static final int BLUE = Color.WHITE;
 
     private SharedPreferences uiPrefs;
     private LinearLayout content;
@@ -144,8 +144,13 @@ public class OrynSettingsActivity extends BaseActivity {
         sidebar = new LinearLayout(this);
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(8), dp(8), dp(8), dp(8));
-        sidebar.setBackground(bg(Color.rgb(8, 16, 27), 18));
-        body.addView(sidebar, new LinearLayout.LayoutParams(refPx(0.195f), -1));
+        sidebar.setBackground(bg(Color.rgb(12, 12, 12), 18));
+        ScrollView sidebarScroll = new ScrollView(this);
+        sidebarScroll.setFillViewport(true);
+        sidebarScroll.setScrollBarStyle(View.SCROLLBARS_INSIDE_INSET);
+        sidebarScroll.setVerticalScrollBarEnabled(false);
+        sidebarScroll.addView(sidebar, new ScrollView.LayoutParams(-1, -2));
+        body.addView(sidebarScroll, new LinearLayout.LayoutParams(refPx(0.195f), -1));
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -190,7 +195,7 @@ public class OrynSettingsActivity extends BaseActivity {
         item.setOnClickListener(v -> {
             if (activeNav != null) activeNav.setBackground(bg(Color.TRANSPARENT, 12));
             activeNav = item;
-            item.setBackground(bg(Color.rgb(31, 48, 71), 12));
+            item.setBackground(bg(Color.rgb(38, 38, 38), 12));
             listener.onClick(v);
         });
 
@@ -201,7 +206,7 @@ public class OrynSettingsActivity extends BaseActivity {
 
         if (activeNav == null && "General".equals(label)) {
             activeNav = item;
-            item.setBackground(bg(Color.rgb(31, 48, 71), 12));
+            item.setBackground(bg(Color.rgb(38, 38, 38), 12));
         }
     }
 
@@ -285,7 +290,7 @@ public class OrynSettingsActivity extends BaseActivity {
 
         section("Appearance", R.drawable.ic_px_image);
         addSetting("Theme", "Choose your preferred theme",
-                spinner(new String[]{"Dark", "Oryn Blue", "Oryn Purple", "AMOLED"}, 0));
+                spinner(new String[]{"Monochrome", "Black", "White"}, 0));
         addSetting("UI Scale", "Adjust the interface size",
                 spinner(new String[]{"Small", "Default", "Large"}, 1));
 
@@ -302,12 +307,12 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showAppearance() {
         clear("Appearance", "Customize the look and feel of OrynLauncher");
         section("Appearance", R.drawable.ic_px_image);
-        Spinner theme = spinner(new String[]{"Dark", "Oryn Blue", "Oryn Purple", "AMOLED"}, 0);
+        Spinner theme = spinner(new String[]{"Monochrome", "Black", "White"}, 0);
         theme.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                if (pos == 1) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.rgb(35,145,255));
-                if (pos == 2) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.rgb(150,90,255));
-                if (pos == 3) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.WHITE);
+                if (pos == 0) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.WHITE);
+                if (pos == 1) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.WHITE);
+                if (pos == 2) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.BLACK);
             }
             public void onNothingSelected(android.widget.AdapterView<?> p) {}
         });
@@ -510,12 +515,12 @@ public class OrynSettingsActivity extends BaseActivity {
     private Button textButton(String label) {
         Button b = new Button(this);
         b.setText(label);
-        b.setTextColor(TEXT);
+        b.setTextColor(Color.BLACK);
         b.setTextSize(12);
         b.setAllCaps(false);
         b.setGravity(Gravity.CENTER);
         b.setPadding(dp(8), 0, dp(8), 0);
-        b.setBackground(bg(BLUE, 12));
+        b.setBackground(bg(Color.WHITE, 12));
         return b;
     }
 
