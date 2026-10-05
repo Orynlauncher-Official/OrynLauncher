@@ -1,15 +1,17 @@
 plugins {
-    id 'net.fabricmc.fabric-loom-remap' version '1.14-SNAPSHOT'
+    id 'net.fabricmc.fabric-loom-remap' version '1.16.3'
 }
 
 version = '1.0.0'
 group = 'net.orynlauncher'
 
-repositories { maven { url = 'https://maven.fabricmc.net/' } }
+repositories {
+    maven { url = 'https://maven.fabricmc.net/' }
+}
 
 dependencies {
     minecraft 'com.mojang:minecraft:1.21.11'
-    mappings loom.officialMojangMappings()
+    mappings 'net.fabricmc:yarn:1.21.11+build.6:v2'
     modImplementation 'net.fabricmc:fabric-loader:0.18.2'
 }
 
@@ -25,3 +27,9 @@ java {
 }
 
 tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
+
+loom {
+    mixin {
+        defaultRefmapName = 'orynlauncher-cosmetics-refmap.json'
+    }
+}
