@@ -73,7 +73,7 @@ public final class ModrinthRemoteRepository {
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Map<String, CacheEntry> searchCache = new HashMap<>();
     private final Map<String, Bitmap> iconCache = new HashMap<>();
-    private final Map<String, CacheEntry> detailCache = new HashMap<>();
+    private final Map<String, DetailEntry> detailCache = new HashMap<>();
     private final Map<String, ValuesEntry> valuesCache = new HashMap<>();
     private Future<?> activeSearch;
 
