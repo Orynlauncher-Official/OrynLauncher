@@ -41,21 +41,20 @@ public final class OrynCosmeticsRuntime {
         State state = entry.state;
 
         if (state == State.READY && entry.textures != null) {
-            System.out.println("[ORYN-COSMETICS] cache HIT texture=" + entry.textureIdentifier);
             return entry.textures;
         }
 
         if (state == State.LOADING || state == State.FAILED) {
-            return vanilla;
+            return entry.textures != null ? entry.textures : vanilla;
         }
 
         synchronized (entry) {
-            if (entry.state != State.UNINITIALIZED) return entry.textures != null ? entry.textures : vanilla;
+            if (entry.state != State.UNINITIALIZED) {
+                return entry.textures != null ? entry.textures : vanilla;
+            }
             entry.state = State.LOADING;
             OrynCosmeticsDebugCounters.recordApplySkin();
-            System.out.println("[ORYN-COSMETICS] applySkin() initialized once account=" + identity
-                    + " count=" + OrynCosmeticsDebugCounters.applySkinCount());
-            System.out.println("[ORYN-COSMETICS] async cosmetic initialization started account=" + identity);
+            System.out.println("[ORYN-COSMETICS] cosmetic initialization started once account=" + identity);
         }
 
         EXECUTOR.execute(() -> initialize(entry, profile, downloader, identity));
@@ -74,41 +73,53 @@ public final class OrynCosmeticsRuntime {
                 fail(entry, "runtime profile missing");
                 return;
             }
-            if (!runtime.skinEnabled) {
-                fail(entry, "skin disabled");
-                return;
-            }
             if (!runtime.matches(profile)) {
                 fail(entry, "runtime profile does not match local player");
                 return;
             }
 
-            File skin = runtime.resolveSkinFile();
-            if (skin == null || !skin.isFile() || !skin.canRead()) {
-                fail(entry, "PNG missing/unreadable");
+            final boolean useSkin = runtime.skinEnabled;
+            final boolean useCape = runtime.capeEnabled;
+
+            if (!useSkin && !useCape) {
+                fail(entry, "skin and cape disabled");
                 return;
             }
 
-            long modified = skin.lastModified();
-            String cacheKey = identity + "|" + skin.getAbsolutePath() + "|" + modified
-                    + "|" + runtime.model + "|" + runtime.skinEnabled;
+            File skin = useSkin ? runtime.resolveSkinFile() : null;
+            File cape = useCape ? runtime.resolveCapeFile() : null;
+
+            if (useSkin && (skin == null || !skin.isFile() || !skin.canRead())) {
+                fail(entry, "custom skin PNG missing/unreadable");
+                return;
+            }
+            if (useCape && (cape == null || !cape.isFile() || !cape.canRead())) {
+                fail(entry, "custom cape PNG missing/unreadable");
+                return;
+            }
+
+            long skinModified = skin == null ? 0L : skin.lastModified();
+            long capeModified = cape == null ? 0L : cape.lastModified();
+
+            String cacheKey = identity
+                    + "|skin=" + (skin == null ? "" : skin.getAbsolutePath() + ":" + skinModified)
+                    + "|cape=" + (cape == null ? "" : cape.getAbsolutePath() + ":" + capeModified)
+                    + "|model=" + runtime.model
+                    + "|skinEnabled=" + useSkin
+                    + "|capeEnabled=" + useCape;
             entry.cacheKey = cacheKey;
 
-            System.out.println("[ORYN-COSMETICS] cache MISS account=" + identity);
-            System.out.println("[ORYN-COSMETICS] PNG exists = true bytes=" + skin.length()
-                    + " modified=" + modified);
+            String skinUrl = useSkin ? OrynRuntimeTextureServer.startSkin(skin) : null;
+            String capeUrl = useCape ? OrynRuntimeTextureServer.startCape(cape) : null;
 
-            final String resolvedModel = runtime.model;
-
-            String url = OrynRuntimeTextureServer.startSkin(skin);
-            if (url == null) {
-                fail(entry, "runtime texture server unavailable");
+            if (useSkin && skinUrl == null) {
+                fail(entry, "runtime skin texture server unavailable");
                 return;
             }
-
-            Identifier textureId = Identifier.of("orynlauncher", "cosmetics/skin/" + safeId(identity));
-            System.out.println("[ORYN-COSMETICS] registering skin texture=" + textureId);
-            System.out.println("[ORYN-COSMETICS] Native downloader request = 1 (async, not render thread)");
+            if (useCape && capeUrl == null) {
+                fail(entry, "runtime cape texture server unavailable");
+                return;
+            }
 
             File cacheDir = new File(new File(System.getProperty("user.dir", ".")),
                     ".oryn/cosmetics/runtime-cache");
@@ -117,57 +128,161 @@ public final class OrynCosmeticsRuntime {
                 return;
             }
 
-            File cacheFile = new File(cacheDir, "skin-" + safeId(identity) + "-" + modified + ".png");
+            CompletableFuture<AssetInfo.TextureAsset> skinFuture = useSkin
+                    ? loadTexture(downloader, identity, "skin", skin, skinModified, skinUrl, cacheDir)
+                    : CompletableFuture.completedFuture(null);
 
-            CompletableFuture<AssetInfo.TextureAsset> future =
-                    downloader.downloadAndRegisterTexture(textureId, cacheFile.toPath(), url, false);
+            CompletableFuture<AssetInfo.TextureAsset> capeFuture = useCape
+                    ? loadTexture(downloader, identity, "cape", cape, capeModified, capeUrl, cacheDir)
+                    : CompletableFuture.completedFuture(null);
 
-            if (future == null) {
-                fail(entry, "native downloader returned null future");
-                return;
-            }
+            skinFuture.thenCombine(capeFuture, (skinAsset, capeAsset) -> {
+                if (useSkin && skinAsset == null) {
+                    throw new IllegalStateException("skin texture asset is null");
+                }
+                if (useCape && capeAsset == null) {
+                    throw new IllegalStateException("cape texture asset is null");
+                }
 
-            future.whenComplete((asset, error) -> {
-                if (error != null || asset == null) {
-                    fail(entry, "native texture pipeline failed: "
-                            + (error == null ? "null texture asset" : error));
+                PlayerSkinType model = "slim".equalsIgnoreCase(runtime.model)
+                        ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
+
+                // Preserve the working Oryn body texture exactly. Only the cape
+                // component is added/replaced here.
+                SkinTextures result;
+                if (useSkin) {
+                    result = new SkinTextures(
+                            skinAsset,
+                            capeAsset,
+                            null,
+                            model,
+                            false
+                    );
+                } else {
+                    SkinTextures vanillaTextures = DefaultSkinHelper.getSkinTextures(profile);
+                    result = new SkinTextures(
+                            vanillaTextures.body(),
+                            capeAsset,
+                            vanillaTextures.elytra(),
+                            vanillaTextures.model(),
+                            vanillaTextures.secure()
+                    );
+                }
+                return result;
+            }).whenComplete((result, error) -> {
+                if (error != null || result == null) {
+                    fail(entry, "native skin/cape texture pipeline failed: "
+                            + (error == null ? "null SkinTextures" : error));
                     return;
                 }
 
-                try {
-                    Map<Identifier, net.minecraft.client.texture.AbstractTexture> textures =
-                            ((net.orynlauncher.cosmetics.mixin.OrynTextureManagerAccessor) (Object)
-                                    ((net.orynlauncher.cosmetics.mixin.OrynPlayerSkinTextureDownloaderAccessor) (Object) downloader)
-                                            .oryn$getTextureManager()).oryn$getTextures();
-
-                    boolean lookup = textures.containsKey(asset.texturePath()) || textures.containsKey(textureId);
-                    if (!lookup) {
-                        fail(entry, "TextureManager lookup failed after registration");
-                        return;
-                    }
-
-                    PlayerSkinType model = "slim".equalsIgnoreCase(resolvedModel)
-                            ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
-                    SkinTextures result = new SkinTextures(asset, null, null, model, false);
-
-                    synchronized (entry) {
-                        entry.textures = result;
-                        entry.textureIdentifier = asset.texturePath().toString();
-                        entry.state = State.READY;
-                    }
-
-                    System.out.println("[ORYN-COSMETICS] Texture registered = true");
-                    System.out.println("[ORYN-COSMETICS] TextureManager lookup = true");
-                    System.out.println("[ORYN-COSMETICS] SkinTextures cached = true model=" + model);
-                    System.out.println("[ORYN-COSMETICS] skinTextureRegistrations = "
-                            + OrynCosmeticsDebugCounters.textureRegistrations());
-                } catch (Throwable t) {
-                    fail(entry, "post-registration cache failure: " + t);
+                synchronized (entry) {
+                    entry.textures = result;
+                    entry.skinTextureIdentifier = result.body() == null
+                            ? "null" : result.body().texturePath().toString();
+                    entry.capeTextureIdentifier = result.cape() == null
+                            ? "null" : result.cape().texturePath().toString();
+                    entry.state = State.READY;
                 }
+
+                printCapeDiagnostic(profile, runtime, cape, result, identity);
             });
         } catch (Throwable t) {
             fail(entry, "async cosmetic initialization failed: " + t);
         }
+    }
+
+    private static CompletableFuture<AssetInfo.TextureAsset> loadTexture(
+            PlayerSkinTextureDownloader downloader,
+            String identity,
+            String type,
+            File source,
+            long modified,
+            String url,
+            File cacheDir) {
+
+        Identifier id = Identifier.of(
+                "orynlauncher",
+                "cosmetics/" + type + "/" + safeId(identity)
+        );
+
+        File cacheFile = new File(
+                cacheDir,
+                type + "-" + safeId(identity) + "-" + modified + ".png"
+        );
+
+        System.out.println("[ORYN-CAPE-DEBUG] " + type
+                + " selected=" + source.getAbsolutePath()
+                + " file=" + source.getAbsolutePath()
+                + " exists=" + source.isFile()
+                + " fileSize=" + source.length()
+                + " textureIdentifier=" + id);
+
+        CompletableFuture<AssetInfo.TextureAsset> future =
+                downloader.downloadAndRegisterTexture(
+                        id,
+                        cacheFile.toPath(),
+                        url,
+                        false
+                );
+
+        if (future == null) {
+            return CompletableFuture.failedFuture(
+                    new IllegalStateException(type + " downloader returned null future"));
+        }
+
+        return future.thenApply(asset -> {
+            if (asset == null) {
+                throw new IllegalStateException(type + " texture asset is null");
+            }
+
+            try {
+                Map<Identifier, net.minecraft.client.texture.AbstractTexture> textures =
+                        ((net.orynlauncher.cosmetics.mixin.OrynTextureManagerAccessor) (Object)
+                                ((net.orynlauncher.cosmetics.mixin.OrynPlayerSkinTextureDownloaderAccessor) (Object)
+                                        downloader).oryn$getTextureManager()).oryn$getTextures();
+
+                boolean registered = textures.containsKey(asset.texturePath())
+                        || textures.containsKey(id);
+
+                if (!registered) {
+                    throw new IllegalStateException(type + " TextureManager lookup failed after registration");
+                }
+
+                System.out.println("[ORYN-COSMETICS] " + type
+                        + " texture registered once=" + asset.texturePath());
+                return asset;
+            } catch (Throwable t) {
+                throw new IllegalStateException(type + " post-registration verification failed", t);
+            }
+        });
+    }
+
+    private static void printCapeDiagnostic(GameProfile profile,
+                                            OrynRuntimeProfile runtime,
+                                            File cape,
+                                            SkinTextures textures,
+                                            String identity) {
+        String capeId = textures.cape() == null ? "null" : textures.cape().texturePath().toString();
+
+        System.out.println("[ORYN-CAPE-DEBUG]");
+        System.out.println("enabled=" + runtime.capeEnabled);
+        System.out.println("selected=" + (runtime.capePath.isEmpty() ? "" : runtime.capePath));
+        System.out.println("file=" + (cape == null ? "" : cape.getAbsolutePath()));
+        System.out.println("exists=" + (cape != null && cape.isFile()));
+        System.out.println("fileSize=" + (cape != null && cape.isFile() ? cape.length() : 0));
+        System.out.println("textureIdentifier=" + capeId);
+        System.out.println("skinTexturesCape=" + capeId);
+        System.out.println("player=" + profile.name() + " (" + identity + ")");
+        System.out.println("renderer=PlayerEntityRenderer -> CapeFeatureRenderer (native)");
+        System.out.println("capeRenderPath=SkinTextures.cape -> PlayerEntityRenderState.capeVisible -> CapeFeatureRenderer");
+        System.out.println("[/ORYN-CAPE-DEBUG]");
+
+        System.out.println("[ORYN-CAPE] APPLIED");
+        System.out.println("skin=" + (textures.body() == null ? "null" : textures.body().texturePath()));
+        System.out.println("cape=" + capeId);
+        System.out.println("player=" + profile.name());
+        System.out.println("renderer=PlayerEntityRenderer/CapeFeatureRenderer");
     }
 
     private static void fail(Entry entry, String reason) {
@@ -187,20 +302,11 @@ public final class OrynCosmeticsRuntime {
         return value.replace("-", "").replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
-    private static final class AssetPair {
-        final AssetInfo.TextureAsset skin;
-        final AssetInfo.TextureAsset cape;
-
-        AssetPair(AssetInfo.TextureAsset skin, AssetInfo.TextureAsset cape) {
-            this.skin = skin;
-            this.cape = cape;
-        }
-    }
-
     private static final class Entry {
         volatile State state = State.UNINITIALIZED;
         volatile SkinTextures textures;
-        volatile String textureIdentifier;
+        volatile String skinTextureIdentifier;
+        volatile String capeTextureIdentifier;
         volatile String cacheKey;
     }
 }
