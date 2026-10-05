@@ -1,7 +1,8 @@
 package net.orynlauncher.cosmetics.mixin;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.client.texture.PlayerSkinProvider;\nimport net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.client.texture.PlayerSkinProvider;
+import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.entity.player.SkinTextures;
 import net.orynlauncher.cosmetics.OrynRuntimeProfile;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,7 +10,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Optional;\nimport java.util.concurrent.CompletableFuture;\nimport java.util.function.Supplier;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 @Mixin(PlayerSkinProvider.class)
 public abstract class OrynPlayerSkinProviderMixin {
