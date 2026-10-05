@@ -105,8 +105,20 @@ public final class ModrinthRemoteRepository {
 
         activeSearch = executor.submit(() -> {
             try {
-                ModrinthSearchResult result = api.search(query, projectType, minecraftVersion, loader, offset, 20);
-                Log.d(TAG, "Repository received projects = " + result.projects.size()
+                ModrinthSearchResult raw = api.search(query, projectType, minecraftVersion, loader, offset, 20);
+                List<ModrinthProject> validProjects = new ArrayList<>();
+                for (ModrinthProject project : raw.projects) {
+                    if (project != null && projectType != null
+                            && projectType.equalsIgnoreCase(project.projectType)) {
+                        validProjects.add(project);
+                    } else if (project != null) {
+                        Log.d(TAG, "Repository rejected project " + project.id
+                                + " type=" + project.projectType + " expected=" + projectType);
+                    }
+                }
+                ModrinthSearchResult result = new ModrinthSearchResult(
+                        validProjects, raw.offset, raw.totalHits);
+                Log.d(TAG, "Repository received valid projects = " + result.projects.size()
                         + " • totalHits=" + result.totalHits);
                 searchCache.put(key, new CacheEntry(System.currentTimeMillis(), result));
                 callback.onSuccess(result, offset > 0);
@@ -135,6 +147,10 @@ public final class ModrinthRemoteRepository {
         executor.execute(() -> {
             try {
                 ModrinthProject fullProject = api.getProject(selected.id);
+                if (projectType == null || !projectType.equalsIgnoreCase(fullProject.projectType)) {
+                    throw new Exception("Modrinth project type mismatch: expected "
+                            + projectType + " but received " + fullProject.projectType);
+                }
                 List<ModrinthVersion> versions = compatibleVersions(
                         api.getProjectVersions(selected.id, minecraftVersion, loader), projectType, minecraftVersion, loader);
                 Log.d(TAG, "Project detail: " + selected.id + " • compatible versions=" + versions.size());
