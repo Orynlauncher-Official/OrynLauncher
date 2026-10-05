@@ -190,15 +190,57 @@ public final class OrynCosmeticsStore {
         return file != null && file.exists() && file.delete();
     }
 
-    public void removeCosmetic(String fileName, boolean skin) throws Exception {
+    /**
+     * Unequip a cosmetic only for the selected account. The shared cached asset is
+     * deleted only when no other account/profile references it.
+     */
+    public void removeCosmetic(Account account, String fileName, boolean skin) throws Exception {
         if (fileName == null || fileName.isEmpty()) return;
-        File target = new File(skin ? skins : capes, fileName);
-        if (target.exists() && !target.delete()) {
-            throw new IllegalStateException("Could not remove " + fileName);
+
+        CosmeticProfile active = getActiveProfile(account);
+        String key = skin ? "skin" : "cape";
+        if (skin) {
+            active.skin = "";
+            active.skinUrl = "";
+            active.skinEnabled = false;
+        } else {
+            active.cape = "";
+            active.capeUrl = "";
+            active.capeEnabled = false;
         }
-        clearReferences(profiles, skin ? "skin" : "cape", fileName);
-        File meta = new File(metadata, fileName + ".json");
-        if (meta.exists()) meta.delete();
+        setActiveProfile(account, active);
+
+        if (!isReferenced(profiles, key, fileName)) {
+            File target = new File(skin ? skins : capes, fileName);
+            if (target.exists() && !target.delete()) {
+                throw new IllegalStateException("Could not remove " + fileName);
+            }
+            File meta = new File(metadata, fileName + ".json");
+            if (meta.exists()) meta.delete();
+        }
+    }
+
+    /** Legacy compatibility: only clears references; it never deletes a shared asset blindly. */
+    public void removeCosmetic(String fileName, boolean skin) throws Exception {
+        removeCosmetic(Account.getCurrent(), fileName, skin);
+    }
+
+    private boolean isReferenced(File dir, String key, String fileName) {
+        File[] files = dir.listFiles();
+        if (files == null) return false;
+        for (File f : files) {
+            if (f.isDirectory()) {
+                if (isReferenced(f, key, fileName)) return true;
+                continue;
+            }
+            if (!f.getName().endsWith(".json")) continue;
+            try {
+                JSONObject o = new JSONObject(read(f));
+                if (fileName.equals(o.optString(key, ""))) return true;
+            } catch (Exception ignored) {
+            }
+        }
+        return false;
     }
 
     private void clearReferences(File dir, String key, String fileName) {
