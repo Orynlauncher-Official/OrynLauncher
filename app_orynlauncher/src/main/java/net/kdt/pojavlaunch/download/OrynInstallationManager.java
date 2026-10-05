@@ -42,7 +42,8 @@ public final class OrynInstallationManager {
         String filename = new File(sourceFile.filename).getName();
         if (filename.contains("..") || filename.isEmpty()) throw new Exception("Invalid destination filename");
         Log.d(TAG, "[ORYN-DOWNLOAD] type=" + projectType + " project=" + project.id
-                + " version=" + version.id + " instance=" + gameDirectory.getAbsolutePath());
+                + " version=" + version.id + " instance="
+                + (gameDirectory == null ? "<new-instance>" : gameDirectory.getAbsolutePath()));
         if (filename.isEmpty()) throw new Exception("Modrinth returned an invalid filename");
 
         if ("modpack".equals(projectType)) {
