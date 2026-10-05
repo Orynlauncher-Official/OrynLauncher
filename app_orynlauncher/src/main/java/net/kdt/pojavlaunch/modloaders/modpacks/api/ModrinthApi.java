@@ -8,6 +8,7 @@ import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.InstanceInstaller;
+import net.kdt.pojavlaunch.instances.OrynInstanceManager;
 import net.kdt.pojavlaunch.downloader.Downloader;
 import net.kdt.pojavlaunch.downloader.TaskMetadata;
 import net.kdt.pojavlaunch.mirrors.DownloadMirror;
@@ -182,11 +183,9 @@ public class ModrinthApi implements ModpackApi{
         final String packVersion = index.versionId == null ? "" : index.versionId.trim();
         final File[] createdRoot = new File[1];
 
-        Instance instance = net.kdt.pojavlaunch.instances.Instances.createInstance(i -> {
-            i.name = packName;
-            i.versionId = minecraftVersion;
-            i.sharedData = false;
-        }, packName);
+        Instance instance = OrynInstanceManager.create(packName, minecraftVersion, true);
+        OrynInstanceManager.configureModpack(instance, packName, packVersion, null,
+                minecraftVersion, index.dependencies);
         createdRoot[0] = instance.getGameDirectory();
 
         try {
@@ -194,6 +193,20 @@ public class ModrinthApi implements ModpackApi{
             if (loaderInstaller == null) {
                 throw new IOException("Unknown modpack mod loader information");
             }
+            if (index.dependencies.containsKey("fabric-loader")) {
+                OrynInstanceManager.configureLoader(instance, "fabric",
+                        index.dependencies.get("fabric-loader"), null);
+            } else if (index.dependencies.containsKey("forge")) {
+                OrynInstanceManager.configureLoader(instance, "forge",
+                        index.dependencies.get("forge"), null);
+            } else if (index.dependencies.containsKey("neoforge")) {
+                OrynInstanceManager.configureLoader(instance, "neoforge",
+                        index.dependencies.get("neoforge"), null);
+            } else if (index.dependencies.containsKey("quilt-loader")) {
+                OrynInstanceManager.configureLoader(instance, "quilt",
+                        index.dependencies.get("quilt-loader"), null);
+            }
+
             if (loaderInstaller.requiresGuiInstallation()) {
                 InstanceInstaller instanceInstaller = loaderInstaller.createInstaller();
                 if (instanceInstaller == null) throw new IOException("Failed to prepare data for instance installation");
@@ -202,6 +215,9 @@ public class ModrinthApi implements ModpackApi{
                 String versionId = loaderInstaller.installHeadlessly();
                 if (versionId == null) throw new IOException("Unknown mod loader version");
                 instance.versionId = versionId;
+                String loaderType = instance.loaderType == null ? "vanilla" : instance.loaderType;
+                OrynInstanceManager.configureLoader(instance, loaderType,
+                        instance.loaderVersion, versionId);
             }
             instance.write();
             ModIconCache.writeInstanceImage(instance, icon);
