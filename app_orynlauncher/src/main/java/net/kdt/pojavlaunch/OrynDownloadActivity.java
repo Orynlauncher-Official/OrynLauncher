@@ -89,7 +89,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private ScrollView projectScroll;
     private TextView status;
     private TextView categoryTitle;
-    private TextView instanceButton;
+    private Button instanceButton;
     private TextView instanceTargetView;
     private EditText search;
     private Spinner versionSpinner;
@@ -927,11 +927,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         ? selectedInstance.versionId : selectedInstance.name);
         instanceButton.setText(name + " ▼");
 
-        View target = findViewByTag("instance_target");
-        if (target instanceof TextView) {
-            TextView text = (TextView) target;
-            if (selectedInstance == null) text.setText("Select an instance first");
-            else text.setText(name + "\n" + selectedMinecraftVersion());
+        if (instanceTargetView != null) {
+            if (selectedInstance == null) instanceTargetView.setText("Select an instance first");
+            else instanceTargetView.setText(name + "\n" + minecraftVersionFromInstance(selectedInstance.versionId));
         }
 
         if (selectedProject != null) {
