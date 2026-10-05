@@ -4,6 +4,7 @@ import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.PlayerSkinTextureDownloader;
 import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
+import net.orynlauncher.cosmetics.OrynCosmeticsDebugCounters;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -23,7 +24,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
                                     CallbackInfoReturnable<CompletableFuture<AssetInfo.TextureAsset>> cir) {
         if (isOrynUrl(url)) {
             oryn$downloaderRequestCount++;
-            OrynPlayerSkinProviderMixin.recordDownloaderRequest();
+            OrynCosmeticsDebugCounters.recordDownloaderRequest();
             System.out.println("[ORYN-COSMETICS] Native downloader request count = "
                     + oryn$downloaderRequestCount);
             System.out.println("[ORYN-COSMETICS] Native downloader applySkin URL accepted = " + url);
@@ -39,7 +40,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
             NativeImage image = cir.getReturnValue();
             if (image != null) {
                 oryn$pngDecodeCount++;
-                OrynPlayerSkinProviderMixin.recordPngDecode();
+                OrynCosmeticsDebugCounters.recordPngDecode();
             }
             System.out.println("[ORYN-COSMETICS] PNG decoded = " + (image != null));
             System.out.println("[ORYN-COSMETICS] pngDecodeCount = " + oryn$pngDecodeCount);
@@ -55,7 +56,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
                                     CallbackInfoReturnable<CompletableFuture<AssetInfo.TextureAsset>> cir) {
         if (isOrynAsset(asset)) {
             oryn$textureRegistrationCount++;
-            OrynPlayerSkinProviderMixin.recordTextureRegistration();
+            OrynCosmeticsDebugCounters.recordTextureRegistration();
             System.out.println("[ORYN-COSMETICS] Texture registration count = "
                     + oryn$textureRegistrationCount);
             System.out.println("[ORYN-COSMETICS] Texture registration entered id="
