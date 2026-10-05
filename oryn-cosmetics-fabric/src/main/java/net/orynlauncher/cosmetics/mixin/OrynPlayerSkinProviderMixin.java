@@ -1,151 +1,114 @@
 package net.orynlauncher.cosmetics.mixin;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import net.minecraft.client.texture.PlayerSkinProvider;
+import net.minecraft.client.texture.PlayerSkinTextureDownloader;
 import net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.entity.player.PlayerSkinType;
 import net.minecraft.entity.player.SkinTextures;
+import net.minecraft.util.AssetInfo;
+import net.minecraft.util.Identifier;
+import com.mojang.authlib.GameProfile;
 import net.orynlauncher.cosmetics.OrynRuntimeProfile;
 import net.orynlauncher.cosmetics.OrynRuntimeTextureServer;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.io.File;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
+import java.util.concurrent.CompletableFuture;
 
-/**
- * 1.21.11 runtime skin bridge.
- *
- * Vanilla PlayerRenderer remains completely untouched. Minecraft's own
- * PlayerSkinTextureDownloader still downloads/decodes/registers the PNG.
- * Any Oryn failure immediately returns the normal vanilla skin.
- *
- * Cape is intentionally not handled in this phase.
- */
 @Mixin(PlayerSkinProvider.class)
 public abstract class OrynPlayerSkinProviderMixin {
-
     @Inject(method = "supplySkinTextures", at = @At("HEAD"), cancellable = true)
-    private void oryn$customSkin(GameProfile profile, boolean requireSecure,
-                                 CallbackInfoReturnable<Supplier<SkinTextures>> cir) {
-        OrynRuntimeProfile runtime = OrynRuntimeProfile.load();
-
-        if (runtime == null || !runtime.skinEnabled || !runtime.matches(profile)) {
-            return;
-        }
-
-        System.out.println("[ORYN-COSMETICS] Skin override candidate"
-                + " account=" + profile.name()
-                + " uuid=" + profile.id()
-                + " model=" + runtime.model
-                + " path=" + runtime.skinPath
-                + " requireSecure=" + requireSecure);
-
-        cir.setReturnValue(() -> {
-            try {
-                File skin = new File(runtime.skinPath);
-                if (!skin.isFile() || !skin.canRead()) {
-                    System.out.println("[ORYN-COSMETICS] Custom skin file unavailable; vanilla fallback.");
-                    return DefaultSkinHelper.getSkinTextures(profile);
-                }
-
-                String url = OrynRuntimeTextureServer.startSkin(skin);
-                if (url == null) {
-                    System.out.println("[ORYN-COSMETICS] Custom skin transport unavailable; vanilla fallback.");
-                    return DefaultSkinHelper.getSkinTextures(profile);
-                }
-
-                /*
-                 * The launcher process exits after Minecraft starts, so the
-                 * previous launcher-side HTTP server was not a valid runtime
-                 * source. This property points at a server living inside the
-                 * Minecraft JVM instead.
-                 *
-                 * PNG decode, texture registration, UV mapping and rendering
-                 * remain entirely inside Minecraft's vanilla pipeline.
-                 */
-                String payload = buildSkinPayload(profile, url, runtime.model);
-                profile.properties().removeAll("textures");
-                profile.properties().put("textures", new Property("textures", payload));
-
-                System.out.println("[ORYN-COSMETICS] Custom skin property installed"
-                        + " transport=runtime-http"
-                        + " model=" + runtime.model);
-
-                PlayerSkinProvider provider = (PlayerSkinProvider) (Object) this;
-                CompletableFuture<Optional<SkinTextures>> future =
-                        provider.fetchSkinTextures(profile);
-                Optional<SkinTextures> loaded =
-                        future == null ? Optional.empty() : future.join();
-
-                if (loaded.isPresent()) {
-                    SkinTextures custom = loaded.get();
-                    if (custom.body() != null) {
-                        System.out.println("[ORYN-COSMETICS] Vanilla skin provider loaded custom skin"
-                                + " body=" + custom.body().texturePath()
-                                + " model=" + custom.model()
-                                + " secure=" + custom.secure());
-                        return custom;
-                    }
-                }
-
-                System.out.println("[ORYN-COSMETICS] Vanilla provider returned no custom skin; vanilla fallback.");
-                return DefaultSkinHelper.getSkinTextures(profile);
-            } catch (Throwable t) {
-                System.out.println("[ORYN-COSMETICS] Custom skin failed; vanilla fallback: " + t);
-                return DefaultSkinHelper.getSkinTextures(profile);
-            }
-        });
-    }
-
-    @Inject(method = "fetchSkinTextures", at = @At("RETURN"))
-    private void oryn$diagnostic(GameProfile profile,
-                                 CallbackInfoReturnable<CompletableFuture<Optional<SkinTextures>>> cir) {
+    private void oryn$applySkin(GameProfile profile, boolean requireSecure,
+                                CallbackInfoReturnable<Supplier<SkinTextures>> cir) {
         OrynRuntimeProfile runtime = OrynRuntimeProfile.load();
         if (runtime == null || !runtime.skinEnabled || !runtime.matches(profile)) return;
 
-        CompletableFuture<Optional<SkinTextures>> future = cir.getReturnValue();
-        if (future == null) return;
+        System.out.println("[ORYN-COSMETICS] applySkin() called = true");
+        System.out.println("[ORYN-COSMETICS] Renderer hook = NONE (vanilla renderer untouched)");
 
-        future.thenAccept(optional -> {
-            SkinTextures textures = optional.orElse(null);
-            System.out.println("[ORYN-COSMETICS] vanilla fetch result: skin="
-                    + (textures == null || textures.body() == null
-                    ? "null" : textures.body().texturePath())
-                    + " model=" + (textures == null ? "null" : textures.model()));
-        });
+        cir.setReturnValue(() -> loadSkin(runtime, profile));
     }
 
-    private static String buildSkinPayload(GameProfile profile, String url, String model) {
-        String id = profile.id() == null
-                ? "00000000-0000-0000-0000-000000000000"
-                : profile.id().toString();
-        String name = profile.name() == null ? "Player" : profile.name();
-        String normalizedModel = "slim".equalsIgnoreCase(model) ? "slim" : "classic";
+    private SkinTextures loadSkin(OrynRuntimeProfile runtime, GameProfile profile) {
+        File skin = runtime.resolveSkinFile();
+        if (skin == null) return fail(profile, "skin path empty");
+        if (!skin.isFile() || !skin.canRead()) return fail(profile, "PNG missing/unreadable: " + skin.getAbsolutePath());
 
-        String json = "{"
-                + "\"timestamp\":" + System.currentTimeMillis() + ","
-                + "\"profileId\":\"" + escape(id) + "\","
-                + "\"profileName\":\"" + escape(name) + "\","
-                + "\"textures\":{"
-                + "\"SKIN\":{"
-                + "\"url\":\"" + escape(url) + "\","
-                + "\"metadata\":{\"model\":\"" + normalizedModel + "\"}"
-                + "}"
-                + "}"
-                + "}";
+        System.out.println("[ORYN-COSMETICS] PNG exists = true path=" + skin.getAbsolutePath()
+                + " bytes=" + skin.length() + " modified=" + skin.lastModified());
 
-        return Base64.getEncoder().encodeToString(
-                json.getBytes(StandardCharsets.UTF_8));
+        try {
+            String url = OrynRuntimeTextureServer.startSkin(skin);
+            if (url == null) return fail(profile, "runtime texture server unavailable");
+
+            PlayerSkinTextureDownloader downloader =
+                    ((OrynPlayerSkinProviderAccessor) (Object) this).oryn$getDownloader();
+            Identifier textureId = Identifier.of("orynlauncher",
+                    "cosmetics/skin/" + safeId(profile.id() == null ? "unknown" : profile.id().toString()));
+
+            File cacheDir = new File(new File(System.getProperty("user.dir", ".")),
+                    ".oryn/cosmetics/runtime-cache");
+            cacheDir.mkdirs();
+            File cacheFile = new File(cacheDir,
+                    "skin-" + safeId(profile.id() == null ? "unknown" : profile.id().toString())
+                            + "-" + skin.lastModified() + ".png");
+
+            System.out.println("[ORYN-COSMETICS] Texture Identifier = " + textureId);
+            System.out.println("[ORYN-COSMETICS] Native downloader = " + downloader.getClass().getName());
+            System.out.println("[ORYN-COSMETICS] Native texture pipeline = PlayerSkinTextureDownloader -> TextureManager");
+
+            CompletableFuture<AssetInfo.TextureAsset> future =
+                    downloader.downloadAndRegisterTexture(textureId, cacheFile.toPath(), url, false);
+            if (future == null) return fail(profile, "native downloader returned null future");
+
+            AssetInfo.TextureAsset asset = future.join();
+            if (asset == null) return fail(profile, "native downloader returned null texture asset");
+
+            System.out.println("[ORYN-COSMETICS] Texture registered = true");
+            System.out.println("[ORYN-COSMETICS] Texture path = " + asset.texturePath());
+
+            try {
+                java.util.Map<Identifier, net.minecraft.client.texture.AbstractTexture> textures =
+                        ((OrynTextureManagerAccessor) (Object)
+                                ((OrynPlayerSkinTextureDownloaderAccessor) (Object) downloader)
+                                        .oryn$getTextureManager()).oryn$getTextures();
+                boolean lookup = textures.containsKey(asset.texturePath()) || textures.containsKey(textureId);
+                System.out.println("[ORYN-COSMETICS] TextureManager lookup = " + lookup);
+                System.out.println("[ORYN-COSMETICS] TextureManager entry class = "
+                        + (textures.get(asset.texturePath()) == null ? "null"
+                        : textures.get(asset.texturePath()).getClass().getName()));
+            } catch (Throwable lookupError) {
+                System.out.println("[ORYN-COSMETICS] TextureManager lookup = ERROR " + lookupError);
+            }
+
+            PlayerSkinType skinType = "slim".equalsIgnoreCase(runtime.model)
+                    ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
+            SkinTextures textures = new SkinTextures(asset, null, null, skinType, false);
+
+            System.out.println("[ORYN-COSMETICS] SkinTextures override = true"
+                    + " body=" + asset.texturePath()
+                    + " model=" + skinType
+                    + " secure=false");
+            return textures;
+        } catch (Throwable t) {
+            return fail(profile, "native texture pipeline exception: " + t);
+        }
     }
 
-    private static String escape(String value) {
-        return value.replace("\\", "\\\\").replace("\"", "\\\"");
+    private SkinTextures fail(GameProfile profile, String reason) {
+        System.out.println("[ORYN-COSMETICS] CUSTOM SKIN FAILED");
+        System.out.println("[ORYN-COSMETICS] Reason: " + reason);
+        System.out.println("[ORYN-COSMETICS] Vanilla fallback = true");
+        return DefaultSkinHelper.getSkinTextures(profile);
+    }
+
+    private static String safeId(String value) {
+        return value.replace("-", "").replaceAll("[^A-Za-z0-9._-]", "_");
     }
 }
