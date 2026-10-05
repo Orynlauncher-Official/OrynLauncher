@@ -42,9 +42,9 @@ public abstract class OrynPlayerSkinProviderMixin {
     private static int textureRegistrationCount;
     private static int downloaderRequestCount;
 
-    static void recordDownloaderRequest() { downloaderRequestCount++; }
-    static void recordPngDecode() { pngDecodeCount++; }
-    static void recordTextureRegistration() { textureRegistrationCount++; }
+    private static void recordDownloaderRequest() { downloaderRequestCount++; }
+    private static void recordPngDecode() { pngDecodeCount++; }
+    private static void recordTextureRegistration() { textureRegistrationCount++; }
 
     @Inject(method = "supplySkinTextures", at = @At("HEAD"), cancellable = true)
     private void oryn$applySkin(GameProfile profile, boolean requireSecure,
