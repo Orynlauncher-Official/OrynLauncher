@@ -28,11 +28,17 @@ public final class OrynProjectAdapter extends RecyclerView.Adapter<OrynProjectAd
     private final Listener listener;
     private final List<ModrinthProject> items = new ArrayList<>();
     private int selectedPosition = RecyclerView.NO_POSITION;
+    private int placeholderResId = R.drawable.oryn_download_mod;
 
     public OrynProjectAdapter(OrynContentRepository repository, Listener listener) {
         this.repository = repository;
         this.listener = listener;
         setHasStableIds(true);
+    }
+
+    public void setPlaceholder(int resourceId) {
+        placeholderResId = resourceId;
+        notifyDataSetChanged();
     }
 
     public void submitList(List<ModrinthProject> projects) {
@@ -85,7 +91,7 @@ public final class OrynProjectAdapter extends RecyclerView.Adapter<OrynProjectAd
 
         ImageView icon = new ImageView(parent.getContext());
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        icon.setImageResource(R.drawable.oryn_download_mod);
+        icon.setImageResource(placeholderResId);
         card.addView(icon, new LinearLayout.LayoutParams(58 * dp, 58 * dp));
 
         LinearLayout body = new LinearLayout(parent.getContext());
