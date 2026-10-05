@@ -468,6 +468,27 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     }
                 }
 
+                // Modrinth can legitimately return zero hits for a strict
+                // version/loader facet even when compatible projects exist. Match
+                // the Modrinth client behavior: retry the project-type search and
+                // let the version picker perform the authoritative compatibility check.
+                if (searchHits.size() == 0) {
+                    JsonObject broadResponse = searchModrinthProjects(
+                            requestedQuery, requestedCategory, requestedVersion, requestedLoader, false);
+                    JsonArray broadHits = broadResponse == null
+                            ? null : broadResponse.getAsJsonArray("hits");
+                    if (broadHits != null) {
+                        for (int i = 0; i < broadHits.size(); i++) {
+                            JsonObject hit = broadHits.get(i).getAsJsonObject();
+                            String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
+                                    ? hit.get("project_type").getAsString() : "";
+                            if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
+                            searchHits.add(hit);
+                            if (searchHits.size() >= 30) break;
+                        }
+                    }
+                }
+
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
 
@@ -475,8 +496,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
                     if (searchHits.size() == 0) {
                         status.setText(requestedQuery.isEmpty()
-                                ? "No compatible " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found"
-                                : "No compatible results found");
+                                ? "No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found on Modrinth"
+                                : "No results found on Modrinth");
                         return;
                     }
 
@@ -655,7 +676,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 connection.setConnectTimeout(10000);
                 connection.setReadTimeout(15000);
                 connection.setInstanceFollowRedirects(true);
-                connection.setRequestProperty("User-Agent", "OrynLauncher/2.2");
+                connection.setRequestProperty("User-Agent", "OrynLauncher/4.0");
                 InputStream in = connection.getInputStream();
                 final android.graphics.Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(in);
                 in.close();
@@ -682,9 +703,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 if (category == Category.MOD && loaderForRequest != null && !loaderForRequest.isEmpty()) {
                     versionParams.put("loaders",
                             String.format("[\"%s\"]", loaderForRequest));
-                } else if (category == Category.RESOURCEPACK || category == Category.SHADER) {
-                    versionParams.put("loaders", "[\"minecraft\"]");
                 }
+                // Resource packs and shaders are validated by game_versions.
+                // Do not require a synthetic "minecraft" loader facet here.
                 versionParams.put("include_changelog", false);
                 JsonArray versions = api.get(
                         "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
@@ -1029,7 +1050,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         JsonArray.class
                 );
 
-                String loader = getSelectedLoader();
+                String loader = getModrinthLoader(instance);
                 JsonObject version = null;
                 for (int i = 0; versions != null && i < versions.size(); i++) {
                     JsonObject candidate = versions.get(i).getAsJsonObject();
@@ -1045,12 +1066,6 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     }
                     if (!gameMatch) continue;
 
-                    if (forcedVersionId != null && candidate.has("id")
-                            && forcedVersionId.equals(candidate.get("id").getAsString())) {
-                        version = candidate;
-                        break;
-                    }
-
                     if (loader != null && category == Category.MOD) {
                         boolean loaderMatch = false;
                         if (candidate.has("loaders")) {
@@ -1063,6 +1078,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
                             }
                         }
                         if (!loaderMatch) continue;
+                    }
+
+                    if (forcedVersionId != null && candidate.has("id")
+                            && forcedVersionId.equals(candidate.get("id").getAsString())) {
+                        version = candidate;
+                        break;
                     }
 
                     // Prefer a featured release, otherwise keep the first
@@ -1378,7 +1399,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 connection.setConnectTimeout(15000);
                 connection.setReadTimeout(30000);
                 connection.setInstanceFollowRedirects(true);
-                connection.setRequestProperty("User-Agent", "OrynLauncher/2.2 (Zalith-style Modrinth downloader)");
+                connection.setRequestProperty("User-Agent", "OrynLauncher/4.0 (Modrinth client)");
                 connection.connect();
 
                 if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) {
