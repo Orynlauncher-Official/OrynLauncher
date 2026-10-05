@@ -781,10 +781,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
         String name = selectedInstance == null ? "Select an instance"
                 : (selectedInstance.name == null || selectedInstance.name.trim().isEmpty()
                 ? selectedInstance.versionId : selectedInstance.name);
-        instanceButton.setText(name + " ▼");
-        instanceTarget.setText(selectedInstance == null
-                ? "Select an instance first"
-                : name + "\n" + minecraftVersionFromInstance(selectedInstance.versionId));
+        if (instanceButton != null) {
+            instanceButton.setText(name + " ▼");
+        }
+        // instanceTarget exists only in the wide-screen sidebar. Compact phones
+        // intentionally do not create that view, so never dereference it there.
+        if (instanceTarget != null) {
+            instanceTarget.setText(selectedInstance == null
+                    ? "Select an instance first"
+                    : name + "\n" + minecraftVersionFromInstance(selectedInstance.versionId));
+        }
     }
 
     private void updateFilterVisibility() {
