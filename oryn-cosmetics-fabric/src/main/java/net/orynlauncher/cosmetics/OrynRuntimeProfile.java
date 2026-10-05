@@ -380,9 +380,6 @@ public final class OrynRuntimeProfile {
         }
     }
 
-    private static boolean valid(String path) {
-        return path != null && !path.isEmpty() && new File(path).isFile();
-    }
 
     public static void logRenderer(net.minecraft.client.render.entity.state.PlayerEntityRenderState state) {
         if (state == null || state.skinTextures == null) return;
