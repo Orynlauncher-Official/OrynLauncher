@@ -6,6 +6,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import net.kdt.pojavlaunch.download.OrynInstanceContentScanner;
 
 /**
  * Single ownership boundary for OrynLauncher instances.
@@ -16,6 +20,45 @@ import java.util.UUID;
  */
 public final class OrynInstanceManager {
     private static final String TAG = "OrynInstanceManager";
+    private static final List<ContentListener> CONTENT_LISTENERS = new CopyOnWriteArrayList<>();
+
+    public interface ContentListener {
+        void onContentInstalled(OrynInstanceContentEvent event);
+    }
+
+    public static void addContentListener(ContentListener listener) {
+        if (listener != null) CONTENT_LISTENERS.add(listener);
+    }
+
+    public static void removeContentListener(ContentListener listener) {
+        CONTENT_LISTENERS.remove(listener);
+    }
+
+    public static void refreshInstanceContent(final String instanceId) {
+        if (instanceId == null || instanceId.trim().isEmpty()) return;
+        EXECUTOR.execute(() -> {
+            try {
+                for (Instance instance : Instances.loadAllInstances()) {
+                    if (instanceId.equals(instance.id)) {
+                        OrynInstanceContentScanner.refreshAsync(instance);
+                        return;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Unable to refresh instance content", e);
+            }
+        });
+    }
+
+    private static final java.util.concurrent.ExecutorService EXECUTOR = java.util.concurrent.Executors.newSingleThreadExecutor();
+
+    public static void publishContentInstalled(OrynInstanceContentEvent event) {
+        if (event == null) return;
+        refreshInstanceContent(event.instanceId);
+        for (ContentListener listener : CONTENT_LISTENERS) {
+            try { listener.onContentInstalled(event); } catch (Exception e) { Log.w(TAG, "Content listener failed", e); }
+        }
+    }
 
     private OrynInstanceManager() {}
 
@@ -101,6 +144,7 @@ public final class OrynInstanceManager {
         instance.metadata.sanitize();
         instance.metadata.installedContent.put(key, value == null ? "" : value);
         instance.write();
+        refreshInstanceContent(instance.id);
     }
 
     public static void markPlayed(Instance instance) throws IOException {
