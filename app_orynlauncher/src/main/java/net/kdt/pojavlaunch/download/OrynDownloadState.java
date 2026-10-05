@@ -45,7 +45,7 @@ public final class OrynDownloadState {
     public final ModrinthVersion selectedVersion;
     public final DetailStatus detailStatus;
     public final String detailMessage;
-    public final DownloadState installState;
+    public final OrynInstallState installState;
 
     private OrynDownloadState(Category category, String minecraftVersion, String loader,
                               String query, Instance selectedInstance,
@@ -55,7 +55,7 @@ public final class OrynDownloadState {
                               List<ModrinthVersion> compatibleVersions,
                               ModrinthVersion selectedVersion,
                               DetailStatus detailStatus, String detailMessage,
-                              DownloadState installState) {
+                              OrynInstallState installState) {
         this.category = category;
         this.minecraftVersion = minecraftVersion;
         this.loader = loader;
@@ -82,7 +82,7 @@ public final class OrynDownloadState {
                 ListStatus.IDLE, "Discovering Modrinth content…",
                 null, Collections.<ModrinthVersion>emptyList(), null,
                 DetailStatus.IDLE, "Select a project to view details.",
-                DownloadState.idle());
+                OrynInstallState.idle());
     }
 
     public OrynDownloadState withFilters(Category category, String minecraftVersion, String loader, String query) {
@@ -92,7 +92,7 @@ public final class OrynDownloadState {
                 ListStatus.LOADING, "Loading projects…",
                 null, Collections.<ModrinthVersion>emptyList(), null,
                 DetailStatus.IDLE, "Select a project to view details.",
-                DownloadState.idle());
+                OrynInstallState.idle());
     }
 
     public OrynDownloadState withProjects(List<ModrinthProject> projects, int nextOffset,
@@ -130,7 +130,7 @@ public final class OrynDownloadState {
                 listStatus, listMessage,
                 project, Collections.<ModrinthVersion>emptyList(), null,
                 DetailStatus.LOADING, "Loading compatible versions…",
-                DownloadState.idle());
+                OrynInstallState.idle());
     }
 
     public OrynDownloadState withDetails(ModrinthProject project, List<ModrinthVersion> versions) {
@@ -144,7 +144,7 @@ public final class OrynDownloadState {
                 versions == null || versions.isEmpty()
                         ? "No downloadable version matches the current filters."
                         : "Select a version, then download.",
-                DownloadState.idle());
+                OrynInstallState.idle());
     }
 
     public OrynDownloadState withSelectedVersion(ModrinthVersion version) {
@@ -153,10 +153,10 @@ public final class OrynDownloadState {
                 projects, nextOffset, totalHits, hasMore,
                 listStatus, listMessage,
                 selectedProject, compatibleVersions, version,
-                detailStatus, detailMessage, DownloadState.idle());
+                detailStatus, detailMessage, OrynInstallState.idle());
     }
 
-    public OrynDownloadState withInstallState(DownloadState state) {
+    public OrynDownloadState withInstallState(OrynInstallState state) {
         return new OrynDownloadState(
                 category, minecraftVersion, loader, query, selectedInstance,
                 projects, nextOffset, totalHits, hasMore,
