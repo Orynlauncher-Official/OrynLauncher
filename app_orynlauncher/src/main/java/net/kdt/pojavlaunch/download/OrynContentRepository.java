@@ -10,16 +10,16 @@ public final class OrynContentRepository {
         void onError(Exception error);
     }
 
-    private final ModrinthRepository delegate;
+    private final ModrinthRemoteRepository delegate;
 
     public OrynContentRepository() {
-        delegate = new ModrinthRepository();
+        delegate = new ModrinthRemoteRepository();
     }
 
     public void search(String query, String projectType, String minecraftVersion, String loader,
                        int offset, final Listener<ModrinthSearchResult> listener) {
         delegate.searchAsync(query, projectType, minecraftVersion, loader, offset,
-                new ModrinthRepository.SearchCallback() {
+                new ModrinthRemoteRepository.SearchCallback() {
                     @Override public void onLoading() { }
                     @Override public void onSuccess(ModrinthSearchResult result, boolean append) {
                         listener.onSuccess(result);
@@ -34,7 +34,7 @@ public final class OrynContentRepository {
                                   String minecraftVersion, String loader,
                                   final Listener<ProjectDetails> listener) {
         delegate.loadProjectDetailsAsync(project, projectType, minecraftVersion, loader,
-                new ModrinthRepository.DetailsCallback() {
+                new ModrinthRemoteRepository.DetailsCallback() {
                     @Override public void onLoading() { }
                     @Override public void onSuccess(ModrinthProject fullProject,
                                                     List<ModrinthVersion> compatibleVersions) {
@@ -47,21 +47,21 @@ public final class OrynContentRepository {
     }
 
     public void loadGameVersions(final Listener<List<String>> listener) {
-        delegate.loadGameVersionsAsync(new ModrinthRepository.ValuesCallback() {
+        delegate.loadGameVersionsAsync(new ModrinthRemoteRepository.ValuesCallback() {
             @Override public void onSuccess(List<String> values) { listener.onSuccess(values); }
             @Override public void onError(Exception error) { listener.onError(error); }
         });
     }
 
     public void loadLoaders(final Listener<List<String>> listener) {
-        delegate.loadLoadersAsync(new ModrinthRepository.ValuesCallback() {
+        delegate.loadLoadersAsync(new ModrinthRemoteRepository.ValuesCallback() {
             @Override public void onSuccess(List<String> values) { listener.onSuccess(values); }
             @Override public void onError(Exception error) { listener.onError(error); }
         });
     }
 
     public void loadIcon(String url, final Listener<Bitmap> listener) {
-        delegate.loadIconAsync(url, new ModrinthRepository.IconCallback() {
+        delegate.loadIconAsync(url, new ModrinthRemoteRepository.IconCallback() {
             @Override public void onSuccess(Bitmap bitmap) { listener.onSuccess(bitmap); }
             @Override public void onError() { listener.onError(new Exception("Icon unavailable")); }
         });
