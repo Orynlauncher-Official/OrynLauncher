@@ -26,20 +26,13 @@ public final class OrynCosmeticsVersionAdapterFactory {
     }
 
     private static boolean isAuthlibProfileVersion(String version) {
-        if (version.isEmpty()) return false;
-
-        // Stable releases and snapshots with a 1.x Java Edition base use the
-        // standard GameProfile texture property path. We deliberately do not
-        // guess mappings or load Minecraft classes in the launcher process.
-        if (!version.startsWith("1.")) return false;
+        if (version.isEmpty() || !version.startsWith("1.")) return false;
 
         try {
-            String[] parts = version.split("\.");
+            String[] parts = version.split("\\.");
             int minor = Integer.parseInt(parts[1]);
             return minor >= 7;
         } catch (Exception ignored) {
-            // Snapshot IDs such as 24w05a are handled by the vanilla fallback
-            // rather than pretending we know their mappings.
             return false;
         }
     }
