@@ -7,13 +7,6 @@ import net.kdt.pojavlaunch.authenticator.accounts.Account;
 
 import java.io.File;
 
-/**
- * Single launcher entry point for cosmetics.
- *
- * This class knows nothing about Minecraft mappings, PlayerRenderer,
- * SkinTextures, TextureManager, or renderer internals. It selects a
- * version adapter and hands the adapter an immutable OrynCosmeticsProfile.
- */
 public final class OrynCosmeticsManager {
     private static final String TAG = "OrynCosmetics";
 
@@ -33,26 +26,28 @@ public final class OrynCosmeticsManager {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
             OrynCosmeticsStore.CosmeticProfile stored = store.getActiveProfile(account);
             OrynCosmeticsProfile profile = OrynCosmeticsProfile.from(account, stored);
-
             OrynCosmeticsVersionAdapter adapter =
                     OrynCosmeticsVersionAdapterFactory.forVersion(minecraftVersion);
 
-            Log.i(TAG, "[ORYN-COSMETICS] Minecraft version: " + safe(minecraftVersion));
-            Log.i(TAG, "[ORYN-COSMETICS] Adapter: " + adapter.id());
-            Log.i(TAG, "[ORYN-COSMETICS] Custom skin supported: "
-                    + adapter.supportsSkin(minecraftVersion));
-            Log.i(TAG, "[ORYN-COSMETICS] Custom cape supported: "
-                    + adapter.supportsCape(minecraftVersion));
-            Log.i(TAG, "[ORYN-COSMETICS] Account UUID: " + safeUuid(account));
-            Log.i(TAG, "[ORYN-COSMETICS] Skin enabled: " + profile.skinEnabled);
-            Log.i(TAG, "[ORYN-COSMETICS] Skin selected: " + profile.skinFile);
-            Log.i(TAG, "[ORYN-COSMETICS] Skin model: " + profile.model);
-            Log.i(TAG, "[ORYN-COSMETICS] Cape enabled: " + profile.capeEnabled);
-            Log.i(TAG, "[ORYN-COSMETICS] Cape selected: " + profile.capeFile);
+            Log.i(TAG, "[ORYN-COSMETICS] Minecraft version = " + safe(minecraftVersion));
+            Log.i(TAG, "[ORYN-COSMETICS] Selected adapter = " + adapter.id());
+            Log.i(TAG, "[ORYN-COSMETICS] Adapter initialized = true");
+            Log.i(TAG, "[ORYN-COSMETICS] account UUID = " + safeUuid(account));
+            Log.i(TAG, "[ORYN-COSMETICS] skin enabled = " + profile.skinEnabled);
+            Log.i(TAG, "[ORYN-COSMETICS] skin path = " + profile.skinFile);
+            Log.i(TAG, "[ORYN-COSMETICS] skin model = " + profile.model);
+            Log.i(TAG, "[ORYN-COSMETICS] cape enabled = " + profile.capeEnabled);
+            Log.i(TAG, "[ORYN-COSMETICS] cape path = " + profile.capeFile);
+            Log.i(TAG, "[ORYN-COSMETICS] applySkin() called = delegated to runtime adapter");
+            Log.i(TAG, "[ORYN-COSMETICS] applyCape() called = not invoked (skin-first debug phase)");
+
+            if (profile.skinEnabled && profile.skinFile.isEmpty()) {
+                Log.e(TAG, "[ORYN-COSMETICS] CUSTOM SKIN FAILED Reason: skin enabled but persisted skin path is empty");
+            }
 
             return adapter.prepare(context, account, profile, gameDir, minecraftVersion);
         } catch (Throwable t) {
-            Log.w(TAG, "[ORYN-COSMETICS] Adapter preparation failed; continuing with vanilla.", t);
+            Log.e(TAG, "[ORYN-COSMETICS] CUSTOM SKIN FAILED Reason: launch cosmetics handoff exception", t);
             return "{}";
         }
     }
@@ -82,9 +77,7 @@ public final class OrynCosmeticsManager {
     }
 
     private static String safeUuid(Account account) {
-        if (account == null || account.profileId == null || account.profileId.isEmpty()) {
-            return "unknown";
-        }
+        if (account == null || account.profileId == null || account.profileId.isEmpty()) return "unknown";
         return account.profileId;
     }
 
