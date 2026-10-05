@@ -30,8 +30,8 @@ public final class OrynCosmeticsRuntime {
     private OrynCosmeticsRuntime() {}
 
     public static SkinTextures getOrStart(GameProfile profile, PlayerSkinTextureDownloader downloader) {
-        SkinTextures vanilla = DefaultSkinHelper.getSkinTextures(profile);
-        if (profile == null || downloader == null) return vanilla;
+        if (profile == null || downloader == null) return DefaultSkinHelper.getSkinTextures(profile);
+        SkinTextures vanilla = DefaultSkinHelper.getSkinTextures(profile); return vanilla;
 
         final String identity = profile.id() == null
                 ? "name:" + profile.name()
@@ -145,7 +145,7 @@ public final class OrynCosmeticsRuntime {
                     throw new IllegalStateException("cape texture asset is null");
                 }
 
-                PlayerSkinType model = "slim".equalsIgnoreCase(runtime.model)
+                PlayerSkinType model = "slim".equalsIgnoreCase(selectedRuntime.model)
                         ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
 
                 // Preserve the working Oryn body texture exactly. Only the cape
