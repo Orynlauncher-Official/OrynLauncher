@@ -59,7 +59,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         }
     }
 
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    // Download/search requests must not queue behind a slow Modrinth request.\n    // V4 switches categories frequently, so use a small cached pool and let\n    // searchGeneration discard stale responses on the UI thread.\n    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ApiHandler api = new ApiHandler("https://api.modrinth.com/v2");
     private final ModrinthApi modrinthModpackApi = new ModrinthApi();
     private Category category = Category.MOD;
@@ -457,36 +457,24 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonArray rawHits = response == null ? null : response.getAsJsonArray("hits");
                 JsonArray searchHits = new JsonArray();
 
-                if (rawHits != null) {
-                    for (int i = 0; i < rawHits.size(); i++) {
-                        JsonObject hit = rawHits.get(i).getAsJsonObject();
-                        String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
-                                ? hit.get("project_type").getAsString() : "";
-                        if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
-                        searchHits.add(hit);
-                        if (searchHits.size() >= 30) break;
-                    }
-                }
+                // Always validate the project type locally. We also validate the
+                // version/loader fields returned by Modrinth's search index so a
+                // broad fallback can safely be used when a facet query is empty
+                // or temporarily rejected by the API.
+                appendCompatibleSearchHits(searchHits, rawHits, requestedCategory,
+                        requestedVersion, requestedLoader, 30);
 
-                // Modrinth can legitimately return zero hits for a strict
-                // version/loader facet even when compatible projects exist. Match
-                // the Modrinth client behavior: retry the project-type search and
-                // let the version picker perform the authoritative compatibility check.
-                if (searchHits.size() == 0) {
+                // If the strict facet search returned too few projects, perform a
+                // second project-type-only Modrinth search and fill the remaining
+                // slots from its indexed versions/categories. This makes the
+                // browser resilient to Modrinth facet/index changes.
+                if (searchHits.size() < 30) {
                     JsonObject broadResponse = searchModrinthProjects(
                             requestedQuery, requestedCategory, requestedVersion, requestedLoader, false);
                     JsonArray broadHits = broadResponse == null
                             ? null : broadResponse.getAsJsonArray("hits");
-                    if (broadHits != null) {
-                        for (int i = 0; i < broadHits.size(); i++) {
-                            JsonObject hit = broadHits.get(i).getAsJsonObject();
-                            String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
-                                    ? hit.get("project_type").getAsString() : "";
-                            if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
-                            searchHits.add(hit);
-                            if (searchHits.size() >= 30) break;
-                        }
-                    }
+                    appendCompatibleSearchHits(searchHits, broadHits, requestedCategory,
+                            requestedVersion, requestedLoader, 30);
                 }
 
                 runOnUiThread(() -> {
@@ -521,6 +509,65 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             }
         });
+    }
+
+    private void appendCompatibleSearchHits(JsonArray destination, JsonArray hits,
+                                                Category requestedCategory,
+                                                String minecraftVersion,
+                                                String loader,
+                                                int maxResults) {
+        if (hits == null) return;
+
+        for (int i = 0; i < hits.size() && destination.size() < maxResults; i++) {
+            JsonObject hit = hits.get(i).getAsJsonObject();
+            String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
+                    ? hit.get("project_type").getAsString() : "";
+            if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
+
+            // Avoid duplicates when the strict and broad searches overlap.
+            String id = hit.has("project_id") && !hit.get("project_id").isJsonNull()
+                    ? hit.get("project_id").getAsString() : "";
+            boolean duplicate = false;
+            for (int j = 0; j < destination.size(); j++) {
+                JsonObject existing = destination.get(j).getAsJsonObject();
+                if (id.equals(existing.has("project_id") ? existing.get("project_id").getAsString() : "")) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (duplicate) continue;
+
+            // Search results expose the supported Minecraft versions and loader
+            // tags directly. For non-mod projects there is no loader filter.
+            boolean versionMatch = false;
+            if (minecraftVersion != null && hit.has("versions") && hit.get("versions").isJsonArray()) {
+                JsonArray versions = hit.getAsJsonArray("versions");
+                for (int j = 0; j < versions.size(); j++) {
+                    if (minecraftVersion.equals(versions.get(j).getAsString())) {
+                        versionMatch = true;
+                        break;
+                    }
+                }
+            }
+            if (!versionMatch) continue;
+
+            if (requestedCategory == Category.MOD && loader != null && !loader.isEmpty()) {
+                boolean loaderMatch = false;
+                JsonArray categories = hit.has("categories") && hit.get("categories").isJsonArray()
+                        ? hit.getAsJsonArray("categories") : null;
+                if (categories != null) {
+                    for (int j = 0; j < categories.size(); j++) {
+                        if (loader.equalsIgnoreCase(categories.get(j).getAsString())) {
+                            loaderMatch = true;
+                            break;
+                        }
+                    }
+                }
+                if (!loaderMatch) continue;
+            }
+
+            destination.add(hit);
+        }
     }
 
     private String buildSearchFacets(Category requestedCategory, String minecraftVersion, String loader) {
