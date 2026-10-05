@@ -527,7 +527,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 && (!category.usesLoader() || contains(state.selectedVersion.loaders, loader))
                 && viewModel.isVersionCompatible(state.selectedVersion, mc,
                         category.usesLoader() ? loader : null)
-                && state.selectedInstance != null;
+                && (state.selectedInstance != null || category == OrynDownloadState.Category.MODPACK);
         versionInstallButton.setEnabled(valid && state.installState.status != OrynInstallState.Status.DOWNLOADING
                 && state.installState.status != OrynInstallState.Status.INSTALLING
                 && state.installState.status != OrynInstallState.Status.CHECKING);
