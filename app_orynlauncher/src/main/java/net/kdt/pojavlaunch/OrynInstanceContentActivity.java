@@ -255,6 +255,18 @@ public class OrynInstanceContentActivity extends AppCompatActivity
                 OrynInstanceContentScanner.ContentItem item = items.get(position);
                 holder.text.setText(item.name + "\n" + (item.enabled ? "Enabled" : "Disabled")
                         + " • " + formatBytes(item.size));
+                holder.text.setOnLongClickListener(v -> {
+                    File target = new File(instance.getGameDirectory(),
+                            selected == OrynInstanceContentScanner.ContentType.MODS ? "mods" :
+                            selected == OrynInstanceContentScanner.ContentType.SHADERS ? "shaderpacks" :
+                            selected == OrynInstanceContentScanner.ContentType.RESOURCE_PACKS ? "resourcepacks" : "saves");
+                    target = new File(target, item.fileName);
+                    if (target.delete()) {
+                        OrynInstanceContentScanner.refreshAsync(instance);
+                        Toast.makeText(OrynInstanceContentActivity.this, "Deleted " + item.name, Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                });
             }
         }
 
