@@ -42,6 +42,10 @@ public abstract class OrynPlayerSkinProviderMixin {
     private static int textureRegistrationCount;
     private static int downloaderRequestCount;
 
+    static void recordDownloaderRequest() { downloaderRequestCount++; }
+    static void recordPngDecode() { pngDecodeCount++; }
+    static void recordTextureRegistration() { textureRegistrationCount++; }
+
     @Inject(method = "supplySkinTextures", at = @At("HEAD"), cancellable = true)
     private void oryn$applySkin(GameProfile profile, boolean requireSecure,
                                 CallbackInfoReturnable<Supplier<SkinTextures>> cir) {
@@ -146,8 +150,6 @@ public abstract class OrynPlayerSkinProviderMixin {
                  * state. The downloader mixin records its real decode/register
                  * counters; this method never calls it again for a cache hit.
                  */
-                downloaderRequestCount++;
-                System.out.println("[ORYN-COSMETICS] downloaderRequestCount = " + downloaderRequestCount);
 
                 CompletableFuture<AssetInfo.TextureAsset> future =
                         downloader.downloadAndRegisterTexture(textureId, cacheFile.toPath(), url, false);
