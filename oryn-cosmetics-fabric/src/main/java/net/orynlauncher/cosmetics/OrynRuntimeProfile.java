@@ -10,16 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Runtime account/profile data consumed by the 1.21.11 bridge.
- *
- * This class deliberately does not know about NativeImage, TextureManager,
- * SkinTextures, PlayerRenderer, UVs, or OpenGL. Minecraft owns all texture
- * decoding, caching and rendering.
- */
 public final class OrynRuntimeProfile {
     private static final Logger LOGGER = LoggerFactory.getLogger("OrynCosmetics");
-
     private static OrynRuntimeProfile cached;
     private static long cachedModified = Long.MIN_VALUE;
 
@@ -34,10 +26,10 @@ public final class OrynRuntimeProfile {
     private OrynRuntimeProfile(String accountUuid, String accountName,
                                String skinPath, String capePath, String model,
                                boolean skinEnabled, boolean capeEnabled) {
-        this.accountUuid = accountUuid;
-        this.accountName = accountName;
-        this.skinPath = skinPath;
-        this.capePath = capePath;
+        this.accountUuid = accountUuid == null ? "" : accountUuid;
+        this.accountName = accountName == null ? "" : accountName;
+        this.skinPath = skinPath == null ? "" : skinPath;
+        this.capePath = capePath == null ? "" : capePath;
         this.model = "slim".equalsIgnoreCase(model) ? "slim" : "classic";
         this.skinEnabled = skinEnabled;
         this.capeEnabled = capeEnabled;
@@ -45,11 +37,12 @@ public final class OrynRuntimeProfile {
 
     public static OrynRuntimeProfile load() {
         try {
-            File file = new File(
-                    new File(System.getProperty("user.dir", ".")),
+            File file = new File(new File(System.getProperty("user.dir", ".")),
                     ".oryn/cosmetics/active_profile.json");
-
-            if (!file.isFile()) return null;
+            if (!file.isFile()) {
+                LOGGER.error("[ORYN-COSMETICS] CUSTOM SKIN FAILED Reason: runtime profile missing path={}", file.getAbsolutePath());
+                return null;
+            }
 
             long modified = file.lastModified();
             if (cached != null && cachedModified == modified) return cached;
@@ -70,14 +63,28 @@ public final class OrynRuntimeProfile {
                     getBool(o, "capeEnabled"));
             cachedModified = modified;
 
-            LOGGER.info("[ORYN-COSMETICS] Runtime profile loaded account={} uuid={} skinEnabled={} model={} capeEnabled={}",
-                    cached.accountName, cached.accountUuid, cached.skinEnabled,
-                    cached.model, cached.capeEnabled);
+            LOGGER.info("[ORYN-COSMETICS] account UUID = {}", cached.accountUuid);
+            LOGGER.info("[ORYN-COSMETICS] skin enabled = {}", cached.skinEnabled);
+            LOGGER.info("[ORYN-COSMETICS] skin path = {}", cached.skinPath);
+            LOGGER.info("[ORYN-COSMETICS] skin model = {}", cached.model);
+            LOGGER.info("[ORYN-COSMETICS] cape enabled = {}", cached.capeEnabled);
+            LOGGER.info("[ORYN-COSMETICS] cape path = {}", cached.capePath);
+
+            if (cached.skinEnabled && cached.skinPath.isEmpty()) {
+                LOGGER.error("[ORYN-COSMETICS] CUSTOM SKIN FAILED Reason: skin enabled but skin path is empty");
+            }
             return cached;
         } catch (Throwable t) {
-            LOGGER.warn("[ORYN-COSMETICS] Failed to load runtime cosmetics profile", t);
+            LOGGER.error("[ORYN-COSMETICS] CUSTOM SKIN FAILED Reason: runtime profile parse failed", t);
             return null;
         }
+    }
+
+    public File resolveSkinFile() {
+        if (Boolean.getBoolean("oryn.cosmetics.testSkin")) {
+            return OrynRuntimeTestSkin.ensure();
+        }
+        return skinPath.isEmpty() ? null : new File(skinPath);
     }
 
     private static String get(JsonObject o, String key) {
@@ -94,14 +101,11 @@ public final class OrynRuntimeProfile {
 
     public boolean matches(GameProfile profile) {
         if (profile == null) return false;
-
         String uuid = profile.id() == null ? "" : profile.id().toString();
         String configured = accountUuid.replace("-", "");
-
         if (!configured.isEmpty() && !configured.matches("0{32}")) {
             return configured.equalsIgnoreCase(uuid.replace("-", ""));
         }
-
         return !accountName.isEmpty() && accountName.equalsIgnoreCase(profile.name());
     }
 }
