@@ -38,10 +38,8 @@ public class OrynCosmeticsActivity extends Activity {
     private OrynCosmeticPreviewView preview;
     private Button profiles, models, skins, capes;
     private TextView status, selectedSkin, selectedCape, tabTitle;
-    private Button skinTab, capeTab, applyButton, saveButton, removeButton, unequipButton;
-    private Switch skinEnabledSwitch, capeEnabledSwitch;
+    private Button skinToggle, capeToggle, applyButton, saveButton, removeButton, unequipButton;
     private OrynCosmeticsStore.CosmeticProfile active;
-    private boolean capeTabSelected;
     private boolean refreshing;
 
     @Override public void onCreate(@Nullable Bundle b) {
@@ -161,12 +159,10 @@ public class OrynCosmeticsActivity extends Activity {
 
         left.addView(sectionLabel("Collection"), lp(-1, 24));
 
-        skinTab = button("  Skin");
-        capeTab = button("  Cape");
-        skinTab.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        capeTab.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        left.addView(skinTab, lp(-1, 46));
-        left.addView(capeTab, lp(-1, 46));
+        Button combinedNav = button("  Skin & Cape");
+        combinedNav.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        primary(combinedNav);
+        left.addView(combinedNav, lp(-1, 46));
 
         left.addView(new Space(this), lp(-1, 10));
         left.addView(sectionLabel("Import"), lp(-1, 24));
@@ -212,9 +208,9 @@ public class OrynCosmeticsActivity extends Activity {
         header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout headerText = new LinearLayout(this);
         headerText.setOrientation(LinearLayout.VERTICAL);
-        tabTitle = text("Skin Preview", 20, WHITE);
+        tabTitle = text("Skin & Cape Preview", 20, WHITE);
         tabTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView subtitle = text("Preview your equipped look before launching Minecraft.", 10, MUTED);
+        TextView subtitle = text("Configure your skin and cape together, with independent controls.", 10, MUTED);
         headerText.addView(tabTitle, lp(-1, 27));
         headerText.addView(subtitle, lp(-1, 20));
         header.addView(headerText, new LinearLayout.LayoutParams(0, d(48), 1));
@@ -293,25 +289,20 @@ public class OrynCosmeticsActivity extends Activity {
         newProfile.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         right.addView(newProfile, lp(-1, 34));
 
-        right.addView(sectionLabel("Cosmetics"), lp(-1, 24));
+        right.addView(sectionLabel("Skin & Cape"), lp(-1, 24));
         skins = selectorButton("None");
         capes = selectorButton("None");
         right.addView(skins, lp(-1, 38));
         right.addView(capes, lp(-1, 38));
-
-        skinEnabledSwitch = new Switch(this);
-        skinEnabledSwitch.setText("Skin enabled");
-        skinEnabledSwitch.setTextColor(WHITE);
-        skinEnabledSwitch.setTextSize(10);
-        skinEnabledSwitch.setPadding(d(4), 0, 0, 0);
-        right.addView(skinEnabledSwitch, lp(-1, 34));
-
-        capeEnabledSwitch = new Switch(this);
-        capeEnabledSwitch.setText("Cape enabled");
-        capeEnabledSwitch.setTextColor(WHITE);
-        capeEnabledSwitch.setTextSize(10);
-        capeEnabledSwitch.setPadding(d(4), 0, 0, 0);
-        right.addView(capeEnabledSwitch, lp(-1, 34));
+        LinearLayout toggles = new LinearLayout(this);
+        toggles.setOrientation(LinearLayout.HORIZONTAL);
+        skinToggle = button("Skin: OFF");
+        capeToggle = button("Cape: OFF");
+        toggles.addView(skinToggle, new LinearLayout.LayoutParams(0, d(36), 1));
+        Space toggleGap = new Space(this);
+        toggles.addView(toggleGap, lp(8, 1));
+        toggles.addView(capeToggle, new LinearLayout.LayoutParams(0, d(36), 1));
+        right.addView(toggles, lp(-1, 40));
 
         right.addView(sectionLabel("Player Model"), lp(-1, 24));
         models = selectorButton("Classic (Steve)");
@@ -322,8 +313,8 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout actions = new LinearLayout(this);
         actions.setOrientation(LinearLayout.HORIZONTAL);
         actions.setPadding(0, d(2), 0, d(2));
-        applyButton = button("Apply Skin");
-        saveButton = button("Save Skin");
+        applyButton = button("Apply Cosmetics");
+        saveButton = button("Save Cosmetics");
         primary(applyButton);
         actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(42), 1));
         Space actionGap = new Space(this);
@@ -334,7 +325,7 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout actions2 = new LinearLayout(this);
         actions2.setOrientation(LinearLayout.HORIZONTAL);
         removeButton = button("Remove Skin");
-        unequipButton = button("Unequip Cape");
+        unequipButton = button("Remove Cape");
         actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(34), 1));
         Space actionGap2 = new Space(this);
         actions2.addView(actionGap2, lp(8, 1));
@@ -356,8 +347,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         setContentView(root);
 
-        skinTab.setOnClickListener(v -> setTab(false));
-        capeTab.setOnClickListener(v -> setTab(true));
+        combinedNav.setOnClickListener(v -> status.setText("Skin & Cape • combined cosmetics profile"));
         importSkin.setOnClickListener(v -> pick(PICK_SKIN));
         importCape.setOnClickListener(v -> pick(PICK_CAPE));
         back.setOnClickListener(v -> finish());
@@ -380,7 +370,7 @@ public class OrynCosmeticsActivity extends Activity {
                         OrynCosmeticsStore.CosmeticProfile p = new OrynCosmeticsStore.CosmeticProfile();
                         p.name = n;
                         try {
-                            store.saveProfile(currentAccount, p);
+                            store.saveProfile(p);
                             active = p;
                             refresh();
                             status.setText("Profile created");
@@ -391,7 +381,7 @@ public class OrynCosmeticsActivity extends Activity {
         });
 
         profiles.setOnClickListener(v -> {
-            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles(currentAccount);
+            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
             String[] values = new String[ps.size()];
             int selected = 0;
             for (int i = 0; i < ps.size(); i++) {
@@ -402,7 +392,7 @@ public class OrynCosmeticsActivity extends Activity {
                 if (pos < ps.size()) {
                     active = ps.get(pos);
                     try {
-                        store.setActiveProfile(currentAccount, active);
+                        store.setActiveProfile(active);
                         refresh();
                         status.setText("Profile: " + active.name);
                     } catch (Exception e) {
@@ -417,7 +407,8 @@ public class OrynCosmeticsActivity extends Activity {
             int selected = "slim".equals(active.model) ? 1 : 0;
             showChoice("Player Model", values, selected, pos -> {
                 active.model = pos == 1 ? "slim" : "classic";
-                saveCurrent(pos == 1 ? "Slim (Alex) saved" : "Classic (Steve) saved");
+                refresh();
+                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
             });
         });
 
@@ -433,7 +424,8 @@ public class OrynCosmeticsActivity extends Activity {
             showChoice("Skin", values, selected, pos -> {
                 active.skin = pos == 0 ? "" : fs.get(pos - 1).getName();
                 active.skinEnabled = pos != 0;
-                saveCurrent(pos == 0 ? "Skin unequipped" : "Skin saved");
+                refresh();
+                status.setText(pos == 0 ? "Skin unequipped" : "Skin selected");
             });
         });
 
@@ -449,30 +441,23 @@ public class OrynCosmeticsActivity extends Activity {
             showChoice("Cape", values, selected, pos -> {
                 active.cape = pos == 0 ? "" : fs.get(pos - 1).getName();
                 active.capeEnabled = pos != 0;
-                saveCurrent(pos == 0 ? "Cape unequipped" : "Cape saved");
+                refresh();
+                status.setText(pos == 0 ? "Cape unequipped" : "Cape selected");
             });
         });
 
-        applyButton.setOnClickListener(v -> saveCurrent("Applied " + (capeTabSelected ? "cape" : "skin")));
-        saveButton.setOnClickListener(v -> saveCurrent(capeTabSelected ? "Cape saved" : "Skin saved"));
-        removeButton.setOnClickListener(v -> removeSelected());
-        unequipButton.setOnClickListener(v -> {
-            active.cape = "";
-            active.capeEnabled = false;
-            saveCurrent("Cape unequipped");
+        skinToggle.setOnClickListener(v -> {
+            active.skinEnabled = !active.skinEnabled;
+            saveCurrent(active.skinEnabled ? "Skin enabled" : "Skin disabled");
         });
-
-        skinEnabledSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (refreshing || active == null) return;
-            active.skinEnabled = isChecked;
-            saveCurrent(isChecked ? "Skin enabled" : "Skin disabled");
+        capeToggle.setOnClickListener(v -> {
+            active.capeEnabled = !active.capeEnabled;
+            saveCurrent(active.capeEnabled ? "Cape enabled" : "Cape disabled");
         });
-
-        capeEnabledSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (refreshing || active == null) return;
-            active.capeEnabled = isChecked;
-            saveCurrent(isChecked ? "Cape enabled" : "Cape disabled");
-        });
+        applyButton.setOnClickListener(v -> saveCurrent("Cosmetics applied"));
+        saveButton.setOnClickListener(v -> saveCurrent("Cosmetics saved"));
+        removeButton.setOnClickListener(v -> removeSkin());
+        unequipButton.setOnClickListener(v -> removeCape());
     }
 
     private interface ChoiceAction { void run(int position); }
@@ -488,32 +473,6 @@ public class OrynCosmeticsActivity extends Activity {
                 })
                 .setNegativeButton("Cancel", null)
                 .show();
-    }
-
-    private void setTab(boolean capesTab) {
-        capeTabSelected = capesTab;
-
-        // Make the left rail a real tab switch, not just a visual toggle.
-        tabTitle.setText(capesTab ? "Cape Preview" : "Skin Preview");
-        skinTab.setBackground(bg(capesTab ? CARD : BLUE, 10, Color.rgb(42,49,62), 1));
-        capeTab.setBackground(bg(capesTab ? BLUE : CARD, 10, Color.rgb(42,49,62), 1));
-
-        // Only show the selector relevant to the active tab.
-        if (skins != null) skins.setVisibility(capesTab ? View.GONE : View.VISIBLE);
-        if (capes != null) capes.setVisibility(capesTab ? View.VISIBLE : View.GONE);
-
-        applyButton.setText(capesTab ? "Equip Cape" : "Apply Skin");
-        saveButton.setText(capesTab ? "Save Cape" : "Save Skin");
-        removeButton.setText(capesTab ? "Remove Cape" : "Remove Skin");
-        unequipButton.setVisibility(capesTab ? View.VISIBLE : View.GONE);
-
-        status.setText(capesTab
-                ? "Capes • local and compatible"
-                : "Skins • 64×64 compatible PNG");
-
-        // Refresh the 3D preview when switching tabs so an already-equipped
-        // cape appears immediately instead of waiting for another profile change.
-        refreshPreview();
     }
 
     private void pick(int requestCode) {
@@ -550,12 +509,13 @@ public class OrynCosmeticsActivity extends Activity {
             }
         }
         capes.setText(capeLabel);
-        skinEnabledSwitch.setChecked(active.skinEnabled && !active.skin.isEmpty());
-        capeEnabledSwitch.setChecked(active.capeEnabled && !active.cape.isEmpty());
 
+        skinToggle.setText(active.skinEnabled ? "Skin: ON" : "Skin: OFF");
+        capeToggle.setText(active.capeEnabled ? "Cape: ON" : "Cape: OFF");
+        skinToggle.setEnabled(!active.skin.isEmpty());
+        capeToggle.setEnabled(!active.cape.isEmpty());
         refreshing = false;
         refreshPreview();
-        setTab(capeTabSelected);
     }
 
     private String displayName(File f) {
@@ -566,46 +526,33 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void refreshPreview() {
         if (active == null) return;
-        Bitmap s = active.skin.isEmpty() || !active.skinEnabled ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
-        Bitmap c = active.cape.isEmpty() || !active.capeEnabled ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
-        preview.setSkin(s, "slim".equals(active.model));
-        // Keep the skin preview clean; show the equipped cape in the dedicated Capes tab.
-        preview.setCape(capeTabSelected ? c : null);
-        // A cape sits behind the player, so automatically show the back while
-        // the Capes tab is active. Return to the front for the Skin tab.
-        preview.setCapePreview(capeTabSelected);
+        Bitmap s = active.skin.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
+        Bitmap c = active.cape.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
+        preview.setSkin(active.skinEnabled ? s : null, "slim".equals(active.model));
+        preview.setCape(active.capeEnabled ? c : null);
+        preview.setCapePreview(active.capeEnabled);
         selectedSkin.setText("Skin  •  " + (active.skin.isEmpty() ? "None" : displayName(new File(active.skin))));
         selectedCape.setText("Cape  •  " + (active.cape.isEmpty() ? "None" : displayName(new File(active.cape))));
     }
 
-    private void removeSelected() {
-        if (capeTabSelected) {
-            if (active.cape.isEmpty()) {
-                status.setText("No cape selected");
-                return;
-            }
-            String removed = active.cape;
-            try {
-                store.removeCosmetic(currentAccount, removed, false);
-                active.cape = "";
-                saveCurrent("Cape removed");
-            } catch (Exception e) {
-                status.setText("Could not remove cape");
-            }
-        } else {
-            if (active.skin.isEmpty()) {
-                status.setText("No skin selected");
-                return;
-            }
-            String removed = active.skin;
-            try {
-                store.removeCosmetic(currentAccount, removed, true);
-                active.skin = "";
-                saveCurrent("Skin removed");
-            } catch (Exception e) {
-                status.setText("Could not remove skin");
-            }
-        }
+    private void removeSkin() {
+        if (active.skin.isEmpty()) { status.setText("No skin selected"); return; }
+        try {
+            store.removeCosmetic(active.skin, true);
+            active.skin = "";
+            active.skinEnabled = false;
+            saveCurrent("Skin removed");
+        } catch (Exception e) { status.setText("Could not remove skin"); }
+    }
+
+    private void removeCape() {
+        if (active.cape.isEmpty()) { status.setText("No cape selected"); return; }
+        try {
+            store.removeCosmetic(active.cape, false);
+            active.cape = "";
+            active.capeEnabled = false;
+            saveCurrent("Cape removed");
+        } catch (Exception e) { status.setText("Could not remove cape"); }
     }
 
     private void saveCurrent(String message) {
@@ -640,15 +587,13 @@ public class OrynCosmeticsActivity extends Activity {
     private boolean sameAccount(Account a, Account b) {
         if (a == b) return true;
         if (a == null || b == null) return false;
-        String aUuid = a.profileId == null ? "" : a.profileId;
-        String bUuid = b.profileId == null ? "" : b.profileId;
-        if (!aUuid.equals(bUuid)) return false;
-        String aName = a.username == null ? "" : a.username;
-        String bName = b.username == null ? "" : b.username;
-        if (!aName.equals(bName)) return false;
-        String aType = a.authType == null ? "" : a.authType.name();
-        String bType = b.authType == null ? "" : b.authType.name();
-        return aType.equals(bType);
+        String au = a.profileId == null ? "" : a.profileId;
+        String bu = b.profileId == null ? "" : b.profileId;
+        String an = a.username == null ? "" : a.username;
+        String bn = b.username == null ? "" : b.username;
+        String at = a.authType == null ? "" : a.authType.name();
+        String bt = b.authType == null ? "" : b.authType.name();
+        return au.equals(bu) && an.equals(bn) && at.equals(bt);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -657,8 +602,8 @@ public class OrynCosmeticsActivity extends Activity {
         Uri uri = data.getData();
         try {
             File f = requestCode == PICK_SKIN ? store.importSkin(uri, "skin") : store.importCape(uri, "cape");
-            if (requestCode == PICK_SKIN) active.skin = f.getName();
-            else active.cape = f.getName();
+            if (requestCode == PICK_SKIN) { active.skin = f.getName(); active.skinEnabled = true; }
+            else { active.cape = f.getName(); active.capeEnabled = true; }
             saveCurrent("Imported " + displayName(f));
         } catch (Exception e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
