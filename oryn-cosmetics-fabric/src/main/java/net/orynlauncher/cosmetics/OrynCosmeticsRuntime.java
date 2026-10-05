@@ -187,6 +187,16 @@ public final class OrynCosmeticsRuntime {
         return value.replace("-", "").replaceAll("[^A-Za-z0-9._-]", "_");
     }
 
+    private static final class AssetPair {
+        final AssetInfo.TextureAsset skin;
+        final AssetInfo.TextureAsset cape;
+
+        AssetPair(AssetInfo.TextureAsset skin, AssetInfo.TextureAsset cape) {
+            this.skin = skin;
+            this.cape = cape;
+        }
+    }
+
     private static final class Entry {
         volatile State state = State.UNINITIALIZED;
         volatile SkinTextures textures;
