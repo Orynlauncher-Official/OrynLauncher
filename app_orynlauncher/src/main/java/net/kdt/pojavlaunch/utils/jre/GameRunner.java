@@ -16,6 +16,7 @@ import net.kdt.pojavlaunch.authenticator.accounts.Account;
 import net.kdt.pojavlaunch.game.renderer.def.Renderers;
 import net.kdt.pojavlaunch.game.renderer.impl.GLESRenderSpec;
 import net.kdt.pojavlaunch.instances.Instance;
+import net.kdt.pojavlaunch.instances.OrynInstanceManager;
 import net.kdt.pojavlaunch.lifecycle.LifecycleAwareAlertDialog;
 import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.multirt.Runtime;
@@ -186,6 +187,14 @@ public class GameRunner {
                 }
             }
         File gamedir = instance.getGameDirectory();
+        if (!instance.isIsolated()) {
+            throw new IllegalStateException("Refusing to launch a non-isolated Oryn instance: " + instance.name);
+        }
+        try {
+            OrynInstanceManager.markPlayed(instance);
+        } catch (IOException e) {
+            Log.w("GameRunner", "Failed to persist instance last-played timestamp", e);
+        }
 
         // Oryn Performance Engine: optimize the process/JVM launch path without
         // changing Minecraft resolution, render distance, simulation distance, or graphics.
@@ -239,6 +248,8 @@ public class GameRunner {
         if(versionInfo.javaVersion != null) requiredJavaVersion = versionInfo.javaVersion.majorVersion;
 
         Runtime runtime = MultiRTUtils.forceReread(pickRuntime(instance, requiredJavaVersion));
+        instance.javaRuntime = runtime.name;
+        instance.maybeWrite();
 
         // Pre-process specific files
         disableSplash(gamedir);
