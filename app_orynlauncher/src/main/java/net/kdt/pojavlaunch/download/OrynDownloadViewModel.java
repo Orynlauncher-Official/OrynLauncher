@@ -192,6 +192,15 @@ public final class OrynDownloadViewModel {
                 });
     }
 
+    public boolean isVersionCompatible(ModrinthVersion version) {
+        synchronized (this) {
+            if (closed || version == null) return false;
+            return repository.isCompatible(version, state.category.projectType,
+                    state.minecraftVersion,
+                    state.category.usesLoader() ? state.loader : null);
+        }
+    }
+
     public void selectVersion(ModrinthVersion version) {
         synchronized (this) {
             if (closed) return;
@@ -211,6 +220,17 @@ public final class OrynDownloadViewModel {
 
         if ((snapshot.selectedInstance == null && !"modpack".equals(snapshot.category.projectType))
                 || snapshot.selectedProject == null || snapshot.selectedVersion == null) {
+            publish();
+            return;
+        }
+
+        if (!repository.isCompatible(snapshot.selectedVersion, snapshot.category.projectType,
+                snapshot.minecraftVersion,
+                snapshot.category.usesLoader() ? snapshot.loader : null)) {
+            synchronized (this) {
+                state = state.withInstallState(
+                        OrynInstallState.failed("This version is not compatible with the selected instance"));
+            }
             publish();
             return;
         }
