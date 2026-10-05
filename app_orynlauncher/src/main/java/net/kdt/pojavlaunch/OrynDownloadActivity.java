@@ -321,7 +321,62 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
+        updateVersionSpinnerVisibility();
         loadMinecraftVersions();
+        loadModrinthLoaders();
+    }
+
+    private void loadModrinthLoaders() {
+        executor.execute(() -> {
+            try {
+                JsonArray tags = fetchJsonArray(MODRINTH_BASE + "/tag/loader");
+                java.util.ArrayList<String> values = new java.util.ArrayList<>();
+                values.add("Auto");
+                for (int i = 0; i < tags.size(); i++) {
+                    JsonObject tag = tags.get(i).getAsJsonObject();
+                    String name = tag.has("name") ? tag.get("name").getAsString() : "";
+                    if (name.isEmpty()) continue;
+                    boolean supportsMod = tag.has("supported_project_types")
+                            && tag.get("supported_project_types").isJsonArray()
+                            && supportsProjectType(tag.getAsJsonArray("supported_project_types"), "mod");
+                    boolean supportsModpack = tag.has("supported_project_types")
+                            && tag.get("supported_project_types").isJsonArray()
+                            && supportsProjectType(tag.getAsJsonArray("supported_project_types"), "modpack");
+                    if (supportsMod || supportsModpack) values.add(name);
+                }
+                runOnUiThread(() -> {
+                    String detected = getModrinthLoader(Instances.loadSelectedInstance());
+                    selectedLoader = detected;
+                    android.widget.ArrayAdapter<String> adapter =
+                            new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, values);
+                    loaderSpinner.setAdapter(adapter);
+                    int index = detected == null ? 0 : values.indexOf(detected);
+                    if (index < 0) index = 0;
+                    loaderSpinner.setSelection(index);
+                    updateVersionSpinnerVisibility();
+                });
+            } catch (Exception e) {
+                runOnUiThread(() -> {
+                    java.util.ArrayList<String> fallback = new java.util.ArrayList<>();
+                    fallback.add("Auto");
+                    fallback.add("fabric");
+                    fallback.add("forge");
+                    fallback.add("neoforge");
+                    fallback.add("quilt");
+                    android.widget.ArrayAdapter<String> adapter =
+                            new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, fallback);
+                    loaderSpinner.setAdapter(adapter);
+                    updateVersionSpinnerVisibility();
+                });
+            }
+        });
+    }
+
+    private boolean supportsProjectType(JsonArray types, String projectType) {
+        for (int i = 0; types != null && i < types.size(); i++) {
+            if (projectType.equalsIgnoreCase(types.get(i).getAsString())) return true;
+        }
+        return false;
     }
 
     private void loadMinecraftVersions() {
