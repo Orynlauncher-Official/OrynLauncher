@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 
 public final class OrynDownloadViewModel {
     public interface Observer {
-        void onStateChanged(OrynDownloadState state);
+        void onStateChanged(OrynOrynInstallState state);
     }
 
     private static final String TAG = "OrynDownload";
@@ -25,7 +25,7 @@ public final class OrynDownloadViewModel {
     private final OrynInstallationManager installationManager;
     private final ExecutorService worker = Executors.newCachedThreadPool();
 
-    private OrynDownloadState state;
+    private OrynOrynInstallState state;
     private Observer observer;
     private int searchGeneration;
     private boolean closed;
@@ -34,7 +34,7 @@ public final class OrynDownloadViewModel {
         repository = new OrynContentRepository();
         downloadManager = new OrynDownloadManager();
         installationManager = new OrynInstallationManager(new InstalledProjectStore());
-        state = OrynDownloadState.initial(selectedInstance);
+        state = OrynOrynInstallState.initial(selectedInstance);
     }
 
     public synchronized void observe(Observer observer) {
@@ -42,7 +42,7 @@ public final class OrynDownloadViewModel {
         if (observer != null) observer.onStateChanged(state);
     }
 
-    public synchronized OrynDownloadState getState() {
+    public synchronized OrynOrynInstallState getState() {
         return state;
     }
 
@@ -54,7 +54,7 @@ public final class OrynDownloadViewModel {
         publish();
     }
 
-    public void setFilters(OrynDownloadState.Category category, String version, String loader, String query) {
+    public void setFilters(OrynOrynInstallState.Category category, String version, String loader, String query) {
         synchronized (this) {
             if (closed) return;
             searchGeneration++;
@@ -65,9 +65,9 @@ public final class OrynDownloadViewModel {
     }
 
     public void loadMore() {
-        OrynDownloadState snapshot;
+        OrynOrynInstallState snapshot;
         synchronized (this) {
-            if (closed || state.listStatus == OrynDownloadState.ListStatus.LOADING
+            if (closed || state.listStatus == OrynOrynInstallState.ListStatus.LOADING
                     || !state.hasMore || state.projects.isEmpty()) return;
             snapshot = state;
         }
@@ -76,7 +76,7 @@ public final class OrynDownloadViewModel {
 
     private void search(final boolean append) {
         final int generation;
-        final OrynDownloadState snapshot;
+        final OrynOrynInstallState snapshot;
         synchronized (this) {
             generation = searchGeneration;
             snapshot = state;
@@ -180,7 +180,7 @@ public final class OrynDownloadViewModel {
     }
 
     public void installSelected() {
-        final OrynDownloadState snapshot;
+        final OrynOrynInstallState snapshot;
         synchronized (this) {
             if (closed) return;
             snapshot = state;
@@ -197,7 +197,7 @@ public final class OrynDownloadViewModel {
         if (sourceFile == null) {
             synchronized (this) {
                 state = state.withInstallState(
-                        DownloadState.failed("No downloadable file for this version"));
+                        OrynInstallState.failed("No downloadable file for this version"));
             }
             publish();
             return;
@@ -207,14 +207,14 @@ public final class OrynDownloadViewModel {
             try {
                 synchronized (OrynDownloadViewModel.this) {
                     if (closed) return;
-                    state = state.withInstallState(DownloadState.checking());
+                    state = state.withInstallState(OrynInstallState.checking());
                 }
                 publish();
 
                 if (installationManager.isInstalled(snapshot.selectedInstance,
                         snapshot.selectedProject, snapshot.category.projectType)) {
                     synchronized (OrynDownloadViewModel.this) {
-                        state = state.withInstallState(DownloadState.installed());
+                        state = state.withInstallState(OrynInstallState.installed());
                     }
                     publish();
                     return;
@@ -225,7 +225,7 @@ public final class OrynDownloadViewModel {
                         snapshot.category.projectType, sourceFile);
 
                 synchronized (OrynDownloadViewModel.this) {
-                    state = state.withInstallState(DownloadState.downloading(0));
+                    state = state.withInstallState(OrynInstallState.downloading(0));
                 }
                 publish();
 
@@ -233,14 +233,14 @@ public final class OrynDownloadViewModel {
                         percent -> {
                             synchronized (OrynDownloadViewModel.this) {
                                 if (!closed) state = state.withInstallState(
-                                        DownloadState.downloading(percent));
+                                        OrynInstallState.downloading(percent));
                             }
                             publish();
                         });
 
                 synchronized (OrynDownloadViewModel.this) {
                     if (closed) return;
-                    state = state.withInstallState(DownloadState.installing());
+                    state = state.withInstallState(OrynInstallState.installing());
                 }
                 publish();
 
@@ -248,13 +248,13 @@ public final class OrynDownloadViewModel {
                         snapshot.category.projectType, sourceFile, snapshot.selectedInstance, downloaded);
 
                 synchronized (OrynDownloadViewModel.this) {
-                    if (!closed) state = state.withInstallState(DownloadState.installed());
+                    if (!closed) state = state.withInstallState(OrynInstallState.installed());
                 }
                 publish();
             } catch (Exception error) {
                 synchronized (OrynDownloadViewModel.this) {
                     if (!closed) state = state.withInstallState(
-                            DownloadState.failed(error.getMessage() == null
+                            OrynInstallState.failed(error.getMessage() == null
                                     ? "Download failed" : error.getMessage()));
                 }
                 publish();
@@ -264,7 +264,7 @@ public final class OrynDownloadViewModel {
 
     private void publish() {
         Observer target;
-        OrynDownloadState snapshot;
+        OrynOrynInstallState snapshot;
         synchronized (this) {
             target = observer;
             snapshot = state;
