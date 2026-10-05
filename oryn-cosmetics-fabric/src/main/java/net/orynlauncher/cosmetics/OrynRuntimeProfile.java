@@ -80,6 +80,10 @@ public final class OrynRuntimeProfile {
         }
     }
 
+    public File resolveCapeFile() {
+        return capePath.isEmpty() ? null : new File(capePath);
+    }
+
     public File resolveSkinFile() {
         if (Boolean.getBoolean("oryn.cosmetics.testSkin")) {
             return OrynRuntimeTestSkin.ensure();
