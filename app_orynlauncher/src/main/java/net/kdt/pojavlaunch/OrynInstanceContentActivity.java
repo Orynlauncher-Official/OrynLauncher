@@ -52,6 +52,11 @@ public class OrynInstanceContentActivity extends AppCompatActivity
             return;
         }
         buildUi();
+        String requested = getIntent().getStringExtra("content_type");
+        if ("mods".equals(requested)) showType(OrynInstanceContentScanner.ContentType.MODS);
+        else if ("shaders".equals(requested)) showType(OrynInstanceContentScanner.ContentType.SHADERS);
+        else if ("resourcepacks".equals(requested)) showType(OrynInstanceContentScanner.ContentType.RESOURCE_PACKS);
+        else if ("saves".equals(requested)) showType(OrynInstanceContentScanner.ContentType.SAVES);
         OrynInstanceContentScanner.observe(instance.id, this);
         OrynInstanceContentScanner.refreshAsync(instance);
         startWatchers();
