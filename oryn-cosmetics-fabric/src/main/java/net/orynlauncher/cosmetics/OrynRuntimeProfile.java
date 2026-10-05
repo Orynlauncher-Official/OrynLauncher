@@ -17,11 +17,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class OrynRuntimeProfile {
     private static final Logger LOGGER = LoggerFactory.getLogger("OrynCosmetics");
+    private static final String TEST_SKIN_PROPERTY = "oryn.cosmetics.testSkin";
     private static OrynRuntimeProfile cached;
     private static long cachedModified = Long.MIN_VALUE;
     private static final Map<String, RegisteredTexture> TEXTURES = new HashMap<>();
@@ -71,6 +73,9 @@ public final class OrynRuntimeProfile {
                     cached.skinEnabled, cached.model, cached.skinPath);
             LOGGER.info("[ORYN-COSMETICS] Cape enabled={} source={}",
                     cached.capeEnabled, cached.capePath);
+            if (Boolean.getBoolean(TEST_SKIN_PROPERTY)) {
+                LOGGER.warn("[ORYN-COSMETICS] ORYN TEST SKIN mode enabled by -D{}=true", TEST_SKIN_PROPERTY);
+            }
             return cached;
         } catch (Throwable t) {
             LOGGER.warn("[ORYN-COSMETICS] Failed to load runtime cosmetics profile", t);
@@ -111,18 +116,29 @@ public final class OrynRuntimeProfile {
 
     public SkinTextures createSkinTextures() {
         try {
-            if (!skinEnabled || !valid(skinPath)) {
+            if (!skinEnabled && !Boolean.getBoolean(TEST_SKIN_PROPERTY)) {
                 LOGGER.warn("[ORYN-COSMETICS] Skin unavailable: enabled={} path={}", skinEnabled, skinPath);
                 return null;
             }
 
             MinecraftClient client = MinecraftClient.getInstance();
-            TextureAssetInfo body = register(client, "skin", skinPath, true);
+            if (client == null) return null;
+
+            TextureAssetInfo body;
+            if (Boolean.getBoolean(TEST_SKIN_PROPERTY)) {
+                body = registerBundled(client, "skin", "/orynlauncher/cosmetics/test_skin.png");
+            } else {
+                if (!valid(skinPath)) {
+                    LOGGER.warn("[ORYN-COSMETICS] Skin unavailable: enabled={} path={}", skinEnabled, skinPath);
+                    return null;
+                }
+                body = registerFile(client, "skin", skinPath, true);
+            }
             if (body == null) return null;
 
             TextureAssetInfo cape = null;
             if (capeEnabled && valid(capePath)) {
-                cape = register(client, "cape", capePath, false);
+                cape = registerFile(client, "cape", capePath, false);
             }
 
             PlayerSkinType type = "slim".equalsIgnoreCase(model)
@@ -141,15 +157,17 @@ public final class OrynRuntimeProfile {
         }
     }
 
-    private static synchronized TextureAssetInfo register(MinecraftClient client, String kind,
-                                                           String path, boolean skin) throws Exception {
+    private static TextureAssetInfo registerFile(MinecraftClient client, String kind,
+                                                  String path, boolean skin) throws Exception {
         File file = new File(path);
         if (!file.isFile()) {
             LOGGER.warn("[ORYN-COSMETICS] {} file missing: {}", kind, path);
             return null;
         }
 
-        String key = kind + "|" + file.getAbsolutePath() + "|" + file.length() + "|" + file.lastModified();
+        String digest = sha256(file);
+        String account = accountKey();
+        String key = kind + "|" + account + "|" + digest;
         RegisteredTexture old = TEXTURES.get(key);
         if (old != null) {
             LOGGER.info("[ORYN-COSMETICS] {} texture cache HIT id={} size={}x{}",
@@ -162,76 +180,199 @@ public final class OrynRuntimeProfile {
             image = NativeImage.read(in);
         }
 
-        int width = image.getWidth();
-        int height = image.getHeight();
+        logDecodedImage(kind, file.getAbsolutePath(), image, digest);
 
-        LOGGER.info("[ORYN-COSMETICS] {} PNG size={}x{} decoded=true thread={}",
-                kind, width, height, Thread.currentThread().getName());
-
-        if (skin) {
-            // Minecraft Java's modern player texture is 64x64. Keep the original
-            // pixels untouched; reject legacy dimensions instead of silently
-            // rescaling them into an invalid UV layout.
-            if (!((width == 64 && height == 64) || (width == 64 && height == 32))) {
-                image.close();
-                LOGGER.warn("[ORYN-COSMETICS] Skin rejected: expected 64x64 (or legacy 64x32), got {}x{}",
-                        width, height);
-                return null;
-            }
-        } else if (!((width == 64 && height == 32)
-                || (width == 22 && height == 17)
-                || (width == 44 && height == 34))) {
+        if (!validDimensions(kind, image.getWidth(), image.getHeight(), skin)) {
             image.close();
-            LOGGER.warn("[ORYN-COSMETICS] Cape rejected: unsupported dimensions {}x{}", width, height);
             return null;
         }
 
-        // NativeImage.read() preserves the PNG's decoded pixel data. Do not flip,
-        // rotate, rescale, or manually swizzle channels. The texture owns the
-        // NativeImage for its entire lifetime.
-        Identifier id = Identifier.of("orynlauncher",
-                "cosmetics/" + kind + "_" + Integer.toHexString(key.hashCode()));
+        return registerDecoded(client, kind, key, image, image.getWidth(), image.getHeight());
+    }
 
-        NativeImageBackedTexture texture =
-                new NativeImageBackedTexture(() -> "Oryn " + kind, image);
-
-        // Texture registration and GL upload must happen on Minecraft's client
-        // render thread. This method is called from the client skin/render pipeline;
-        // fail loudly if a future caller invokes it from another thread rather than
-        // racing OpenGL state.
-        if (!client.isOnThread()) {
-            LOGGER.warn("[ORYN-COSMETICS] {} upload requested off render thread: {}",
-                    kind, Thread.currentThread().getName());
+    private static TextureAssetInfo registerBundled(MinecraftClient client, String kind, String resource) throws Exception {
+        String key = kind + "|" + accountKey() + "|bundled-test";
+        RegisteredTexture old = TEXTURES.get(key);
+        if (old != null) {
+            LOGGER.info("[ORYN-COSMETICS] {} bundled test texture cache HIT id={} size={}x{}",
+                    kind, old.id, old.width, old.height);
+            return new TextureAssetInfo(old.id);
         }
 
-        client.getTextureManager().registerTexture(id, texture);
-        texture.upload();
-
-        boolean registered = client.getTextureManager().getTexture(id) == texture;
-        NativeImage retained = texture.getImage();
-        boolean imageAlive = retained != null
-                && retained.getWidth() == width
-                && retained.getHeight() == height;
-
-        LOGGER.info("[ORYN-COSMETICS] {} texture registered={} imageAlive={} id={} size={}x{}",
-                kind, registered, imageAlive, id, width, height);
-
-        if (!registered || !imageAlive) {
-            texture.close();
+        InputStream stream = OrynRuntimeProfile.class.getResourceAsStream(resource);
+        if (stream == null) {
+            LOGGER.warn("[ORYN-COSMETICS] Bundled test texture missing: {}", resource);
             return null;
         }
 
-        TEXTURES.put(key, new RegisteredTexture(id, texture, width, height));
+        NativeImage image;
+        try (InputStream in = stream) {
+            image = NativeImage.read(in);
+        }
+
+        logDecodedImage(kind + " TEST", resource, image, "bundled");
+        if (!validDimensions(kind, image.getWidth(), image.getHeight(), true)) {
+            image.close();
+            LOGGER.warn("[ORYN-COSMETICS] Bundled test skin has invalid dimensions");
+            return null;
+        }
+
+        return registerDecoded(client, kind, key, image, image.getWidth(), image.getHeight());
+    }
+
+    private static TextureAssetInfo registerDecoded(MinecraftClient client, String kind, String key,
+                                                     NativeImage image, int width, int height) throws Exception {
+        String idPath = "cosmetics/" + accountKey() + "/" + kind + "_" + keyDigest(key);
+        Identifier id = Identifier.of("orynlauncher", idPath);
+
+        LOGGER.info("[ORYN-COSMETICS] {} Identifier before upload={}", kind, id);
+        LOGGER.info("[ORYN-COSMETICS] {} upload thread request={} clientThread={} renderThread={}",
+                kind, Thread.currentThread().getName(), client.isOnThread(),
+                com.mojang.blaze3d.systems.RenderSystem.isOnRenderThread());
+
+        RegistrationHolder holder = new RegistrationHolder();
+        Runnable upload = () -> {
+            try {
+                LOGGER.info("[ORYN-COSMETICS] {} GL registration thread={} renderThread={}",
+                        kind, Thread.currentThread().getName(),
+                        com.mojang.blaze3d.systems.RenderSystem.isOnRenderThread());
+
+                NativeImageBackedTexture texture =
+                        new NativeImageBackedTexture(() -> "Oryn " + kind, image);
+
+                client.getTextureManager().registerTexture(id, texture);
+                LOGGER.info("[ORYN-COSMETICS] {} TextureManager.registerTexture id={}", kind, id);
+
+                texture.upload();
+
+                boolean registered = client.getTextureManager().getTexture(id) == texture;
+                NativeImage retained = texture.getImage();
+                boolean imageAlive = retained != null
+                        && retained.getWidth() == width
+                        && retained.getHeight() == height;
+
+                LOGGER.info("[ORYN-COSMETICS] {} upload complete registered={} imageAlive={} id={} size={}x{}",
+                        kind, registered, imageAlive, id, width, height);
+
+                if (!registered || !imageAlive) {
+                    texture.close();
+                    return;
+                }
+
+                TEXTURES.put(key, new RegisteredTexture(id, texture, width, height));
+                holder.texture = texture;
+                holder.success = true;
+            } catch (Throwable t) {
+                LOGGER.warn("[ORYN-COSMETICS] {} GL registration/upload failed id={}", kind, id, t);
+                holder.error = t;
+            }
+        };
+
+        if (client.isOnThread()) {
+            upload.run();
+        } else {
+            LOGGER.info("[ORYN-COSMETICS] {} marshaling registration/upload to Minecraft client thread", kind);
+            client.executeSync(upload);
+        }
+
+        if (!holder.success) {
+            if (holder.error != null) {
+                image.close();
+                throw new IllegalStateException("Texture registration failed for " + id, holder.error);
+            }
+            image.close();
+            return null;
+        }
+
+        LOGGER.info("[ORYN-COSMETICS] {} exact SkinTextures identifier={}", kind, id);
         return new TextureAssetInfo(id);
+    }
+
+    private static void logDecodedImage(String kind, String source, NativeImage image, String digest) {
+        NativeImage.Format format = image.getFormat();
+        LOGGER.info("[ORYN-COSMETICS] Original PNG: source={} width={} height={} format={} hasAlpha={} digest={}",
+                source, image.getWidth(), image.getHeight(), format, format.hasAlpha(), digest);
+        logPixel(image, kind, 0, 0);
+        logPixel(image, kind, 32, 0);
+        logPixel(image, kind, 0, 32);
+        logPixel(image, kind, 32, 32);
+        logPixel(image, kind, image.getWidth() - 1, image.getHeight() - 1);
+    }
+
+    private static void logPixel(NativeImage image, String kind, int x, int y) {
+        if (x < 0 || y < 0 || x >= image.getWidth() || y >= image.getHeight()) return;
+        LOGGER.info("[ORYN-COSMETICS] {} NativeImage pixel({},{})=0x{}",
+                kind, x, y, Integer.toHexString(image.getColorArgb(x, y)));
+    }
+
+    private static boolean validDimensions(String kind, int width, int height, boolean skin) {
+        if (skin) {
+            if (width != 64 || height != 64) {
+                LOGGER.warn("[ORYN-COSMETICS] INVALID SKIN DIMENSIONS: {}x{}", width, height);
+                return false;
+            }
+            return true;
+        }
+
+        if (width != 64 || height != 32) {
+            LOGGER.warn("[ORYN-COSMETICS] INVALID CAPE DIMENSIONS: {}x{} (Oryn 1.21.11 runtime requires 64x32)",
+                    width, height);
+            return false;
+        }
+        return true;
+    }
+
+    private static String accountKey() {
+        String uuid = cached == null ? "" : cached.accountUuid;
+        String name = cached == null ? "" : cached.accountName;
+        if (uuid != null) {
+            String normalized = uuid.replace("-", "").trim();
+            if (!normalized.isEmpty() && !normalized.matches("0{32}")) return safeId(normalized);
+        }
+        return safeId(name == null || name.isEmpty() ? "offline" : name.toLowerCase());
+    }
+
+    private static String safeId(String value) {
+        return value.replaceAll("[^a-zA-Z0-9._-]", "_");
+    }
+
+    private static String keyDigest(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] bytes = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder out = new StringBuilder(24);
+            for (int i = 0; i < 12 && i < bytes.length; i++) {
+                out.append(String.format("%02x", bytes[i]));
+            }
+            return out.toString();
+        } catch (Exception e) {
+            return Integer.toHexString(value.hashCode());
+        }
+    }
+
+    private static String sha256(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int n;
+            while ((n = in.read(buffer)) != -1) digest.update(buffer, 0, n);
+        }
+        StringBuilder out = new StringBuilder(64);
+        for (byte b : digest.digest()) out.append(String.format("%02x", b));
+        return out.toString();
+    }
+
+    private static boolean valid(String path) {
+        return path != null && !path.isEmpty() && new File(path).isFile();
     }
 
     public SkinTextures withCape(SkinTextures base) {
         try {
             if (base == null || !capeEnabled || !valid(capePath)) return base;
-            TextureAssetInfo cape = register(MinecraftClient.getInstance(), "cape", capePath, false);
+            TextureAssetInfo cape = registerFile(MinecraftClient.getInstance(), "cape", capePath, false);
             if (cape == null) return base;
             SkinTextures result = SkinTextures.create(base.body(), cape, base.elytra(), base.model());
-            LOGGER.info("[ORYN-COSMETICS] Cape merged: {}", cape.texturePath());
+            LOGGER.info("[ORYN-COSMETICS] Cape merged: Identifier={} registered=true", cape.texturePath());
             return result;
         } catch (Throwable t) {
             LOGGER.warn("[ORYN-COSMETICS] Failed to merge custom cape", t);
@@ -257,7 +398,12 @@ public final class OrynRuntimeProfile {
         }
     }
 
+    private static final class RegistrationHolder {
+        NativeImageBackedTexture texture;
+        Throwable error;
+        boolean success;
+    }
+
     private record RegisteredTexture(Identifier id, NativeImageBackedTexture texture,
                                      int width, int height) {}
-
 }
