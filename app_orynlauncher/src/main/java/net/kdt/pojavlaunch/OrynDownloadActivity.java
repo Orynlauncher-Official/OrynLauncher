@@ -473,6 +473,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 ? View.VISIBLE : View.GONE);
 
         android.util.Log.d("OrynDownload", "Rendering cards = " + state.projects.size());
+        projectAdapter.setPlaceholder(placeholder());
         projectAdapter.submitList(state.projects);
         projectAdapter.setSelectedId(state.selectedProject == null ? null : state.selectedProject.id);
 
