@@ -201,6 +201,23 @@ public final class OrynDownloadViewModel {
         }
     }
 
+    public boolean isVersionCompatible(ModrinthVersion version, String minecraftVersion, String loader) {
+        synchronized (this) {
+            if (closed || version == null) return false;
+            return repository.isCompatible(version, state.category.projectType,
+                    minecraftVersion,
+                    state.category.usesLoader() ? loader : null);
+        }
+    }
+
+    public void setVersionContext(String minecraftVersion, String loader) {
+        synchronized (this) {
+            if (closed) return;
+            state = state.withVersionContext(minecraftVersion, loader);
+        }
+        publish();
+    }
+
     public void selectVersion(ModrinthVersion version) {
         synchronized (this) {
             if (closed) return;
