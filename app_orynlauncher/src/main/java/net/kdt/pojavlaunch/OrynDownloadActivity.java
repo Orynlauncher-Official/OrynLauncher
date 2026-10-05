@@ -768,7 +768,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         row.addView(card, cardLp);
 
         Log.d("OrynModrinth", "[Modrinth] Render project: " + projectId + " • " + title);
-        View.OnClickListener select = v -> showProjectDetails(projectId, title, description, iconUrl);
+        View.OnClickListener select = v -> showProjectDetails(projectId, title, author, description, iconUrl);
         card.setOnClickListener(select);
         if (iconUrl != null) loadImage(icon, iconUrl);
     }
@@ -786,21 +786,15 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return bg;
     }
 
-    private void showProjectDetails(final String projectId, String title, String description, String iconUrl) {
+    private void showProjectDetails(final String projectId, String title, String author,
+                                    String description, String iconUrl) {
         detailTitle.setText(title);
-        String authorText = hitAuthorForDetail(projectId);
-        detailVersion.setText(category.title + " • "
-                + (getDownloadMinecraftVersion() == null ? "Version will be scanned" : getDownloadMinecraftVersion())
-                + (authorText.isEmpty() ? "" : " • " + authorText));
+        detailVersion.setText(category.title + " • Checking compatibility…"
+                + (author == null || author.isEmpty() ? "" : " • " + author));
         detailDesc.setText(description == null || description.trim().isEmpty()
                 ? "No description available." : description);
-        detailDownload.setEnabled(true);
-        detailDownload.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
-        detailDownload.setOnClickListener(v -> {
-            // ZalithLauncher-style flow: never silently pick an arbitrary/latest
-            // file. Let the user inspect compatible project versions first.
-            chooseCompatibleVersion(projectId, title, iconUrl, detailDownload);
-        });
+        detailDownload.setEnabled(false);
+        detailDownload.setText("Checking compatibility…");
         if (iconUrl != null) {
             loadImage(detailIcon, iconUrl);
         } else {
@@ -809,12 +803,66 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     : category == Category.SHADER ? R.drawable.oryn_download_shader
                     : R.drawable.oryn_download_mod);
         }
-    }
 
-    private String hitAuthorForDetail(String projectId) {
-        // Search results already carry the author username. Keep the detail
-        // panel lightweight; the exact compatible version is checked before download.
-        return "";
+        final String requestedVersion = getDownloadMinecraftVersion();
+        final String requestedLoader = getSelectedLoader();
+        executor.execute(() -> {
+            try {
+                JsonArray versions = api.get(
+                        "project/" + URLEncoder.encode(projectId, "UTF-8") + "/version",
+                        JsonArray.class);
+                JsonObject compatible = null;
+                for (int i = 0; versions != null && i < versions.size(); i++) {
+                    JsonObject candidate = versions.get(i).getAsJsonObject();
+                    if (!supportsMinecraftAndLoader(candidate, requestedVersion,
+                            (category == Category.MOD || category == Category.MODPACK) ? requestedLoader : null)) {
+                        continue;
+                    }
+                    JsonArray files = candidate.has("files") && candidate.get("files").isJsonArray()
+                            ? candidate.getAsJsonArray("files") : null;
+                    if (files == null || files.size() == 0) continue;
+                    compatible = candidate;
+                    if (candidate.has("featured") && candidate.get("featured").getAsBoolean()) break;
+                }
+
+                final JsonObject selected = compatible;
+                runOnUiThread(() -> {
+                    if (selected == null) {
+                        detailVersion.setText("No compatible version found"
+                                + (author == null || author.isEmpty() ? "" : " • " + author));
+                        detailDownload.setEnabled(false);
+                        detailDownload.setText("No compatible version");
+                        return;
+                    }
+
+                    String versionName = selected.has("version_number")
+                            ? selected.get("version_number").getAsString() : "compatible version";
+                    String loaderText = "";
+                    if ((category == Category.MOD || category == Category.MODPACK)
+                            && selected.has("loaders") && selected.get("loaders").isJsonArray()
+                            && selected.getAsJsonArray("loaders").size() > 0) {
+                        loaderText = " • " + selected.getAsJsonArray("loaders").get(0).getAsString();
+                    }
+                    detailVersion.setText((requestedVersion == null ? "" : requestedVersion)
+                            + " • " + versionName + loaderText
+                            + (author == null || author.isEmpty() ? "" : " • " + author));
+                    detailDownload.setEnabled(true);
+                    detailDownload.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
+                    detailDownload.setOnClickListener(v ->
+                            chooseCompatibleVersion(projectId, title, iconUrl, detailDownload));
+
+                    Log.d("OrynModrinth", "[Modrinth] Selected project: " + projectId
+                            + " • Compatible version: " + versionName);
+                });
+            } catch (Exception error) {
+                Log.e("OrynModrinth", "[Modrinth] Version lookup failed for " + projectId, error);
+                runOnUiThread(() -> {
+                    detailVersion.setText("Unable to check compatible version");
+                    detailDownload.setEnabled(false);
+                    detailDownload.setText("Unavailable");
+                });
+            }
+        });
     }
 
     private void loadImage(final ImageView target, final String imageUrl) {
@@ -986,6 +1034,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     status.setText("Installing " + projectTitle + " into " + targetInstance.name);
                     button.setText("Installing…");
                 });
+                Log.d("OrynModrinth", "[Modrinth] Installing .mrpack to: " + targetInstance.getGameDirectory().getAbsolutePath());
                 modrinthModpackApi.installMrpackIntoExistingInstance(finalCacheFile, targetInstance, null);
                 runOnUiThread(() -> {
                     button.setEnabled(true);
@@ -1286,6 +1335,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 long expectedSize = file.has("size") ? file.get("size").getAsLong() : -1L;
 
                 output = new File(targetDirectory, filename);
+                Log.d("OrynModrinth", "[Modrinth] Compatible version: "
+                        + (version.has("version_number") ? version.get("version_number").getAsString() : version.get("id").getAsString()));
+                Log.d("OrynModrinth", "[Modrinth] Download file: " + url);
+                Log.d("OrynModrinth", "[Modrinth] Installing to: " + output.getAbsolutePath());
                 downloadFile(url, output, sha1, expectedSize, button, projectTitle);
 
                 final String saved = output.getName();
