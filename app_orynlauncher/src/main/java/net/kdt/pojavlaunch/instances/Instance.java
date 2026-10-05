@@ -29,6 +29,22 @@ public class Instance extends DisplayInstance {
     public String controlLayout;
     public boolean sharedData;
 
+    // OrynLauncher instance identity and isolation metadata.
+    public String id;
+    public String minecraftVersion;
+    public String loaderType;
+    public String loaderVersion;
+    public boolean isModpack;
+    public String modpackName;
+    public String modpackVersion;
+    public String modpackProjectId;
+    public String javaRuntime;
+    public int memoryMin = -1;
+    public int memoryMax = -1;
+    public long createdAt;
+    public long lastPlayedAt;
+    public OrynInstanceMetadata metadata = new OrynInstanceMetadata();
+
     protected Instance() {
     }
 
@@ -36,6 +52,15 @@ public class Instance extends DisplayInstance {
     protected void sanitize() {
         super.sanitize();
         sanitizeArgs();
+        if (metadata == null) metadata = new OrynInstanceMetadata();
+        metadata.sanitize();
+        if (id == null || id.trim().isEmpty()) id = java.util.UUID.randomUUID().toString();
+        if (createdAt <= 0L) createdAt = System.currentTimeMillis();
+        if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
+            // Legacy instances stored only the launch/profile version.
+            minecraftVersion = versionId;
+        }
+        if (javaRuntime == null && selectedRuntime != null) javaRuntime = selectedRuntime;
     }
 
     private void sanitizeArgs() {
@@ -113,5 +138,10 @@ public class Instance extends DisplayInstance {
     public File getGameDirectory() {
         if(sharedData) return Instances.SHARED_DATA_DIRECTORY;
         return mInstanceRoot;
+    }
+
+    public boolean isIsolated() {
+        return !sharedData && mInstanceRoot != null
+                && !mInstanceRoot.equals(Instances.SHARED_DATA_DIRECTORY);
     }
 }
