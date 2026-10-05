@@ -38,6 +38,7 @@ public final class OrynProjectAdapter extends RecyclerView.Adapter<OrynProjectAd
     public void submitList(List<ModrinthProject> projects) {
         items.clear();
         if (projects != null) items.addAll(projects);
+        android.util.Log.d("OrynDownload", "ProjectCard views requested = " + items.size());
         if (selectedPosition >= items.size()) selectedPosition = RecyclerView.NO_POSITION;
         notifyDataSetChanged();
     }
