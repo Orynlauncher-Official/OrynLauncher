@@ -19,7 +19,7 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
     }
 
     @Override public boolean supportsCape(String minecraftVersion) {
-        return false;
+        return "1.21.11".equals(minecraftVersion);
     }
 
     @Override
@@ -29,7 +29,7 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
         Log.i(TAG, "[ORYN-COSMETICS] Selected adapter = " + id());
         Log.i(TAG, "[ORYN-COSMETICS] Adapter initialized = true");
         Log.i(TAG, "[ORYN-COSMETICS] applySkin() called = true (runtime bridge will execute inside Minecraft)");
-        Log.i(TAG, "[ORYN-COSMETICS] applyCape() called = false (intentionally deferred until skin passes)");
+        Log.i(TAG, "[ORYN-COSMETICS] applyCape() called = true (runtime bridge)");
         Log.i(TAG, "[ORYN-COSMETICS] Native PlayerRenderer = untouched");
 
         if (gameDir != null) {
