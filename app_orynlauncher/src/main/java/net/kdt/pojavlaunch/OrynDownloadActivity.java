@@ -9,95 +9,56 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.EditorInfo;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import git.artdeell.mojo.R;
-import net.kdt.pojavlaunch.download.DownloadState;
-import net.kdt.pojavlaunch.download.InstalledProjectStore;
-import net.kdt.pojavlaunch.download.ModrinthFile;
-import net.kdt.pojavlaunch.download.ModrinthInstaller;
+import net.kdt.pojavlaunch.download.OrynContentRepository;
+import net.kdt.pojavlaunch.download.OrynDownloadState;
+import net.kdt.pojavlaunch.download.OrynDownloadViewModel;
+import net.kdt.pojavlaunch.download.OrynProjectAdapter;
 import net.kdt.pojavlaunch.download.ModrinthProject;
-import net.kdt.pojavlaunch.download.ModrinthRepository;
-import net.kdt.pojavlaunch.download.ModrinthSearchResult;
 import net.kdt.pojavlaunch.download.ModrinthVersion;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 
 public class OrynDownloadActivity extends AppCompatActivity {
-    private enum Category {
-        MOD("Mods", "mod", "mods", R.drawable.oryn_download_mod),
-        RESOURCEPACK("Resource Packs", "resourcepack", "resourcepacks", R.drawable.oryn_download_resource),
-        SHADER("Shaders", "shader", "shaderpacks", R.drawable.oryn_download_shader),
-        MODPACK("Modpacks", "modpack", "", R.drawable.oryn_download_mod);
+    private OrynDownloadViewModel viewModel;
+    private OrynProjectAdapter projectAdapter;
+    private OrynContentRepository filterRepository;
+    private ExecutorService instanceExecutor;
 
-        final String title;
-        final String projectType;
-        final String folder;
-        final int placeholder;
-
-        Category(String title, String projectType, String folder, int placeholder) {
-            this.title = title;
-            this.projectType = projectType;
-            this.folder = folder;
-            this.placeholder = placeholder;
-        }
-    }
-
-    private final ModrinthRepository repository = new ModrinthRepository();
-    private final InstalledProjectStore installedStore = new InstalledProjectStore();
-    private final ModrinthInstaller installer = new ModrinthInstaller(repository, installedStore);
-    private final ExecutorService instanceExecutor = Executors.newSingleThreadExecutor();
-
-    private Category category = Category.MOD;
-    private Instance selectedInstance;
-    private ModrinthProject selectedProject;
-    private List<ModrinthVersion> selectedCompatibleVersions = new ArrayList<>();
-    private ModrinthVersion selectedVersion;
-
-    /*
-     * ONE source of truth for project data.
-     * No compatibility-count list, no parallel UI list, no separate card count.
-     */
-    private DownloadState downloadState = DownloadState.idle();
-    private int generation = 0;
-    private boolean suppressFilterCallbacks;
-
-    private LinearLayout projectRows;
-    private ScrollView projectScroll;
-    private TextView status;
-    private TextView categoryTitle;
-    private Button instanceButton;
-    private TextView instanceTargetView;
-    private EditText search;
     private Spinner versionSpinner;
     private Spinner loaderSpinner;
+    private EditText search;
+    private Button instanceButton;
     private Button loadMoreButton;
-    private ProgressBar searchProgress;
+    private Button downloadButton;
+    private ProgressBar listProgress;
+    private ProgressBar detailProgress;
+    private TextView categoryTitle;
+    private TextView status;
+    private TextView instanceTarget;
+    private RecyclerView projectList;
 
     private ImageView detailIcon;
     private TextView detailTitle;
@@ -105,8 +66,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private TextView detailInfo;
     private TextView detailDescription;
     private Spinner detailVersionSpinner;
-    private Button detailDownload;
-    private ProgressBar detailProgress;
+
+    private OrynDownloadState.Category category = OrynDownloadState.Category.MOD;
+    private Instance selectedInstance;
+    private List<String> availableVersions = new ArrayList<>();
+    private List<String> availableLoaders = new ArrayList<>();
+    private boolean suppressFilters;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,9 +87,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
 
         selectedInstance = Instances.loadSelectedInstance();
+        viewModel = new OrynDownloadViewModel(selectedInstance);
+        filterRepository = new OrynContentRepository();
+        instanceExecutor = Executors.newSingleThreadExecutor();
+
         buildUi();
+        viewModel.observe(this::renderState);
         loadFilters();
-        updateInstanceUi();
     }
 
     private int dp(float value) {
@@ -139,13 +108,6 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return view;
     }
 
-    private void styleButton(Button button) {
-        button.setAllCaps(false);
-        button.setTextColor(Color.WHITE);
-        button.setTextSize(12);
-        button.setBackground(round(0xFF30343E, dp(10)));
-    }
-
     private GradientDrawable round(int color, int radius) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
@@ -153,10 +115,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return drawable;
     }
 
+    private void styleButton(Button button) {
+        button.setAllCaps(false);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(12);
+        button.setBackground(round(0xFF2A2E38, dp(10)));
+    }
+
     private void buildUi() {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setBackgroundColor(0xFF0B0C0F);
+        root.setBackgroundColor(0xFF0A0B0E);
 
         root.addView(buildSidebar(), new LinearLayout.LayoutParams(dp(178), -1));
 
@@ -168,30 +137,29 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
 
-        categoryTitle = text(category.title, 24);
+        categoryTitle = text("Mods", 24);
         categoryTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         header.addView(categoryTitle, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         instanceButton = new Button(this);
         styleButton(instanceButton);
-        instanceButton.setText("Select an instance");
         instanceButton.setOnClickListener(v -> chooseInstance());
-        header.addView(instanceButton, new LinearLayout.LayoutParams(dp(190), dp(40)));
+        header.addView(instanceButton, new LinearLayout.LayoutParams(dp(205), dp(40)));
         center.addView(header);
 
-        LinearLayout filterRow = new LinearLayout(this);
-        filterRow.setGravity(Gravity.CENTER_VERTICAL);
-        filterRow.setPadding(0, dp(2), 0, dp(5));
+        LinearLayout filters = new LinearLayout(this);
+        filters.setGravity(Gravity.CENTER_VERTICAL);
+        filters.setPadding(0, dp(3), 0, dp(5));
 
         versionSpinner = new Spinner(this);
-        filterRow.addView(versionSpinner, new LinearLayout.LayoutParams(dp(135), dp(38)));
+        filters.addView(versionSpinner, new LinearLayout.LayoutParams(dp(140), dp(38)));
 
         loaderSpinner = new Spinner(this);
         LinearLayout.LayoutParams loaderLp = new LinearLayout.LayoutParams(dp(115), dp(38));
-        loaderLp.leftMargin = dp(6);
-        filterRow.addView(loaderSpinner, loaderLp);
+        loaderLp.leftMargin = dp(7);
+        filters.addView(loaderSpinner, loaderLp);
 
-        center.addView(filterRow);
+        center.addView(filters);
 
         LinearLayout searchRow = new LinearLayout(this);
         searchRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -199,139 +167,131 @@ public class OrynDownloadActivity extends AppCompatActivity {
         search = new EditText(this);
         search.setSingleLine(true);
         search.setTextColor(Color.WHITE);
-        search.setHintTextColor(0xFF737782);
+        search.setHintTextColor(0xFF707580);
         search.setTextSize(13);
-        search.setHint("Search mods, resource packs, shaders, modpacks…");
+        search.setHint("Search Modrinth content…");
         search.setInputType(InputType.TYPE_CLASS_TEXT);
-        search.setImeOptions(EditorInfo.IME_ACTION_SEARCH);
-        search.setPadding(dp(14), 0, dp(10), 0);
-        search.setBackground(round(0xFF1D1F25, dp(10)));
-        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(44), 1));
+        search.setPadding(dp(13), 0, dp(10), 0);
+        search.setBackground(round(0xFF1A1C22, dp(10)));
+        searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         Button searchButton = new Button(this);
         styleButton(searchButton);
         searchButton.setText("Search");
-        LinearLayout.LayoutParams searchButtonLp = new LinearLayout.LayoutParams(dp(82), dp(44));
-        searchButtonLp.leftMargin = dp(7);
-        searchRow.addView(searchButton, searchButtonLp);
+        LinearLayout.LayoutParams searchLp = new LinearLayout.LayoutParams(dp(82), dp(42));
+        searchLp.leftMargin = dp(7);
+        searchRow.addView(searchButton, searchLp);
         center.addView(searchRow);
 
-        searchProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        searchProgress.setMax(100);
-        searchProgress.setIndeterminate(true);
-        searchProgress.setVisibility(View.GONE);
-        center.addView(searchProgress, new LinearLayout.LayoutParams(-1, dp(3)));
+        listProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        listProgress.setIndeterminate(true);
+        listProgress.setVisibility(View.GONE);
+        center.addView(listProgress, new LinearLayout.LayoutParams(-1, dp(3)));
 
-        status = text("Select an instance first", 11);
-        status.setTextColor(0xFF8D929D);
+        status = text("Loading Modrinth…", 11);
+        status.setTextColor(0xFF8B909B);
         status.setPadding(0, dp(3), 0, dp(3));
-        center.addView(status, new LinearLayout.LayoutParams(-1, dp(30)));
+        center.addView(status, new LinearLayout.LayoutParams(-1, dp(29)));
 
-        projectScroll = new ScrollView(this);
-        projectScroll.setFillViewport(true);
-        projectRows = new LinearLayout(this);
-        projectRows.setOrientation(LinearLayout.VERTICAL);
-        projectRows.setPadding(0, dp(4), dp(6), dp(14));
-        projectScroll.addView(projectRows);
-        center.addView(projectScroll, new LinearLayout.LayoutParams(0, 0, 1));
+        projectList = new RecyclerView(this);
+        projectList.setClipToPadding(false);
+        projectList.setPadding(0, dp(3), dp(4), dp(12));
+        projectList.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
+        projectAdapter = new OrynProjectAdapter(
+                new OrynContentRepository(),
+                project -> viewModel.selectProject(project));
+        projectList.setAdapter(projectAdapter);
+        center.addView(projectList, new LinearLayout.LayoutParams(0, 0, 1));
 
         loadMoreButton = new Button(this);
         styleButton(loadMoreButton);
         loadMoreButton.setText("Load more");
         loadMoreButton.setVisibility(View.GONE);
-        loadMoreButton.setOnClickListener(v -> performSearch(false));
+        loadMoreButton.setOnClickListener(v -> viewModel.loadMore());
         center.addView(loadMoreButton, new LinearLayout.LayoutParams(-1, dp(40)));
 
-        root.addView(buildDetails(), new LinearLayout.LayoutParams(dp(305), -1));
+        root.addView(buildDetails(), new LinearLayout.LayoutParams(dp(320), -1));
 
-        searchButton.setOnClickListener(v -> performSearch(true));
+        searchButton.setOnClickListener(v -> refreshSearch());
         search.setOnEditorActionListener((v, actionId, event) -> {
-            if (actionId == EditorInfo.IME_ACTION_SEARCH || event != null) {
-                performSearch(true);
-                return true;
-            }
-            return false;
+            refreshSearch();
+            return true;
         });
 
-        versionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (suppressFilterCallbacks) return;
-                Object value = parent.getItemAtPosition(position);
-                if (value != null) {
-                    performSearch(true);
-                }
+        versionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (!suppressFilters && position >= 0) refreshSearch();
             }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
 
-        loaderSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (suppressFilterCallbacks) return;
-                if (category == Category.MOD || category == Category.MODPACK) performSearch(true);
+        loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                if (!suppressFilters && category.usesLoader() && position >= 0) refreshSearch();
             }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        projectList.post(this::updateGridColumns);
+        projectList.addOnLayoutChangeListener((v, left, top, right, bottom,
+                                                oldLeft, oldTop, oldRight, oldBottom) -> {
+            if (right - left != oldRight - oldLeft) updateGridColumns();
         });
 
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
+        updateInstanceUi();
     }
 
     private LinearLayout buildSidebar() {
         LinearLayout sidebar = new LinearLayout(this);
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(14), dp(16), dp(12), dp(12));
-        sidebar.setBackgroundColor(0xFF121317);
+        sidebar.setBackgroundColor(0xFF111318);
 
         TextView brand = text("ORYNLAUNCHER", 12);
         brand.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        brand.setTextColor(0xFFC8CBD3);
+        brand.setTextColor(0xFFD5D8DE);
         sidebar.addView(brand, new LinearLayout.LayoutParams(-1, dp(32)));
 
         TextView heading = text("Download", 24);
         heading.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         sidebar.addView(heading, new LinearLayout.LayoutParams(-1, dp(45)));
 
-        TextView sub = text("Discover real Modrinth content", 11);
-        sub.setTextColor(0xFF7F8490);
-        sub.setMaxLines(2);
-        sidebar.addView(sub, new LinearLayout.LayoutParams(-1, dp(38)));
+        TextView sub = text("Real Modrinth content", 11);
+        sub.setTextColor(0xFF7E838E);
+        sidebar.addView(sub, new LinearLayout.LayoutParams(-1, dp(30)));
 
-        addCategory(sidebar, "Mods", Category.MOD);
-        addCategory(sidebar, "Resource Packs", Category.RESOURCEPACK);
-        addCategory(sidebar, "Shaders", Category.SHADER);
-        addCategory(sidebar, "Modpacks", Category.MODPACK);
+        addCategory(sidebar, OrynDownloadState.Category.MOD);
+        addCategory(sidebar, OrynDownloadState.Category.RESOURCEPACK);
+        addCategory(sidebar, OrynDownloadState.Category.SHADER);
+        addCategory(sidebar, OrynDownloadState.Category.MODPACK);
 
         TextView spacer = text("", 1);
         sidebar.addView(spacer, new LinearLayout.LayoutParams(1, 0, 1));
 
-        TextView target = text("INSTALLING TO", 9);
-        target.setTextColor(0xFF666B76);
-        sidebar.addView(target, new LinearLayout.LayoutParams(-1, dp(20)));
+        TextView targetLabel = text("INSTALLING TO", 9);
+        targetLabel.setTextColor(0xFF686D78);
+        sidebar.addView(targetLabel, new LinearLayout.LayoutParams(-1, dp(20)));
 
-        TextView targetValue = text("", 11);
-        instanceTargetView = targetValue;
-        targetValue.setTextColor(0xFFD8DAE0);
-        targetValue.setMaxLines(2);
-        targetValue.setTag("instance_target");
-        sidebar.addView(targetValue, new LinearLayout.LayoutParams(-1, dp(40)));
+        instanceTarget = text("", 11);
+        instanceTarget.setTextColor(0xFFD4D7DE);
+        instanceTarget.setMaxLines(2);
+        sidebar.addView(instanceTarget, new LinearLayout.LayoutParams(-1, dp(45)));
 
         return sidebar;
     }
 
-    private void addCategory(LinearLayout sidebar, String title, Category value) {
+    private void addCategory(LinearLayout sidebar, OrynDownloadState.Category value) {
         Button button = new Button(this);
         styleButton(button);
         button.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-        button.setText(title);
+        button.setText(value.title);
         button.setOnClickListener(v -> {
             category = value;
             categoryTitle.setText(value.title);
-            selectedProject = null;
-            selectedCompatibleVersions.clear();
-            selectedVersion = null;
-            clearDetails();
             updateFilterVisibility();
-            performSearch(true);
+            refreshSearch();
         });
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(44));
         lp.bottomMargin = dp(5);
@@ -339,668 +299,388 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private LinearLayout buildDetails() {
-        LinearLayout details = new LinearLayout(this);
-        details.setOrientation(LinearLayout.VERTICAL);
-        details.setPadding(dp(18), dp(18), dp(18), dp(16));
-        details.setBackgroundColor(0xFF121317);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setPadding(dp(18), dp(18), dp(18), dp(16));
+        panel.setBackgroundColor(0xFF111318);
 
         detailIcon = new ImageView(this);
         detailIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        detailIcon.setImageResource(category.placeholder);
-        details.addView(detailIcon, new LinearLayout.LayoutParams(dp(88), dp(88)));
+        detailIcon.setImageResource(R.drawable.oryn_download_mod);
+        panel.addView(detailIcon, new LinearLayout.LayoutParams(dp(84), dp(84)));
 
         detailTitle = text("Select a project", 19);
-        detailTitle.setGravity(Gravity.CENTER);
         detailTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(-1, -2);
-        titleLp.topMargin = dp(12);
-        details.addView(detailTitle, titleLp);
+        detailTitle.setMaxLines(2);
+        LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(-1, dp(48));
+        titleLp.topMargin = dp(11);
+        panel.addView(detailTitle, titleLp);
 
         detailAuthor = text("", 11);
-        detailAuthor.setTextColor(0xFF8F949F);
-        detailAuthor.setGravity(Gravity.CENTER);
-        details.addView(detailAuthor, new LinearLayout.LayoutParams(-1, dp(24)));
+        detailAuthor.setTextColor(0xFF8C919C);
+        panel.addView(detailAuthor, new LinearLayout.LayoutParams(-1, dp(22)));
 
         detailInfo = text("", 10);
-        detailInfo.setTextColor(0xFFB4B7BF);
-        detailInfo.setGravity(Gravity.CENTER);
+        detailInfo.setTextColor(0xFFB9BCC4);
         detailInfo.setMaxLines(8);
-        details.addView(detailInfo, new LinearLayout.LayoutParams(-1, dp(72)));
+        panel.addView(detailInfo, new LinearLayout.LayoutParams(-1, dp(105)));
 
-        detailDescription = text("Choose a real Modrinth project to inspect compatible versions and install it into the selected instance.", 12);
-        detailDescription.setTextColor(0xFFB8BBC3);
-        detailDescription.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        detailDescription.setMaxLines(12);
+        detailDescription = text(
+                "Select a project to inspect its Modrinth details and compatible versions.",
+                11);
+        detailDescription.setTextColor(0xFFB5B8C0);
+        detailDescription.setMaxLines(10);
         LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(-1, 0, 1);
-        descLp.topMargin = dp(8);
-        details.addView(detailDescription, descLp);
+        descLp.topMargin = dp(6);
+        panel.addView(detailDescription, descLp);
 
-        TextView versionLabel = text("COMPATIBLE VERSION", 9);
+        TextView versionLabel = text("COMPATIBLE VERSIONS", 9);
         versionLabel.setTextColor(0xFF707580);
-        details.addView(versionLabel, new LinearLayout.LayoutParams(-1, dp(20)));
+        panel.addView(versionLabel, new LinearLayout.LayoutParams(-1, dp(22)));
 
         detailVersionSpinner = new Spinner(this);
-        details.addView(detailVersionSpinner, new LinearLayout.LayoutParams(-1, dp(38)));
+        panel.addView(detailVersionSpinner, new LinearLayout.LayoutParams(-1, dp(38)));
 
         detailProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         detailProgress.setMax(100);
         detailProgress.setVisibility(View.GONE);
-        details.addView(detailProgress, new LinearLayout.LayoutParams(-1, dp(3)));
+        panel.addView(detailProgress, new LinearLayout.LayoutParams(-1, dp(3)));
 
-        detailDownload = new Button(this);
-        styleButton(detailDownload);
-        detailDownload.setText("DOWNLOAD");
-        detailDownload.setEnabled(false);
-        detailDownload.setOnClickListener(v -> installSelectedProject());
-        details.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(46)));
+        downloadButton = new Button(this);
+        styleButton(downloadButton);
+        downloadButton.setText("DOWNLOAD");
+        downloadButton.setEnabled(false);
+        downloadButton.setOnClickListener(v -> viewModel.installSelected());
+        panel.addView(downloadButton, new LinearLayout.LayoutParams(-1, dp(46)));
 
-        return details;
+        detailVersionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                OrynDownloadState state = viewModel.getState();
+                if (position >= 0 && position < state.compatibleVersions.size()) {
+                    viewModel.selectVersion(state.compatibleVersions.get(position));
+                }
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        return panel;
     }
 
     private void loadFilters() {
-        suppressFilterCallbacks = true;
-        repository.loadGameVersionsAsync(new ModrinthRepository.ValuesCallback() {
+        suppressFilters = true;
+        filterRepository.loadGameVersions(new OrynContentRepository.Listener<List<String>>() {
             @Override public void onSuccess(List<String> values) {
                 runOnUiThread(() -> {
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                            OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item, values);
-                    versionSpinner.setAdapter(adapter);
-                    String current = selectedInstance == null
-                            ? "1.21.11"
-                            : minecraftVersionFromInstance(selectedInstance.versionId);
-                    int index = current == null ? -1 : values.indexOf(current);
-                    if (index < 0 && !values.isEmpty()) index = 0;
-                    if (index >= 0) versionSpinner.setSelection(index);
-                    suppressFilterCallbacks = false;
-                    updateFilterVisibility();
-                    performSearch(true);
+                    availableVersions = new ArrayList<>(values);
+                    if (availableVersions.isEmpty()) fallbackVersions();
+                    setupVersionSpinner();
+                    loadLoaders();
                 });
             }
 
             @Override public void onError(Exception error) {
                 runOnUiThread(() -> {
-                    suppressFilterCallbacks = false;
-                    ArrayList<String> fallback = new ArrayList<>();
-                    fallback.add("1.21.11");
-                    fallback.add("1.21.10");
-                    fallback.add("1.21.9");
-                    versionSpinner.setAdapter(new ArrayAdapter<>(
-                            OrynDownloadActivity.this,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            fallback));
-                    suppressFilterCallbacks = false;
-                    updateFilterVisibility();
-                    performSearch(true);
+                    fallbackVersions();
+                    setupVersionSpinner();
+                    loadLoaders();
                 });
             }
         });
+    }
 
-        repository.loadLoadersAsync(new ModrinthRepository.ValuesCallback() {
+    private void loadLoaders() {
+        filterRepository.loadLoaders(new OrynContentRepository.Listener<List<String>>() {
             @Override public void onSuccess(List<String> values) {
                 runOnUiThread(() -> {
-                    List<String> sorted = new ArrayList<>(values);
-                    Collections.sort(sorted);
-                    ArrayList<String> display = new ArrayList<>();
-                    display.add("Auto");
-                    display.addAll(sorted);
-                    ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                            OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item, display);
-                    loaderSpinner.setAdapter(adapter);
-                    String detected = detectLoader(selectedInstance);
-                    if (detected != null) {
-                        int index = display.indexOf(detected);
-                        if (index >= 0) loaderSpinner.setSelection(index);
-                    }
-                    suppressFilterCallbacks = false;
+                    availableLoaders = new ArrayList<>(values);
+                    setupLoaderSpinner();
+                    suppressFilters = false;
                     updateFilterVisibility();
+                    refreshSearch();
                 });
             }
 
             @Override public void onError(Exception error) {
                 runOnUiThread(() -> {
-                    ArrayList<String> fallback = new ArrayList<>();
-                    fallback.add("Auto");
-                    fallback.add("fabric");
-                    fallback.add("forge");
-                    fallback.add("neoforge");
-                    fallback.add("quilt");
-                    loaderSpinner.setAdapter(new ArrayAdapter<>(
-                            OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item, fallback));
-                    suppressFilterCallbacks = false;
+                    availableLoaders.clear();
+                    Collections.addAll(availableLoaders, "fabric", "forge", "neoforge", "quilt");
+                    setupLoaderSpinner();
+                    suppressFilters = false;
                     updateFilterVisibility();
+                    refreshSearch();
                 });
             }
         });
     }
 
-    private void updateFilterVisibility() {
-        boolean needsLoader = category == Category.MOD || category == Category.MODPACK;
-        loaderSpinner.setVisibility(needsLoader ? View.VISIBLE : View.GONE);
-        versionSpinner.setVisibility(View.VISIBLE);
+    private void fallbackVersions() {
+        availableVersions.clear();
+        Collections.addAll(availableVersions, "1.21.11", "1.21.10", "1.21.9");
     }
 
-    private void performSearch(boolean reset) {
-        String mcVersion = selectedMinecraftVersion();
-        if (mcVersion == null || mcVersion.isEmpty()) {
-            status.setText("Select a Minecraft version.");
-            renderEmpty("Select a Minecraft version");
-            loadMoreButton.setVisibility(View.GONE);
+    private void setupVersionSpinner() {
+        String preferred = selectedInstance == null
+                ? "1.21.11" : minecraftVersionFromInstance(selectedInstance.versionId);
+        if (preferred != null && !availableVersions.contains(preferred)) {
+            availableVersions.add(0, preferred);
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, availableVersions);
+        versionSpinner.setAdapter(adapter);
+        int index = availableVersions.indexOf(preferred);
+        if (index >= 0) versionSpinner.setSelection(index);
+    }
+
+    private void setupLoaderSpinner() {
+        ArrayList<String> values = new ArrayList<>();
+        values.add("Auto");
+        for (String loader : availableLoaders) {
+            if (loader != null && !values.contains(loader)) values.add(loader);
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, values);
+        loaderSpinner.setAdapter(adapter);
+
+        String detected = detectLoader(selectedInstance);
+        if (detected != null) {
+            int index = values.indexOf(detected);
+            if (index >= 0) loaderSpinner.setSelection(index);
+        }
+    }
+
+    private void refreshSearch() {
+        String version = selectedMinecraftVersion();
+        if (version == null || version.isEmpty()) {
+            status.setText("Select a Minecraft version");
             return;
         }
+        String loader = selectedLoader();
+        viewModel.setFilters(category, version, loader, search.getText().toString().trim());
+    }
 
-        final int requestGeneration = ++generation;
-        final int offset = reset ? 0 : downloadState.offset;
-        final String query = search == null ? "" : search.getText().toString().trim();
-        final String loader = selectedLoader();
+    private void renderState(OrynDownloadState state) {
+        if (LooperHolder.isMainThread()) {
+            renderStateOnMain(state);
+        } else {
+            runOnUiThread(() -> renderStateOnMain(state));
+        }
+    }
 
-        if (!reset && (downloadState.projects.isEmpty() || !downloadState.hasMore)) {
-            loadMoreButton.setVisibility(View.GONE);
-            return;
+    private void renderStateOnMain(OrynDownloadState state) {
+        listProgress.setVisibility(state.listStatus == OrynDownloadState.ListStatus.LOADING
+                ? View.VISIBLE : View.GONE);
+
+        projectAdapter.submitList(state.projects);
+        projectAdapter.setSelectedId(state.selectedProject == null ? null : state.selectedProject.id);
+
+        if (state.listStatus == OrynDownloadState.ListStatus.ERROR && state.projects.isEmpty()) {
+            status.setText(state.listMessage == null ? "Could not load projects" : state.listMessage);
+        } else if (state.projects.isEmpty() && state.listStatus == OrynDownloadState.ListStatus.READY) {
+            status.setText("No projects found");
+        } else if (!state.projects.isEmpty()) {
+            String loader = state.category.usesLoader() ? " • " + state.loader : "";
+            status.setText(state.projects.size() + " projects • " + state.minecraftVersion + loader);
+        } else {
+            status.setText("Loading Modrinth projects…");
         }
 
-        if (reset) {
-            repository.cancelSearch();
-            downloadState = DownloadState.searching(
-                    Collections.<ModrinthProject>emptyList(), 0, 0, false);
-            selectedProject = null;
-            selectedCompatibleVersions.clear();
-            selectedVersion = null;
+        loadMoreButton.setVisibility(
+                state.hasMore && !state.projects.isEmpty() ? View.VISIBLE : View.GONE);
+        loadMoreButton.setEnabled(state.listStatus != OrynDownloadState.ListStatus.LOADING);
+
+        renderDetails(state);
+    }
+
+    private void renderDetails(OrynDownloadState state) {
+        if (state.selectedProject == null) {
             clearDetails();
-            renderSkeletons();
-        }
-
-        android.util.Log.d("OrynDownload",
-                "Search request: type=" + category.projectType
-                        + " • version=" + mcVersion
-                        + " • loader=" + String.valueOf(loader)
-                        + " • offset=" + offset
-                        + " • query=" + query);
-
-        searchProgress.setVisibility(View.VISIBLE);
-        loadMoreButton.setEnabled(false);
-        status.setText("Loading Modrinth…");
-
-        repository.searchAsync(query, category.projectType, mcVersion, loader, offset,
-                new ModrinthRepository.SearchCallback() {
-                    @Override public void onLoading() {
-                        runOnUiThread(() -> {
-                            searchProgress.setVisibility(View.VISIBLE);
-                            if (reset) renderSkeletons();
-                        });
-                    }
-
-                    @Override public void onSuccess(ModrinthSearchResult result, boolean append) {
-                        runOnUiThread(() -> {
-                            if (requestGeneration != generation) return;
-
-                            List<ModrinthProject> merged = new ArrayList<>();
-                            if (append) merged.addAll(downloadState.projects);
-
-                            Set<String> existing = new HashSet<>();
-                            for (ModrinthProject project : merged) {
-                                if (project != null && project.id != null) existing.add(project.id);
-                            }
-
-                            for (ModrinthProject project : result.projects) {
-                                if (project == null || project.id == null || project.id.isEmpty()) continue;
-                                if (!existing.contains(project.id)) {
-                                    merged.add(project);
-                                    existing.add(project.id);
-                                }
-                            }
-
-                            boolean hasMore = result.hasMore() && !merged.isEmpty();
-                            downloadState = DownloadState.projects(
-                                    merged,
-                                    result.offset + result.projects.size(),
-                                    result.totalHits,
-                                    hasMore);
-
-                            android.util.Log.d("OrynDownload",
-                                    "State projects = " + downloadState.projects.size()
-                                            + " • totalHits=" + downloadState.totalHits
-                                            + " • hasMore=" + downloadState.hasMore);
-
-                            searchProgress.setVisibility(View.GONE);
-                            loadMoreButton.setEnabled(true);
-
-                            renderProjects(downloadState.projects);
-
-                            // NEVER use totalHits as the visible project count.
-                            // The UI count is exactly the same list the renderer consumes.
-                            if (downloadState.projects.isEmpty()) {
-                                status.setText("No projects found");
-                                loadMoreButton.setVisibility(View.GONE);
-                            } else {
-                                String filterText = mcVersion
-                                        + (loader == null ? "" : " • " + loader);
-                                status.setText(downloadState.projects.size()
-                                        + " projects • " + filterText);
-                                loadMoreButton.setVisibility(
-                                        downloadState.hasMore && !downloadState.projects.isEmpty()
-                                                ? View.VISIBLE : View.GONE);
-                            }
-                        });
-                    }
-
-                    @Override public void onError(Exception error) {
-                        runOnUiThread(() -> {
-                            if (requestGeneration != generation) return;
-                            searchProgress.setVisibility(View.GONE);
-                            loadMoreButton.setEnabled(true);
-
-                            if (downloadState.projects.isEmpty()) {
-                                renderEmpty("Modrinth couldn't be reached.");
-                                status.setText("Modrinth couldn't be reached.");
-                            } else {
-                                status.setText("Modrinth couldn't load more projects.");
-                            }
-                            loadMoreButton.setVisibility(View.GONE);
-                            android.util.Log.e("OrynDownload",
-                                    "Search failed: " + String.valueOf(error.getMessage()), error);
-                        });
-                    }
-                });
-    }
-
-    private void renderSkeletons() {
-        projectRows.removeAllViews();
-        int count = columnsForWidth();
-        for (int start = 0; start < 6; start += count) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            for (int i = 0; i < count && start + i < 6; i++) {
-                View skeleton = skeletonCard();
-                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(145), 1);
-                lp.setMargins(dp(3), dp(3), dp(3), dp(3));
-                row.addView(skeleton, lp);
-            }
-            projectRows.addView(row, new LinearLayout.LayoutParams(-1, dp(151)));
-        }
-    }
-
-    private View skeletonCard() {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.VERTICAL);
-        card.setPadding(dp(12), dp(12), dp(12), dp(12));
-        card.setBackground(round(0xFF17191E, dp(12)));
-
-        LinearLayout line = new LinearLayout(this);
-        line.addView(block(dp(48), dp(48)), new LinearLayout.LayoutParams(dp(48), dp(48)));
-        LinearLayout copy = new LinearLayout(this);
-        copy.setOrientation(LinearLayout.VERTICAL);
-        copy.addView(block(-1, dp(13)), new LinearLayout.LayoutParams(-1, dp(13)));
-        copy.addView(block(dp(110), dp(10)), new LinearLayout.LayoutParams(dp(110), dp(10)));
-        LinearLayout.LayoutParams copyLp = new LinearLayout.LayoutParams(0, dp(48), 1);
-        copyLp.leftMargin = dp(9);
-        line.addView(copy, copyLp);
-        card.addView(line);
-
-        card.addView(block(-1, dp(10)), new LinearLayout.LayoutParams(-1, dp(10)));
-        card.addView(block(dp(180), dp(10)), new LinearLayout.LayoutParams(dp(180), dp(10)));
-        return card;
-    }
-
-    private View block(int width, int height) {
-        View v = new View(this);
-        v.setBackground(round(0xFF292C33, dp(5)));
-        return v;
-    }
-
-    private void renderProjects(List<ModrinthProject> source) {
-        projectRows.removeAllViews();
-
-        int requestedCards = source == null ? 0 : source.size();
-        android.util.Log.d("OrynDownload",
-                "Rendering cards = " + requestedCards);
-
-        if (requestedCards == 0) {
-            renderEmpty("No projects found");
             return;
         }
 
-        int count = columnsForWidth();
-        for (int start = 0; start < requestedCards; start += count) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
+        ModrinthProject project = state.selectedProject;
+        detailTitle.setText(project.title);
+        detailAuthor.setText("by " + safe(project.author));
+        detailInfo.setText(buildProjectInfo(project));
+        detailDescription.setText(project.description == null || project.description.isEmpty()
+                ? "No description available." : project.description);
 
-            int rowCount = Math.min(count, requestedCards - start);
-            for (int i = 0; i < rowCount; i++) {
-                // The card receives the exact Project object from DownloadState.projects.
-                ModrinthProject project = source.get(start + i);
-                View card = createProjectCard(project);
-                LinearLayout.LayoutParams lp =
-                        new LinearLayout.LayoutParams(0, dp(160), 1);
-                lp.setMargins(dp(3), dp(3), dp(3), dp(3));
-                row.addView(card, lp);
-            }
-
-            for (int i = rowCount; i < count; i++) {
-                View spacer = new View(this);
-                row.addView(spacer, new LinearLayout.LayoutParams(0, dp(160), 1));
-            }
-
-            projectRows.addView(row, new LinearLayout.LayoutParams(-1, dp(166)));
+        if (state.detailStatus == OrynDownloadState.DetailStatus.LOADING) {
+            detailProgress.setVisibility(View.VISIBLE);
+            detailProgress.setIndeterminate(true);
+            detailVersionSpinner.setAdapter(new ArrayAdapter<>(
+                    this, android.R.layout.simple_spinner_dropdown_item,
+                    Collections.singletonList("Loading compatible versions…")));
+            downloadButton.setEnabled(false);
+            downloadButton.setText("CHECKING…");
+            return;
         }
 
-        android.util.Log.d("OrynDownload",
-                "ProjectCard views created = " + requestedCards);
-    }
+        detailProgress.setVisibility(View.GONE);
+        ArrayList<String> labels = new ArrayList<>();
+        for (ModrinthVersion version : state.compatibleVersions) {
+            String loader = state.category.usesLoader() && version.loaders != null
+                    && !version.loaders.isEmpty() ? " • " + join(version.loaders, 2) : "";
+            String label = version.versionNumber == null || version.versionNumber.isEmpty()
+                    ? version.name : version.versionNumber;
+            labels.add(label + loader);
+        }
 
-    private int columnsForWidth() {
-        int widthDp = getResources().getDisplayMetrics().widthPixels;
-        int side = dp(178 + 305 + 32);
-        int centerPx = Math.max(dp(280), widthDp - side);
-        int centerDp = (int)(centerPx / getResources().getDisplayMetrics().density);
-        if (centerDp >= 1000) return 3;
-        if (centerDp >= 610) return 2;
-        return 1;
-    }
+        if (labels.isEmpty()) {
+            detailVersionSpinner.setAdapter(new ArrayAdapter<>(
+                    this, android.R.layout.simple_spinner_dropdown_item,
+                    Collections.singletonList("No compatible version/file")));
+            downloadButton.setEnabled(false);
+            downloadButton.setText("DOWNLOAD");
+            return;
+        }
 
-    private View createProjectCard(final ModrinthProject project) {
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.TOP);
-        card.setPadding(dp(10), dp(10), dp(10), dp(8));
-        card.setBackground(round(0xFF17191E, dp(12)));
-        card.setClickable(true);
-        card.setFocusable(true);
+        detailVersionSpinner.setAdapter(new ArrayAdapter<>(
+                this, android.R.layout.simple_spinner_dropdown_item, labels));
+        int selected = state.selectedVersion == null
+                ? 0 : state.compatibleVersions.indexOf(state.selectedVersion);
+        if (selected < 0) selected = 0;
+        if (detailVersionSpinner.getSelectedItemPosition() != selected) {
+            detailVersionSpinner.setSelection(selected);
+        }
 
-        final ImageView icon = new ImageView(this);
-        icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        icon.setImageResource(category.placeholder);
-        card.addView(icon, new LinearLayout.LayoutParams(dp(54), dp(54)));
+        if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.DOWNLOADING) {
+            detailProgress.setIndeterminate(false);
+            detailProgress.setProgress(state.installState.progress);
+            detailProgress.setVisibility(View.VISIBLE);
+            downloadButton.setEnabled(false);
+            downloadButton.setText("Downloading " + state.installState.progress + "%");
+        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.INSTALLING
+                || state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.CHECKING) {
+            detailProgress.setIndeterminate(true);
+            detailProgress.setVisibility(View.VISIBLE);
+            downloadButton.setEnabled(false);
+            downloadButton.setText(state.installState.status
+                    == net.kdt.pojavlaunch.download.DownloadState.Status.CHECKING
+                    ? "CHECKING…" : "INSTALLING…");
+        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.INSTALLED) {
+            detailProgress.setVisibility(View.GONE);
+            downloadButton.setEnabled(false);
+            downloadButton.setText("INSTALLED ✓");
+            status.setText("Installed " + project.title);
+        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.FAILED) {
+            detailProgress.setVisibility(View.GONE);
+            downloadButton.setEnabled(state.selectedInstance != null && state.selectedVersion != null);
+            downloadButton.setText("RETRY");
+        } else {
+            detailProgress.setVisibility(View.GONE);
+            boolean hasInstance = state.selectedInstance != null;
+            downloadButton.setEnabled(hasInstance && state.selectedVersion != null);
+            downloadButton.setText(hasInstance ? "DOWNLOAD" : "SELECT INSTANCE");
+        }
 
-        LinearLayout body = new LinearLayout(this);
-        body.setOrientation(LinearLayout.VERTICAL);
-        LinearLayout.LayoutParams bodyLp = new LinearLayout.LayoutParams(0, -1, 1);
-        bodyLp.leftMargin = dp(9);
-        card.addView(body, bodyLp);
-
-        TextView title = text(project.title, 14);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        title.setMaxLines(1);
-        body.addView(title);
-
-        TextView author = text(project.author, 10);
-        author.setTextColor(0xFF8D929D);
-        author.setMaxLines(1);
-        body.addView(author);
-
-        TextView description = text(project.description, 10);
-        description.setTextColor(0xFFB5B8C0);
-        description.setMaxLines(2);
-        LinearLayout.LayoutParams descLp = new LinearLayout.LayoutParams(-1, 0, 1);
-        descLp.topMargin = dp(4);
-        body.addView(description, descLp);
-
-        TextView meta = text(formatDownloads(project.downloads) + " downloads • " + categoryLabel(project.projectType), 9);
-        meta.setTextColor(0xFF777C87);
-        body.addView(meta);
-
-        TextView compatibility = text(
-                project.gameVersions.isEmpty() ? selectedMinecraftVersion() : selectedMinecraftVersion()
-                        + (selectedLoader() == null ? "" : " • " + selectedLoader()), 9);
-        compatibility.setTextColor(0xFF9EA2AC);
-        body.addView(compatibility);
-
-        card.setOnClickListener(v -> {
-            v.animate().scaleX(0.98f).scaleY(0.98f).setDuration(70)
-                    .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start()).start();
-            selectProject(project);
-        });
-
-        repository.loadIconAsync(project.iconUrl, new ModrinthRepository.IconCallback() {
-            @Override public void onSuccess(Bitmap bitmap) {
-                runOnUiThread(() -> {
-                    if (bitmap != null && !bitmap.isRecycled()) icon.setImageBitmap(bitmap);
+        new OrynContentRepository().loadIcon(project.iconUrl,
+                new OrynContentRepository.Listener<Bitmap>() {
+                    @Override public void onSuccess(Bitmap bitmap) {
+                        if (state.selectedProject == null || !state.selectedProject.id.equals(project.id)) return;
+                        runOnUiThread(() -> {
+                            if (bitmap != null && !bitmap.isRecycled()) detailIcon.setImageBitmap(bitmap);
+                        });
+                    }
+                    @Override public void onError(Exception error) { }
                 });
-            }
-
-            @Override public void onError() {
-                // The Oryn placeholder remains; an icon failure never removes the card.
-            }
-        });
-
-        android.util.Log.d("OrynDownload", "Rendering project: " + project.id + " • " + project.title);
-        android.util.Log.d("OrynDownload", "Project ID: " + project.id);
-        android.util.Log.d("OrynDownload", "Project name: " + project.title);
-        return card;
     }
 
-    private void selectProject(ModrinthProject project) {
-        selectedProject = project;
-        selectedCompatibleVersions.clear();
-        selectedVersion = null;
-        detailTitle.setText(project.title);
-        detailAuthor.setText("by " + project.author);
-        detailDescription.setText(project.description);
-        detailInfo.setText(buildProjectInfo(project));
-        detailIcon.setImageResource(category.placeholder);
-        detailDownload.setEnabled(false);
-        detailDownload.setText("CHECKING…");
-        detailProgress.setVisibility(View.VISIBLE);
+    private void clearDetails() {
+        detailIcon.setImageResource(placeholder());
+        detailTitle.setText("Select a project");
+        detailAuthor.setText("");
+        detailInfo.setText("");
+        detailDescription.setText("Select a project to inspect its Modrinth details and compatible versions.");
         detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item,
-                Collections.singletonList("Checking compatible versions…")));
-
-        repository.loadProjectDetailsAsync(project, category.projectType,
-                selectedMinecraftVersion(), selectedLoader(),
-                new ModrinthRepository.DetailsCallback() {
-                    @Override public void onLoading() {}
-
-                    @Override public void onSuccess(ModrinthProject fullProject, List<ModrinthVersion> compatibleVersions) {
-                        runOnUiThread(() -> {
-                            if (selectedProject != project) return;
-                            selectedCompatibleVersions = compatibleVersions;
-                            detailProgress.setVisibility(View.GONE);
-
-                            ArrayList<String> labels = new ArrayList<>();
-                            for (ModrinthVersion version : compatibleVersions) {
-                                String loader = ("mod".equals(category.projectType) || "modpack".equals(category.projectType))
-                                        ? firstLoader(version.loaders) : null;
-                                labels.add(version.versionNumber.isEmpty() ? version.name
-                                        : version.versionNumber + (loader == null ? "" : " • " + loader));
-                            }
-                            if (labels.isEmpty()) {
-                                detailVersionSpinner.setAdapter(new ArrayAdapter<>(
-                                        OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item,
-                                        Collections.singletonList("No compatible version/file")));
-                                detailDownload.setEnabled(false);
-                                detailDownload.setText("DOWNLOAD");
-                                detailInfo.setText(buildProjectInfo(fullProject) + "\n\nNo compatible downloadable file.");
-                            } else {
-                                detailVersionSpinner.setAdapter(new ArrayAdapter<>(
-                                        OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item, labels));
-                                selectedVersion = compatibleVersions.get(0);
-                                detailVersionSpinner.setSelection(0);
-                                boolean installed = isInstalled(project);
-                                detailDownload.setEnabled(selectedInstance != null);
-                                detailDownload.setText(installed ? "INSTALLED ✓" : "DOWNLOAD");
-                                detailInfo.setText(buildProjectInfo(fullProject)
-                                        + "\n\n" + compatibleVersions.size() + " compatible versions");
-                            }
-
-                            repository.loadIconAsync(fullProject.iconUrl, new ModrinthRepository.IconCallback() {
-                                @Override public void onSuccess(Bitmap bitmap) {
-                                    runOnUiThread(() -> {
-                                        if (selectedProject == project && bitmap != null && !bitmap.isRecycled()) {
-                                            detailIcon.setImageBitmap(bitmap);
-                                        }
-                                    });
-                                }
-                                @Override public void onError() {}
-                            });
-                        });
-                    }
-
-                    @Override public void onError(Exception error) {
-                        runOnUiThread(() -> {
-                            if (selectedProject != project) return;
-                            detailProgress.setVisibility(View.GONE);
-                            detailDownload.setEnabled(false);
-                            detailDownload.setText("DOWNLOAD");
-                            detailInfo.setText(buildProjectInfo(project) + "\n\nUnable to load versions.");
-                            Toast.makeText(OrynDownloadActivity.this,
-                                    "Could not load project versions", Toast.LENGTH_SHORT).show();
-                        });
-                    }
-                });
-
-        detailVersionSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position >= 0 && position < selectedCompatibleVersions.size()) {
-                    selectedVersion = selectedCompatibleVersions.get(position);
-                    detailDownload.setEnabled(selectedInstance != null);
-                    detailDownload.setText(isInstalled(project) ? "INSTALLED ✓" : "DOWNLOAD");
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-    }
-
-    private void installSelectedProject() {
-        if (selectedProject == null || selectedVersion == null) return;
-        if (selectedInstance == null) {
-            Toast.makeText(this, "Select an instance before downloading", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (isInstalled(selectedProject)) {
-            detailDownload.setText("INSTALLED ✓");
-            Toast.makeText(this, "Already installed", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        final ModrinthProject project = selectedProject;
-        final ModrinthVersion version = selectedVersion;
-        final String mcVersion = selectedMinecraftVersion();
-        final String loader = selectedLoader();
-
-        detailDownload.setEnabled(false);
-        detailProgress.setVisibility(View.VISIBLE);
-
-        installer.installAsync(project, version, category.projectType, mcVersion, loader,
-                selectedInstance, new ModrinthInstaller.Callback() {
-                    @Override public void onState(DownloadState state) {
-                        runOnUiThread(() -> {
-                            if (state.status == DownloadState.Status.DOWNLOADING) {
-                                detailProgress.setIndeterminate(false);
-                                detailProgress.setProgress(state.progress);
-                                detailDownload.setText("Downloading " + state.progress + "%");
-                                status.setText(project.title + " • " + state.progress + "%");
-                            } else if (state.status == DownloadState.Status.INSTALLING) {
-                                detailProgress.setIndeterminate(true);
-                                detailDownload.setText("Installing…");
-                                status.setText("Installing " + project.title + "…");
-                            } else if (state.status == DownloadState.Status.CHECKING) {
-                                detailProgress.setIndeterminate(true);
-                                detailDownload.setText("Checking…");
-                                status.setText("Checking " + project.title + "…");
-                            }
-                        });
-                    }
-
-                    @Override public void onSuccess(ModrinthFile file) {
-                        runOnUiThread(() -> {
-                            detailProgress.setVisibility(View.GONE);
-                            detailDownload.setEnabled(true);
-                            detailDownload.setText("INSTALLED ✓");
-                            status.setText("Installed successfully");
-                            Toast.makeText(OrynDownloadActivity.this,
-                                    "Installed " + project.title, Toast.LENGTH_LONG).show();
-                        });
-                    }
-
-                    @Override public void onError(Exception error) {
-                        runOnUiThread(() -> {
-                            detailProgress.setVisibility(View.GONE);
-                            detailDownload.setEnabled(true);
-                            detailDownload.setText("RETRY");
-                            status.setText("Download failed");
-                            Toast.makeText(OrynDownloadActivity.this,
-                                    error.getMessage() == null ? "Download failed" : error.getMessage(),
-                                    Toast.LENGTH_LONG).show();
-                        });
-                    }
-                });
-    }
-
-    private boolean isInstalled(ModrinthProject project) {
-        return selectedInstance != null
-                && installedStore.isInstalled(selectedInstance.getGameDirectory(), project.id, category.projectType);
+                Collections.singletonList("Select a project")));
+        detailProgress.setVisibility(View.GONE);
+        downloadButton.setEnabled(false);
+        downloadButton.setText("DOWNLOAD");
     }
 
     private void chooseInstance() {
         instanceExecutor.execute(() -> {
             try {
-                final List<Instance> instances = Instances.loadAllInstances();
-                final String[] names = new String[instances == null ? 0 : instances.size()];
-                if (instances != null) {
-                    for (int i = 0; i < instances.size(); i++) {
-                        Instance item = instances.get(i);
-                        names[i] = item.name == null || item.name.trim().isEmpty()
-                                ? item.versionId : item.name;
-                    }
+                List<Instance> instances = Instances.loadAllInstances();
+                final List<Instance> result = instances == null
+                        ? Collections.<Instance>emptyList() : new ArrayList<>(instances);
+                final String[] names = new String[result.size()];
+                for (int i = 0; i < result.size(); i++) {
+                    Instance item = result.get(i);
+                    names[i] = item.name == null || item.name.trim().isEmpty()
+                            ? item.versionId : item.name;
                 }
+
                 runOnUiThread(() -> {
-                    if (names.length == 0) {
+                    if (result.isEmpty()) {
                         Toast.makeText(this, "No Minecraft instances found", Toast.LENGTH_LONG).show();
                         return;
                     }
                     new AlertDialog.Builder(this)
                             .setTitle("Install into instance")
                             .setItems(names, (dialog, which) -> {
-                                if (instances != null && which >= 0 && which < instances.size()) {
-                                    selectedInstance = instances.get(which);
-                                    updateInstanceUi();
-                                    performSearch(true);
-                                    if (selectedProject != null) selectProject(selectedProject);
-                                }
+                                selectedInstance = result.get(which);
+                                viewModel.setInstance(selectedInstance);
+                                updateInstanceUi();
+                                refreshSearch();
                             })
                             .setNegativeButton("Cancel", null)
                             .show();
                 });
-            } catch (Exception e) {
-                runOnUiThread(() -> Toast.makeText(this,
-                        "Could not load instances", Toast.LENGTH_LONG).show());
+            } catch (Exception error) {
+                runOnUiThread(() -> Toast.makeText(
+                        this, "Could not load Minecraft instances", Toast.LENGTH_LONG).show());
             }
         });
     }
 
     private void updateInstanceUi() {
-        String name = selectedInstance == null ? "Select an instance" :
-                (selectedInstance.name == null || selectedInstance.name.trim().isEmpty()
-                        ? selectedInstance.versionId : selectedInstance.name);
+        String name = selectedInstance == null ? "Select an instance"
+                : (selectedInstance.name == null || selectedInstance.name.trim().isEmpty()
+                ? selectedInstance.versionId : selectedInstance.name);
         instanceButton.setText(name + " ▼");
+        instanceTarget.setText(selectedInstance == null
+                ? "Select an instance first"
+                : name + "\n" + minecraftVersionFromInstance(selectedInstance.versionId));
+    }
 
-        if (instanceTargetView != null) {
-            if (selectedInstance == null) instanceTargetView.setText("Select an instance first");
-            else instanceTargetView.setText(name + "\n" + minecraftVersionFromInstance(selectedInstance.versionId));
+    private void updateFilterVisibility() {
+        loaderSpinner.setVisibility(category.usesLoader() ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateGridColumns() {
+        if (projectList == null) return;
+        int widthDp = (int) (projectList.getWidth()
+                / getResources().getDisplayMetrics().density);
+        int columns;
+        int smallest = getResources().getConfiguration().smallestScreenWidthDp;
+        if (smallest < 600) {
+            columns = 1;
+        } else {
+            columns = Math.max(1, Math.min(4, widthDp / 310));
         }
-
-        if (selectedProject != null) {
-            detailDownload.setEnabled(selectedVersion != null && selectedInstance != null);
-            detailDownload.setText(isInstalled(selectedProject) ? "INSTALLED ✓" : "DOWNLOAD");
+        RecyclerView.LayoutManager current = projectList.getLayoutManager();
+        if (!(current instanceof GridLayoutManager)
+                || ((GridLayoutManager) current).getSpanCount() != columns) {
+            projectList.setLayoutManager(new GridLayoutManager(this, columns));
         }
     }
 
     private String selectedMinecraftVersion() {
-        if (versionSpinner != null && versionSpinner.getSelectedItem() != null) {
-            return versionSpinner.getSelectedItem().toString();
-        }
-        return selectedInstance == null ? null : minecraftVersionFromInstance(selectedInstance.versionId);
+        Object value = versionSpinner == null ? null : versionSpinner.getSelectedItem();
+        if (value != null) return value.toString();
+        return selectedInstance == null ? "1.21.11" : minecraftVersionFromInstance(selectedInstance.versionId);
     }
 
     private String selectedLoader() {
-        if (category != Category.MOD && category != Category.MODPACK) return null;
-        if (loaderSpinner != null && loaderSpinner.getSelectedItem() != null) {
-            String value = loaderSpinner.getSelectedItem().toString();
-            if (!"Auto".equalsIgnoreCase(value)) return value.toLowerCase(Locale.ROOT);
+        if (!category.usesLoader()) return null;
+        Object value = loaderSpinner == null ? null : loaderSpinner.getSelectedItem();
+        if (value != null && !"Auto".equalsIgnoreCase(value.toString())) {
+            return value.toString().toLowerCase(Locale.ROOT);
         }
         String detected = detectLoader(selectedInstance);
-        if (detected != null) return detected;
-        return "fabric";
+        return detected == null ? "fabric" : detected;
     }
 
     private String detectLoader(Instance instance) {
@@ -1034,7 +714,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private String minecraftVersionFromInstance(String versionId) {
-        if (versionId == null || versionId.trim().isEmpty()) return null;
+        if (versionId == null || versionId.trim().isEmpty()) return "1.21.11";
         String id = versionId.trim();
         if (id.startsWith("fabric-loader-")) {
             int dash = id.lastIndexOf('-');
@@ -1042,77 +722,35 @@ public class OrynDownloadActivity extends AppCompatActivity {
         }
         java.util.regex.Matcher matcher = java.util.regex.Pattern
                 .compile("^(\\d+\\.\\d+(?:\\.\\d+)?)").matcher(id);
-        if (matcher.find()) return matcher.group(1);
-        return id;
+        return matcher.find() ? matcher.group(1) : id;
     }
 
-    private void clearDetails() {
-        detailIcon.setImageResource(category.placeholder);
-        detailTitle.setText("Select a project");
-        detailAuthor.setText("");
-        detailInfo.setText("");
-        detailDescription.setText("Choose a real Modrinth project to inspect compatible versions and install it into the selected instance.");
-        detailVersionSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_dropdown_item,
-                Collections.singletonList("Select a project")));
-        detailDownload.setEnabled(false);
-        detailDownload.setText("DOWNLOAD");
-        detailProgress.setVisibility(View.GONE);
-    }
-
-    private void renderEmpty(String message) {
-        projectRows.removeAllViews();
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setGravity(Gravity.CENTER);
-        box.setPadding(dp(20), dp(35), dp(20), dp(35));
-
-        TextView title = text(message, 18);
-        title.setGravity(Gravity.CENTER);
-        title.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        box.addView(title);
-
-        TextView hint = text("Try another search, Minecraft version, or loader.", 11);
-        hint.setTextColor(0xFF808590);
-        hint.setGravity(Gravity.CENTER);
-        LinearLayout.LayoutParams hintLp = new LinearLayout.LayoutParams(-1, dp(30));
-        hintLp.topMargin = dp(6);
-        box.addView(hint, hintLp);
-        projectRows.addView(box, new LinearLayout.LayoutParams(-1, dp(150)));
+    private int placeholder() {
+        if (category == OrynDownloadState.Category.RESOURCEPACK) return R.drawable.oryn_download_resource;
+        if (category == OrynDownloadState.Category.SHADER) return R.drawable.oryn_download_shader;
+        return R.drawable.oryn_download_mod;
     }
 
     private String buildProjectInfo(ModrinthProject project) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(formatDownloads(project.downloads)).append(" downloads");
-        if (project.followers > 0) builder.append(" • ").append(project.followers).append(" followers");
-        builder.append("\nType: ").append(project.projectType);
-        if (!project.categories.isEmpty()) builder.append("\nCategories: ").append(join(project.categories, 6));
-        if (!project.gameVersions.isEmpty()) builder.append("\nVersions: ").append(join(project.gameVersions, 10));
-        if (!project.loaders.isEmpty()) builder.append("\nLoaders: ").append(join(project.loaders, 8));
-        return builder.toString();
-    }
-
-    private String firstLoader(List<String> values) {
-        if (values == null || values.isEmpty()) return null;
-        return values.get(0);
+        StringBuilder out = new StringBuilder();
+        out.append(formatDownloads(project.downloads)).append(" downloads");
+        if (project.followers > 0) out.append(" • ").append(project.followers).append(" followers");
+        out.append("\nType: ").append(project.projectType);
+        if (!project.categories.isEmpty()) out.append("\nCategories: ").append(join(project.categories, 7));
+        if (!project.gameVersions.isEmpty()) out.append("\nMinecraft: ").append(join(project.gameVersions, 8));
+        if (!project.loaders.isEmpty()) out.append("\nLoaders: ").append(join(project.loaders, 7));
+        return out.toString();
     }
 
     private String join(List<String> values, int max) {
-        StringBuilder builder = new StringBuilder();
-        int count = Math.min(max, values.size());
+        StringBuilder out = new StringBuilder();
+        int count = Math.min(max, values == null ? 0 : values.size());
         for (int i = 0; i < count; i++) {
-            if (i > 0) builder.append(", ");
-            builder.append(values.get(i));
+            if (i > 0) out.append(", ");
+            out.append(values.get(i));
         }
-        if (values.size() > count) builder.append("…");
-        return builder.toString();
-    }
-
-    private String categoryLabel(String projectType) {
-        if ("resourcepack".equals(projectType)) return "PACK";
-        if ("modpack".equals(projectType)) return "MODPACK";
-        if ("shader".equals(projectType)) return "SHADER";
-        return "MOD";
+        if (values != null && values.size() > count) out.append("…");
+        return out.toString();
     }
 
     private String formatDownloads(long value) {
@@ -1122,11 +760,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
         return String.valueOf(value);
     }
 
+    private String safe(String value) {
+        return value == null || value.isEmpty() ? "Unknown author" : value;
+    }
+
     @Override
     protected void onDestroy() {
-        repository.shutdown();
-        installer.shutdown();
-        instanceExecutor.shutdownNow();
+        if (viewModel != null) viewModel.shutdown();
+        if (filterRepository != null) filterRepository.shutdown();
+        if (instanceExecutor != null) instanceExecutor.shutdownNow();
         super.onDestroy();
+    }
+
+    private static final class LooperHolder {
+        static boolean isMainThread() {
+            return android.os.Looper.myLooper() == android.os.Looper.getMainLooper();
+        }
     }
 }
