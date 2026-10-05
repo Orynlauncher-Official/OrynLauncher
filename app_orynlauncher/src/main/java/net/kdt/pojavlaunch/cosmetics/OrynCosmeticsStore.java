@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
 
 import org.json.JSONObject;
 
@@ -222,7 +223,7 @@ public final class OrynCosmeticsStore {
 
     /** Legacy compatibility: only clears references; it never deletes a shared asset blindly. */
     public void removeCosmetic(String fileName, boolean skin) throws Exception {
-        removeCosmetic(Account.getCurrent(), fileName, skin);
+        removeCosmetic(Accounts.getCurrent(), fileName, skin);
     }
 
     private boolean isReferenced(File dir, String key, String fileName) {
