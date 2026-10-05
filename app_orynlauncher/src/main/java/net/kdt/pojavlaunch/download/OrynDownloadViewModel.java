@@ -201,8 +201,8 @@ public final class OrynDownloadViewModel {
             snapshot = state;
         }
 
-        if (snapshot.selectedInstance == null || snapshot.selectedProject == null
-                || snapshot.selectedVersion == null) {
+        if ((snapshot.selectedInstance == null && !"modpack".equals(snapshot.category.projectType))
+                || snapshot.selectedProject == null || snapshot.selectedVersion == null) {
             publish();
             return;
         }
