@@ -1,0 +1,78 @@
+package net.kdt.pojavlaunch.download;
+
+import net.kdt.pojavlaunch.Tools;
+import net.kdt.pojavlaunch.instances.Instance;
+import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
+
+import java.io.File;
+import java.util.Locale;
+
+public final class OrynInstallationManager {
+    private final InstalledProjectStore installedStore;
+
+    public OrynInstallationManager(InstalledProjectStore installedStore) {
+        this.installedStore = installedStore;
+    }
+
+    public void install(ModrinthProject project, ModrinthVersion version, String projectType,
+                        ModrinthFile sourceFile, Instance instance, File downloadedFile) throws Exception {
+        if (instance == null) throw new Exception("Select an instance before downloading");
+        if (project == null || version == null || sourceFile == null) {
+            throw new Exception("Invalid project or version");
+        }
+
+        File gameDirectory = instance.getGameDirectory();
+        String filename = new File(sourceFile.filename).getName();
+        if (filename.isEmpty()) throw new Exception("Modrinth returned an invalid filename");
+
+        if ("modpack".equals(projectType)) {
+            try {
+                new ModrinthApi().installMrpackIntoExistingInstance(downloadedFile, instance, null);
+                installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
+            } finally {
+                if (downloadedFile != null && downloadedFile.exists()) downloadedFile.delete();
+            }
+            return;
+        }
+
+        File folder;
+        if ("mod".equals(projectType)) folder = new File(gameDirectory, "mods");
+        else if ("resourcepack".equals(projectType)) folder = new File(gameDirectory, "resourcepacks");
+        else if ("shader".equals(projectType)) folder = new File(gameDirectory, "shaderpacks");
+        else throw new Exception("Unsupported content type: " + projectType);
+
+        if (!folder.isDirectory() && !folder.mkdirs()) {
+            throw new Exception("Could not create " + folder.getName() + " folder");
+        }
+
+        File destination = new File(folder, filename);
+        if (destination.exists() && !destination.delete()) {
+            throw new Exception("Could not replace existing file");
+        }
+
+        if (!downloadedFile.renameTo(destination)) {
+            throw new Exception("Could not install " + filename);
+        }
+        installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
+    }
+
+    public File createDownloadTarget(ModrinthProject project, ModrinthVersion version,
+                                     String projectType, ModrinthFile file) throws Exception {
+        if (file == null || file.filename == null || file.filename.isEmpty()) {
+            throw new Exception("Invalid Modrinth file");
+        }
+        File cache = Tools.DIR_CACHE;
+        if (!cache.isDirectory() && !cache.mkdirs()) {
+            throw new Exception("Could not create download cache");
+        }
+        String safeProject = project == null ? "project" : project.id;
+        String safeVersion = version == null ? "version" : version.id;
+        String filename = new File(file.filename).getName();
+        return new File(cache, "oryn-" + safeProject + "-" + safeVersion + "-" + filename);
+    }
+
+    public boolean isInstalled(Instance instance, ModrinthProject project, String projectType) {
+        return instance != null && project != null
+                && installedStore.isInstalled(instance.getGameDirectory(), project.id, projectType);
+    }
+}
