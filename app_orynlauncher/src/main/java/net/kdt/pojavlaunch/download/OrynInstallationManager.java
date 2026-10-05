@@ -1,5 +1,7 @@
 package net.kdt.pojavlaunch.download;
 
+import android.util.Log;
+
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
@@ -11,6 +13,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 public final class OrynInstallationManager {
+    private static final String TAG = "OrynDownload";
     private final InstalledProjectStore installedStore;
 
     public OrynInstallationManager(InstalledProjectStore installedStore) {
@@ -25,13 +28,20 @@ public final class OrynInstallationManager {
         }
 
         File gameDirectory = instance.getGameDirectory();
+        if (gameDirectory == null) throw new Exception("Selected instance has no game directory");
         String filename = new File(sourceFile.filename).getName();
+        if (filename.contains("..") || filename.isEmpty()) throw new Exception("Invalid destination filename");
+        Log.d(TAG, "[ORYN-DOWNLOAD] type=" + projectType + " project=" + project.id
+                + " version=" + version.id + " instance=" + gameDirectory.getAbsolutePath());
         if (filename.isEmpty()) throw new Exception("Modrinth returned an invalid filename");
 
         if ("modpack".equals(projectType)) {
             try {
                 new ModrinthApi().installMrpackIntoExistingInstance(downloadedFile, instance, null);
+                if (!gameDirectory.isDirectory()) throw new Exception("Modpack installation did not create the instance directory");
                 installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
+                Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + gameDirectory.getAbsolutePath()
+                        + " downloaded=true installed=true fileExists=true");
             } finally {
                 if (downloadedFile != null && downloadedFile.exists()) downloadedFile.delete();
             }
@@ -52,6 +62,9 @@ public final class OrynInstallationManager {
         if (destination.exists() && !destination.delete()) {
             throw new Exception("Could not replace existing file");
         }
+        if (!downloadedFile.isFile() || downloadedFile.length() <= 0) {
+            throw new Exception("Downloaded file is missing or empty before installation");
+        }
 
         if (!downloadedFile.renameTo(destination)) {
             copyFile(downloadedFile, destination);
@@ -59,7 +72,16 @@ public final class OrynInstallationManager {
                 throw new Exception("Installed file but could not clean download cache");
             }
         }
+        if (!destination.isFile() || destination.length() <= 0) {
+            throw new Exception("Installation verification failed: destination file is missing or empty");
+        }
+        String lower = filename.toLowerCase(java.util.Locale.ROOT);
+        boolean extensionOk = ("mod".equals(projectType) && lower.endsWith(".jar"))
+                || (("resourcepack".equals(projectType) || "shader".equals(projectType)) && lower.endsWith(".zip"));
+        if (!extensionOk) throw new Exception("Installation verification failed: invalid file type");
         installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
+        Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + destination.getAbsolutePath()
+                + " downloaded=true installed=true fileExists=" + destination.isFile());
     }
 
     public File createDownloadTarget(ModrinthProject project, ModrinthVersion version,
