@@ -18,6 +18,8 @@ import androidx.annotation.Nullable;
 import net.kdt.pojavlaunch.cosmetics.OrynCosmeticPreviewView;
 import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore;
 import net.kdt.pojavlaunch.instances.Instances;
+import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
 
 import java.io.File;
 import java.util.List;
@@ -32,10 +34,12 @@ public class OrynCosmeticsActivity extends Activity {
     private static final int MUTED = Color.rgb(155, 165, 180);
 
     private OrynCosmeticsStore store;
+    private Account currentAccount;
     private OrynCosmeticPreviewView preview;
     private Button profiles, models, skins, capes;
     private TextView status, selectedSkin, selectedCape, tabTitle;
     private Button skinTab, capeTab, applyButton, saveButton, removeButton, unequipButton;
+    private Switch skinEnabledSwitch, capeEnabledSwitch;
     private OrynCosmeticsStore.CosmeticProfile active;
     private boolean capeTabSelected;
     private boolean refreshing;
@@ -49,7 +53,8 @@ public class OrynCosmeticsActivity extends Activity {
                 View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         store = new OrynCosmeticsStore(this);
-        active = store.getActiveProfile();
+        currentAccount = Accounts.getCurrent();
+        active = store.getActiveProfile(currentAccount);
         buildUi();
         refresh();
     }
@@ -294,6 +299,20 @@ public class OrynCosmeticsActivity extends Activity {
         right.addView(skins, lp(-1, 38));
         right.addView(capes, lp(-1, 38));
 
+        skinEnabledSwitch = new Switch(this);
+        skinEnabledSwitch.setText("Skin enabled");
+        skinEnabledSwitch.setTextColor(WHITE);
+        skinEnabledSwitch.setTextSize(10);
+        skinEnabledSwitch.setPadding(d(4), 0, 0, 0);
+        right.addView(skinEnabledSwitch, lp(-1, 34));
+
+        capeEnabledSwitch = new Switch(this);
+        capeEnabledSwitch.setText("Cape enabled");
+        capeEnabledSwitch.setTextColor(WHITE);
+        capeEnabledSwitch.setTextSize(10);
+        capeEnabledSwitch.setPadding(d(4), 0, 0, 0);
+        right.addView(capeEnabledSwitch, lp(-1, 34));
+
         right.addView(sectionLabel("Player Model"), lp(-1, 24));
         models = selectorButton("Classic (Steve)");
         right.addView(models, lp(-1, 38));
@@ -361,7 +380,7 @@ public class OrynCosmeticsActivity extends Activity {
                         OrynCosmeticsStore.CosmeticProfile p = new OrynCosmeticsStore.CosmeticProfile();
                         p.name = n;
                         try {
-                            store.saveProfile(p);
+                            store.saveProfile(currentAccount, p);
                             active = p;
                             refresh();
                             status.setText("Profile created");
@@ -372,7 +391,7 @@ public class OrynCosmeticsActivity extends Activity {
         });
 
         profiles.setOnClickListener(v -> {
-            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
+            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles(currentAccount);
             String[] values = new String[ps.size()];
             int selected = 0;
             for (int i = 0; i < ps.size(); i++) {
@@ -383,7 +402,7 @@ public class OrynCosmeticsActivity extends Activity {
                 if (pos < ps.size()) {
                     active = ps.get(pos);
                     try {
-                        store.setActiveProfile(active);
+                        store.setActiveProfile(currentAccount, active);
                         refresh();
                         status.setText("Profile: " + active.name);
                     } catch (Exception e) {
@@ -398,8 +417,7 @@ public class OrynCosmeticsActivity extends Activity {
             int selected = "slim".equals(active.model) ? 1 : 0;
             showChoice("Player Model", values, selected, pos -> {
                 active.model = pos == 1 ? "slim" : "classic";
-                refresh();
-                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
+                saveCurrent(pos == 1 ? "Slim (Alex) saved" : "Classic (Steve) saved");
             });
         });
 
@@ -414,8 +432,8 @@ public class OrynCosmeticsActivity extends Activity {
             }
             showChoice("Skin", values, selected, pos -> {
                 active.skin = pos == 0 ? "" : fs.get(pos - 1).getName();
-                refresh();
-                status.setText(pos == 0 ? "Skin unequipped" : "Skin selected");
+                active.skinEnabled = pos != 0;
+                saveCurrent(pos == 0 ? "Skin unequipped" : "Skin saved");
             });
         });
 
@@ -430,8 +448,8 @@ public class OrynCosmeticsActivity extends Activity {
             }
             showChoice("Cape", values, selected, pos -> {
                 active.cape = pos == 0 ? "" : fs.get(pos - 1).getName();
-                refresh();
-                status.setText(pos == 0 ? "Cape unequipped" : "Cape selected");
+                active.capeEnabled = pos != 0;
+                saveCurrent(pos == 0 ? "Cape unequipped" : "Cape saved");
             });
         });
 
@@ -440,7 +458,20 @@ public class OrynCosmeticsActivity extends Activity {
         removeButton.setOnClickListener(v -> removeSelected());
         unequipButton.setOnClickListener(v -> {
             active.cape = "";
+            active.capeEnabled = false;
             saveCurrent("Cape unequipped");
+        });
+
+        skinEnabledSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (refreshing || active == null) return;
+            active.skinEnabled = isChecked;
+            saveCurrent(isChecked ? "Skin enabled" : "Skin disabled");
+        });
+
+        capeEnabledSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (refreshing || active == null) return;
+            active.capeEnabled = isChecked;
+            saveCurrent(isChecked ? "Cape enabled" : "Cape disabled");
         });
     }
 
@@ -519,6 +550,8 @@ public class OrynCosmeticsActivity extends Activity {
             }
         }
         capes.setText(capeLabel);
+        skinEnabledSwitch.setChecked(active.skinEnabled && !active.skin.isEmpty());
+        capeEnabledSwitch.setChecked(active.capeEnabled && !active.cape.isEmpty());
 
         refreshing = false;
         refreshPreview();
@@ -533,8 +566,8 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void refreshPreview() {
         if (active == null) return;
-        Bitmap s = active.skin.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
-        Bitmap c = active.cape.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
+        Bitmap s = active.skin.isEmpty() || !active.skinEnabled ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
+        Bitmap c = active.cape.isEmpty() || !active.capeEnabled ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
         preview.setSkin(s, "slim".equals(active.model));
         // Keep the skin preview clean; show the equipped cape in the dedicated Capes tab.
         preview.setCape(capeTabSelected ? c : null);
@@ -590,8 +623,20 @@ public class OrynCosmeticsActivity extends Activity {
     private void syncInstance() {
         try {
             net.kdt.pojavlaunch.instances.Instance i = Instances.loadSelectedInstance();
-            if (i != null) store.writeActiveForInstance(i.getGameDirectory());
+            if (i != null) store.writeActiveForInstance(i.getGameDirectory(), currentAccount);
         } catch (Exception ignored) {}
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        Account latest = Accounts.getCurrent();
+        String oldId = currentAccount == null ? "" : currentAccount.profileId;
+        String newId = latest == null ? "" : latest.profileId;
+        if (!oldId.equals(newId)) {
+            currentAccount = latest;
+            active = store.getActiveProfile(currentAccount);
+            if (preview != null) refresh();
+        }
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
