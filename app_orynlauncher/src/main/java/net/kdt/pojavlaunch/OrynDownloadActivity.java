@@ -59,7 +59,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
         }
     }
 
-    // Download/search requests must not queue behind a slow Modrinth request.\n    // V4 switches categories frequently, so use a small cached pool and let\n    // searchGeneration discard stale responses on the UI thread.\n    private final ExecutorService executor = Executors.newCachedThreadPool();
+    // Download/search requests must not queue behind a slow Modrinth request.
+    // V4 switches categories frequently, so use a small cached pool and let
+    // searchGeneration discard stale responses on the UI thread.
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     private final ApiHandler api = new ApiHandler("https://api.modrinth.com/v2");
     private final ModrinthApi modrinthModpackApi = new ModrinthApi();
     private Category category = Category.MOD;
