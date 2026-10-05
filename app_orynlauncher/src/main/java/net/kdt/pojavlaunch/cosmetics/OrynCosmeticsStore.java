@@ -355,6 +355,7 @@ public final class OrynCosmeticsStore {
             dir.mkdirs();
             CosmeticProfile p = getActiveProfile(account);
             JSONObject o = toJson(p);
+            o.put("accountName", account == null || account.username == null ? "" : account.username);
             o.put("skinPath", p.skin.isEmpty()
                     ? "" : new File(skins, p.skin).getAbsolutePath());
             o.put("capePath", p.cape.isEmpty()
