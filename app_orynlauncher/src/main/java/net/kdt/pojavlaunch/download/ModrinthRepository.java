@@ -107,6 +107,20 @@ public final class ModrinthRepository {
         });
     }
 
+    public void loadGameVersionsAsync(final ValuesCallback callback) {
+        executor.execute(() -> {
+            try { callback.onSuccess(api.getGameVersions()); }
+            catch (Exception e) { callback.onError(e); }
+        });
+    }
+
+    public void loadLoadersAsync(final ValuesCallback callback) {
+        executor.execute(() -> {
+            try { callback.onSuccess(api.getLoadersForContent()); }
+            catch (Exception e) { callback.onError(e); }
+        });
+    }
+
     public void loadIconAsync(final String url, final IconCallback callback) {
         if (url == null || url.trim().isEmpty()) {
             callback.onError();
