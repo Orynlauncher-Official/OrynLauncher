@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "id": "oryn_cosmetics",
+  "version": "${version}",
+  "name": "OrynLauncher Cosmetics",
+  "description": "Client-side OrynLauncher skin and cape renderer for Minecraft 1.21.11.",
+  "environment": "client",
+  "mixins": ["oryn-cosmetics.mixins.json"],
+  "depends": {"fabricloader": ">=0.18.2", "minecraft": "1.21.11"}
+}
