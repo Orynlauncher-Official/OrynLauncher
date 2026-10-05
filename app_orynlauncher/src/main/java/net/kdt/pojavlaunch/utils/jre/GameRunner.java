@@ -273,19 +273,6 @@ public class GameRunner {
 
         versionInfo.logging = null;
 
-        // Oryn's 1.21.11 Fabric cosmetics bridge reads the account-scoped
-        // profile directly inside Minecraft and injects it into SkinTextures
-        // / PlayerRenderer. This is client-side only and does not alter auth.
-        if ("1.21.11".equals(versionInfo.id)) {
-            File cosmeticsProfile = new File(gamedir, ".oryn/cosmetics/active_profile.json");
-            if (cosmeticsProfile.isFile()) {
-                javaArgList.add("-Doryn.cosmetics.profile=" + cosmeticsProfile.getAbsolutePath());
-                Log.i("OrynCosmetics", "Minecraft 1.21.11 cosmetics profile passed to JVM");
-            } else {
-                Log.i("OrynCosmetics", "No account-scoped cosmetics profile found for Minecraft launch");
-            }
-        }
-
         File versionSpecificNativesDir = new File(Tools.DIR_CACHE, "natives/"+versionId);
         if(versionSpecificNativesDir.exists()) {
             String dirPath = versionSpecificNativesDir.getAbsolutePath();
