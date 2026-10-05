@@ -262,6 +262,18 @@ public final class OrynDownloadViewModel {
                 installationManager.install(snapshot.selectedProject, snapshot.selectedVersion,
                         snapshot.category.projectType, sourceFile, snapshot.selectedInstance, downloaded);
 
+                // InstallationManager performs destination and file verification. Re-check the
+                // persisted installation state before reporting success to the UI.
+                if (!installationManager.isInstalled(snapshot.selectedInstance,
+                        snapshot.selectedProject, snapshot.category.projectType)) {
+                    throw new Exception("Installation completed but the content is not visible in the selected instance");
+                }
+                Log.d(TAG, "[ORYN-DOWNLOAD] type=" + snapshot.category.projectType
+                        + " project=" + snapshot.selectedProject.id
+                        + " version=" + snapshot.selectedVersion.id
+                        + " instance=" + snapshot.selectedInstance.getGameDirectory().getAbsolutePath()
+                        + " installed=true fileExists=true");
+
                 synchronized (OrynDownloadViewModel.this) {
                     if (!closed) state = state.withInstallState(OrynInstallState.installed());
                 }
