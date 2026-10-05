@@ -309,6 +309,26 @@ class AssetTaskRegistrar {
 }
 
 afterEvaluate {
+    // Build the production-remapped Minecraft 1.21.11 Fabric cosmetics bridge
+    // and package it as an application asset. The launcher installs it into
+    // the selected game's mods directory at launch.
+    android.applicationVariants.configureEach { variant ->
+        def variantName = variant.getName()
+        def bridgeAssetsDir = new File(project.buildDir,
+                "intermediates/oryn_cosmetics_assets/" + variantName.toLowerCase())
+        bridgeAssetsDir.mkdirs()
+        project.android.sourceSets[variantName].assets.srcDirs += bridgeAssetsDir.absolutePath
+
+        def remapJarTask = project(":oryn_cosmetics_mod").tasks.named("remapJar")
+        def copyBridgeTask = project.tasks.register(
+                "copyOrynCosmeticsBridge" + variantName.capitalize(), Copy) {
+            from(remapJarTask.map { it.archiveFile })
+            into(new File(bridgeAssetsDir, "components/oryn-cosmetics"))
+            dependsOn(remapJarTask)
+        }
+        variant.getPreBuildProvider().get().dependsOn(copyBridgeTask)
+    }
+
     def registrar = new AssetTaskRegistrar(project)
     android.applicationVariants.configureEach { variant ->
         registrar.setVariant(variant)
