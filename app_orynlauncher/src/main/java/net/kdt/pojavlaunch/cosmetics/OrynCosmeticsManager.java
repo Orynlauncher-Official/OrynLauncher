@@ -18,7 +18,7 @@ public final class OrynCosmeticsManager {
 
     private OrynCosmeticsManager() {}
 
-    public static String prepareForLaunch(Context context, Account account) {
+    public static String prepareForLaunch(Context context, Account account) {\n        return prepareForLaunch(context, account, null);\n    }\n\n    public static String prepareForLaunch(Context context, Account account, java.io.File gameDir) {
         try {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
             OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile(account);
@@ -29,7 +29,7 @@ public final class OrynCosmeticsManager {
             Log.i(TAG, "Skin model: " + ("slim".equalsIgnoreCase(profile.model) ? "slim" : "classic"));
             Log.i(TAG, "Cape selected: " + (profile.cape == null ? "" : profile.cape));
 
-            String properties = OrynLocalCosmeticsServer.prepare(context, account);
+            if (gameDir != null) {\n                store.writeActiveForInstance(gameDir, account);\n                installFabricBridge(context, gameDir);\n            }\n            String properties = "{}";
             if (properties == null || properties.trim().isEmpty() || "{}".equals(properties.trim())) {
                 Log.i(TAG, "No enabled custom cosmetics will be supplied; Minecraft falls back normally");
                 return "{}";
@@ -42,6 +42,24 @@ public final class OrynCosmeticsManager {
             // Cosmetics must never prevent normal Minecraft startup.
             Log.w(TAG, "Cosmetics preparation failed; continuing with normal profile", t);
             return "{}";
+        }
+    }
+
+    private static void installFabricBridge(Context context, java.io.File gameDir) {
+        try {
+            if (gameDir == null) return;
+            java.io.File mods = new java.io.File(gameDir, "mods");
+            if (!mods.exists() && !mods.mkdirs()) return;
+            java.io.File target = new java.io.File(mods, "orynlauncher-cosmetics-1.0.0.jar");
+            try (java.io.InputStream in = context.getAssets().open("orynlauncher/oryn_cosmetics_fabric.jar");
+                 java.io.FileOutputStream out = new java.io.FileOutputStream(target)) {
+                byte[] buffer = new byte[8192];
+                int n;
+                while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
+            }
+            Log.i(TAG, "Minecraft client cosmetics bridge installed: " + target.getAbsolutePath());
+        } catch (Exception e) {
+            Log.w(TAG, "Fabric cosmetics bridge asset is unavailable; continuing without client hook", e);
         }
     }
 
