@@ -242,7 +242,7 @@ public class GameRunner {
 
         // Pre-process specific files
         disableSplash(gamedir);
-        String localCosmeticsProperties = OrynCosmeticsManager.prepareForLaunch(activity, account);
+        String localCosmeticsProperties = OrynCosmeticsManager.prepareForLaunch(activity, account, gamedir);
         List<String> launchArgs = getMoJsonClientArgs(account, versionInfo, gamedir, localCosmeticsProperties);
 
         // Select the appropriate openGL version
