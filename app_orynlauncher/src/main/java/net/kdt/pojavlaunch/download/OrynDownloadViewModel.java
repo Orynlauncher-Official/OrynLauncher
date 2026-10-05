@@ -348,13 +348,23 @@ public final class OrynDownloadViewModel {
     }
 
     private void publish() {
-        Observer target;
-        OrynDownloadState snapshot;
+        final Observer target;
+        final OrynDownloadState snapshot;
         synchronized (this) {
             target = observer;
             snapshot = state;
         }
-        if (target != null && !closed) target.onStateChanged(snapshot);
+        if (target == null || closed) return;
+        if (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) {
+            target.onStateChanged(snapshot);
+            return;
+        }
+        new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+            synchronized (OrynDownloadViewModel.this) {
+                if (closed || observer != target) return;
+            }
+            target.onStateChanged(snapshot);
+        });
     }
 
     public void shutdown() {
