@@ -242,7 +242,8 @@ public final class OrynCosmeticsStore {
     public void setActiveProfile(CosmeticProfile p) throws Exception {
         saveProfile(p);
         JSONObject o = new JSONObject();
-        o.put("name", p.name); o.put("skin", p.skin); o.put("model", p.model); o.put("cape", p.cape);\n            o.put("skinEnabled", p.skinEnabled); o.put("capeEnabled", p.capeEnabled);
+        o.put("name", p.name); o.put("skin", p.skin); o.put("model", p.model); o.put("cape", p.cape);
+        o.put("skinEnabled", p.skinEnabled); o.put("capeEnabled", p.capeEnabled);
         try (FileOutputStream out = new FileOutputStream(active)) {
             out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
         }
