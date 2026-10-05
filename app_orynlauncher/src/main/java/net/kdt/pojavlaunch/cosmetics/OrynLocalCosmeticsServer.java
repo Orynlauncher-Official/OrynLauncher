@@ -33,17 +33,26 @@ public final class OrynLocalCosmeticsServer {
     public static synchronized String prepare(Context context, Account account) {
         try {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
-            OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile();
+            OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile(account);
 
-            File skin = profile.skin == null || profile.skin.isEmpty()
+            File skin = profile.skin == null || profile.skin.isEmpty() || !profile.skinEnabled
                     ? null : new File(context.getFilesDir(), "cosmetics/skins/" + profile.skin);
-            File cape = profile.cape == null || profile.cape.isEmpty()
+            File cape = profile.cape == null || profile.cape.isEmpty() || !profile.capeEnabled
                     ? null : new File(context.getFilesDir(), "cosmetics/capes/" + profile.cape);
 
-            if (skin == null || !skin.isFile()) skin = null;
-            if (cape == null || !cape.isFile()) cape = null;
+            if (skin != null && (!skin.isFile() || !store.isValidSkin(skin))) {
+                Log.w(TAG, "Skin cache invalid or missing; continuing without custom skin");
+                skin = null;
+            }
+            if (cape != null && (!cape.isFile() || !store.isValidCape(cape))) {
+                Log.w(TAG, "Cape cache invalid or missing; continuing without custom cape");
+                cape = null;
+            }
 
-            if (skin == null && cape == null) return "{}";
+            if (skin == null && cape == null) {
+                Log.i(TAG, "No enabled cached cosmetics for account " + safeUuid(account));
+                return "{}";
+            }
 
             skinFile = skin;
             capeFile = cape;
@@ -89,14 +98,26 @@ public final class OrynLocalCosmeticsServer {
             values.put(property);
             userProperties.put("textures", values);
 
-            Log.i(TAG, "Local cosmetics enabled: skin=" + (skinFile != null)
-                    + ", cape=" + (capeFile != null)
-                    + ", model=" + (slim ? "slim" : "classic"));
+            Log.i(TAG, "Account UUID: " + safeUuid(account));
+            Log.i(TAG, "Skin selected: " + (profile.skin == null ? "" : profile.skin));
+            Log.i(TAG, "Skin model: " + (slim ? "slim" : "classic"));
+            Log.i(TAG, "Cape selected: " + (profile.cape == null ? "" : profile.cape));
+            Log.i(TAG, "Skin cache: " + (skinFile != null ? "HIT" : "MISS"));
+            Log.i(TAG, "Cape cache: " + (capeFile != null ? "HIT" : "MISS"));
+            Log.i(TAG, "Minecraft cosmetic provider initialized");
+            Log.i(TAG, "Cosmetic texture payload prepared for Minecraft client");
             return userProperties.toString();
         } catch (Exception e) {
             Log.w(TAG, "Could not prepare local cosmetics", e);
             return "{}";
         }
+    }
+
+    private static String safeUuid(Account account) {
+        if (account == null || account.profileId == null || account.profileId.isEmpty()) {
+            return "unknown";
+        }
+        return account.profileId;
     }
 
     private static void startServer() throws Exception {
