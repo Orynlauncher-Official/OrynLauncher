@@ -3,6 +3,7 @@ package net.orynlauncher.cosmetics.mixin;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.entity.PlayerLikeEntity;
+import net.minecraft.entity.player.SkinTextures;
 import net.orynlauncher.cosmetics.OrynRuntimeProfile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +16,26 @@ public abstract class OrynPlayerRendererMixin {
     private void oryn$rendererState(PlayerLikeEntity player, PlayerEntityRenderState state,
                                     float tickProgress, CallbackInfo ci) {
         OrynRuntimeProfile runtime = OrynRuntimeProfile.load();
-        if (runtime != null && runtime.matches(player)) OrynRuntimeProfile.logRenderer(state);
+        if (runtime == null || !runtime.matches(player)) return;
+
+        SkinTextures current = state.skinTextures;
+        boolean alreadyOryn = current != null
+                && current.body() != null
+                && "orynlauncher".equals(current.body().texturePath().getNamespace());
+
+        if (runtime.skinEnabled && !alreadyOryn) {
+            SkinTextures custom = runtime.createSkinTextures();
+            if (custom != null) {
+                state.skinTextures = custom;
+                current = custom;
+                System.out.println("[ORYN-COSMETICS] PlayerRenderer state overridden with Oryn SkinTextures");
+            }
+        }
+
+        if (runtime.capeEnabled && current != null && current.cape() != null) {
+            state.capeVisible = true;
+        }
+
+        OrynRuntimeProfile.logRenderer(state);
     }
 }
