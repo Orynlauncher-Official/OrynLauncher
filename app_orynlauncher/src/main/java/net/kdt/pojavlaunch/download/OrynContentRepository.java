@@ -71,6 +71,11 @@ public final class OrynContentRepository {
         return delegate.selectFile(version, projectType);
     }
 
+    public boolean isCompatible(ModrinthVersion version, String projectType,
+                                 String minecraftVersion, String loader) {
+        return delegate.isCompatible(version, projectType, minecraftVersion, loader);
+    }
+
     public void shutdown() {
         delegate.shutdown();
     }
