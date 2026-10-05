@@ -84,6 +84,8 @@ public final class ModrinthRepository {
         activeSearch = executor.submit(() -> {
             try {
                 ModrinthSearchResult result = api.search(query, projectType, minecraftVersion, loader, offset, 20);
+                Log.d(TAG, "Repository received projects = " + result.projects.size()
+                        + " • totalHits=" + result.totalHits);
                 searchCache.put(key, new CacheEntry(System.currentTimeMillis(), result));
                 callback.onSuccess(result, offset > 0);
             } catch (Exception e) {
