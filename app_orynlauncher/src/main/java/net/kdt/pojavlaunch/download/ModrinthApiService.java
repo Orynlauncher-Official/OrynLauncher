@@ -52,9 +52,13 @@ public final class ModrinthApiService {
                 Log.d(TAG, "Skipping hit without project_id");
                 continue;
             }
-            // The /search facets already perform the project-type/version/loader
-            // discovery filtering. Do not apply a second compatibility-count
-            // filter here: every valid returned hit becomes a real Project object.
+            // Facets are the server-side filter, but the response is still
+            // untrusted. Enforce the requested category before state can see it.
+            if (!matchesProjectType(project, projectType)) {
+                Log.d(TAG, "Discarding project " + project.id + " because project_type="
+                        + project.projectType + " expected=" + projectType);
+                continue;
+            }
             projects.add(project);
         }
 
@@ -278,6 +282,13 @@ public final class ModrinthApiService {
             if (value.equalsIgnoreCase(element.getAsString())) return true;
         }
         return false;
+    }
+
+    private static boolean matchesProjectType(ModrinthProject project, String expectedType) {
+        return project != null
+                && expectedType != null
+                && !expectedType.isEmpty()
+                && expectedType.equalsIgnoreCase(project.projectType);
     }
 
     private static String buildFacets(String projectType, String minecraftVersion, String loader) {
