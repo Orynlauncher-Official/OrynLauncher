@@ -207,6 +207,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         sidebar.setBackgroundColor(0xFF0D0F12);
         shellBody.addView(sidebar, new LinearLayout.LayoutParams(dp(78), -1));
 
+        title = text("DOWNLOAD CENTER", 1, Color.TRANSPARENT);
+        subtitle = text("", 1, Color.TRANSPARENT);
+
         content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
         content.setPadding(dp(8), dp(8), dp(8), dp(8));
