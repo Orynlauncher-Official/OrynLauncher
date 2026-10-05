@@ -1,7 +1,7 @@
 package net.orynlauncher.cosmetics.mixin;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.client.texture.PlayerSkinProvider;\nimport net.minecraft.entity.player.DefaultSkinHelper;
+import net.minecraft.client.texture.PlayerSkinProvider;\nimport net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.entity.player.SkinTextures;
 import net.orynlauncher.cosmetics.OrynRuntimeProfile;
 import org.spongepowered.asm.mixin.Mixin;
