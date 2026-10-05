@@ -21,7 +21,7 @@ import net.kdt.pojavlaunch.multirt.MultiRTUtils;
 import net.kdt.pojavlaunch.multirt.Runtime;
 import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.game.renderer.GameRenderer;
-import net.kdt.pojavlaunch.cosmetics.OrynLocalCosmeticsServer;
+import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsManager;
 import net.kdt.pojavlaunch.game.renderer.RenderSpec;
 import net.kdt.pojavlaunch.utils.DateUtils;
 import net.kdt.pojavlaunch.utils.FileUtils;
@@ -242,7 +242,7 @@ public class GameRunner {
 
         // Pre-process specific files
         disableSplash(gamedir);
-        String localCosmeticsProperties = OrynLocalCosmeticsServer.prepare(activity, account);
+        String localCosmeticsProperties = OrynCosmeticsManager.prepareForLaunch(activity, account);
         List<String> launchArgs = getMoJsonClientArgs(account, versionInfo, gamedir, localCosmeticsProperties);
 
         // Select the appropriate openGL version
