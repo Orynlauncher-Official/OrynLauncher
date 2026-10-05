@@ -19,7 +19,23 @@ public final class OrynCosmeticsManager {
     private OrynCosmeticsManager() {}
 
     public static String prepareForLaunch(Context context, Account account) {
-        return prepareForLaunch(context, account, null);
+        try {
+            OrynCosmeticsStore store = new OrynCosmeticsStore(context);
+            OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile(account);
+
+            Log.i(TAG, "Launch preparation started");
+            Log.i(TAG, "Account UUID: " + safeUuid(account));
+            Log.i(TAG, "Skin enabled: " + profile.skinEnabled);
+            Log.i(TAG, "Skin selected: " + (profile.skin == null ? "" : profile.skin));
+            Log.i(TAG, "Skin model: " + ("slim".equalsIgnoreCase(profile.model) ? "slim" : "classic"));
+            Log.i(TAG, "Cape enabled: " + profile.capeEnabled);
+            Log.i(TAG, "Cape selected: " + (profile.cape == null ? "" : profile.cape));
+
+            return "{}";
+        } catch (Throwable t) {
+            Log.w(TAG, "Cosmetics preparation failed; continuing with normal profile", t);
+            return "{}";
+        }
     }
 
     public static String prepareForLaunch(Context context, Account account, java.io.File gameDir) {
@@ -29,24 +45,19 @@ public final class OrynCosmeticsManager {
 
             Log.i(TAG, "Launch preparation started");
             Log.i(TAG, "Account UUID: " + safeUuid(account));
+            Log.i(TAG, "Skin enabled: " + profile.skinEnabled);
             Log.i(TAG, "Skin selected: " + (profile.skin == null ? "" : profile.skin));
             Log.i(TAG, "Skin model: " + ("slim".equalsIgnoreCase(profile.model) ? "slim" : "classic"));
+            Log.i(TAG, "Cape enabled: " + profile.capeEnabled);
             Log.i(TAG, "Cape selected: " + (profile.cape == null ? "" : profile.cape));
 
             if (gameDir != null) {
                 store.writeActiveForInstance(gameDir, account);
                 installFabricBridge(context, gameDir);
-            }\n            String properties = "{}";
-            if (properties == null || properties.trim().isEmpty() || "{}".equals(properties.trim())) {
-                Log.i(TAG, "No enabled custom cosmetics will be supplied; Minecraft falls back normally");
-                return "{}";
+                Log.i(TAG, "Minecraft client cosmetics bridge profile prepared in " + gameDir.getAbsolutePath());
             }
-
-            Log.i(TAG, "Cosmetics applied to Minecraft launch profile");
-            Log.i(TAG, "Minecraft cosmetic provider initialized");
-            return properties;
+            return "{}";
         } catch (Throwable t) {
-            // Cosmetics must never prevent normal Minecraft startup.
             Log.w(TAG, "Cosmetics preparation failed; continuing with normal profile", t);
             return "{}";
         }
