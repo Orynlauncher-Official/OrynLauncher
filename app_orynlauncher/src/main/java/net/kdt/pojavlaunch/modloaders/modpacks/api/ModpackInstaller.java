@@ -9,6 +9,7 @@ import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.InstanceInstaller;
 import net.kdt.pojavlaunch.instances.Instances;
+import net.kdt.pojavlaunch.instances.OrynInstanceManager;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.lifecycle.ContextExecutor;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.modloader.LoaderInstaller;
@@ -28,7 +29,9 @@ public class ModpackInstaller {
     public static LoaderInstaller installModpack(String modpackName, String title, File modpackFile, String icon, InstallFunction installFunction) throws IOException {
         // Build a new minecraft instance, folder first
         LoaderInstaller loaderInstaller;
-        Instance instance = Instances.createInstance(i-> i.name = title, modpackName.substring(0, Math.min(16,modpackName.length())));
+        Instance instance = OrynInstanceManager.create(title, "", true);
+        instance.modpackName = title;
+        instance.modpackVersion = modpackName;
         try {
             // Install the modpack
             loaderInstaller = installFunction.installModpack(modpackFile, instance.getGameDirectory());
@@ -47,7 +50,7 @@ public class ModpackInstaller {
             instance.write();
             ModIconCache.writeInstanceImage(instance, icon);
 
-            Instances.setSelectedInstance(instance);
+            OrynInstanceManager.select(instance);
             if(loaderInstaller.requiresGuiInstallation()) {
                 instance.installer.start();
             }
