@@ -198,6 +198,7 @@ public class InstanceEditorFragment extends Fragment implements CropperUtils.Cro
     private void save(){
         //First, check for potential issues in the inputs
         mInstance.versionId = mDefaultVersion.getText().toString();
+        mInstance.minecraftVersion = mInstance.versionId;
         mInstance.controlLayout = mDefaultControl.getText().toString();
         mInstance.jvmArgs = mDefaultJvmArgument.getText().toString();
 
@@ -208,6 +209,7 @@ public class InstanceEditorFragment extends Fragment implements CropperUtils.Cro
         Runtime selectedRuntime = (Runtime) mDefaultRuntime.getSelectedItem();
         mInstance.selectedRuntime = (selectedRuntime.name.equals("<Default>") || selectedRuntime.versionString == null)
                 ? null : selectedRuntime.name;
+        mInstance.javaRuntime = mInstance.selectedRuntime;
 
         if(mDefaultRenderer.getSelectedItemPosition() == mRenderNames.size()) mInstance.renderer = null;
         else mInstance.renderer = mRenderNames.get(mDefaultRenderer.getSelectedItemPosition());
