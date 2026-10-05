@@ -122,7 +122,7 @@ public final class OrynInstanceManager {
     public static void assertIsolated(Instance instance) {
         require(instance);
         File root = instance.getGameDirectory();
-        if (instance.sharedData || root == null || root.equals(Instances.SHARED_DATA_DIRECTORY)) {
+        if (!instance.isIsolated()) {
             throw new IllegalStateException("Oryn instance is not isolated: " + instance.name);
         }
         File instancesRoot = new File(net.kdt.pojavlaunch.Tools.DIR_GAME_HOME, "instances");
