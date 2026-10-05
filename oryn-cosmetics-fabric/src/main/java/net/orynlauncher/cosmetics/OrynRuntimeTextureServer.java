@@ -22,31 +22,44 @@ public final class OrynRuntimeTextureServer {
     private static ServerSocket serverSocket;
     private static Thread serverThread;
     private static File skinFile;
+    private static File capeFile;
 
     private OrynRuntimeTextureServer() {}
 
     public static synchronized String startSkin(File file) {
-        if (file == null || !file.isFile() || !file.canRead()) {
-            return null;
-        }
-
+        if (file == null || !file.isFile() || !file.canRead()) return null;
         try {
-            if (serverSocket == null || serverSocket.isClosed()) {
-                serverSocket = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
-                skinFile = file;
-                serverThread = new Thread(OrynRuntimeTextureServer::run, "Oryn-Cosmetics-TextureServer");
-                serverThread.setDaemon(true);
-                serverThread.start();
-            } else {
-                skinFile = file;
-            }
-
+            ensureServer();
+            skinFile = file;
             return "http://127.0.0.1:" + serverSocket.getLocalPort()
                     + "/skin.png?v=" + file.lastModified();
         } catch (Exception e) {
             System.out.println("[ORYN-COSMETICS] Runtime texture server failed: " + e);
             return null;
         }
+    }
+
+    public static synchronized String startCape(File file) {
+        if (file == null || !file.isFile() || !file.canRead()) return null;
+        try {
+            ensureServer();
+            capeFile = file;
+            return "http://127.0.0.1:" + serverSocket.getLocalPort()
+                    + "/cape.png?v=" + file.lastModified();
+        } catch (Exception e) {
+            System.out.println("[ORYN-COSMETICS] Runtime cape server failed: " + e);
+            return null;
+        }
+    }
+
+    private static void ensureServer() throws Exception {
+        if (serverSocket != null && !serverSocket.isClosed()) return;
+        serverSocket = new ServerSocket(0, 8, InetAddress.getByName("127.0.0.1"));
+        serverThread = new Thread(OrynRuntimeTextureServer::run, "Oryn-Cosmetics-TextureServer");
+        serverThread.setDaemon(true);
+        serverThread.start();
+        System.out.println("[ORYN-COSMETICS] Runtime texture server started on port "
+                + serverSocket.getLocalPort());
     }
 
     private static void run() {
@@ -80,12 +93,13 @@ public final class OrynRuntimeTextureServer {
             int query = path.indexOf('?');
             if (query >= 0) path = path.substring(0, query);
 
-            if (!"/skin.png".equals(path)) {
+            File file;
+            if ("/skin.png".equals(path)) file = skinFile;
+            else if ("/cape.png".equals(path)) file = capeFile;
+            else {
                 writeResponse(s, 404, null);
                 return;
             }
-
-            File file = skinFile;
             if (file == null || !file.isFile() || !file.canRead()) {
                 writeResponse(s, 404, null);
                 return;
