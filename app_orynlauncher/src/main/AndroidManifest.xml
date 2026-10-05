@@ -25,7 +25,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
 
-        <activity android:name=".OrynInstanceContentActivity" android:screenOrientation="portrait" />
     <application
         android:name="net.kdt.pojavlaunch.PojavApplication"
         android:allowBackup="true"
@@ -42,6 +41,7 @@
         android:networkSecurityConfig="@xml/netconfig"
         android:enableOnBackInvokedCallback="false"
         tools:ignore="UnusedAttribute">
+        <activity android:name=".OrynInstanceContentActivity" android:screenOrientation="portrait" />
         <activity
             android:name="net.kdt.pojavlaunch.OrynFileManagerActivity"
             android:screenOrientation="landscape"
