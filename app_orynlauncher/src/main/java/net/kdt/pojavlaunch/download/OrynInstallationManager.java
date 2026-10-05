@@ -5,6 +5,7 @@ import android.util.Log;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
+import net.kdt.pojavlaunch.instances.OrynInstanceManager;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -22,13 +23,19 @@ public final class OrynInstallationManager {
 
     public void install(ModrinthProject project, ModrinthVersion version, String projectType,
                         ModrinthFile sourceFile, Instance instance, File downloadedFile) throws Exception {
-        if (instance == null) throw new Exception("Select an instance before downloading");
         if (project == null || version == null || sourceFile == null) {
             throw new Exception("Invalid project or version");
         }
+        // Complete modpacks are independent instances and do not require a
+        // currently selected target instance at all.
+        if (instance == null && !"modpack".equals(projectType)) {
+            throw new Exception("Select an instance before downloading");
+        }
 
-        File gameDirectory = instance.getGameDirectory();
-        if (gameDirectory == null) throw new Exception("Selected instance has no game directory");
+        File gameDirectory = instance == null ? null : instance.getGameDirectory();
+        if (gameDirectory == null && !"modpack".equals(projectType)) {
+            throw new Exception("Selected instance has no game directory");
+        }
         String filename = new File(sourceFile.filename).getName();
         if (filename.contains("..") || filename.isEmpty()) throw new Exception("Invalid destination filename");
         Log.d(TAG, "[ORYN-DOWNLOAD] type=" + projectType + " project=" + project.id
@@ -43,7 +50,10 @@ public final class OrynInstallationManager {
                         || !newInstance.getGameDirectory().isDirectory()) {
                     throw new Exception("Modpack installation did not create a new instance");
                 }
+                newInstance.modpackProjectId = project.id;
+                newInstance.write();
                 installedStore.markInstalled(newInstance.getGameDirectory(), project.id, projectType, filename);
+                OrynInstanceManager.recordInstalledContent(newInstance, projectType + ":" + project.id, filename);
                 Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + newInstance.getGameDirectory().getAbsolutePath()
                         + " downloaded=true installed=true fileExists=true");
                 // Make the newly installed pack the selected instance only after installation succeeds.
