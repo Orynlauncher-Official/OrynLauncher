@@ -48,15 +48,22 @@ public final class ModrinthApiService {
         for (JsonElement element : hits) {
             if (!element.isJsonObject()) continue;
             ModrinthProject project = parseProject(element.getAsJsonObject());
-            if (project.id == null || project.id.isEmpty()) continue;
-            // Search facets are a discovery filter; the model itself is always
-            // created directly from the returned hit. No guessed compatibility count.
-            if (!projectType.equalsIgnoreCase(project.projectType)) continue;
+            if (project.id == null || project.id.trim().isEmpty()) {
+                Log.d(TAG, "Skipping hit without project_id");
+                continue;
+            }
+            // The /search facets already perform the project-type/version/loader
+            // discovery filtering. Do not apply a second compatibility-count
+            // filter here: every valid returned hit becomes a real Project object.
             projects.add(project);
         }
 
+        Log.d(TAG, "API results = " + hits.size());
         Log.d(TAG, "Raw result count: " + hits.size());
+        Log.d(TAG, "Parsed projects = " + projects.size());
         Log.d(TAG, "Parsed result count: " + projects.size());
+        Log.d(TAG, "Search state payload projects = " + projects.size()
+                + " • offset=" + offset + " • totalHits=" + total);
         return new ModrinthSearchResult(projects, offset, total);
     }
 
@@ -163,7 +170,12 @@ public final class ModrinthApiService {
                 byte[] buffer = new byte[32768];
                 int read;
                 while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
-                return new String(out.toByteArray(), "UTF-8");
+                String body = new String(out.toByteArray(), "UTF-8");
+                // Keep this bounded so Logcat remains usable while still exposing
+                // the exact JSON shape that reached the parser.
+                String rawLog = body.length() > 8000 ? body.substring(0, 8000) + "…[truncated]" : body;
+                Log.d(TAG, "Raw Modrinth response: " + rawLog);
+                return body;
             }
         } finally {
             if (connection != null) connection.disconnect();
