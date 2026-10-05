@@ -10,6 +10,8 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.InstanceInstaller;
 import net.kdt.pojavlaunch.instances.Instances;
 import net.kdt.pojavlaunch.instances.OrynInstanceManager;
+import net.kdt.pojavlaunch.extra.ExtraConstants;
+import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.lifecycle.ContextExecutor;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.modloader.LoaderInstaller;
@@ -51,6 +53,7 @@ public class ModpackInstaller {
             ModIconCache.writeInstanceImage(instance, icon);
 
             OrynInstanceManager.select(instance);
+            ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, null);
             if(loaderInstaller.requiresGuiInstallation()) {
                 instance.installer.start();
             }
