@@ -4,8 +4,11 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
-import java.util.Locale;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 
 public final class OrynInstallationManager {
     private final InstalledProjectStore installedStore;
@@ -51,7 +54,10 @@ public final class OrynInstallationManager {
         }
 
         if (!downloadedFile.renameTo(destination)) {
-            throw new Exception("Could not install " + filename);
+            copyFile(downloadedFile, destination);
+            if (!downloadedFile.delete() && downloadedFile.exists()) {
+                throw new Exception("Installed file but could not clean download cache");
+            }
         }
         installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
     }
@@ -69,6 +75,16 @@ public final class OrynInstallationManager {
         String safeVersion = version == null ? "version" : version.id;
         String filename = new File(file.filename).getName();
         return new File(cache, "oryn-" + safeProject + "-" + safeVersion + "-" + filename);
+    }
+
+    private void copyFile(File source, File destination) throws Exception {
+        try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(source));
+             BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(destination))) {
+            byte[] buffer = new byte[32768];
+            int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+            out.flush();
+        }
     }
 
     public boolean isInstalled(Instance instance, ModrinthProject project, String projectType) {
