@@ -125,7 +125,7 @@ public final class ModrinthApiService {
         try {
             connection = open(urlString);
             int status = connection.getResponseCode();
-            Log.d(TAG, "HTTP status: " + status);
+            Log.d(TAG, "HTTP " + status);
             if (status < 200 || status >= 300) {
                 throw new Exception("HTTP " + status + " from Modrinth");
             }
@@ -161,7 +161,7 @@ public final class ModrinthApiService {
             Log.d(TAG, "API URL: " + urlString);
             connection = open(urlString);
             int status = connection.getResponseCode();
-            Log.d(TAG, "HTTP status: " + status);
+            Log.d(TAG, "HTTP " + status);
             if (status < 200 || status >= 300) {
                 throw new Exception("HTTP " + status + " from Modrinth");
             }
