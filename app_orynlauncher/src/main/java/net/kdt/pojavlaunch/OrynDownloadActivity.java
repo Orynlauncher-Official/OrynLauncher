@@ -1354,7 +1354,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 if (version == null) {
                     throw new Exception("No compatible " + category.title.toLowerCase()
                             + " version for Minecraft " + minecraftVersion
-                            + (loader == null || category != Category.MOD ? "" : " (" + loader + ")"));
+                            + (loader == null || (category != Category.MOD && category != Category.MODPACK)
+                            ? "" : " (" + loader + ")"));
                 }
 
                 // The version selected above is already filtered for the
