@@ -19,23 +19,31 @@ public abstract class OrynPlayerRendererMixin {
         if (runtime == null || !runtime.matches(player)) return;
 
         SkinTextures current = state.skinTextures;
-        boolean alreadyOryn = current != null
-                && current.body() != null
-                && "orynlauncher".equals(current.body().texturePath().getNamespace());
 
-        if (runtime.skinEnabled && !alreadyOryn) {
+        // PlayerSkinProvider is the authoritative source. This fallback only
+        // repairs the render state if another cache path supplied vanilla data.
+        if (runtime.skinEnabled) {
             SkinTextures custom = runtime.createSkinTextures();
             if (custom != null) {
                 state.skinTextures = custom;
                 current = custom;
-                System.out.println("[ORYN-COSMETICS] PlayerRenderer state overridden with Oryn SkinTextures");
+            }
+        } else if (runtime.capeEnabled && current != null) {
+            SkinTextures customCape = runtime.withCape(current);
+            if (customCape != null) {
+                state.skinTextures = customCape;
+                current = customCape;
             }
         }
 
-        if (runtime.capeEnabled && current != null && current.cape() != null) {
-            state.capeVisible = true;
-        }
+        state.capeVisible = runtime.capeEnabled && current != null && current.cape() != null;
 
         OrynRuntimeProfile.logRenderer(state);
+        System.out.println("[ORYN-COSMETICS] PlayerRenderer final skin="
+                + (current == null ? "null" : current.body().texturePath())
+                + " cape=" + (current == null || current.cape() == null
+                ? "null" : current.cape().texturePath())
+                + " model=" + (current == null ? "null" : current.model())
+                + " capeVisible=" + state.capeVisible);
     }
 }
