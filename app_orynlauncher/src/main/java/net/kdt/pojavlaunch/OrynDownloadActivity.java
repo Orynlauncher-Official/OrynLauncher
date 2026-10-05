@@ -626,17 +626,27 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         // Render results in a two-column grid so the loaded Modrinth projects
         // are immediately visible instead of appearing as a narrow/empty list.
-        LinearLayout row;
-        if (results.getChildCount() == 0
-                || !(results.getChildAt(results.getChildCount() - 1) instanceof LinearLayout)
-                || ((LinearLayout) results.getChildAt(results.getChildCount() - 1)).getTag() != Boolean.TRUE) {
+        // Keep exactly two project cards per row. The previous implementation
+        // reused the same row after the second card, which put all 30 results
+        // into one weighted LinearLayout and compressed every card to almost
+        // zero width. That made the Modrinth results appear blank.
+        LinearLayout row = null;
+        if (results.getChildCount() > 0) {
+            View last = results.getChildAt(results.getChildCount() - 1);
+            if (last instanceof LinearLayout && Boolean.TRUE.equals(last.getTag())) {
+                LinearLayout candidate = (LinearLayout) last;
+                if (candidate.getChildCount() < 2) {
+                    row = candidate;
+                }
+            }
+        }
+
+        if (row == null) {
             row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.TOP);
             row.setTag(Boolean.TRUE);
             results.addView(row, new LinearLayout.LayoutParams(-1, dp(92)));
-        } else {
-            row = (LinearLayout) results.getChildAt(results.getChildCount() - 1);
         }
 
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(0, dp(84), 1);
