@@ -146,8 +146,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         center.setPadding(dp(compactPhone ? 8 : 12), dp(compactPhone ? 6 : 10),
                 dp(compactPhone ? 8 : 8), dp(compactPhone ? 6 : 8));
         root.addView(center, new LinearLayout.LayoutParams(
-                compactPhone ? -1 : 0, 0,
-                compactPhone ? 1 : 1));
+                compactPhone ? -1 : 0,
+                compactPhone ? 0 : -1,
+                1));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
