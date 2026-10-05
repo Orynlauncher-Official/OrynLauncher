@@ -262,16 +262,29 @@ public final class OrynDownloadViewModel {
                 installationManager.install(snapshot.selectedProject, snapshot.selectedVersion,
                         snapshot.category.projectType, sourceFile, snapshot.selectedInstance, downloaded);
 
-                // InstallationManager performs destination and file verification. Re-check the
-                // persisted installation state before reporting success to the UI.
-                if (!installationManager.isInstalled(snapshot.selectedInstance,
+                // InstallationManager performs destination and file verification.
+                // Modpacks intentionally create and select a NEW instance, so never verify
+                // them against the instance that was selected before the download started.
+                Instance verifiedInstance = snapshot.selectedInstance;
+                if ("modpack".equals(snapshot.category.projectType)) {
+                    verifiedInstance = net.kdt.pojavlaunch.instances.Instances.loadSelectedInstance();
+                    if (verifiedInstance == null
+                            || !installationManager.isInstalled(verifiedInstance,
+                            snapshot.selectedProject, snapshot.category.projectType)) {
+                        throw new Exception("Modpack installed but the new instance is not visible");
+                    }
+                    synchronized (OrynDownloadViewModel.this) {
+                        if (!closed) state = state.withSelectedInstance(verifiedInstance);
+                    }
+                    publish();
+                } else if (!installationManager.isInstalled(snapshot.selectedInstance,
                         snapshot.selectedProject, snapshot.category.projectType)) {
                     throw new Exception("Installation completed but the content is not visible in the selected instance");
                 }
                 Log.d(TAG, "[ORYN-DOWNLOAD] type=" + snapshot.category.projectType
                         + " project=" + snapshot.selectedProject.id
                         + " version=" + snapshot.selectedVersion.id
-                        + " instance=" + snapshot.selectedInstance.getGameDirectory().getAbsolutePath()
+                        + " instance=" + verifiedInstance.getGameDirectory().getAbsolutePath()
                         + " installed=true fileExists=true");
 
                 synchronized (OrynDownloadViewModel.this) {
