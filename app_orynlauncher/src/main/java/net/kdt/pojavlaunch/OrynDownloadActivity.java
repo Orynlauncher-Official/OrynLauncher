@@ -757,14 +757,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
                             }
                             if (labels.isEmpty()) {
                                 detailVersionSpinner.setAdapter(new ArrayAdapter<>(
-                                        this, android.R.layout.simple_spinner_dropdown_item,
+                                        OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item,
                                         Collections.singletonList("No compatible version/file")));
                                 detailDownload.setEnabled(false);
                                 detailDownload.setText("DOWNLOAD");
                                 detailInfo.setText(buildProjectInfo(fullProject) + "\n\nNo compatible downloadable file.");
                             } else {
                                 detailVersionSpinner.setAdapter(new ArrayAdapter<>(
-                                        this, android.R.layout.simple_spinner_dropdown_item, labels));
+                                        OrynDownloadActivity.this, android.R.layout.simple_spinner_dropdown_item, labels));
                                 selectedVersion = compatibleVersions.get(0);
                                 detailVersionSpinner.setSelection(0);
                                 boolean installed = isInstalled(project);
