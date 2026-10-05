@@ -31,7 +31,7 @@ public final class OrynCosmeticsRuntime {
 
     public static SkinTextures getOrStart(GameProfile profile, PlayerSkinTextureDownloader downloader) {
         if (profile == null || downloader == null) return DefaultSkinHelper.getSkinTextures(profile);
-        SkinTextures vanilla = DefaultSkinHelper.getSkinTextures(profile); return vanilla;
+        SkinTextures vanilla = DefaultSkinHelper.getSkinTextures(profile);
 
         final String identity = profile.id() == null
                 ? "name:" + profile.name()
