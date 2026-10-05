@@ -105,6 +105,15 @@ public final class OrynDownloadState {
                 detailStatus, detailMessage, installState);
     }
 
+    public OrynDownloadState withListLoading(String message) {
+        return new OrynDownloadState(
+                category, minecraftVersion, loader, query, selectedInstance,
+                projects, nextOffset, totalHits, hasMore,
+                ListStatus.LOADING, message,
+                selectedProject, compatibleVersions, selectedVersion,
+                detailStatus, detailMessage, installState);
+    }
+
     public OrynDownloadState withListError(String message) {
         return new OrynDownloadState(
                 category, minecraftVersion, loader, query, selectedInstance,
