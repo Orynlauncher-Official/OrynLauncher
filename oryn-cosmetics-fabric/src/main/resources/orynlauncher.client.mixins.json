@@ -3,7 +3,10 @@
   "package": "net.orynlauncher.cosmetics.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "OrynPlayerSkinProviderMixin"
+    "OrynPlayerSkinProviderMixin",
+    "OrynPlayerSkinProviderAccessor",
+    "OrynPlayerSkinTextureDownloaderAccessor",
+    "OrynTextureManagerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
