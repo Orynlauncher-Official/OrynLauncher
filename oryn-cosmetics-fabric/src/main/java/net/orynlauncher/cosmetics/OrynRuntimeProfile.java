@@ -70,12 +70,12 @@ public final class OrynRuntimeProfile {
 
     public boolean matches(GameProfile profile) {
         if (profile == null) return false;
-        String uuid = profile.getId() == null ? "" : profile.getId().toString();
+        String uuid = profile.id() == null ? "" : profile.getId().toString();
         String configured = accountUuid.replace("-", "");
         if (!configured.isEmpty() && !configured.matches("0{32}")) {
             return configured.equalsIgnoreCase(uuid.replace("-", ""));
         }
-        return !accountName.isEmpty() && accountName.equalsIgnoreCase(profile.getName());
+        return !accountName.isEmpty() && accountName.equalsIgnoreCase(profile.name());
     }
 
     public boolean matches(net.minecraft.entity.PlayerLikeEntity player) {
