@@ -23,7 +23,7 @@ public abstract class OrynPlayerSkinProviderMixin {
         if (runtime == null || !runtime.matches(profile)) return;
 
         System.out.println("[ORYN-COSMETICS] GameProfile properties: textures property present="
-                + (profile.getProperties().get("textures") != null)
+                + (profile.properties().get("textures") != null)
                 + " account=" + profile.name()
                 + " uuid=" + profile.id());
 
