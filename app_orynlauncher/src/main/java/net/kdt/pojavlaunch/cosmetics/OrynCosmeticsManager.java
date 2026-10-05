@@ -18,7 +18,11 @@ public final class OrynCosmeticsManager {
 
     private OrynCosmeticsManager() {}
 
-    public static String prepareForLaunch(Context context, Account account) {\n        return prepareForLaunch(context, account, null);\n    }\n\n    public static String prepareForLaunch(Context context, Account account, java.io.File gameDir) {
+    public static String prepareForLaunch(Context context, Account account) {
+        return prepareForLaunch(context, account, null);
+    }
+
+    public static String prepareForLaunch(Context context, Account account, java.io.File gameDir) {
         try {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
             OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile(account);
@@ -29,7 +33,10 @@ public final class OrynCosmeticsManager {
             Log.i(TAG, "Skin model: " + ("slim".equalsIgnoreCase(profile.model) ? "slim" : "classic"));
             Log.i(TAG, "Cape selected: " + (profile.cape == null ? "" : profile.cape));
 
-            if (gameDir != null) {\n                store.writeActiveForInstance(gameDir, account);\n                installFabricBridge(context, gameDir);\n            }\n            String properties = "{}";
+            if (gameDir != null) {
+                store.writeActiveForInstance(gameDir, account);
+                installFabricBridge(context, gameDir);
+            }\n            String properties = "{}";
             if (properties == null || properties.trim().isEmpty() || "{}".equals(properties.trim())) {
                 Log.i(TAG, "No enabled custom cosmetics will be supplied; Minecraft falls back normally");
                 return "{}";
