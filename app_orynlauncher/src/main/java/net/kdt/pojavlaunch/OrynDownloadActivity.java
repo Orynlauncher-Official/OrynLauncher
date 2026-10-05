@@ -373,7 +373,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailIcon.setImageResource(R.drawable.oryn_download_mod);
         panel.addView(detailIcon, new LinearLayout.LayoutParams(dp(84), dp(84)));
 
-        detailTitle = text("Select a project", 19);
+        detailTitle = text("Project versions", 19);
         detailTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         detailTitle.setMaxLines(2);
         LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(-1, dp(48));
@@ -390,7 +390,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         panel.addView(detailInfo, new LinearLayout.LayoutParams(-1, dp(105)));
 
         detailDescription = text(
-                "Select a project to inspect its Modrinth details and compatible versions.",
+                "Tap any Modrinth project to view all available versions.",
                 11);
         detailDescription.setTextColor(0xFFB5B8C0);
         detailDescription.setMaxLines(10);
@@ -398,7 +398,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         descLp.topMargin = dp(6);
         panel.addView(detailDescription, descLp);
 
-        TextView versionLabel = text("COMPATIBLE VERSIONS", 9);
+        TextView versionLabel = text("ALL AVAILABLE VERSIONS", 9);
         versionLabel.setTextColor(0xFF707580);
         panel.addView(versionLabel, new LinearLayout.LayoutParams(-1, dp(22)));
 
@@ -594,7 +594,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             suppressDetailSelection = true;
             detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                     this, android.R.layout.simple_spinner_dropdown_item,
-                    Collections.singletonList("Loading compatible versions…")));
+                    Collections.singletonList("Loading all versions…")));
             suppressDetailSelection = false;
             downloadButton.setEnabled(false);
             downloadButton.setText("CHECKING…");
@@ -609,14 +609,15 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     && !version.loaders.isEmpty() ? " • " + join(version.loaders, 2) : "";
             String label = version.versionNumber == null || version.versionNumber.isEmpty()
                     ? version.name : version.versionNumber;
-            labels.add(label + loader);
+            boolean compatible = viewModel.isVersionCompatible(version);
+            labels.add(label + loader + (compatible ? " • Compatible" : " • Not compatible"));
         }
 
         if (labels.isEmpty()) {
             suppressDetailSelection = true;
             detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                     this, android.R.layout.simple_spinner_dropdown_item,
-                    Collections.singletonList("No compatible version/file")));
+                    Collections.singletonList("No downloadable versions")));
             suppressDetailSelection = false;
             downloadButton.setEnabled(false);
             downloadButton.setText("DOWNLOAD");
@@ -656,14 +657,18 @@ public class OrynDownloadActivity extends AppCompatActivity {
             status.setText("Installed " + project.title);
         } else if (state.installState.status == OrynInstallState.Status.FAILED) {
             detailProgress.setVisibility(View.GONE);
-            downloadButton.setEnabled(state.selectedInstance != null && state.selectedVersion != null);
+            downloadButton.setEnabled(state.selectedInstance != null
+                    && state.selectedVersion != null
+                    && viewModel.isVersionCompatible(state.selectedVersion));
             downloadButton.setText("RETRY");
             if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
         } else {
             detailProgress.setVisibility(View.GONE);
             boolean hasInstance = state.selectedInstance != null;
-            downloadButton.setEnabled(hasInstance && state.selectedVersion != null);
-            downloadButton.setText(hasInstance ? "DOWNLOAD" : "SELECT INSTANCE");
+            boolean compatible = state.selectedVersion != null && viewModel.isVersionCompatible(state.selectedVersion);
+            downloadButton.setEnabled(hasInstance && compatible);
+            downloadButton.setText(!hasInstance ? "SELECT INSTANCE"
+                    : compatible ? "DOWNLOAD" : "VERSION NOT COMPATIBLE");
             if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
         }
 
@@ -693,14 +698,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void clearDetails() {
         detailIcon.setImageResource(placeholder());
-        detailTitle.setText("Select a project");
+        detailTitle.setText("Project versions");
         detailAuthor.setText("");
         detailInfo.setText("");
-        detailDescription.setText("Select a project to inspect its Modrinth details and compatible versions.");
+        detailDescription.setText("Tap any Modrinth project to view all available versions.");
         suppressDetailSelection = true;
         detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item,
-                Collections.singletonList("Select a project")));
+                Collections.singletonList("Choose a project above")));
         suppressDetailSelection = false;
         detailProgress.setVisibility(View.GONE);
         downloadButton.setEnabled(false);
