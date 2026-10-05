@@ -202,6 +202,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         projectAdapter = new OrynProjectAdapter(
                 filterRepository,
                 project -> viewModel.selectProject(project));
+        projectList.setLayoutManager(new GridLayoutManager(this, 1));
         projectList.setAdapter(projectAdapter);
         center.addView(projectList, new LinearLayout.LayoutParams(0, 0, 1));
 
@@ -234,6 +235,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
 
+        // A RecyclerView without a LayoutManager receives adapter data but renders zero child views.
+        // Install a safe one-column manager immediately, then adapt after the real width is known.
         projectList.post(this::updateGridColumns);
         projectList.addOnLayoutChangeListener((v, left, top, right, bottom,
                                                 oldLeft, oldTop, oldRight, oldBottom) -> {
@@ -243,6 +246,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         setContentView(root);
         updateInstanceUi();
+        updateFilterVisibility();
+        projectList.post(this::updateGridColumns);
     }
 
     private LinearLayout buildSidebar() {
