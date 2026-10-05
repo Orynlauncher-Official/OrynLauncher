@@ -6,7 +6,8 @@
     "OrynPlayerSkinProviderMixin",
     "OrynPlayerSkinProviderAccessor",
     "OrynPlayerSkinTextureDownloaderAccessor",
-    "OrynTextureManagerAccessor"
+    "OrynTextureManagerAccessor",
+    "OrynPlayerSkinTextureDownloaderMixin"
   ],
   "injectors": {
     "defaultRequire": 1
