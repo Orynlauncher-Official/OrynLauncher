@@ -49,10 +49,32 @@ public final class ModrinthRemoteRepository {
         }
     }
 
+    private static final class ValuesEntry {
+        final long created;
+        final List<String> values;
+        ValuesEntry(long created, List<String> values) {
+            this.created = created;
+            this.values = values;
+        }
+    }
+
+    private static final class DetailEntry {
+        final long created;
+        final ModrinthProject project;
+        final List<ModrinthVersion> versions;
+        DetailEntry(long created, ModrinthProject project, List<ModrinthVersion> versions) {
+            this.created = created;
+            this.project = project;
+            this.versions = versions;
+        }
+    }
+
     private final ModrinthApiService api;
     private final ExecutorService executor = Executors.newCachedThreadPool();
     private final Map<String, CacheEntry> searchCache = new HashMap<>();
     private final Map<String, Bitmap> iconCache = new HashMap<>();
+    private final Map<String, CacheEntry> detailCache = new HashMap<>();
+    private final Map<String, ValuesEntry> valuesCache = new HashMap<>();
     private Future<?> activeSearch;
 
     public ModrinthRemoteRepository() {
@@ -101,12 +123,24 @@ public final class ModrinthRemoteRepository {
                                         final String loader,
                                         final DetailsCallback callback) {
         callback.onLoading();
+        final String key = selected.id + "|" + safe(projectType) + "|" + safe(minecraftVersion) + "|" + safe(loader);
+        synchronized (this) {
+            DetailEntry cached = detailCache.get(key);
+            if (cached != null && System.currentTimeMillis() - cached.created < CACHE_MS) {
+                Log.d(TAG, "Detail cache hit: " + key);
+                callback.onSuccess(cached.project, cached.versions);
+                return;
+            }
+        }
         executor.execute(() -> {
             try {
                 ModrinthProject fullProject = api.getProject(selected.id);
                 List<ModrinthVersion> versions = compatibleVersions(
                         api.getProjectVersions(selected.id, minecraftVersion, loader), projectType, minecraftVersion, loader);
                 Log.d(TAG, "Project detail: " + selected.id + " • compatible versions=" + versions.size());
+                synchronized (this) {
+                    detailCache.put(key, new DetailEntry(System.currentTimeMillis(), fullProject, versions));
+                }
                 callback.onSuccess(fullProject, versions);
             } catch (Exception e) {
                 callback.onError(e);
@@ -115,16 +149,38 @@ public final class ModrinthRemoteRepository {
     }
 
     public void loadGameVersionsAsync(final ValuesCallback callback) {
+        final String key = "game_versions";
+        synchronized (this) {
+            ValuesEntry cached = valuesCache.get(key);
+            if (cached != null && System.currentTimeMillis() - cached.created < CACHE_MS) {
+                callback.onSuccess(new ArrayList<>(cached.values));
+                return;
+            }
+        }
         executor.execute(() -> {
-            try { callback.onSuccess(api.getGameVersions()); }
-            catch (Exception e) { callback.onError(e); }
+            try {
+                List<String> values = api.getGameVersions();
+                synchronized (this) { valuesCache.put(key, new ValuesEntry(System.currentTimeMillis(), new ArrayList<>(values))); }
+                callback.onSuccess(values);
+            } catch (Exception e) { callback.onError(e); }
         });
     }
 
     public void loadLoadersAsync(final ValuesCallback callback) {
+        final String key = "loaders";
+        synchronized (this) {
+            ValuesEntry cached = valuesCache.get(key);
+            if (cached != null && System.currentTimeMillis() - cached.created < CACHE_MS) {
+                callback.onSuccess(new ArrayList<>(cached.values));
+                return;
+            }
+        }
         executor.execute(() -> {
-            try { callback.onSuccess(api.getLoadersForContent()); }
-            catch (Exception e) { callback.onError(e); }
+            try {
+                List<String> values = api.getLoadersForContent();
+                synchronized (this) { valuesCache.put(key, new ValuesEntry(System.currentTimeMillis(), new ArrayList<>(values))); }
+                callback.onSuccess(values);
+            } catch (Exception e) { callback.onError(e); }
         });
     }
 
@@ -212,6 +268,11 @@ public final class ModrinthRemoteRepository {
         executor.shutdownNow();
         synchronized (iconCache) {
             iconCache.clear();
+        }
+        synchronized (this) {
+            searchCache.clear();
+            detailCache.clear();
+            valuesCache.clear();
         }
     }
 
