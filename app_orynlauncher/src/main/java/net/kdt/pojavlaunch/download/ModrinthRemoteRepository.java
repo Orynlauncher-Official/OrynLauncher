@@ -55,7 +55,7 @@ public final class ModrinthRemoteRepository {
     private final Map<String, Bitmap> iconCache = new HashMap<>();
     private Future<?> activeSearch;
 
-    public ModrinthRepository() {
+    public ModrinthRemoteRepository() {
         api = new ModrinthApiService();
     }
 
