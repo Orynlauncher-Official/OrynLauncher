@@ -2,6 +2,7 @@ package net.kdt.pojavlaunch;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
@@ -29,6 +30,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,6 +65,22 @@ public class OrynDownloadActivity extends AppCompatActivity {
     // V4 switches categories frequently, so use a small cached pool and let
     // searchGeneration discard stale responses on the UI thread.
     private final ExecutorService executor = Executors.newCachedThreadPool();
+    private static final String MODRINTH_BASE = "https://api.modrinth.com/v2";
+    private static final String MODRINTH_UA = "Orynlauncher-Official/OrynLauncher/4.0 (https://github.com/Orynlauncher-Official/OrynLauncher)";
+    private static final long SEARCH_CACHE_MS = 5 * 60 * 1000L;
+    private final Map<String, CachedSearch> searchCache = new HashMap<>();
+    private int searchOffset = 0;
+    private String lastSearchKey = "";
+    private Button loadMoreButton;
+
+    private static final class CachedSearch {
+        final long time;
+        final JsonObject response;
+        CachedSearch(long time, JsonObject response) {
+            this.time = time;
+            this.response = response;
+        }
+    }
     private final ApiHandler api = new ApiHandler("https://api.modrinth.com/v2");
     private final ModrinthApi modrinthModpackApi = new ModrinthApi();
     private Category category = Category.MOD;
@@ -184,21 +202,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
         top.addView(versionSpinner, new LinearLayout.LayoutParams(dp(125), dp(38)));
 
         loaderSpinner = new android.widget.Spinner(this);
-        String[] loaderChoices = new String[]{"Auto", "Fabric", "Forge", "NeoForge", "Quilt"};
-        loaderSpinner.setAdapter(new android.widget.ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_dropdown_item, loaderChoices));
-        String detectedLoader = getModrinthLoader(Instances.loadSelectedInstance());
-        selectedLoader = detectedLoader;
-        if ("fabric".equals(detectedLoader)) loaderSpinner.setSelection(1);
-        else if ("forge".equals(detectedLoader)) loaderSpinner.setSelection(2);
-        else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
-        else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
         loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
-                selectedLoader = position == 1 ? "fabric" : position == 2 ? "forge" :
-                        position == 3 ? "neoforge" : position == 4 ? "quilt" :
-                        getModrinthLoader(Instances.loadSelectedInstance());
-                searchProjects(search == null ? "" : search.getText().toString().trim());
+                Object value = parent.getItemAtPosition(position);
+                selectedLoader = value == null || "Auto".equalsIgnoreCase(value.toString())
+                        ? getModrinthLoader(Instances.loadSelectedInstance()) : value.toString().toLowerCase(Locale.ROOT);
+                if (search != null && selectedMinecraftVersion != null) {
+                    searchProjects(search.getText().toString().trim());
+                }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
@@ -244,6 +255,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
         results.setPadding(0, dp(4), dp(8), dp(12));
         scroll.addView(results);
         main.addView(scroll, new LinearLayout.LayoutParams(0, 0, 1));
+
+        loadMoreButton = new Button(this);
+        loadMoreButton.setText("Load more");
+        loadMoreButton.setTextColor(Color.WHITE);
+        loadMoreButton.setTextSize(12);
+        loadMoreButton.setAllCaps(false);
+        loadMoreButton.setVisibility(View.GONE);
+        loadMoreButton.setBackground(roundBg(0xFF343843, dp(10)));
+        loadMoreButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim(), true));
+        main.addView(loadMoreButton, new LinearLayout.LayoutParams(-1, dp(42)));
 
         LinearLayout details = new LinearLayout(this);
         details.setOrientation(LinearLayout.VERTICAL);
@@ -306,37 +327,26 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void loadMinecraftVersions() {
         executor.execute(() -> {
             try {
-                URL url = new URL("https://piston-meta.mojang.com/mc/game/version_manifest_v2.json");
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setConnectTimeout(12000);
-                connection.setReadTimeout(15000);
-                connection.setInstanceFollowRedirects(true);
-                connection.connect();
-                InputStream in = new BufferedInputStream(connection.getInputStream());
-                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
-                in.close();
-                connection.disconnect();
-
-                JsonObject manifest = new com.google.gson.JsonParser().parse(
-                        new String(out.toByteArray(), "UTF-8")).getAsJsonObject();
-                JsonArray versions = manifest.getAsJsonArray("versions");
+                JsonArray versions = fetchJsonArray(MODRINTH_BASE + "/tag/game_version");
                 java.util.ArrayList<String> values = new java.util.ArrayList<>();
                 String current = getSelectedMinecraftVersion();
 
                 for (int i = 0; i < versions.size(); i++) {
                     JsonObject v = versions.get(i).getAsJsonObject();
-                    if (!"release".equalsIgnoreCase(v.has("type") ? v.get("type").getAsString() : "")) continue;
-                    values.add(v.get("id").getAsString());
+                    String type = v.has("version_type") ? v.get("version_type").getAsString() : "release";
+                    String id = v.has("version") ? v.get("version").getAsString() : "";
+                    if (id.isEmpty()) continue;
+                    if (!"release".equalsIgnoreCase(type)) continue;
+                    values.add(id);
                 }
 
                 runOnUiThread(() -> {
-                    if (values.isEmpty()) return;
+                    if (values.isEmpty()) {
+                        status.setText("Unable to load Minecraft versions from Modrinth");
+                        return;
+                    }
                     android.widget.ArrayAdapter<String> adapter =
-                            new android.widget.ArrayAdapter<String>(
-                                    this, android.R.layout.simple_spinner_dropdown_item, values);
+                            new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, values);
                     versionSpinner.setAdapter(adapter);
                     int index = current == null ? -1 : values.indexOf(current);
                     if (index < 0) index = 0;
@@ -346,25 +356,19 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    String current = getSelectedMinecraftVersion();
-                    if (current != null && !current.isEmpty()) {
-                        java.util.ArrayList<String> fallback = new java.util.ArrayList<>();
-                        fallback.add(current);
-                        android.widget.ArrayAdapter<String> adapter =
-                                new android.widget.ArrayAdapter<String>(
-                                        this, android.R.layout.simple_spinner_dropdown_item, fallback);
-                        versionSpinner.setAdapter(adapter);
-                        selectedMinecraftVersion = current;
-                    }
-                    updateVersionSpinnerVisibility();
+                    status.setText("Unable to load Minecraft versions from Modrinth");
+                    Toast.makeText(this, "Modrinth version list unavailable", Toast.LENGTH_LONG).show();
                 });
             }
         });
     }
 
     private void updateVersionSpinnerVisibility() {
-        if (versionSpinner == null) return;
+        if (versionSpinner == null || loaderSpinner == null) return;
         versionSpinner.setVisibility(View.VISIBLE);
+        boolean needsLoader = category == Category.MOD || category == Category.MODPACK;
+        loaderSpinner.setVisibility(needsLoader ? View.VISIBLE : View.GONE);
+        if (!needsLoader) selectedLoader = null;
     }
 
     private void addRailItem(LinearLayout parent, String text, String shortText, Category value) {
@@ -391,6 +395,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         parent.addView(item, lp);
         item.setOnClickListener(v -> {
             category = value;
+            forcedVersionId = null;
             if (categoryTitleView != null) categoryTitleView.setText(value.title);
             updateVersionSpinnerVisibility();
             search.setHint("Search " + value.title.toLowerCase(Locale.ROOT));
@@ -409,6 +414,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void searchProjects(final String query) {
+        searchProjects(query, false);
+    }
+
+    private void searchProjects(final String query, final boolean append) {
         if (progress == null || status == null || results == null) return;
 
         final int requestId = ++searchGeneration;
@@ -417,101 +426,137 @@ public class OrynDownloadActivity extends AppCompatActivity {
         final String requestedVersion = getDownloadMinecraftVersion();
         final String requestedLoader = getSelectedLoader();
 
+        if (!append) {
+            searchOffset = 0;
+            lastSearchKey = makeSearchCacheKey(requestedCategory, requestedVersion, requestedLoader, requestedQuery);
+            results.removeAllViews();
+        }
+
         progress.setVisibility(View.VISIBLE);
         status.setText("Loading " + requestedCategory.title.toLowerCase(Locale.ROOT) + "…");
-        results.removeAllViews();
 
         Instance selectedInstance = null;
-        try {
-            selectedInstance = Instances.loadSelectedInstance();
-        } catch (Throwable ignored) {}
-
+        try { selectedInstance = Instances.loadSelectedInstance(); } catch (Throwable ignored) {}
         if (selectedInstance == null) {
             progress.setVisibility(View.GONE);
             status.setText("Select an instance first");
             return;
         }
-
         if (requestedVersion == null || requestedVersion.trim().isEmpty()) {
             progress.setVisibility(View.GONE);
             status.setText("Select a Minecraft version");
             return;
         }
 
+        final int offset = searchOffset;
         executor.execute(() -> {
             try {
-                HashMap<String, Object> params = new HashMap<>();
-                params.put("query", requestedQuery);
-                params.put("limit", 30);
-                params.put("index", requestedQuery.isEmpty() ? "downloads" : "relevance");
-
-                // Modrinth supports project_type and versions as search facets.
-                // Use the selected Minecraft version for discovery so incompatible
-                // projects do not flood the result list.
-                params.put("facets", buildSearchFacets(requestedCategory, requestedVersion, requestedLoader));
-
-                JsonObject response;
-                try {
-                    response = searchModrinthProjects(requestedQuery, requestedCategory, requestedVersion, requestedLoader, true);
-                } catch (Exception preciseError) {
-                    response = searchModrinthProjects(requestedQuery, requestedCategory, requestedVersion, requestedLoader, false);
+                String cacheKey = makeSearchCacheKey(requestedCategory, requestedVersion, requestedLoader, requestedQuery)
+                        + "|offset=" + offset;
+                JsonObject response = null;
+                synchronized (searchCache) {
+                    CachedSearch cached = searchCache.get(cacheKey);
+                    if (cached != null && System.currentTimeMillis() - cached.time < SEARCH_CACHE_MS) {
+                        response = cached.response;
+                    }
                 }
 
-                JsonArray rawHits = response == null ? null : response.getAsJsonArray("hits");
-                JsonArray searchHits = new JsonArray();
+                if (response == null) {
+                    String facets = buildSearchFacets(requestedCategory, requestedVersion, requestedLoader);
+                    StringBuilder url = new StringBuilder(MODRINTH_BASE + "/search");
+                    url.append("?query=").append(URLEncoder.encode(requestedQuery, "UTF-8"));
+                    url.append("&limit=20&offset=").append(offset);
+                    url.append("&index=").append(URLEncoder.encode(
+                            requestedQuery.isEmpty() ? "downloads" : "relevance", "UTF-8"));
+                    url.append("&facets=").append(URLEncoder.encode(facets, "UTF-8"));
 
-                // Always validate the project type locally. We also validate the
-                // version/loader fields returned by Modrinth's search index so a
-                // broad fallback can safely be used when a facet query is empty
-                // or temporarily rejected by the API.
-                appendCompatibleSearchHits(searchHits, rawHits, requestedCategory,
-                        requestedVersion, requestedLoader, 30);
+                    Log.d("OrynModrinth", "[Modrinth] Category: " + requestedCategory.projectType);
+                    Log.d("OrynModrinth", "[Modrinth] Minecraft: " + requestedVersion);
+                    Log.d("OrynModrinth", "[Modrinth] Loader: " + (requestedLoader == null ? "none" : requestedLoader));
+                    Log.d("OrynModrinth", "[Modrinth] Search: " + requestedQuery);
+                    Log.d("OrynModrinth", "[Modrinth] Requesting projects: " + url);
 
-                // If the strict facet search returned too few projects, perform a
-                // second project-type-only Modrinth search and fill the remaining
-                // slots from its indexed versions/categories. This makes the
-                // browser resilient to Modrinth facet/index changes.
-                if (searchHits.size() < 30) {
-                    JsonObject broadResponse = searchModrinthProjects(
-                            requestedQuery, requestedCategory, requestedVersion, requestedLoader, false);
-                    JsonArray broadHits = broadResponse == null
-                            ? null : broadResponse.getAsJsonArray("hits");
-                    appendCompatibleSearchHits(searchHits, broadHits, requestedCategory,
-                            requestedVersion, requestedLoader, 30);
+                    try {
+                        response = fetchJsonObject(url.toString());
+                    } catch (Exception strictError) {
+                        // Retry project-type-only search. Exact compatibility is
+                        // checked against the returned project metadata below.
+                        String fallback = MODRINTH_BASE + "/search?query="
+                                + URLEncoder.encode(requestedQuery, "UTF-8")
+                                + "&limit=20&offset=" + offset
+                                + "&index=" + URLEncoder.encode(
+                                requestedQuery.isEmpty() ? "downloads" : "relevance", "UTF-8")
+                                + "&facets=" + URLEncoder.encode(
+                                String.format("[[\"project_type:%s\"]]", requestedCategory.projectType), "UTF-8");
+                        Log.w("OrynModrinth", "[Modrinth] Strict search failed; retrying broad project-type search", strictError);
+                        response = fetchJsonObject(fallback);
+                    }
+                    synchronized (searchCache) {
+                        searchCache.put(cacheKey, new CachedSearch(System.currentTimeMillis(), response));
+                    }
                 }
+
+                JsonArray hits = response == null || !response.has("hits")
+                        ? new JsonArray() : response.getAsJsonArray("hits");
+                JsonArray compatible = new JsonArray();
+                appendCompatibleSearchHits(compatible, hits, requestedCategory,
+                        requestedVersion, requestedLoader, 20);
+
+                final JsonArray finalHits = compatible;
+                final int totalHits = response != null && response.has("total_hits")
+                        ? response.get("total_hits").getAsInt() : finalHits.size();
+
+                Log.d("OrynModrinth", "[Modrinth] Results: " + finalHits.size()
+                        + " (server total " + totalHits + ")");
 
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
-
                     if (requestId != searchGeneration || category != requestedCategory) return;
 
-                    if (searchHits.size() == 0) {
-                        status.setText(requestedQuery.isEmpty()
-                                ? "No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found on Modrinth"
-                                : "No results found on Modrinth");
+                    if (!append) results.removeAllViews();
+
+                    if (finalHits.size() == 0 && results.getChildCount() == 0) {
+                        status.setText("No compatible projects found.");
+                        if (loadMoreButton != null) loadMoreButton.setVisibility(View.GONE);
                         return;
                     }
 
-                    status.setText(searchHits.size() + " compatible projects • "
+                    status.setText((append ? "Showing more • " : "")
+                            + finalHits.size() + " compatible projects • "
                             + requestedVersion
-                            + (requestedCategory == Category.MOD && requestedLoader != null
-                            ? " • " + requestedLoader : ""));
+                            + ((requestedCategory == Category.MOD || requestedCategory == Category.MODPACK)
+                            && requestedLoader != null ? " • " + requestedLoader : ""));
 
-                    for (int i = 0; i < searchHits.size(); i++) {
-                        addResult(searchHits.get(i).getAsJsonObject());
+                    for (int i = 0; i < finalHits.size(); i++) {
+                        addResult(finalHits.get(i).getAsJsonObject());
+                    }
+
+                    searchOffset = offset + finalHits.size();
+                    if (loadMoreButton != null) {
+                        boolean canLoadMore = totalHits > searchOffset && finalHits.size() > 0;
+                        loadMoreButton.setVisibility(canLoadMore ? View.VISIBLE : View.GONE);
+                    }
+
+                    if (finalHits.size() == 0 && results.getChildCount() > 0) {
+                        status.setText("No more compatible projects.");
                     }
                 });
             } catch (Exception e) {
+                Log.e("OrynModrinth", "[Modrinth] Search failed", e);
                 runOnUiThread(() -> {
                     progress.setVisibility(View.GONE);
                     if (requestId != searchGeneration || category != requestedCategory) return;
-                    status.setText("Unable to connect to Modrinth • Tap Search to retry");
-                    Toast.makeText(this,
-                            e.getMessage() == null ? "Modrinth request failed" : e.getMessage(),
-                            Toast.LENGTH_LONG).show();
+                    status.setText("Unable to load Modrinth projects. Check your internet connection and try again.");
+                    if (loadMoreButton != null) loadMoreButton.setVisibility(View.GONE);
                 });
             }
         });
+    }
+
+    private String makeSearchCacheKey(Category cat, String version, String loader, String query) {
+        return cat.projectType + "|" + (version == null ? "" : version)
+                + "|" + (loader == null ? "" : loader)
+                + "|" + (query == null ? "" : query.toLowerCase(Locale.ROOT));
     }
 
     private void appendCompatibleSearchHits(JsonArray destination, JsonArray hits,
@@ -520,30 +565,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                                 String loader,
                                                 int maxResults) {
         if (hits == null) return;
-
         for (int i = 0; i < hits.size() && destination.size() < maxResults; i++) {
             JsonObject hit = hits.get(i).getAsJsonObject();
             String type = hit.has("project_type") && !hit.get("project_type").isJsonNull()
                     ? hit.get("project_type").getAsString() : "";
-            if (!requestedCategory.projectType.equalsIgnoreCase(type)) continue;
-
-            // Avoid duplicates when the strict and broad searches overlap.
-            String id = hit.has("project_id") && !hit.get("project_id").isJsonNull()
+            String projectId = hit.has("project_id") && !hit.get("project_id").isJsonNull()
                     ? hit.get("project_id").getAsString() : "";
-            boolean duplicate = false;
-            for (int j = 0; j < destination.size(); j++) {
-                JsonObject existing = destination.get(j).getAsJsonObject();
-                if (id.equals(existing.has("project_id") ? existing.get("project_id").getAsString() : "")) {
-                    duplicate = true;
-                    break;
-                }
-            }
-            if (duplicate) continue;
+            if (!requestedCategory.projectType.equalsIgnoreCase(type) || projectId.isEmpty()) continue;
 
-            // Search results expose the supported Minecraft versions and loader
-            // tags directly. For non-mod projects there is no loader filter.
             boolean versionMatch = false;
-            if (minecraftVersion != null && hit.has("versions") && hit.get("versions").isJsonArray()) {
+            if (hit.has("versions") && hit.get("versions").isJsonArray()) {
                 JsonArray versions = hit.getAsJsonArray("versions");
                 for (int j = 0; j < versions.size(); j++) {
                     if (minecraftVersion.equals(versions.get(j).getAsString())) {
@@ -552,9 +583,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     }
                 }
             }
+            // A strict Modrinth facet response is already version-filtered. Do
+            // not discard the result if the search index omits its versions field.
+            if (!versionMatch && !hit.has("versions")) versionMatch = true;
             if (!versionMatch) continue;
 
-            if (requestedCategory == Category.MOD && loader != null && !loader.isEmpty()) {
+            if ((requestedCategory == Category.MOD || requestedCategory == Category.MODPACK)
+                    && loader != null && !loader.isEmpty()) {
                 boolean loaderMatch = false;
                 JsonArray categories = hit.has("categories") && hit.get("categories").isJsonArray()
                         ? hit.getAsJsonArray("categories") : null;
@@ -566,10 +601,20 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         }
                     }
                 }
-                if (!loaderMatch) continue;
+                // Strict facets guarantee compatibility. For fallback results,
+                // the project endpoint is checked when the user selects it.
+                if (!loaderMatch && categories != null) continue;
             }
 
-            destination.add(hit);
+            boolean duplicate = false;
+            for (int j = 0; j < destination.size(); j++) {
+                JsonObject existing = destination.get(j).getAsJsonObject();
+                if (projectId.equals(existing.has("project_id") ? existing.get("project_id").getAsString() : "")) {
+                    duplicate = true;
+                    break;
+                }
+            }
+            if (!duplicate) destination.add(hit);
         }
     }
 
@@ -580,42 +625,60 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         // Modrinth search treats loaders as categories for project discovery.
         // The final version endpoint still performs the authoritative loader check.
-        if (requestedCategory == Category.MOD && loader != null && !loader.isEmpty()) {
+        if ((requestedCategory == Category.MOD || requestedCategory == Category.MODPACK)
+                && loader != null && !loader.isEmpty()) {
             facets.setLength(facets.length() - 1);
             facets.append(String.format(",[\"categories:%s\"]]", loader));
         }
         return facets.toString();
     }
 
-    private JsonObject searchModrinthProjects(String query, Category requestedCategory,
-                                                String minecraftVersion, String loader,
-                                                boolean includeCompatibilityFacets) throws Exception {
-        String facets = includeCompatibilityFacets
-                ? buildSearchFacets(requestedCategory, minecraftVersion, loader)
-                : String.format(Locale.ROOT, "[[\"project_type:%s\"]]", requestedCategory.projectType);
-        StringBuilder urlBuilder = new StringBuilder("https://api.modrinth.com/v2/search");
-        urlBuilder.append("?query=").append(URLEncoder.encode(query == null ? "" : query, "UTF-8"));
-        urlBuilder.append("&limit=50");
-        urlBuilder.append("&index=").append(URLEncoder.encode(query == null || query.isEmpty() ? "downloads" : "relevance", "UTF-8"));
-        urlBuilder.append("&facets=").append(URLEncoder.encode(facets, "UTF-8"));
-        HttpURLConnection connection = (HttpURLConnection) new URL(urlBuilder.toString()).openConnection();
+    private JsonObject fetchJsonObject(String urlString) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
         connection.setConnectTimeout(12000);
         connection.setReadTimeout(20000);
         connection.setInstanceFollowRedirects(true);
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Accept", "application/json");
-        connection.setRequestProperty("User-Agent", "OrynLauncher/4.0");
+        connection.setRequestProperty("User-Agent", MODRINTH_UA);
         int code = connection.getResponseCode();
-        InputStream stream = code >= 200 && code < 300 ? connection.getInputStream() : connection.getErrorStream();
+        InputStream stream = code >= 200 && code < 300
+                ? connection.getInputStream() : connection.getErrorStream();
         if (stream == null) throw new Exception("Modrinth returned HTTP " + code);
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         byte[] buffer = new byte[8192];
         int read;
         try (InputStream in = new BufferedInputStream(stream)) {
             while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
-        } finally { connection.disconnect(); }
+        } finally {
+            connection.disconnect();
+        }
         if (code < 200 || code >= 300) throw new Exception("Modrinth returned HTTP " + code);
         return new com.google.gson.JsonParser().parse(new String(out.toByteArray(), "UTF-8")).getAsJsonObject();
+    }
+
+    private JsonArray fetchJsonArray(String urlString) throws Exception {
+        HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+        connection.setConnectTimeout(12000);
+        connection.setReadTimeout(20000);
+        connection.setInstanceFollowRedirects(true);
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", MODRINTH_UA);
+        int code = connection.getResponseCode();
+        InputStream stream = code >= 200 && code < 300
+                ? connection.getInputStream() : connection.getErrorStream();
+        if (stream == null) throw new Exception("Modrinth returned HTTP " + code);
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int read;
+        try (InputStream in = new BufferedInputStream(stream)) {
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+        } finally {
+            connection.disconnect();
+        }
+        if (code < 200 || code >= 300) throw new Exception("Modrinth returned HTTP " + code);
+        return new com.google.gson.JsonParser().parse(new String(out.toByteArray(), "UTF-8")).getAsJsonArray();
     }
 
     private void addResult(JsonObject hit) {
@@ -636,6 +699,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         card.setGravity(Gravity.CENTER_VERTICAL);
         card.setPadding(dp(10), dp(9), dp(10), dp(9));
         card.setBackground(roundBg(0xFF292B32, dp(9)));
+        card.setMinimumWidth(dp(260));
 
         ImageView icon = new ImageView(this);
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -703,6 +767,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         cardLp.setMargins(0, 0, dp(6), dp(8));
         row.addView(card, cardLp);
 
+        Log.d("OrynModrinth", "[Modrinth] Render project: " + projectId + " • " + title);
         View.OnClickListener select = v -> showProjectDetails(projectId, title, description, iconUrl);
         card.setOnClickListener(select);
         if (iconUrl != null) loadImage(icon, iconUrl);
@@ -723,8 +788,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void showProjectDetails(final String projectId, String title, String description, String iconUrl) {
         detailTitle.setText(title);
-        detailVersion.setText(category.title + " • " +
-                (getDownloadMinecraftVersion() == null ? "Version will be scanned" : getDownloadMinecraftVersion()));
+        String authorText = hitAuthorForDetail(projectId);
+        detailVersion.setText(category.title + " • "
+                + (getDownloadMinecraftVersion() == null ? "Version will be scanned" : getDownloadMinecraftVersion())
+                + (authorText.isEmpty() ? "" : " • " + authorText));
         detailDesc.setText(description == null || description.trim().isEmpty()
                 ? "No description available." : description);
         detailDownload.setEnabled(true);
@@ -742,6 +809,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     : category == Category.SHADER ? R.drawable.oryn_download_shader
                     : R.drawable.oryn_download_mod);
         }
+    }
+
+    private String hitAuthorForDetail(String projectId) {
+        // Search results already carry the author username. Keep the detail
+        // panel lightweight; the exact compatible version is checked before download.
+        return "";
     }
 
     private void loadImage(final ImageView target, final String imageUrl) {
@@ -775,7 +848,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                             String.format("[\"%s\"]", minecraftVersionRequest));
                 }
                 String loaderForRequest = getSelectedLoader();
-                if (category == Category.MOD && loaderForRequest != null && !loaderForRequest.isEmpty()) {
+                if ((category == Category.MOD || category == Category.MODPACK)
+                        && loaderForRequest != null && !loaderForRequest.isEmpty()) {
                     versionParams.put("loaders",
                             String.format("[\"%s\"]", loaderForRequest));
                 }
@@ -792,7 +866,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 for (int i = 0; versions != null && i < versions.size(); i++) {
                     JsonObject candidate = versions.get(i).getAsJsonObject();
                     if (!supportsMinecraftAndLoader(candidate, minecraftVersion,
-                            category == Category.MOD ? loader : null)) continue;
+                            (category == Category.MOD || category == Category.MODPACK) ? loader : null)) continue;
                     compatible.add(candidate);
                 }
 
@@ -827,7 +901,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                 : v.has("version_number") ? v.get("version_number").getAsString() : "Version";
                         String mc = minecraftVersion == null ? "Minecraft" : minecraftVersion;
                         String loaderLabel = "";
-                        if (category == Category.MOD && v.has("loaders") && v.get("loaders").isJsonArray()) {
+                        if ((category == Category.MOD || category == Category.MODPACK)
+                                && v.has("loaders") && v.get("loaders").isJsonArray()) {
                             JsonArray ls = v.getAsJsonArray("loaders");
                             if (ls.size() > 0) loaderLabel = " • " + ls.get(0).getAsString();
                         }
@@ -1141,7 +1216,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     }
                     if (!gameMatch) continue;
 
-                    if (loader != null && category == Category.MOD) {
+                    if (loader != null && (category == Category.MOD || category == Category.MODPACK)) {
                         boolean loaderMatch = false;
                         if (candidate.has("loaders")) {
                             JsonArray loaders = candidate.getAsJsonArray("loaders");
@@ -1412,17 +1487,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private String getSelectedLoader() {
-        if (category != Category.MOD) return null;
+        if (category != Category.MOD && category != Category.MODPACK) return null;
         if (selectedLoader != null && !selectedLoader.isEmpty()) return selectedLoader;
         return getModrinthLoader(Instances.loadSelectedInstance());
     }
 
     private String getModrinthLoader(Instance instance) {
         if (instance == null) return null;
-        if (category == Category.RESOURCEPACK || category == Category.SHADER || category == Category.MODPACK) {
-            return "minecraft";
-        }
-
         String profileId = instance.versionId == null ? "" : instance.versionId.toLowerCase(Locale.ROOT);
         if (profileId.contains("neoforge")) return "neoforge";
         if (profileId.contains("forge")) return "forge";
