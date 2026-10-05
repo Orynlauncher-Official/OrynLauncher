@@ -25,7 +25,7 @@ public final class OrynCosmeticsRuntime {
     });
 
     private static final Map<String, Entry> CACHE = new ConcurrentHashMap<>();
-    private static volatile CompletableFuture<OrynRuntimeProfile> PROFILE_FUTURE;
+    private static volatile OrynRuntimeProfile RUNTIME_PROFILE;
 
     private OrynCosmeticsRuntime() {}
 
@@ -62,7 +62,11 @@ public final class OrynCosmeticsRuntime {
     private static void initialize(Entry entry, GameProfile profile,
                                    PlayerSkinTextureDownloader downloader, String identity) {
         try {
-            OrynRuntimeProfile runtime = profileFuture().join();
+            OrynRuntimeProfile runtime = RUNTIME_PROFILE;
+            if (runtime == null) {
+                runtime = OrynRuntimeProfile.load();
+                RUNTIME_PROFILE = runtime;
+            }
             if (runtime == null) {
                 fail(entry, "runtime profile missing");
                 return;
@@ -169,22 +173,9 @@ public final class OrynCosmeticsRuntime {
         System.out.println("[ORYN-COSMETICS] Vanilla fallback = true");
     }
 
-    private static CompletableFuture<OrynRuntimeProfile> profileFuture() {
-        CompletableFuture<OrynRuntimeProfile> current = PROFILE_FUTURE;
-        if (current != null) return current;
-        synchronized (OrynCosmeticsRuntime.class) {
-            current = PROFILE_FUTURE;
-            if (current == null) {
-                current = CompletableFuture.supplyAsync(OrynRuntimeProfile::load, EXECUTOR);
-                PROFILE_FUTURE = current;
-            }
-            return current;
-        }
-    }
-
     public static void clear() {
         CACHE.clear();
-        PROFILE_FUTURE = null;
+        RUNTIME_PROFILE = null;
     }
 
     private static String safeId(String value) {
