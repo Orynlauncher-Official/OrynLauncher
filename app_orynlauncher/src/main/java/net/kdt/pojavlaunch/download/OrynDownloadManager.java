@@ -1,6 +1,7 @@
 package net.kdt.pojavlaunch.download;
 
 import android.os.SystemClock;
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -12,6 +13,7 @@ import java.security.MessageDigest;
 import java.util.Locale;
 
 public final class OrynDownloadManager {
+    private static final String TAG = "OrynDownload";
     public interface Callback {
         void onProgress(int percent);
     }
@@ -82,6 +84,11 @@ public final class OrynDownloadManager {
                         throw new Exception("SHA-1 verification failed");
                     }
                 }
+                if (!temp.isFile() || temp.length() <= 0) {
+                    throw new Exception("Downloaded file is empty");
+                }
+                Log.d(TAG, "[ORYN-DOWNLOAD] downloaded=true destination=" + output.getAbsolutePath()
+                        + " bytes=" + temp.length() + " fileExists=" + temp.isFile());
 
                 if (output.exists() && !output.delete()) {
                     throw new Exception("Could not replace existing file");
@@ -89,6 +96,11 @@ public final class OrynDownloadManager {
                 if (!temp.renameTo(output)) {
                     throw new Exception("Could not finalize downloaded file");
                 }
+                if (!output.isFile() || output.length() <= 0) {
+                    throw new Exception("Final downloaded file does not exist or is empty");
+                }
+                Log.d(TAG, "[ORYN-DOWNLOAD] finalized=true destination=" + output.getAbsolutePath()
+                        + " fileExists=true");
                 if (callback != null) callback.onProgress(100);
                 return output;
             } catch (Exception error) {
