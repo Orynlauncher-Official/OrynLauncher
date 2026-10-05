@@ -705,7 +705,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void chooseInstance() {
         instanceExecutor.execute(() -> {
-            List<Instance> values = Instances.loadAllInstances();
+            final List<Instance> values;
+            try {
+                values = Instances.loadAllInstances();
+            } catch (java.io.IOException e) {
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Failed to load Minecraft instances", Toast.LENGTH_LONG).show());
+                return;
+            }
             runOnUiThread(() -> {
                 if (values == null || values.isEmpty()) {
                     Toast.makeText(this, "No Minecraft instances found", Toast.LENGTH_LONG).show();
