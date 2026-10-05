@@ -369,7 +369,7 @@ public final class OrynCosmeticsStore {
     private JSONObject toJson(CosmeticProfile p) throws Exception {
         JSONObject o = new JSONObject();
         o.put("name", p.name);
-        o.put("accountUuid", p.accountUuid == null ? "" : p.accountUuid);
+        o.put("accountUuid", p.accountUuid == null ? "" : p.accountUuid);\n        // Keep the account name beside the UUID so zero-UUID local accounts remain isolated at render time.\n        Account current = Accounts.getCurrent();\n        o.put("accountName", current == null || current.username == null ? "" : current.username);
         o.put("skin", p.skin == null ? "" : p.skin);
         o.put("skinUrl", p.skinUrl == null ? "" : p.skinUrl);
         o.put("model", "slim".equalsIgnoreCase(p.model) ? "slim" : "classic");
