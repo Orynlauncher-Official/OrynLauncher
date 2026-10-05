@@ -23,6 +23,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
                                     CallbackInfoReturnable<CompletableFuture<AssetInfo.TextureAsset>> cir) {
         if (isOrynUrl(url)) {
             oryn$downloaderRequestCount++;
+            OrynPlayerSkinProviderMixin.recordDownloaderRequest();
             System.out.println("[ORYN-COSMETICS] Native downloader request count = "
                     + oryn$downloaderRequestCount);
             System.out.println("[ORYN-COSMETICS] Native downloader applySkin URL accepted = " + url);
@@ -38,6 +39,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
             NativeImage image = cir.getReturnValue();
             if (image != null) {
                 oryn$pngDecodeCount++;
+                OrynPlayerSkinProviderMixin.recordPngDecode();
             }
             System.out.println("[ORYN-COSMETICS] PNG decoded = " + (image != null));
             System.out.println("[ORYN-COSMETICS] pngDecodeCount = " + oryn$pngDecodeCount);
@@ -53,6 +55,7 @@ public abstract class OrynPlayerSkinTextureDownloaderMixin {
                                     CallbackInfoReturnable<CompletableFuture<AssetInfo.TextureAsset>> cir) {
         if (isOrynAsset(asset)) {
             oryn$textureRegistrationCount++;
+            OrynPlayerSkinProviderMixin.recordTextureRegistration();
             System.out.println("[ORYN-COSMETICS] Texture registration count = "
                     + oryn$textureRegistrationCount);
             System.out.println("[ORYN-COSMETICS] Texture registration entered id="
