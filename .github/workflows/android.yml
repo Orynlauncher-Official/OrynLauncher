@@ -75,24 +75,70 @@ jobs:
           mv app_orynlauncher/build/outputs/bundle/fullGplay/app_orynlauncher-full-gplay.aab out/app-gplay.aab
 
       - name: Build Debug .apk
+        id: debug_build
+        continue-on-error: true
         run: |
-          # Build the launcher. The bundled JRE8 asset is hosted on GitHub Releases
-          # and can occasionally return a transient HTTP 500; retry the whole Gradle
-          # invocation so the download task gets another chance.
-          set -e
+          set -o pipefail
+          mkdir -p out
+          : > out/build-debug.log
+
+          build_status=1
           for attempt in 1 2 3; do
-            echo "Build attempt $attempt/3"
-            if gradle :app_orynlauncher:assembleFullDebug; then
-              break
-            fi
+            echo "Build attempt $attempt/3" | tee -a out/build-debug.log
+            gradle :app_orynlauncher:assembleFullDebug --stacktrace 2>&1 | tee -a out/build-debug.log
+            build_status=${PIPESTATUS[0]}
+            if [ "$build_status" -eq 0 ]; then break; fi
             if [ "$attempt" -eq 3 ]; then
-              echo "Gradle build failed after 3 attempts."
-              exit 1
+              echo "Gradle build failed after 3 attempts." | tee -a out/build-debug.log
+              exit "$build_status"
             fi
-            echo "Transient build/download failure; retrying in 15 seconds..."
+            echo "Transient build/download failure; retrying in 15 seconds..." | tee -a out/build-debug.log
             sleep 15
           done
+          if [ "$build_status" -ne 0 ]; then exit "$build_status"; fi
           mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/orynlauncher-x64armb.apk
+
+      - name: Upload Debug Build Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: orynlauncher-build-log
+          path: out/build-debug.log
+          retention-days: 7
+
+      - name: Send Build Log to Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          BUILD_RESULT: ${{ steps.debug_build.outcome }}
+          BRANCH: ${{ github.ref_name }}
+          COMMIT: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          python3 <<\x27PY\x27
+          import json, os, urllib.request
+          webhook = os.environ.get("DISCORD_WEBHOOK", "").strip()
+          if not webhook:
+              print("DISCORD_WEBHOOK is not configured; skipping Discord notification.")
+              raise SystemExit(0)
+          success = os.environ.get("BUILD_RESULT") == "success"
+          emoji = "✅" if success else "❌"
+          title = "OrynLauncher V4 Build Successful" if success else "OrynLauncher V4 Build Failed"
+          try:
+              with open("out/build-debug.log", "r", encoding="utf-8", errors="replace") as f: log = f.read()
+          except FileNotFoundError:
+              log = "Build log was not generated."
+          log_tail = log[-1600:].replace("```", "'''").strip()
+          message = (f"{emoji} **{title}**\n"
+                     f"**Branch:** `{os.environ.get('BRANCH', 'unknown')}`\n"
+                     f"**Commit:** `{os.environ.get('COMMIT', '')[:7]}`\n\n"
+                     f"```text\n{log_tail}\n```\n"
+                     f"**Full log:** <{os.environ.get('RUN_URL', '')}>")
+          if len(message) > 1990: message = message[:1987] + "..."
+          payload = {"username":"OrynLauncher Build Bot","content":message}
+          request = urllib.request.Request(webhook, data=json.dumps(payload).encode("utf-8"), headers={"Content-Type":"application/json"}, method="POST")
+          with urllib.request.urlopen(request, timeout=20) as response: print("Discord webhook response:", response.status)
+          PY
 
       - name: Build Debug .apk (No runtime)
         run: |
