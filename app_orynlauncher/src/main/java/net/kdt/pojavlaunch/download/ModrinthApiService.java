@@ -72,8 +72,18 @@ public final class ModrinthApiService {
         return parseProject(object);
     }
 
-    public List<ModrinthVersion> getProjectVersions(String projectId) throws Exception {
-        JsonArray array = getArray(BASE + "/project/" + encodePath(projectId) + "/version");
+    public List<ModrinthVersion> getProjectVersions(String projectId, String minecraftVersion,
+                                                   String loader) throws Exception {
+        StringBuilder url = new StringBuilder(BASE)
+                .append("/project/").append(encodePath(projectId)).append("/version")
+                .append("?include_changelog=false");
+        if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
+            url.append("&game_versions=").append(encode("[\"" + minecraftVersion + "\"]"));
+        }
+        if (loader != null && !loader.isEmpty()) {
+            url.append("&loaders=").append(encode("[\"" + loader + "\"]"));
+        }
+        JsonArray array = getArray(url.toString());
         List<ModrinthVersion> versions = new ArrayList<>();
         for (JsonElement element : array) {
             if (element.isJsonObject()) versions.add(parseVersion(element.getAsJsonObject()));
