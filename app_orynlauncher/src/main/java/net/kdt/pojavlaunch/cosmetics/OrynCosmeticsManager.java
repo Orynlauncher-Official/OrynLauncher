@@ -39,6 +39,10 @@ public final class OrynCosmeticsManager {
     }
 
     public static String prepareForLaunch(Context context, Account account, java.io.File gameDir) {
+        return prepareForLaunch(context, account, gameDir, null);
+    }
+
+    public static String prepareForLaunch(Context context, Account account, java.io.File gameDir, String minecraftVersion) {
         try {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
             OrynCosmeticsStore.CosmeticProfile profile = store.getActiveProfile(account);
@@ -53,8 +57,12 @@ public final class OrynCosmeticsManager {
 
             if (gameDir != null) {
                 store.writeActiveForInstance(gameDir, account);
-                installFabricBridge(context, gameDir);
-                Log.i(TAG, "Minecraft client cosmetics bridge profile prepared in " + gameDir.getAbsolutePath());
+                if ("1.21.11".equals(minecraftVersion)) {
+                    installFabricBridge(context, gameDir);
+                    Log.i(TAG, "Minecraft 1.21.11 cosmetics bridge profile prepared in " + gameDir.getAbsolutePath());
+                } else {
+                    Log.i(TAG, "Minecraft cosmetics bridge skipped for unsupported version: " + minecraftVersion);
+                }
             }
             return "{}";
         } catch (Throwable t) {
