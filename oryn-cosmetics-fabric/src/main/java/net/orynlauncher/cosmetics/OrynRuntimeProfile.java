@@ -114,9 +114,23 @@ public final class OrynRuntimeProfile {
             throw new IllegalArgumentException("Invalid image dimensions");
         }
         NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> id.toString(), image);
-        client.getTextureManager().registerTexture(id, texture);
+        client.getTextureManager().registerTexture(id, texture);\n        texture.upload();
         LOGGER.info("[ORYN-COSMETICS] TextureManager registered {} from {} ({}x{})", id, path, image.getWidth(), image.getHeight());
         return new TextureAssetInfo(id);
+    }
+
+    public SkinTextures withCape(SkinTextures base) {
+        try {
+            TextureAssetInfo cape = capeEnabled && valid(capePath) ? register(MinecraftClient.getInstance(), CAPE_ID, capePath) : null;
+            if (cape == null) return base;
+            SkinTextures result = new SkinTextures(base.body(), cape, base.elytra(), base.model(), false);
+            LOGGER.info("[ORYN-COSMETICS] Cape merged into existing skin: skin texture={} cape texture={} model={}",
+                    result.body().texturePath(), result.cape().texturePath(), result.model());
+            return result;
+        } catch (Throwable t) {
+            LOGGER.warn("[ORYN-COSMETICS] Failed to merge custom cape", t);
+            return base;
+        }
     }
 
     private static boolean valid(String path) { return path != null && !path.isEmpty() && new File(path).isFile(); }
