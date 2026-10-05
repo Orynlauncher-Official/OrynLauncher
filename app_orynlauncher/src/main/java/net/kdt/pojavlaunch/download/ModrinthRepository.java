@@ -35,6 +35,11 @@ public final class ModrinthRepository {
         void onError();
     }
 
+    public interface ValuesCallback {
+        void onSuccess(List<String> values);
+        void onError(Exception error);
+    }
+
     private static final class CacheEntry {
         final long created;
         final ModrinthSearchResult result;
