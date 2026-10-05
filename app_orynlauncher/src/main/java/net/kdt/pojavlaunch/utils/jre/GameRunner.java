@@ -321,7 +321,7 @@ public class GameRunner {
 
         try {
             JavaRunner.nativeSetupExit(activity);
-            JavaRunner.startJvm(runtime, javaArgList, launchClassPath, mainClass, launchArgs);
+            JavaRunner.startJvm(runtime, javaArgList, launchClassPath, mainClass, launchArgs, instance.memoryMin, instance.memoryMax);
         }catch (VMLoadException e) {
             LifecycleAwareAlertDialog.DialogCreator dialogCreator = (dialog, builder) ->
                 builder.setMessage(e.toString(activity)).setPositiveButton(android.R.string.ok, (d, w)->{});
