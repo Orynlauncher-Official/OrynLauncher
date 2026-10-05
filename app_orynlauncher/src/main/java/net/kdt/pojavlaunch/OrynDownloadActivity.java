@@ -624,9 +624,24 @@ public class OrynDownloadActivity extends AppCompatActivity {
         arrow.setTextColor(0xFFB9BCC6);
         card.addView(arrow, new LinearLayout.LayoutParams(dp(30), dp(68)));
 
-        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(-1, dp(78));
-        cardLp.setMargins(0, 0, 0, dp(7));
-        results.addView(card, cardLp);
+        // Render results in a two-column grid so the loaded Modrinth projects
+        // are immediately visible instead of appearing as a narrow/empty list.
+        LinearLayout row;
+        if (results.getChildCount() == 0
+                || !(results.getChildAt(results.getChildCount() - 1) instanceof LinearLayout)
+                || ((LinearLayout) results.getChildAt(results.getChildCount() - 1)).getTag() != Boolean.TRUE) {
+            row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.TOP);
+            row.setTag(Boolean.TRUE);
+            results.addView(row, new LinearLayout.LayoutParams(-1, dp(92)));
+        } else {
+            row = (LinearLayout) results.getChildAt(results.getChildCount() - 1);
+        }
+
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(0, dp(84), 1);
+        cardLp.setMargins(0, 0, dp(6), dp(8));
+        row.addView(card, cardLp);
 
         View.OnClickListener select = v -> showProjectDetails(projectId, title, description, iconUrl);
         card.setOnClickListener(select);
