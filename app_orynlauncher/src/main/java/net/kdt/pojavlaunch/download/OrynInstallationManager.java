@@ -6,6 +6,8 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
 import net.kdt.pojavlaunch.instances.OrynInstanceManager;
+import net.kdt.pojavlaunch.extra.ExtraConstants;
+import net.kdt.pojavlaunch.extra.ExtraCore;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -57,7 +59,8 @@ public final class OrynInstallationManager {
                 Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + newInstance.getGameDirectory().getAbsolutePath()
                         + " downloaded=true installed=true fileExists=true");
                 // Make the newly installed pack the selected instance only after installation succeeds.
-                net.kdt.pojavlaunch.instances.Instances.setSelectedInstance(newInstance);
+                OrynInstanceManager.select(newInstance);
+                ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, null);
             } finally {
                 if (downloadedFile != null && downloadedFile.exists()) downloadedFile.delete();
             }
