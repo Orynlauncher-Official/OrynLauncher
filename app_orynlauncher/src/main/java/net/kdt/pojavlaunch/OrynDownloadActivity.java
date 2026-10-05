@@ -89,7 +89,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private ScrollView projectScroll;
     private TextView status;
     private TextView categoryTitle;
-    private TextView instanceButton;
+    private TextView instanceButton;\n    private TextView instanceTargetView;
     private EditText search;
     private Spinner versionSpinner;
     private Spinner loaderSpinner;
@@ -305,7 +305,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         target.setTextColor(0xFF666B76);
         sidebar.addView(target, new LinearLayout.LayoutParams(-1, dp(20)));
 
-        TextView targetValue = text("", 11);
+        TextView targetValue = text("", 11);\n        instanceTargetView = targetValue;
         targetValue.setTextColor(0xFFD8DAE0);
         targetValue.setMaxLines(2);
         targetValue.setTag("instance_target");
