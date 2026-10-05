@@ -7,7 +7,6 @@ import net.minecraft.entity.player.PlayerSkinType;
 import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
-import net.orynlauncher.cosmetics.mixin.OrynPlayerSkinProviderAccessor;
 
 import java.io.File;
 import java.util.Map;
@@ -26,6 +25,7 @@ public final class OrynCosmeticsRuntime {
     });
 
     private static final Map<String, Entry> CACHE = new ConcurrentHashMap<>();
+    private static volatile CompletableFuture<OrynRuntimeProfile> PROFILE_FUTURE;
 
     private OrynCosmeticsRuntime() {}
 
@@ -62,7 +62,7 @@ public final class OrynCosmeticsRuntime {
     private static void initialize(Entry entry, GameProfile profile,
                                    PlayerSkinTextureDownloader downloader, String identity) {
         try {
-            OrynRuntimeProfile runtime = OrynRuntimeProfile.load();
+            OrynRuntimeProfile runtime = profileFuture().join();
             if (runtime == null) {
                 fail(entry, "runtime profile missing");
                 return;
@@ -169,8 +169,22 @@ public final class OrynCosmeticsRuntime {
         System.out.println("[ORYN-COSMETICS] Vanilla fallback = true");
     }
 
+    private static CompletableFuture<OrynRuntimeProfile> profileFuture() {
+        CompletableFuture<OrynRuntimeProfile> current = PROFILE_FUTURE;
+        if (current != null) return current;
+        synchronized (OrynCosmeticsRuntime.class) {
+            current = PROFILE_FUTURE;
+            if (current == null) {
+                current = CompletableFuture.supplyAsync(OrynRuntimeProfile::load, EXECUTOR);
+                PROFILE_FUTURE = current;
+            }
+            return current;
+        }
+    }
+
     public static void clear() {
         CACHE.clear();
+        PROFILE_FUTURE = null;
     }
 
     private static String safeId(String value) {
