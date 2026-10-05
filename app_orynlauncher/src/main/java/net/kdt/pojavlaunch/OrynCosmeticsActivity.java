@@ -586,7 +586,7 @@ public class OrynCosmeticsActivity extends Activity {
             }
             String removed = active.cape;
             try {
-                store.removeCosmetic(removed, false);
+                store.removeCosmetic(currentAccount, removed, false);
                 active.cape = "";
                 saveCurrent("Cape removed");
             } catch (Exception e) {
@@ -599,7 +599,7 @@ public class OrynCosmeticsActivity extends Activity {
             }
             String removed = active.skin;
             try {
-                store.removeCosmetic(removed, true);
+                store.removeCosmetic(currentAccount, removed, true);
                 active.skin = "";
                 saveCurrent("Skin removed");
             } catch (Exception e) {
@@ -630,13 +630,25 @@ public class OrynCosmeticsActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         Account latest = Accounts.getCurrent();
-        String oldId = currentAccount == null ? "" : currentAccount.profileId;
-        String newId = latest == null ? "" : latest.profileId;
-        if (!oldId.equals(newId)) {
+        if (!sameAccount(currentAccount, latest)) {
             currentAccount = latest;
             active = store.getActiveProfile(currentAccount);
             if (preview != null) refresh();
         }
+    }
+
+    private boolean sameAccount(Account a, Account b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+        String aUuid = a.profileId == null ? "" : a.profileId;
+        String bUuid = b.profileId == null ? "" : b.profileId;
+        if (!aUuid.equals(bUuid)) return false;
+        String aName = a.username == null ? "" : a.username;
+        String bName = b.username == null ? "" : b.username;
+        if (!aName.equals(bName)) return false;
+        String aType = a.authType == null ? "" : a.authType.name();
+        String bType = b.authType == null ? "" : b.authType.name();
+        return aType.equals(bType);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
