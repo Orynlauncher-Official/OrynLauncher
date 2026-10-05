@@ -10,10 +10,9 @@ import java.io.File;
 /**
  * Minecraft 1.21.11 adapter.
  *
- * The 1.21.11 client has a changed PlayerSkinProvider/SkinTextures pipeline.
- * Oryn does not register NativeImage objects or replace PlayerRenderer here.
- * The bundled client bridge only makes the local GameProfile texture payload
- * flow through 1.21.11's vanilla PlayerSkinProvider/TextureManager.
+ * Only account-scoped runtime state and the version-specific bridge are
+ * prepared here. Minecraft remains responsible for decoding, registering
+ * and rendering the texture.
  */
 public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVersionAdapter {
     private static final String TAG = "OrynCosmetics";
@@ -30,7 +29,8 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
 
     @Override
     public boolean supportsCape(String minecraftVersion) {
-        return "1.21.11".equals(minecraftVersion);
+        // Skin-first rollout: cape is intentionally gated for now.
+        return false;
     }
 
     @Override
@@ -38,17 +38,17 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
                           File gameDir, String minecraftVersion) {
         Log.i(TAG, "[ORYN-COSMETICS] Minecraft version: " + minecraftVersion);
         Log.i(TAG, "[ORYN-COSMETICS] Adapter: " + id());
-        Log.i(TAG, "[ORYN-COSMETICS] Custom skin supported: " + supportsSkin(minecraftVersion));
-        Log.i(TAG, "[ORYN-COSMETICS] Custom cape supported: " + supportsCape(minecraftVersion));
+        Log.i(TAG, "[ORYN-COSMETICS] Custom skin supported: true");
+        Log.i(TAG, "[ORYN-COSMETICS] Custom cape supported: false (skin-first rollout)");
 
         if (gameDir != null) {
             new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
             installBridge(context, gameDir);
         }
 
-        // The bridge consumes the same vanilla GameProfile texture payload used
-        // by older versions. This keeps PNG decoding/UVs entirely inside MC.
-        return OrynLocalCosmeticsServer.prepare(context, account);
+        // The launcher process exits after JVM startup. Runtime transport is
+        // therefore created by the bridge inside the Minecraft JVM.
+        return "{}";
     }
 
     @Override
@@ -58,13 +58,13 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
 
     @Override
     public void removeCustomCape(Context context, Account account, File gameDir, String minecraftVersion) {
-        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 custom cape disabled; vanilla provider remains authoritative.");
+        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 cape is disabled during skin-first rollout.");
     }
 
     @Override
     public void refreshPlayerTextures(Context context, Account account, File gameDir, String minecraftVersion) {
         if (gameDir != null) new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
-        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 texture refresh requested.");
+        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 skin refresh requested.");
     }
 
     @Override
@@ -81,15 +81,16 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
             }
 
             File target = new File(mods, "orynlauncher-cosmetics-1.0.0.jar");
-            try (java.io.InputStream in = context.getAssets().open("orynlauncher/oryn_cosmetics_fabric.jar");
+            try (java.io.InputStream in =
+                         context.getAssets().open("orynlauncher/oryn_cosmetics_fabric.jar");
                  java.io.FileOutputStream out = new java.io.FileOutputStream(target)) {
                 byte[] buffer = new byte[8192];
                 int n;
                 while ((n = in.read(buffer)) != -1) out.write(buffer, 0, n);
             }
-            Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 native adapter installed.");
+            Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 native skin adapter installed.");
         } catch (Exception e) {
-            Log.w(TAG, "[ORYN-COSMETICS] 1.21.11 adapter asset unavailable; falling back to vanilla.", e);
+            Log.w(TAG, "[ORYN-COSMETICS] 1.21.11 bridge unavailable; falling back to vanilla.", e);
         }
     }
 }
