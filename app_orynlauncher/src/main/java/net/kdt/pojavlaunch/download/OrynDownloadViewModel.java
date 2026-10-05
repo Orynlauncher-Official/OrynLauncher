@@ -138,7 +138,13 @@ public final class OrynDownloadViewModel {
                             if (closed || generation != searchGeneration) return;
                             String message = error == null || error.getMessage() == null
                                     ? "Could not load Modrinth projects" : error.getMessage();
-                            if (state.projects.isEmpty()) state = state.withListError(message);
+                            if (state.projects.isEmpty()) {
+                                state = state.withListError(message);
+                            } else {
+                                state = state.withProjects(
+                                        state.projects, state.nextOffset, state.totalHits,
+                                        state.hasMore, "Could not load more projects: " + message);
+                            }
                         }
                         publish();
                     }
