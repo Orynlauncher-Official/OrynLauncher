@@ -5,6 +5,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 
+import net.kdt.pojavlaunch.authenticator.AuthType;
+import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,26 +24,73 @@ public final class OrynCosmeticsStore {
     public static final String DEFAULT_PROFILE = "Default";
     private final Context context;
     private final File root, skins, capes, profiles, active;
+    private final File legacyRoot, legacyProfiles, legacyActive;
 
     public static final class CosmeticProfile {
         public String name = DEFAULT_PROFILE;
         public String skin = "";
         public String model = "classic";
         public String cape = "";
+        public boolean skinEnabled = true;
+        public boolean capeEnabled = true;
     }
 
     public OrynCosmeticsStore(Context context) {
         this.context = context.getApplicationContext();
-        root = new File(this.context.getFilesDir(), "cosmetics");
-        skins = new File(root, "skins");
-        capes = new File(root, "capes");
+        legacyRoot = new File(this.context.getFilesDir(), "cosmetics");
+        legacyProfiles = new File(legacyRoot, "profiles");
+        legacyActive = new File(legacyRoot, "active_profile.json");
+
+        root = new File(legacyRoot, "accounts/" + accountKey());
+        skins = new File(legacyRoot, "skins");
+        capes = new File(legacyRoot, "capes");
         profiles = new File(root, "profiles");
         active = new File(root, "active_profile.json");
         ensureDirs();
+        migrateLegacyProfilesIfNeeded();
     }
 
     private void ensureDirs() {
         skins.mkdirs(); capes.mkdirs(); profiles.mkdirs();
+    }
+
+    private String accountKey() {
+        try {
+            Account a = Accounts.getCurrent();
+            if (a != null) {
+                String uuid = a.profileId == null ? "" : a.profileId.replace("-", "");
+                boolean zeroUuid = uuid.isEmpty() || uuid.matches("0+");
+                String identity = zeroUuid
+                        ? ((a.authType == null ? AuthType.LOCAL.name() : a.authType.name()) + "_" + (a.username == null ? "unknown" : a.username))
+                        : uuid;
+                return safeName(identity, "unbound");
+            }
+        } catch (Throwable ignored) {}
+        return "unbound";
+    }
+
+    private void migrateLegacyProfilesIfNeeded() {
+        if (profiles.exists() && profiles.listFiles() != null && profiles.listFiles().length > 0) return;
+        File[] old = legacyProfiles.listFiles();
+        if (old != null) {
+            for (File f : old) {
+                if (!f.isFile() || !f.getName().endsWith(".json")) continue;
+                try {
+                    String data = read(f);
+                    try (FileOutputStream out = new FileOutputStream(new File(profiles, f.getName()))) {
+                        out.write(data.getBytes(StandardCharsets.UTF_8));
+                    }
+                } catch (Exception ignored) {}
+            }
+        }
+        if (!active.exists() && legacyActive.exists()) {
+            try {
+                String data = read(legacyActive);
+                try (FileOutputStream out = new FileOutputStream(active)) {
+                    out.write(data.getBytes(StandardCharsets.UTF_8));
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     public List<File> listSkins() { return listPng(skins); }
@@ -137,6 +188,8 @@ public final class OrynCosmeticsStore {
         o.put("skin", p.skin);
         o.put("model", p.model);
         o.put("cape", p.cape);
+        o.put("skinEnabled", p.skinEnabled);
+        o.put("capeEnabled", p.capeEnabled);
         try (FileOutputStream out = new FileOutputStream(new File(profiles, safeName(p.name, "profile") + ".json"))) {
             out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
         }
@@ -154,6 +207,8 @@ public final class OrynCosmeticsStore {
                 p.skin = o.optString("skin", "");
                 p.model = o.optString("model", "classic");
                 p.cape = o.optString("cape", "");
+                p.skinEnabled = o.has("skinEnabled") ? o.optBoolean("skinEnabled", true) : !p.skin.isEmpty();
+                p.capeEnabled = o.has("capeEnabled") ? o.optBoolean("capeEnabled", true) : !p.cape.isEmpty();
                 result.add(p);
             } catch (Exception ignored) {}
         }
@@ -176,6 +231,8 @@ public final class OrynCosmeticsStore {
             p.skin = o.optString("skin", "");
             p.model = o.optString("model", "classic");
             p.cape = o.optString("cape", "");
+            p.skinEnabled = o.has("skinEnabled") ? o.optBoolean("skinEnabled", true) : !p.skin.isEmpty();
+            p.capeEnabled = o.has("capeEnabled") ? o.optBoolean("capeEnabled", true) : !p.cape.isEmpty();
             return p;
         } catch (Exception e) {
             return listProfiles().get(0);
@@ -185,7 +242,7 @@ public final class OrynCosmeticsStore {
     public void setActiveProfile(CosmeticProfile p) throws Exception {
         saveProfile(p);
         JSONObject o = new JSONObject();
-        o.put("name", p.name); o.put("skin", p.skin); o.put("model", p.model); o.put("cape", p.cape);
+        o.put("name", p.name); o.put("skin", p.skin); o.put("model", p.model); o.put("cape", p.cape);\n            o.put("skinEnabled", p.skinEnabled); o.put("capeEnabled", p.capeEnabled);
         try (FileOutputStream out = new FileOutputStream(active)) {
             out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
         }
@@ -200,6 +257,9 @@ public final class OrynCosmeticsStore {
             o.put("name", p.name); o.put("skin", p.skin); o.put("model", p.model); o.put("cape", p.cape);
             o.put("skinPath", p.skin.isEmpty() ? "" : new File(skins, p.skin).getAbsolutePath());
             o.put("capePath", p.cape.isEmpty() ? "" : new File(capes, p.cape).getAbsolutePath());
+            o.put("skinEnabled", p.skinEnabled);
+            o.put("capeEnabled", p.capeEnabled);
+            o.put("accountKey", accountKey());
             try (FileOutputStream out = new FileOutputStream(new File(dir, "active_profile.json"))) {
                 out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
             }
