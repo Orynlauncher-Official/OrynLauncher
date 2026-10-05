@@ -95,6 +95,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         buildUi();
         viewModel.observe(this::renderState);
+        // Render the Download Center immediately. Filter metadata is fetched in the background.
+        refreshSearch();
         loadFilters();
     }
 
@@ -498,8 +500,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         } else if (!state.projects.isEmpty()) {
             String loader = state.category.usesLoader() ? " • " + state.loader : "";
             status.setText(state.projects.size() + " projects • " + state.minecraftVersion + loader);
+        } else if (state.listStatus == OrynDownloadState.ListStatus.ERROR) {
+            status.setText((state.listMessage == null ? "Unable to load projects" : state.listMessage) + "  •  Tap to retry");
+            status.setOnClickListener(v -> refreshSearch());
         } else {
             status.setText("Loading Modrinth projects…");
+            status.setOnClickListener(null);
         }
 
         loadMoreButton.setVisibility(
