@@ -74,6 +74,10 @@ public class Instances {
 
             if(instance == null) continue;
             instance.sanitize();
+            // Persist newly generated identity/metadata for legacy instances.
+            if (instance instanceof Instance) {
+                ((Instance) instance).maybeWrite();
+            }
             instances.add(instance);
 
             if(selectionDst != null && instanceDir.equals(selectedInstanceLocation)) {
@@ -141,9 +145,10 @@ public class Instances {
      */
     private static void createFirstTimeInstance() throws IOException {
         internalCreateInstance((instance)-> {
-            instance.sharedData = true;
+            instance.sharedData = false;
             instance.versionId = "1.12.2";
-        }, null);
+            instance.minecraftVersion = "1.12.2";
+        }, "Oryn Survival");
     }
 
     /**
@@ -152,9 +157,10 @@ public class Instances {
      */
     public static Instance createDefaultInstance() throws IOException {
         return createInstance((instance)-> {
-            instance.sharedData = true;
+            instance.sharedData = false;
             instance.versionId = Instance.VERSION_LATEST_RELEASE;
-        }, null);
+            instance.minecraftVersion = Instance.VERSION_LATEST_RELEASE;
+        }, "Oryn Instance");
     }
 
     /**
@@ -166,7 +172,16 @@ public class Instances {
         FileUtils.ensureDirectory(root);
         Instance instance = new Instance();
         instance.mInstanceRoot = root;
+        // Every newly created instance owns its own game directory.
+        instance.sharedData = false;
+        instance.id = UUID.randomUUID().toString();
+        instance.createdAt = System.currentTimeMillis();
+        instance.lastPlayedAt = 0L;
         instanceSetter.setInstanceProperties(instance);
+        if (instance.minecraftVersion == null || instance.minecraftVersion.isEmpty()) {
+            instance.minecraftVersion = instance.versionId;
+        }
+        instance.metadata.sanitize();
         instance.write();
         return instance;
     }
