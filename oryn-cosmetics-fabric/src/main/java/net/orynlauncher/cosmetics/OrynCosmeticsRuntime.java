@@ -52,6 +52,9 @@ public final class OrynCosmeticsRuntime {
         synchronized (entry) {
             if (entry.state != State.UNINITIALIZED) return entry.textures != null ? entry.textures : vanilla;
             entry.state = State.LOADING;
+            OrynCosmeticsDebugCounters.recordApplySkin();
+            System.out.println("[ORYN-COSMETICS] applySkin() initialized once account=" + identity
+                    + " count=" + OrynCosmeticsDebugCounters.applySkinCount());
             System.out.println("[ORYN-COSMETICS] async cosmetic initialization started account=" + identity);
         }
 
