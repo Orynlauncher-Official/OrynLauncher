@@ -49,7 +49,10 @@ public final class OrynDownloadViewModel {
     public void setInstance(Instance instance) {
         synchronized (this) {
             if (closed) return;
-            state = state.withSelectedInstance(instance);
+            // Instance changes invalidate the visible result set immediately.
+            // The next search repopulates the list for the new instance/version/loader.
+            state = state.withFilters(state.category, state.minecraftVersion,
+                    state.loader, state.query).withSelectedInstance(instance);
         }
         publish();
     }
