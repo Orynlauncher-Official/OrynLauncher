@@ -98,6 +98,8 @@ public final class OrynCosmeticsRuntime {
             System.out.println("[ORYN-COSMETICS] PNG exists = true bytes=" + skin.length()
                     + " modified=" + modified);
 
+            final String resolvedModel = runtime.model;
+
             String url = OrynRuntimeTextureServer.startSkin(skin);
             if (url == null) {
                 fail(entry, "runtime texture server unavailable");
@@ -144,7 +146,7 @@ public final class OrynCosmeticsRuntime {
                         return;
                     }
 
-                    PlayerSkinType model = "slim".equalsIgnoreCase(runtime.model)
+                    PlayerSkinType model = "slim".equalsIgnoreCase(resolvedModel)
                             ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
                     SkinTextures result = new SkinTextures(asset, null, null, model, false);
 
