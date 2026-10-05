@@ -249,7 +249,7 @@ public class ModrinthApi implements ModpackApi{
     public LoaderInstaller installMrpackIntoExistingInstance(File modpackFile, Instance ignoredTargetInstance, String icon) throws IOException {
         Instance created = installMrpackAsNewInstance(modpackFile, icon);
         net.kdt.pojavlaunch.instances.OrynInstanceManager.select(created);
-        return created.installer;
+        // Legacy callers cannot safely consume the new instance-owned GUI installer.\n        // The new architecture owns the installer through the created instance.\n        return null;
     }
 
     public LoaderInstaller installModpack(ModDetail modDetail, int selectedVersion) throws IOException{
