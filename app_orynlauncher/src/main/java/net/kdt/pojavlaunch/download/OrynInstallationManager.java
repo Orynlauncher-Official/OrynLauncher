@@ -6,6 +6,7 @@ import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.modloaders.modpacks.api.ModrinthApi;
 import net.kdt.pojavlaunch.instances.OrynInstanceManager;
+import net.kdt.pojavlaunch.instances.OrynInstanceContentEvent;
 import net.kdt.pojavlaunch.extra.ExtraConstants;
 import net.kdt.pojavlaunch.extra.ExtraCore;
 
@@ -56,6 +57,8 @@ public final class OrynInstallationManager {
                 newInstance.write();
                 installedStore.markInstalled(newInstance.getGameDirectory(), project.id, projectType, filename);
                 OrynInstanceManager.recordInstalledContent(newInstance, projectType + ":" + project.id, filename);
+                OrynInstanceManager.publishContentInstalled(new OrynInstanceContentEvent(
+                        newInstance.id, projectType, filename, project.id, version.id));
                 Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + newInstance.getGameDirectory().getAbsolutePath()
                         + " downloaded=true installed=true fileExists=true");
                 // Make the newly installed pack the selected instance only after installation succeeds.
@@ -78,27 +81,42 @@ public final class OrynInstallationManager {
         }
 
         File destination = new File(folder, filename);
-        if (destination.exists() && !destination.delete()) {
-            throw new Exception("Could not replace existing file");
+        File temporary = new File(folder, "." + filename + ".oryn-part");
+        if (temporary.exists() && !temporary.delete()) {
+            throw new Exception("Could not clear previous temporary installation");
         }
         if (!downloadedFile.isFile() || downloadedFile.length() <= 0) {
             throw new Exception("Downloaded file is missing or empty before installation");
         }
 
-        if (!downloadedFile.renameTo(destination)) {
-            copyFile(downloadedFile, destination);
-            if (!downloadedFile.delete() && downloadedFile.exists()) {
-                throw new Exception("Installed file but could not clean download cache");
-            }
+        // Never expose a half-written file to the instance scanner.
+        copyFile(downloadedFile, temporary);
+        if (!temporary.isFile() || temporary.length() != downloadedFile.length()) {
+            if (temporary.exists()) temporary.delete();
+            throw new Exception("Temporary installation verification failed");
+        }
+        if (destination.exists() && !destination.delete()) {
+            temporary.delete();
+            throw new Exception("Could not replace existing file");
+        }
+        if (!temporary.renameTo(destination)) {
+            temporary.delete();
+            throw new Exception("Could not atomically publish installed file");
         }
         if (!destination.isFile() || destination.length() <= 0) {
             throw new Exception("Installation verification failed: destination file is missing or empty");
+        }
+        if (!downloadedFile.delete() && downloadedFile.exists()) {
+            Log.w(TAG, "Installed file but could not clean download cache: " + downloadedFile);
         }
         String lower = filename.toLowerCase(java.util.Locale.ROOT);
         boolean extensionOk = ("mod".equals(projectType) && lower.endsWith(".jar"))
                 || (("resourcepack".equals(projectType) || "shader".equals(projectType)) && lower.endsWith(".zip"));
         if (!extensionOk) throw new Exception("Installation verification failed: invalid file type");
         installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
+        OrynInstanceManager.recordInstalledContent(instance, projectType + ":" + project.id, filename);
+        OrynInstanceManager.publishContentInstalled(new OrynInstanceContentEvent(
+                instance.id, projectType, filename, project.id, version.id));
         Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + destination.getAbsolutePath()
                 + " downloaded=true installed=true fileExists=" + destination.isFile());
     }
