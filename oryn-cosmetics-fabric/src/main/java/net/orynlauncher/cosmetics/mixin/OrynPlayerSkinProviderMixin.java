@@ -112,6 +112,36 @@ public abstract class OrynPlayerSkinProviderMixin {
                 System.out.println("[ORYN-COSMETICS] Native texture pipeline = PlayerSkinTextureDownloader -> TextureManager");
 
                 /*
+                 * Hard guard against duplicate registration even if the cache
+                 * is invalidated/recreated during the same Minecraft process.
+                 * An already-registered Oryn identifier is reused directly.
+                 */
+                try {
+                    Map<Identifier, net.minecraft.client.texture.AbstractTexture> textures =
+                            ((OrynTextureManagerAccessor) (Object)
+                                    ((OrynPlayerSkinTextureDownloaderAccessor) (Object) downloader)
+                                            .oryn$getTextureManager()).oryn$getTextures();
+                    if (textures.containsKey(textureId)) {
+                        AssetInfo.TextureAsset existing = new AssetInfo.TextureAssetInfo(textureId);
+                        PlayerSkinType existingModel = "slim".equalsIgnoreCase(runtime.model)
+                                ? PlayerSkinType.SLIM : PlayerSkinType.WIDE;
+                        SkinTextures existingTextures =
+                                new SkinTextures(existing, null, null, existingModel, false);
+                        cachedStateKey = stateKey;
+                        cachedSkinTextures = existingTextures;
+                        cachedTextureIdentifier = textureId.toString();
+                        cachedSkinHash = hash;
+                        cachedSkinModified = skin.lastModified();
+                        System.out.println("[ORYN-COSMETICS] Texture already registered = true");
+                        System.out.println("[ORYN-COSMETICS] Texture registration skipped = true");
+                        System.out.println("[ORYN-COSMETICS] Cached existing SkinTextures = true");
+                        return existingTextures;
+                    }
+                } catch (Throwable guardError) {
+                    System.out.println("[ORYN-COSMETICS] Existing texture guard failed = " + guardError);
+                }
+
+                /*
                  * This is the ONLY downloader invocation for this cosmetic
                  * state. The downloader mixin records its real decode/register
                  * counters; this method never calls it again for a cache hit.
