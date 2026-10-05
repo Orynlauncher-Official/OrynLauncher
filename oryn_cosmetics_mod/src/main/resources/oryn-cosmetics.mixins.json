@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.orynlauncher.cosmetics.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["PlayerSkinProviderMixin", "LivingEntityRendererMixin", "EntityRenderManagerMixin"],
+  "injectors": {"defaultRequire": 0}
+}
