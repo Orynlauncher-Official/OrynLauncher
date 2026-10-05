@@ -116,9 +116,14 @@ public final class OrynDownloadViewModel {
                             Set<String> ids = new HashSet<>();
                             for (ModrinthProject project : merged) ids.add(project.id);
                             for (ModrinthProject project : result.projects) {
-                                if (project != null && project.id != null && ids.add(project.id)) {
-                                    merged.add(project);
+                                if (project == null || project.id == null) continue;
+                                if (!snapshot.category.projectType.equalsIgnoreCase(project.projectType)) {
+                                    Log.w(TAG, "Discarding mismatched project from state: "
+                                            + project.id + " type=" + project.projectType
+                                            + " expected=" + snapshot.category.projectType);
+                                    continue;
                                 }
+                                if (ids.add(project.id)) merged.add(project);
                             }
 
                             boolean hasMore = result.hasMore() && !merged.isEmpty();
