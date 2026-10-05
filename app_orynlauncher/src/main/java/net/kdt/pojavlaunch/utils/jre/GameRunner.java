@@ -315,7 +315,7 @@ public class GameRunner {
 
         activity.runOnUiThread(() -> Toast.makeText(activity, activity.getString(R.string.autoram_info_msg,LauncherPreferences.PREF_RAM_ALLOCATION), Toast.LENGTH_SHORT).show());
 
-        Log.i("GameRunner", "Running with "+ launchArgs.toString());
+        Log.i("GameRunner", "Running Minecraft with sanitized launch arguments (" + launchArgs.size() + " args)");
 
         String mainClass = versionInfo.mainClass;
 
