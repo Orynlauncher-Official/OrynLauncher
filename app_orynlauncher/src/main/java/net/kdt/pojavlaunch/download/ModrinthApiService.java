@@ -78,19 +78,32 @@ public final class ModrinthApiService {
 
     public List<ModrinthVersion> getProjectVersions(String projectId, String minecraftVersion,
                                                    String loader) throws Exception {
-        StringBuilder url = new StringBuilder(BASE)
-                .append("/project/").append(encodePath(projectId)).append("/version")
-                .append("?include_changelog=false");
-        if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
-            url.append("&game_versions=").append(encode("[\"" + minecraftVersion + "\"]"));
-        }
-        if (loader != null && !loader.isEmpty()) {
-            url.append("&loaders=").append(encode("[\"" + loader + "\"]"));
-        }
-        JsonArray array = getArray(url.toString());
         List<ModrinthVersion> versions = new ArrayList<>();
-        for (JsonElement element : array) {
-            if (element.isJsonObject()) versions.add(parseVersion(element.getAsJsonObject()));
+        final int pageSize = 100;
+        int offset = 0;
+
+        // With no version/loader filters this walks every Modrinth version page,
+        // so the Download Center can show the complete project history.
+        while (true) {
+            StringBuilder url = new StringBuilder(BASE)
+                    .append("/project/").append(encodePath(projectId)).append("/version")
+                    .append("?include_changelog=false")
+                    .append("&limit=").append(pageSize)
+                    .append("&offset=").append(offset);
+            if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
+                url.append("&game_versions=").append(encode("[\"" + minecraftVersion + "\"]"));
+            }
+            if (loader != null && !loader.isEmpty()) {
+                url.append("&loaders=").append(encode("[\"" + loader + "\"]"));
+            }
+
+            JsonArray array = getArray(url.toString());
+            for (JsonElement element : array) {
+                if (element.isJsonObject()) versions.add(parseVersion(element.getAsJsonObject()));
+            }
+
+            if (array.size() < pageSize) break;
+            offset += array.size();
         }
         return versions;
     }
