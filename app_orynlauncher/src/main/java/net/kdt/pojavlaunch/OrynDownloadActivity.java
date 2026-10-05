@@ -1,6 +1,7 @@
 package net.kdt.pojavlaunch;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -54,6 +55,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private Button instanceButton;
     private Button loadMoreButton;
     private Button downloadButton;
+    private Button openInstalledButton;
     private ProgressBar listProgress;
     private ProgressBar detailProgress;
     private TextView categoryTitle;
@@ -364,6 +366,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         downloadButton.setEnabled(false);
         downloadButton.setOnClickListener(v -> viewModel.installSelected());
         panel.addView(downloadButton, new LinearLayout.LayoutParams(-1, dp(46)));
+        openInstalledButton = new Button(this);
+        styleButton(openInstalledButton);
+        openInstalledButton.setText("OPEN CONTENT");
+        openInstalledButton.setVisibility(View.GONE);
+        openInstalledButton.setOnClickListener(v -> openInstalledContent());
+        panel.addView(openInstalledButton, new LinearLayout.LayoutParams(-1, dp(42)));
 
         detailVersionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
@@ -540,6 +548,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             suppressDetailSelection = false;
             downloadButton.setEnabled(false);
             downloadButton.setText("CHECKING…");
+            if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
             return;
         }
 
@@ -592,16 +601,20 @@ public class OrynDownloadActivity extends AppCompatActivity {
             detailProgress.setVisibility(View.GONE);
             downloadButton.setEnabled(false);
             downloadButton.setText("INSTALLED ✓");
+            openInstalledButton.setVisibility(View.VISIBLE);
+            openInstalledButton.setText("OPEN " + (state.category == OrynDownloadState.Category.MODPACK ? "INSTANCE" : state.category.title.toUpperCase(Locale.ROOT)));
             status.setText("Installed " + project.title);
         } else if (state.installState.status == OrynInstallState.Status.FAILED) {
             detailProgress.setVisibility(View.GONE);
             downloadButton.setEnabled(state.selectedInstance != null && state.selectedVersion != null);
             downloadButton.setText("RETRY");
+            if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
         } else {
             detailProgress.setVisibility(View.GONE);
             boolean hasInstance = state.selectedInstance != null;
             downloadButton.setEnabled(hasInstance && state.selectedVersion != null);
             downloadButton.setText(hasInstance ? "DOWNLOAD" : "SELECT INSTANCE");
+            if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
         }
 
         filterRepository.loadIcon(project.iconUrl,
@@ -614,6 +627,18 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     }
                     @Override public void onError(Exception error) { }
                 });
+    }
+
+    private void openInstalledContent() {
+        OrynDownloadState state = viewModel.getState();
+        if (state.selectedInstance == null) return;
+        Intent intent = new Intent(this, OrynInstanceContentActivity.class);
+        intent.putExtra("instance_id", state.selectedInstance.id);
+        if (state.category == OrynDownloadState.Category.MOD) intent.putExtra("content_type", "mods");
+        else if (state.category == OrynDownloadState.Category.SHADER) intent.putExtra("content_type", "shaders");
+        else if (state.category == OrynDownloadState.Category.RESOURCEPACK) intent.putExtra("content_type", "resourcepacks");
+        else intent.putExtra("content_type", "overview");
+        startActivity(intent);
     }
 
     private void clearDetails() {
@@ -630,6 +655,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailProgress.setVisibility(View.GONE);
         downloadButton.setEnabled(false);
         downloadButton.setText("DOWNLOAD");
+        if (openInstalledButton != null) openInstalledButton.setVisibility(View.GONE);
     }
 
     private void chooseInstance() {
