@@ -156,6 +156,15 @@ public final class OrynDownloadState {
                 OrynInstallState.idle());
     }
 
+    public OrynDownloadState withVersionContext(String minecraftVersion, String loader) {
+        return new OrynDownloadState(
+                category, minecraftVersion, loader, query, selectedInstance,
+                projects, nextOffset, totalHits, hasMore,
+                listStatus, listMessage,
+                selectedProject, compatibleVersions, selectedVersion,
+                detailStatus, detailMessage, installState);
+    }
+
     public OrynDownloadState withSelectedVersion(ModrinthVersion version) {
         return new OrynDownloadState(
                 category, minecraftVersion, loader, query, selectedInstance,
