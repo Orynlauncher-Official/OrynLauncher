@@ -275,7 +275,7 @@ public final class OrynCosmeticsStore {
 
     /** Compatibility overload for old callers; it is intentionally account-scoped to the current account. */
     public void saveProfile(CosmeticProfile p) throws Exception {
-        saveProfile(Account.getCurrent(), p);
+        saveProfile(Accounts.getCurrent(), p);
     }
 
     public List<CosmeticProfile> listProfiles(Account account) {
@@ -307,7 +307,7 @@ public final class OrynCosmeticsStore {
     }
 
     public List<CosmeticProfile> listProfiles() {
-        return listProfiles(Account.getCurrent());
+        return listProfiles(Accounts.getCurrent());
     }
 
     public CosmeticProfile getActiveProfile(Account account) {
@@ -334,7 +334,7 @@ public final class OrynCosmeticsStore {
     }
 
     public CosmeticProfile getActiveProfile() {
-        return getActiveProfile(Account.getCurrent());
+        return getActiveProfile(Accounts.getCurrent());
     }
 
     public void setActiveProfile(Account account, CosmeticProfile p) throws Exception {
@@ -343,7 +343,7 @@ public final class OrynCosmeticsStore {
     }
 
     public void setActiveProfile(CosmeticProfile p) throws Exception {
-        setActiveProfile(Account.getCurrent(), p);
+        setActiveProfile(Accounts.getCurrent(), p);
     }
 
     public void writeActiveForInstance(File gameDir, Account account) {
@@ -363,7 +363,7 @@ public final class OrynCosmeticsStore {
     }
 
     public void writeActiveForInstance(File gameDir) {
-        writeActiveForInstance(gameDir, Account.getCurrent());
+        writeActiveForInstance(gameDir, Accounts.getCurrent());
     }
 
     private JSONObject toJson(CosmeticProfile p) throws Exception {
