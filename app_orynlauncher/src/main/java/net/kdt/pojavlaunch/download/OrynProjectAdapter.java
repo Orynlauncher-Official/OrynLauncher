@@ -68,10 +68,12 @@ public final class OrynProjectAdapter extends RecyclerView.Adapter<OrynProjectAd
 
     @NonNull
     @Override public ProjectHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        android.util.Log.d("OrynDownload", "ProjectCard created; parent=" + parent.getWidth() + "x" + parent.getHeight());
         return new ProjectHolder(createCard(parent));
     }
 
     @Override public void onBindViewHolder(@NonNull ProjectHolder holder, int position) {
+        android.util.Log.d("OrynDownload", "ProjectCard bind position=" + position + " • total=" + items.size());
         holder.bind(items.get(position), position == selectedPosition);
     }
 
@@ -88,6 +90,7 @@ public final class OrynProjectAdapter extends RecyclerView.Adapter<OrynProjectAd
         card.setBackground(round(0xFF17191F, 14 * dp));
         card.setClickable(true);
         card.setFocusable(true);
+        card.setMinimumHeight(82 * dp);
 
         ImageView icon = new ImageView(parent.getContext());
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
