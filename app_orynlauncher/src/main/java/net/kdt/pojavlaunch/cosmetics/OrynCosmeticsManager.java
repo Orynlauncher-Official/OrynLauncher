@@ -38,6 +38,12 @@ public final class OrynCosmeticsManager {
             Log.i(TAG, "[ORYN-COSMETICS] skin model = " + profile.model);
             Log.i(TAG, "[ORYN-COSMETICS] cape enabled = " + profile.capeEnabled);
             Log.i(TAG, "[ORYN-COSMETICS] cape path = " + profile.capeFile);
+            java.io.File capeFile = profile.capeFile.isEmpty() ? null : new java.io.File(profile.capeFile);
+            Log.i(TAG, "[ORYN-COSMETICS] Cape enabled=" + profile.capeEnabled);
+            Log.i(TAG, "[ORYN-COSMETICS] Cape file=" + (capeFile == null ? "" : capeFile.getAbsolutePath()));
+            Log.i(TAG, "[ORYN-COSMETICS] Cape exists=" + (capeFile != null && capeFile.isFile()));
+            Log.i(TAG, "[ORYN-COSMETICS] Cape size=" + (capeFile != null && capeFile.isFile() ? capeFile.length() : 0));
+            Log.i(TAG, "[ORYN-COSMETICS] Cape texture=" + (capeFile == null ? "null" : "pending-runtime-registration"));
             Log.i(TAG, "[ORYN-COSMETICS] applySkin() called = delegated to runtime adapter");
             Log.i(TAG, "[ORYN-COSMETICS] applyCape() called = not invoked (skin-first debug phase)");
 
