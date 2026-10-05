@@ -77,7 +77,7 @@ public final class OrynCosmeticsManager {
             java.io.File mods = new java.io.File(gameDir, "mods");
             if (!mods.exists() && !mods.mkdirs()) return;
             java.io.File target = new java.io.File(mods, "orynlauncher-cosmetics-1.0.0.jar");
-            try (java.io.InputStream in = context.getAssets().open("components/oryn-cosmetics/oryn-cosmetics-1.0.0.jar");
+            try (java.io.InputStream in = context.getAssets().open("orynlauncher/oryn_cosmetics_fabric.jar");
                  java.io.FileOutputStream out = new java.io.FileOutputStream(target)) {
                 byte[] buffer = new byte[8192];
                 int n;
