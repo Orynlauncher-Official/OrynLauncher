@@ -204,7 +204,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 project -> viewModel.selectProject(project));
         projectList.setLayoutManager(new GridLayoutManager(this, 1));
         projectList.setAdapter(projectAdapter);
-        center.addView(projectList, new LinearLayout.LayoutParams(0, 0, 1));
+        // center is vertical: width must fill the available column; weight belongs to height.
+        // Using width=0 here makes RecyclerView measure at zero width, so its cards are created
+        // but have no visible viewport. Keep the list as a full-width, weighted-height child.
+        center.addView(projectList, new LinearLayout.LayoutParams(-1, 0, 1));
 
         loadMoreButton = new Button(this);
         styleButton(loadMoreButton);
@@ -481,6 +484,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         projectAdapter.setPlaceholder(placeholder());
         projectAdapter.submitList(state.projects);
         projectAdapter.setSelectedId(state.selectedProject == null ? null : state.selectedProject.id);
+        projectList.post(() -> android.util.Log.d("OrynDownload",
+                "UI metrics: recycler=" + projectList.getWidth() + "x" + projectList.getHeight()
+                        + " • adapter=" + projectAdapter.getItemCount()
+                        + " • visibleChildren=" + projectList.getChildCount()
+                        + " • visibility=" + projectList.getVisibility()
+                        + " • alpha=" + projectList.getAlpha()));
 
         if (state.listStatus == OrynDownloadState.ListStatus.ERROR && state.projects.isEmpty()) {
             status.setText(state.listMessage == null ? "Could not load projects" : state.listMessage);
