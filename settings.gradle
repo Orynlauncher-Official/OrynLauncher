@@ -17,7 +17,6 @@ dependencyResolutionManagement {
 
 rootProject.name='OrynLauncher'
 include ':app_orynlauncher'
-include ':oryn_cosmetics_mod'
 
 include ':forge_installer'
 include ':glfw:jni_bindings'
