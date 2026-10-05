@@ -34,6 +34,7 @@ import java.util.concurrent.Executors;
 import git.artdeell.mojo.R;
 import net.kdt.pojavlaunch.download.OrynContentRepository;
 import net.kdt.pojavlaunch.download.OrynDownloadState;
+import net.kdt.pojavlaunch.download.OrynInstallState;
 import net.kdt.pojavlaunch.download.OrynDownloadViewModel;
 import net.kdt.pojavlaunch.download.OrynProjectAdapter;
 import net.kdt.pojavlaunch.download.ModrinthProject;
@@ -72,6 +73,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private List<String> availableVersions = new ArrayList<>();
     private List<String> availableLoaders = new ArrayList<>();
     private boolean suppressFilters;
+    private boolean suppressDetailSelection;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -198,7 +200,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         projectList.setPadding(0, dp(3), dp(4), dp(12));
         projectList.setItemAnimator(new androidx.recyclerview.widget.DefaultItemAnimator());
         projectAdapter = new OrynProjectAdapter(
-                new OrynContentRepository(),
+                filterRepository,
                 project -> viewModel.selectProject(project));
         projectList.setAdapter(projectAdapter);
         center.addView(projectList, new LinearLayout.LayoutParams(0, 0, 1));
@@ -356,7 +358,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailVersionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
                 OrynDownloadState state = viewModel.getState();
-                if (position >= 0 && position < state.compatibleVersions.size()) {
+                if (!suppressDetailSelection && position >= 0 && position < state.compatibleVersions.size()) {
                     viewModel.selectVersion(state.compatibleVersions.get(position));
                 }
             }
@@ -507,9 +509,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
         if (state.detailStatus == OrynDownloadState.DetailStatus.LOADING) {
             detailProgress.setVisibility(View.VISIBLE);
             detailProgress.setIndeterminate(true);
+            suppressDetailSelection = true;
             detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                     this, android.R.layout.simple_spinner_dropdown_item,
                     Collections.singletonList("Loading compatible versions…")));
+            suppressDetailSelection = false;
             downloadButton.setEnabled(false);
             downloadButton.setText("CHECKING…");
             return;
@@ -526,14 +530,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
         }
 
         if (labels.isEmpty()) {
+            suppressDetailSelection = true;
             detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                     this, android.R.layout.simple_spinner_dropdown_item,
                     Collections.singletonList("No compatible version/file")));
+            suppressDetailSelection = false;
             downloadButton.setEnabled(false);
             downloadButton.setText("DOWNLOAD");
             return;
         }
 
+        suppressDetailSelection = true;
         detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, labels));
         int selected = state.selectedVersion == null
@@ -542,27 +549,27 @@ public class OrynDownloadActivity extends AppCompatActivity {
         if (detailVersionSpinner.getSelectedItemPosition() != selected) {
             detailVersionSpinner.setSelection(selected);
         }
+        suppressDetailSelection = false;
 
-        if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.DOWNLOADING) {
+        if (state.installState.status == OrynInstallState.Status.DOWNLOADING) {
             detailProgress.setIndeterminate(false);
             detailProgress.setProgress(state.installState.progress);
             detailProgress.setVisibility(View.VISIBLE);
             downloadButton.setEnabled(false);
             downloadButton.setText("Downloading " + state.installState.progress + "%");
-        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.INSTALLING
-                || state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.CHECKING) {
+        } else if (state.installState.status == OrynInstallState.Status.INSTALLING
+                || state.installState.status == OrynInstallState.Status.CHECKING) {
             detailProgress.setIndeterminate(true);
             detailProgress.setVisibility(View.VISIBLE);
             downloadButton.setEnabled(false);
-            downloadButton.setText(state.installState.status
-                    == net.kdt.pojavlaunch.download.DownloadState.Status.CHECKING
+            downloadButton.setText(state.installState.status == OrynInstallState.Status.CHECKING
                     ? "CHECKING…" : "INSTALLING…");
-        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.INSTALLED) {
+        } else if (state.installState.status == OrynInstallState.Status.INSTALLED) {
             detailProgress.setVisibility(View.GONE);
             downloadButton.setEnabled(false);
             downloadButton.setText("INSTALLED ✓");
             status.setText("Installed " + project.title);
-        } else if (state.installState.status == net.kdt.pojavlaunch.download.DownloadState.Status.FAILED) {
+        } else if (state.installState.status == OrynInstallState.Status.FAILED) {
             detailProgress.setVisibility(View.GONE);
             downloadButton.setEnabled(state.selectedInstance != null && state.selectedVersion != null);
             downloadButton.setText("RETRY");
@@ -573,7 +580,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             downloadButton.setText(hasInstance ? "DOWNLOAD" : "SELECT INSTANCE");
         }
 
-        new OrynContentRepository().loadIcon(project.iconUrl,
+        filterRepository.loadIcon(project.iconUrl,
                 new OrynContentRepository.Listener<Bitmap>() {
                     @Override public void onSuccess(Bitmap bitmap) {
                         if (state.selectedProject == null || !state.selectedProject.id.equals(project.id)) return;
@@ -591,9 +598,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailAuthor.setText("");
         detailInfo.setText("");
         detailDescription.setText("Select a project to inspect its Modrinth details and compatible versions.");
+        suppressDetailSelection = true;
         detailVersionSpinner.setAdapter(new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item,
                 Collections.singletonList("Select a project")));
+        suppressDetailSelection = false;
         detailProgress.setVisibility(View.GONE);
         downloadButton.setEnabled(false);
         downloadButton.setText("DOWNLOAD");
