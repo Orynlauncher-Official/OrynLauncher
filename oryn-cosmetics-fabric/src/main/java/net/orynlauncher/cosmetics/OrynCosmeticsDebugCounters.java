@@ -7,11 +7,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * interpret helper methods as target methods.
  */
 public final class OrynCosmeticsDebugCounters {
+    private static final AtomicInteger APPLY_SKIN = new AtomicInteger();
     private static final AtomicInteger DOWNLOADER_REQUESTS = new AtomicInteger();
     private static final AtomicInteger PNG_DECODES = new AtomicInteger();
     private static final AtomicInteger TEXTURE_REGISTRATIONS = new AtomicInteger();
 
     private OrynCosmeticsDebugCounters() {}
+
+    public static void recordApplySkin() { APPLY_SKIN.incrementAndGet(); }
+
+    public static int applySkinCount() { return APPLY_SKIN.get(); }
 
     public static void recordDownloaderRequest() {
         DOWNLOADER_REQUESTS.incrementAndGet();
