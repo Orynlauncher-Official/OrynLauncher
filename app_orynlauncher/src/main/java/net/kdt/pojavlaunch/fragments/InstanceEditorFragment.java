@@ -76,6 +76,24 @@ public class InstanceEditorFragment extends Fragment implements CropperUtils.Cro
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         bindViews(view);
 
+        // Keep instance settings intact, but expose the frequently used content
+        // manager immediately instead of forcing users through the long settings page.
+        if (view instanceof android.widget.LinearLayout) {
+            Button contentButton = new Button(requireContext());
+            contentButton.setText("CONTENT");
+            contentButton.setAllCaps(false);
+            contentButton.setOnClickListener(v -> {
+                if (mInstance == null) return;
+                android.content.Intent intent = new android.content.Intent(requireContext(),
+                        net.kdt.pojavlaunch.OrynInstanceContentActivity.class);
+                intent.putExtra("instance_id", mInstance.id);
+                intent.putExtra("content_type", "overview");
+                startActivity(intent);
+            });
+            ((android.widget.LinearLayout) view).addView(contentButton, 0,
+                    new android.widget.LinearLayout.LayoutParams(-1, (int) (46 * getResources().getDisplayMetrics().density)));
+        }
+
         RendererCache list = RendererCache.getCompatibleRenderers(view.getContext());
         mRenderNames = list.rendererIds;
         List<String> renderList = new ArrayList<>(list.rendererDisplayNames.length + 1);
