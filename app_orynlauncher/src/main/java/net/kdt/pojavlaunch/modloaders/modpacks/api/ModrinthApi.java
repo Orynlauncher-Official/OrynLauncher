@@ -151,6 +151,78 @@ public class ModrinthApi implements ModpackApi{
         return new ModDetail(item, names, mcNames, urls, hashes);
     }
 
+    /**
+     * Install an already-downloaded .mrpack as a NEW launcher instance.
+     * The currently selected instance is never used as the installation destination.
+     */
+    public Instance installMrpackAsNewInstance(File modpackFile, String icon) throws IOException {
+        if (modpackFile == null || !modpackFile.isFile() || modpackFile.length() <= 0) {
+            throw new IOException("Modpack file is missing or empty");
+        }
+
+        ModrinthIndex index;
+        try (ZipFile zip = new ZipFile(modpackFile)) {
+            java.io.InputStream stream = ZipUtils.getEntryStream(zip, "modrinth.index.json");
+            if (stream == null) throw new IOException("Invalid modpack: modrinth.index.json is missing");
+            index = Tools.GLOBAL_GSON.fromJson(Tools.read(stream), ModrinthIndex.class);
+        }
+
+        if (index == null || index.name == null || index.name.trim().isEmpty()) {
+            throw new IOException("Invalid modpack: pack name is missing");
+        }
+        if (index.dependencies == null) {
+            throw new IOException("Invalid modpack: dependencies are missing");
+        }
+        String minecraftVersion = index.dependencies.get("minecraft");
+        if (minecraftVersion == null || minecraftVersion.trim().isEmpty()) {
+            throw new IOException("Invalid modpack: Minecraft version is missing");
+        }
+
+        final String packName = index.name.trim();
+        final String packVersion = index.versionId == null ? "" : index.versionId.trim();
+        final File[] createdRoot = new File[1];
+
+        Instance instance = net.kdt.pojavlaunch.instances.Instances.createInstance(i -> {
+            i.name = packName;
+            i.versionId = minecraftVersion;
+            i.sharedData = false;
+        }, packName);
+        createdRoot[0] = instance.getGameDirectory();
+
+        try {
+            LoaderInstaller loaderInstaller = installMrpack(modpackFile, instance.getGameDirectory());
+            if (loaderInstaller == null) {
+                throw new IOException("Unknown modpack mod loader information");
+            }
+            if (loaderInstaller.requiresGuiInstallation()) {
+                InstanceInstaller instanceInstaller = loaderInstaller.createInstaller();
+                if (instanceInstaller == null) throw new IOException("Failed to prepare data for instance installation");
+                instance.installer = instanceInstaller;
+            } else {
+                String versionId = loaderInstaller.installHeadlessly();
+                if (versionId == null) throw new IOException("Unknown mod loader version");
+                instance.versionId = versionId;
+            }
+            instance.write();
+            ModIconCache.writeInstanceImage(instance, icon);
+            if (loaderInstaller.requiresGuiInstallation()) instance.installer.start();
+
+            android.util.Log.d("OrynDownload", "[ORYN-MODPACK] name=" + packName
+                    + " packVersion=" + packVersion
+                    + " minecraft=" + minecraftVersion
+                    + " loader=" + index.dependencies
+                    + " newInstance=" + instance.getGameDirectory().getAbsolutePath());
+            return instance;
+        } catch (Exception error) {
+            try { net.kdt.pojavlaunch.instances.Instances.removeInstance(instance); } catch (Exception ignored) { }
+            if (error instanceof IOException) throw (IOException) error;
+            throw new IOException("Modpack installation failed", error);
+        } finally {
+            if (modpackFile.exists()) modpackFile.delete();
+            ProgressLayout.clearProgress(ProgressLayout.INSTALL_MODPACK);
+        }
+    }
+
     /** Install an already-downloaded .mrpack into an existing launcher instance. */
     public LoaderInstaller installMrpackIntoExistingInstance(File modpackFile, Instance instance, String icon) throws IOException {
         if (instance == null) throw new IOException("No target instance selected");
