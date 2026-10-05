@@ -151,9 +151,9 @@ public final class ModrinthRemoteRepository {
                     throw new Exception("Modrinth project type mismatch: expected "
                             + projectType + " but received " + fullProject.projectType);
                 }
-                List<ModrinthVersion> versions = compatibleVersions(
-                        api.getProjectVersions(selected.id, minecraftVersion, loader), projectType, minecraftVersion, loader);
-                Log.d(TAG, "Project detail: " + selected.id + " • compatible versions=" + versions.size());
+                List<ModrinthVersion> versions = availableVersions(
+                        api.getProjectVersions(selected.id, null, null), projectType);
+                Log.d(TAG, "Project detail: " + selected.id + " • available versions=" + versions.size());
                 synchronized (this) {
                     detailCache.put(key, new DetailEntry(System.currentTimeMillis(), fullProject, versions));
                 }
@@ -222,6 +222,38 @@ public final class ModrinthRemoteRepository {
                 callback.onError();
             }
         });
+    }
+
+    /**
+     * Returns every downloadable version for the selected Modrinth project.
+     * The UI shows the full project history; installation still validates the
+     * selected version against the active instance below.
+     */
+    public List<ModrinthVersion> availableVersions(List<ModrinthVersion> versions,
+                                                    String projectType) {
+        List<ModrinthVersion> result = new ArrayList<>();
+        if (versions == null) return result;
+        for (ModrinthVersion version : versions) {
+            if (selectFile(version, projectType) != null) result.add(version);
+        }
+        for (int i = 1; i < result.size(); i++) {
+            if (result.get(i).featured && !result.get(0).featured) {
+                ModrinthVersion featured = result.remove(i);
+                result.add(0, featured);
+                break;
+            }
+        }
+        return result;
+    }
+
+    public boolean isCompatible(ModrinthVersion version, String projectType,
+                                String minecraftVersion, String loader) {
+        if (version == null || minecraftVersion == null || minecraftVersion.isEmpty()) return false;
+        if (!containsIgnoreCase(version.gameVersions, minecraftVersion)) return false;
+        if (("mod".equals(projectType) || "modpack".equals(projectType))
+                && loader != null && !loader.isEmpty()
+                && !containsIgnoreCase(version.loaders, loader)) return false;
+        return selectFile(version, projectType) != null;
     }
 
     public List<ModrinthVersion> compatibleVersions(List<ModrinthVersion> versions,
