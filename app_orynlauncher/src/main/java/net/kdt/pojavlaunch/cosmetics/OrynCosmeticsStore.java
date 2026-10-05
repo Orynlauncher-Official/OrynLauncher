@@ -38,7 +38,8 @@ public final class OrynCosmeticsStore {
 
     public static final class CosmeticProfile {
         public String name = DEFAULT_PROFILE;
-        public String accountUuid = "";\n        public String accountName = "";
+        public String accountUuid = "";
+        public String accountName = "";
         public String skin = "";
         public String skinUrl = "";
         public String model = "classic";
@@ -268,7 +269,8 @@ public final class OrynCosmeticsStore {
 
     public void saveProfile(Account account, CosmeticProfile p) throws Exception {
         if (p == null) throw new IllegalArgumentException("Cosmetic profile is null");
-        p.accountUuid = account == null || account.profileId == null ? "" : account.profileId;\n        p.accountName = account == null || account.username == null ? "" : account.username;
+        p.accountUuid = account == null || account.profileId == null ? "" : account.profileId;
+        p.accountName = account == null || account.username == null ? "" : account.username;
         File dir = accountDirectory(account);
         writeJson(new File(dir, safeName(p.name, DEFAULT_PROFILE) + ".json"), toJson(p));
     }
@@ -369,7 +371,8 @@ public final class OrynCosmeticsStore {
     private JSONObject toJson(CosmeticProfile p) throws Exception {
         JSONObject o = new JSONObject();
         o.put("name", p.name);
-        o.put("accountUuid", p.accountUuid == null ? "" : p.accountUuid);\n        o.put("accountName", p.accountName == null ? "" : p.accountName);
+        o.put("accountUuid", p.accountUuid == null ? "" : p.accountUuid);
+        o.put("accountName", p.accountName == null ? "" : p.accountName);
         o.put("skin", p.skin == null ? "" : p.skin);
         o.put("skinUrl", p.skinUrl == null ? "" : p.skinUrl);
         o.put("model", "slim".equalsIgnoreCase(p.model) ? "slim" : "classic");
@@ -383,7 +386,8 @@ public final class OrynCosmeticsStore {
     private CosmeticProfile fromJson(JSONObject o) {
         CosmeticProfile p = new CosmeticProfile();
         p.name = o.optString("name", DEFAULT_PROFILE);
-        p.accountUuid = o.optString("accountUuid", "");\n        p.accountName = o.optString("accountName", "");
+        p.accountUuid = o.optString("accountUuid", "");
+        p.accountName = o.optString("accountName", "");
         p.skin = o.optString("skin", "");
         p.skinUrl = o.optString("skinUrl", "");
         p.model = "slim".equalsIgnoreCase(o.optString("model", "classic"))
