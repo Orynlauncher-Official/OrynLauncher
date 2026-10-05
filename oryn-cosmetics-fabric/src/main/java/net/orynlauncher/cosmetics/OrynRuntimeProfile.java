@@ -114,7 +114,8 @@ public final class OrynRuntimeProfile {
             throw new IllegalArgumentException("Invalid image dimensions");
         }
         NativeImageBackedTexture texture = new NativeImageBackedTexture(() -> id.toString(), image);
-        client.getTextureManager().registerTexture(id, texture);\n        texture.upload();
+        client.getTextureManager().registerTexture(id, texture);
+        texture.upload();
         LOGGER.info("[ORYN-COSMETICS] TextureManager registered {} from {} ({}x{})", id, path, image.getWidth(), image.getHeight());
         return new TextureAssetInfo(id);
     }
