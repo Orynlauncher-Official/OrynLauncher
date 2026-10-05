@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "OrynPlayerSkinProviderMixin",
-    "OrynPlayerRendererMixin"
+    "OrynPlayerRendererMixin",
+    "OrynEntityRenderManagerMixin"
   ],
   "injectors": {
     "defaultRequire": 1
