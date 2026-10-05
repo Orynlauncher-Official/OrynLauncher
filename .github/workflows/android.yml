@@ -61,6 +61,18 @@ jobs:
         with:
           gradle-version: "8.14.3"
 
+      - name: Set up JDK 21 for Minecraft 1.21.11 cosmetics bridge
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build OrynLauncher 1.21.11 cosmetics bridge
+        run: |
+          gradle -p oryn-cosmetics-fabric build --no-daemon
+          mkdir -p app_orynlauncher/src/main/assets/orynlauncher
+          cp oryn-cosmetics-fabric/build/libs/orynlauncher-cosmetics-fabric-1.0.0.jar app_orynlauncher/src/main/assets/orynlauncher/oryn_cosmetics_fabric.jar
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
