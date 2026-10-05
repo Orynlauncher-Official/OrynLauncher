@@ -58,6 +58,10 @@ import net.kdt.pojavlaunch.instances.Instances;
 public class OrynDownloadActivity extends AppCompatActivity {
     private enum Screen { HOME, PROJECTS, DETAILS, VERSIONS }
 
+    private interface VersionClickListener {
+        void onClick(ModrinthVersion version);
+    }
+
     private OrynDownloadViewModel viewModel;
     private OrynContentRepository repository;
     private OrynProjectAdapter projectAdapter;
@@ -789,11 +793,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private final class VersionAdapter extends RecyclerView.Adapter<VersionAdapter.Holder> {
         private final List<ModrinthVersion> items;
         private ModrinthVersion selected;
-        private final Listener listener;
+        private final VersionClickListener listener;
 
-        interface Listener { void onClick(ModrinthVersion version); }
-
-        VersionAdapter(List<ModrinthVersion> items, ModrinthVersion selected, Listener listener) {
+        VersionAdapter(List<ModrinthVersion> items, ModrinthVersion selected, VersionClickListener listener) {
             this.items = items;
             this.selected = selected;
             this.listener = listener;
@@ -815,8 +817,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     + "Minecraft: " + join(v.gameVersions, 8)
                     + (v.loaders == null || v.loaders.isEmpty() ? "" : " • " + join(v.loaders, 5))
                     + "\nFiles: " + (v.files == null ? 0 : v.files.size()));
+            String selectedMinecraft = selectedItem(versionMinecraftSpinner, "");
+            String selectedLoader = category.usesLoader()
+                    ? selectedItem(versionLoaderSpinner, "") : null;
             boolean compatible = viewModel.isVersionCompatible(v,
-                    mc, category.usesLoader() ? loader : null);
+                    selectedMinecraft, category.usesLoader() ? selectedLoader : null);
             h.action.setText(compatible ? "SELECT" : "NOT COMPATIBLE");
             h.action.setEnabled(compatible);
             h.card.setBackground(round(v == selected ? 0xFF262C37 : 0xFF171A20, dp(12)));
