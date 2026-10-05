@@ -430,6 +430,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             searchOffset = 0;
             lastSearchKey = makeSearchCacheKey(requestedCategory, requestedVersion, requestedLoader, requestedQuery);
             results.removeAllViews();
+            if (loadMoreButton != null) loadMoreButton.setVisibility(View.GONE);
         }
 
         progress.setVisibility(View.VISIBLE);
