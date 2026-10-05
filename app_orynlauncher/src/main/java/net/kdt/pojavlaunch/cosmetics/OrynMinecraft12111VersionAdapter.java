@@ -44,7 +44,7 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
     }
 
     @Override public void removeCustomCape(Context context, Account account, File gameDir, String minecraftVersion) {
-        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 cape remains disabled during skin-first debug.");
+        Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 custom cape disabled; vanilla cape provider remains authoritative.");
     }
 
     @Override public void refreshPlayerTextures(Context context, Account account, File gameDir, String minecraftVersion) {
