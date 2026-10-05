@@ -494,6 +494,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
             chosen = v;
             break;
         }
+        viewModel.setVersionContext(mc, category.usesLoader() ? loader : null);
         if (chosen != null) viewModel.selectVersion(chosen);
         renderVersionScreen(viewModel.getState());
     }
@@ -524,7 +525,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         boolean valid = state.selectedVersion != null
                 && contains(state.selectedVersion.gameVersions, mc)
                 && (!category.usesLoader() || contains(state.selectedVersion.loaders, loader))
-                && viewModel.isVersionCompatible(state.selectedVersion)
+                && viewModel.isVersionCompatible(state.selectedVersion, mc,
+                        category.usesLoader() ? loader : null)
                 && state.selectedInstance != null;
         versionInstallButton.setEnabled(valid && state.installState.status != OrynInstallState.Status.DOWNLOADING
                 && state.installState.status != OrynInstallState.Status.INSTALLING
@@ -813,7 +815,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     + "Minecraft: " + join(v.gameVersions, 8)
                     + (v.loaders == null || v.loaders.isEmpty() ? "" : " • " + join(v.loaders, 5))
                     + "\nFiles: " + (v.files == null ? 0 : v.files.size()));
-            boolean compatible = viewModel.isVersionCompatible(v);
+            boolean compatible = viewModel.isVersionCompatible(v,
+                    mc, category.usesLoader() ? loader : null);
             h.action.setText(compatible ? "SELECT" : "NOT COMPATIBLE");
             h.action.setEnabled(compatible);
             h.card.setBackground(round(v == selected ? 0xFF262C37 : 0xFF171A20, dp(12)));
