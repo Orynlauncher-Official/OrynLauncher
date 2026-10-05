@@ -105,7 +105,7 @@ public final class ModrinthRemoteRepository {
             try {
                 ModrinthProject fullProject = api.getProject(selected.id);
                 List<ModrinthVersion> versions = compatibleVersions(
-                        api.getProjectVersions(selected.id), projectType, minecraftVersion, loader);
+                        api.getProjectVersions(selected.id, minecraftVersion, loader), projectType, minecraftVersion, loader);
                 Log.d(TAG, "Project detail: " + selected.id + " • compatible versions=" + versions.size());
                 callback.onSuccess(fullProject, versions);
             } catch (Exception e) {
