@@ -75,6 +75,13 @@ public final class OrynDownloadViewModel {
     }
 
     private void search(final boolean append) {
+        if (append) {
+            synchronized (this) {
+                if (closed) return;
+                state = state.withListLoading("Loading more projects…");
+            }
+            publish();
+        }
         final int generation;
         final OrynOrynInstallState snapshot;
         synchronized (this) {
@@ -174,6 +181,8 @@ public final class OrynDownloadViewModel {
     public void selectVersion(ModrinthVersion version) {
         synchronized (this) {
             if (closed) return;
+            if (state.selectedVersion != null && version != null
+                    && state.selectedVersion.id.equals(version.id)) return;
             state = state.withSelectedVersion(version);
         }
         publish();
