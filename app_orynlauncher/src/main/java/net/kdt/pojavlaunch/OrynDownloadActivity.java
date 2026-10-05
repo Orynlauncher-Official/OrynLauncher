@@ -494,8 +494,10 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         + " • alpha=" + projectList.getAlpha()));
 
         if (state.listStatus == OrynDownloadState.ListStatus.ERROR && state.projects.isEmpty()) {
-            status.setText(state.listMessage == null ? "Could not load projects" : state.listMessage);
+            status.setText((state.listMessage == null ? "Unable to load projects" : state.listMessage) + "  •  Tap to retry");
+            status.setOnClickListener(v -> refreshSearch());
         } else if (state.projects.isEmpty() && state.listStatus == OrynDownloadState.ListStatus.READY) {
+            status.setOnClickListener(null);
             status.setText("No projects found");
         } else if (!state.projects.isEmpty()) {
             String loader = state.category.usesLoader() ? " • " + state.loader : "";
