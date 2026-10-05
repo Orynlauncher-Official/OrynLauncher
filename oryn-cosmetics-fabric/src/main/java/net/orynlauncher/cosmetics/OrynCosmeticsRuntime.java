@@ -78,16 +78,17 @@ public final class OrynCosmeticsRuntime {
                 return;
             }
 
-            final boolean useSkin = runtime.skinEnabled;
-            final boolean useCape = runtime.capeEnabled;
+            final OrynRuntimeProfile selectedRuntime = runtime;
+            final boolean useSkin = selectedRuntime.skinEnabled;
+            final boolean useCape = selectedRuntime.capeEnabled;
 
             if (!useSkin && !useCape) {
                 fail(entry, "skin and cape disabled");
                 return;
             }
 
-            File skin = useSkin ? runtime.resolveSkinFile() : null;
-            File cape = useCape ? runtime.resolveCapeFile() : null;
+            File skin = useSkin ? selectedRuntime.resolveSkinFile() : null;
+            File cape = useCape ? selectedRuntime.resolveCapeFile() : null;
 
             if (useSkin && (skin == null || !skin.isFile() || !skin.canRead())) {
                 fail(entry, "custom skin PNG missing/unreadable");
@@ -104,7 +105,7 @@ public final class OrynCosmeticsRuntime {
             String cacheKey = identity
                     + "|skin=" + (skin == null ? "" : skin.getAbsolutePath() + ":" + skinModified)
                     + "|cape=" + (cape == null ? "" : cape.getAbsolutePath() + ":" + capeModified)
-                    + "|model=" + runtime.model
+                    + "|model=" + selectedRuntime.model
                     + "|skinEnabled=" + useSkin
                     + "|capeEnabled=" + useCape;
             entry.cacheKey = cacheKey;
@@ -185,7 +186,7 @@ public final class OrynCosmeticsRuntime {
                     entry.state = State.READY;
                 }
 
-                printCapeDiagnostic(profile, runtime, cape, result, identity);
+                printCapeDiagnostic(profile, selectedRuntime, cape, result, identity);
             });
         } catch (Throwable t) {
             fail(entry, "async cosmetic initialization failed: " + t);
@@ -210,13 +211,6 @@ public final class OrynCosmeticsRuntime {
                 cacheDir,
                 type + "-" + safeId(identity) + "-" + modified + ".png"
         );
-
-        System.out.println("[ORYN-CAPE-DEBUG] " + type
-                + " selected=" + source.getAbsolutePath()
-                + " file=" + source.getAbsolutePath()
-                + " exists=" + source.isFile()
-                + " fileSize=" + source.length()
-                + " textureIdentifier=" + id);
 
         CompletableFuture<AssetInfo.TextureAsset> future =
                 downloader.downloadAndRegisterTexture(
