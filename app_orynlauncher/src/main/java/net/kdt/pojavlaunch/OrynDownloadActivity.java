@@ -129,16 +129,25 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void buildUi() {
+        final boolean compactPhone = getResources().getConfiguration().smallestScreenWidthDp < 600;
         LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.HORIZONTAL);
+        root.setOrientation(compactPhone ? LinearLayout.VERTICAL : LinearLayout.HORIZONTAL);
         root.setBackgroundColor(0xFF0A0B0E);
 
-        root.addView(buildSidebar(), new LinearLayout.LayoutParams(dp(178), -1));
+        if (compactPhone) {
+            root.addView(buildCompactCategoryNav(),
+                    new LinearLayout.LayoutParams(-1, dp(44)));
+        } else {
+            root.addView(buildSidebar(), new LinearLayout.LayoutParams(dp(150), -1));
+        }
 
         LinearLayout center = new LinearLayout(this);
         center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(dp(16), dp(14), dp(10), dp(10));
-        root.addView(center, new LinearLayout.LayoutParams(0, -1, 1));
+        center.setPadding(dp(compactPhone ? 8 : 12), dp(compactPhone ? 6 : 10),
+                dp(compactPhone ? 8 : 8), dp(compactPhone ? 6 : 8));
+        root.addView(center, new LinearLayout.LayoutParams(
+                compactPhone ? -1 : 0, 0,
+                compactPhone ? 1 : 1));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -150,7 +159,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         instanceButton = new Button(this);
         styleButton(instanceButton);
         instanceButton.setOnClickListener(v -> chooseInstance());
-        header.addView(instanceButton, new LinearLayout.LayoutParams(dp(205), dp(40)));
+        header.addView(instanceButton, new LinearLayout.LayoutParams(
+                compactPhone ? dp(155) : dp(190), dp(40)));
         center.addView(header);
 
         LinearLayout filters = new LinearLayout(this);
@@ -158,10 +168,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
         filters.setPadding(0, dp(3), 0, dp(5));
 
         versionSpinner = new Spinner(this);
-        filters.addView(versionSpinner, new LinearLayout.LayoutParams(dp(140), dp(38)));
+        filters.addView(versionSpinner, new LinearLayout.LayoutParams(
+                compactPhone ? 0 : dp(140), dp(38), compactPhone ? 1 : 0));
 
         loaderSpinner = new Spinner(this);
-        LinearLayout.LayoutParams loaderLp = new LinearLayout.LayoutParams(dp(115), dp(38));
+        LinearLayout.LayoutParams loaderLp = new LinearLayout.LayoutParams(
+                compactPhone ? 0 : dp(115), dp(38), compactPhone ? 1 : 0);
         loaderLp.leftMargin = dp(7);
         filters.addView(loaderSpinner, loaderLp);
 
@@ -220,7 +232,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         loadMoreButton.setOnClickListener(v -> viewModel.loadMore());
         center.addView(loadMoreButton, new LinearLayout.LayoutParams(-1, dp(40)));
 
-        root.addView(buildDetails(), new LinearLayout.LayoutParams(dp(320), -1));
+        root.addView(buildDetails(), compactPhone
+                ? new LinearLayout.LayoutParams(-1, dp(205))
+                : new LinearLayout.LayoutParams(dp(320), -1));
 
         searchButton.setOnClickListener(v -> refreshSearch());
         search.setOnEditorActionListener((v, actionId, event) -> {
@@ -250,11 +264,46 @@ public class OrynDownloadActivity extends AppCompatActivity {
             if (right - left != oldRight - oldLeft) updateGridColumns();
         });
 
-        setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        // Do not force landscape. The Download Center is responsive and keeps one
+        // primary RecyclerView scroll surface on small phones.
         setContentView(root);
         updateInstanceUi();
         updateFilterVisibility();
         projectList.post(this::updateGridColumns);
+    }
+
+    private LinearLayout buildCompactCategoryNav() {
+        LinearLayout nav = new LinearLayout(this);
+        nav.setOrientation(LinearLayout.HORIZONTAL);
+        nav.setGravity(Gravity.CENTER_VERTICAL);
+        nav.setPadding(dp(5), dp(4), dp(5), dp(4));
+        nav.setBackgroundColor(0xFF111318);
+
+        addCompactCategory(nav, OrynDownloadState.Category.MOD);
+        addCompactCategory(nav, OrynDownloadState.Category.RESOURCEPACK);
+        addCompactCategory(nav, OrynDownloadState.Category.SHADER);
+        addCompactCategory(nav, OrynDownloadState.Category.MODPACK);
+        return nav;
+    }
+
+    private void addCompactCategory(LinearLayout nav, OrynDownloadState.Category value) {
+        Button button = new Button(this);
+        styleButton(button);
+        button.setTextSize(10);
+        button.setGravity(Gravity.CENTER);
+        button.setPadding(0, 0, 0, 0);
+        button.setText(value == OrynDownloadState.Category.RESOURCEPACK ? "Packs" :
+                value == OrynDownloadState.Category.MODPACK ? "Modpacks" : value.title);
+        button.setOnClickListener(v -> {
+            category = value;
+            categoryTitle.setText(value.title);
+            updateFilterVisibility();
+            refreshSearch();
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(36), 1);
+        lp.leftMargin = dp(2);
+        lp.rightMargin = dp(2);
+        nav.addView(button, lp);
     }
 
     private LinearLayout buildSidebar() {
@@ -682,6 +731,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                                 selectedInstance = result.get(which);
                                 viewModel.setInstance(selectedInstance);
                                 updateInstanceUi();
+                                syncFiltersToInstance();
                                 refreshSearch();
                             })
                             .setNegativeButton("Cancel", null)
@@ -692,6 +742,38 @@ public class OrynDownloadActivity extends AppCompatActivity {
                         this, "Could not load Minecraft instances", Toast.LENGTH_LONG).show());
             }
         });
+    }
+
+    private void syncFiltersToInstance() {
+        if (selectedInstance == null) return;
+        String version = minecraftVersionFromInstance(selectedInstance.versionId);
+        if (versionSpinner != null && version != null) {
+            android.widget.SpinnerAdapter adapter = versionSpinner.getAdapter();
+            if (adapter != null) {
+                for (int i = 0; i < adapter.getCount(); i++) {
+                    if (version.equals(adapter.getItem(i).toString())) {
+                        suppressFilters = true;
+                        versionSpinner.setSelection(i);
+                        suppressFilters = false;
+                        break;
+                    }
+                }
+            }
+        }
+        String loader = detectLoader(selectedInstance);
+        if (loaderSpinner != null && loader != null && category.usesLoader()) {
+            android.widget.SpinnerAdapter adapter = loaderSpinner.getAdapter();
+            if (adapter != null) {
+                for (int i = 0; i < adapter.getCount(); i++) {
+                    if (loader.equalsIgnoreCase(adapter.getItem(i).toString())) {
+                        suppressFilters = true;
+                        loaderSpinner.setSelection(i);
+                        suppressFilters = false;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     private void updateInstanceUi() {
