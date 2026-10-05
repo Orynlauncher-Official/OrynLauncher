@@ -39,6 +39,8 @@ import net.kdt.pojavlaunch.fragments.SelectAuthFragment;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.InstanceInstaller;
 import net.kdt.pojavlaunch.instances.Instances;
+import net.kdt.pojavlaunch.instances.OrynInstanceManager;
+import net.kdt.pojavlaunch.download.OrynInstanceContentScanner;
 import net.kdt.pojavlaunch.lifecycle.ContextAwareDoneListener;
 import net.kdt.pojavlaunch.lifecycle.ContextExecutor;
 import net.kdt.pojavlaunch.modloaders.modpacks.imagecache.IconCacheJanitor;
@@ -256,6 +258,17 @@ public class LauncherActivity extends BaseActivity {
         super.onResume();
         ContextExecutor.setActivity(this);
         InstanceInstaller.postInstallCheck(this);
+        // Lightweight foreground synchronization: cached content remains immediate while
+        // each instance is rescanned asynchronously from its real filesystem.
+        PojavApplication.sExecutorService.submit(() -> {
+            try {
+                for (Instance instance : Instances.loadAllInstances()) {
+                    OrynInstanceContentScanner.refreshAsync(instance);
+                }
+            } catch (Exception e) {
+                android.util.Log.w("OrynInstanceManager", "Foreground content sync failed", e);
+            }
+        });
     }
 
     @Override
