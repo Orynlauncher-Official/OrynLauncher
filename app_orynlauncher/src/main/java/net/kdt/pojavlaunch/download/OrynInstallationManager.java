@@ -36,12 +36,18 @@ public final class OrynInstallationManager {
         if (filename.isEmpty()) throw new Exception("Modrinth returned an invalid filename");
 
         if ("modpack".equals(projectType)) {
+            // A .mrpack is a complete instance, never install it into the currently selected instance.
             try {
-                new ModrinthApi().installMrpackIntoExistingInstance(downloadedFile, instance, null);
-                if (!gameDirectory.isDirectory()) throw new Exception("Modpack installation did not create the instance directory");
-                installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
-                Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + gameDirectory.getAbsolutePath()
+                Instance newInstance = new ModrinthApi().installMrpackAsNewInstance(downloadedFile, null);
+                if (newInstance == null || newInstance.getGameDirectory() == null
+                        || !newInstance.getGameDirectory().isDirectory()) {
+                    throw new Exception("Modpack installation did not create a new instance");
+                }
+                installedStore.markInstalled(newInstance.getGameDirectory(), project.id, projectType, filename);
+                Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + newInstance.getGameDirectory().getAbsolutePath()
                         + " downloaded=true installed=true fileExists=true");
+                // Make the newly installed pack the selected instance only after installation succeeds.
+                net.kdt.pojavlaunch.instances.Instances.setSelectedInstance(newInstance);
             } finally {
                 if (downloadedFile != null && downloadedFile.exists()) downloadedFile.delete();
             }
