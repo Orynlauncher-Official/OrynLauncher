@@ -494,18 +494,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private List<String> loaderChoices() {
         ArrayList<String> values = new ArrayList<>();
         if (!category.usesLoader()) return values;
-
-        // Follow the selected Minecraft instance's loader.
-        if (selectedInstance != null) {
-            String loader = currentLoader();
-            if (!loader.isEmpty()) values.add(loader);
-            return values;
-        }
-
+        // Loader is an explicit Download Center choice. Do not force the
+        // selected instance's loader and do not silently switch loaders.
         values.add("fabric");
+        values.add("quilt");
         values.add("forge");
         values.add("neoforge");
-        values.add("quilt");
         return values;
     }
 
@@ -602,19 +596,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void setupVersionSelectors(OrynDownloadState state) {
         List<String> versions = supportedMinecraftVersions(state.compatibleVersions);
-        if (versions.isEmpty()) versions.add(currentMinecraftVersion());
+        List<String> versionChoices = new ArrayList<>();
+        versionChoices.add("Choose Minecraft version");
+        versionChoices.addAll(versions);
 
         suppressVersionCallbacks = true;
-        setSpinner(versionMinecraftSpinner, versions,
-                versions.contains(currentMinecraftVersion()) ? currentMinecraftVersion() : versions.get(0));
-        updateVersionLoaderSpinner(state, selectedItem(versionMinecraftSpinner, versions.get(0)));
+        setSpinner(versionMinecraftSpinner, versionChoices, "Choose Minecraft version");
+        setSpinner(versionLoaderSpinner, loaderChoices(), "fabric");
+        if (!category.usesLoader()) versionLoaderSpinner.setVisibility(View.GONE);
         suppressVersionCallbacks = false;
 
         versionMinecraftSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 if (suppressVersionCallbacks) return;
                 updateVersionLoaderSpinner(viewModel.getState(), selectedItem(versionMinecraftSpinner, ""));
-                selectFirstMatchingVersion();
+                clearSelectedDownloadVersion();
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
@@ -622,7 +618,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         versionLoaderSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 if (suppressVersionCallbacks) return;
-                selectFirstMatchingVersion();
+                clearSelectedDownloadVersion();
             }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
@@ -630,37 +626,42 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private void updateVersionLoaderSpinner(OrynDownloadState state, String minecraftVersion) {
         if (versionLoaderSpinner == null) return;
-        List<String> loaders = supportedLoaders(state.compatibleVersions, minecraftVersion);
         if (!category.usesLoader()) {
             versionLoaderSpinner.setVisibility(View.GONE);
             return;
         }
         versionLoaderSpinner.setVisibility(View.VISIBLE);
-        if (loaders.isEmpty()) loaders.add("No loader");
+
+        // Keep all supported loaders available. The user must explicitly
+        // choose the loader; never replace it with an instance default.
+        List<String> loaders = supportedLoaders(state.compatibleVersions, minecraftVersion);
+        if (loaders.isEmpty() || minecraftVersion.isEmpty()
+                || minecraftVersion.equals("Choose Minecraft version")) {
+            loaders = loaderChoices();
+        }
+
         suppressVersionCallbacks = true;
+        String current = selectedItem(versionLoaderSpinner, "fabric");
         setSpinner(versionLoaderSpinner, loaders,
-                loaders.contains(currentLoader()) ? currentLoader() : loaders.get(0));
+                loaders.contains(current) ? current : loaders.get(0));
         suppressVersionCallbacks = false;
     }
 
-    private void selectFirstMatchingVersion() {
+    private void clearSelectedDownloadVersion() {
         OrynDownloadState state = viewModel.getState();
-        if (state.compatibleVersions.isEmpty()) {
+        String mc = selectedItem(versionMinecraftSpinner, "");
+        String loader = category.usesLoader() ? selectedItem(versionLoaderSpinner, "") : null;
+        boolean versionChosen = !mc.isEmpty() && !mc.equals("Choose Minecraft version");
+        boolean loaderChosen = !category.usesLoader()
+                || (loader != null && !loader.isEmpty() && !loader.equals("Choose loader"));
+
+        if (!versionChosen || !loaderChosen) {
+            viewModel.setVersionContext("", null);
             renderVersionScreen(state);
             return;
         }
-        String mc = selectedItem(versionMinecraftSpinner, "");
-        String loader = category.usesLoader() ? selectedItem(versionLoaderSpinner, "") : null;
 
-        ModrinthVersion chosen = null;
-        for (ModrinthVersion v : state.compatibleVersions) {
-            if (!contains(v.gameVersions, mc)) continue;
-            if (category.usesLoader() && !contains(v.loaders, loader)) continue;
-            chosen = v;
-            break;
-        }
         viewModel.setVersionContext(mc, category.usesLoader() ? loader : null);
-        if (chosen != null) viewModel.selectVersion(chosen);
         renderVersionScreen(viewModel.getState());
     }
 
