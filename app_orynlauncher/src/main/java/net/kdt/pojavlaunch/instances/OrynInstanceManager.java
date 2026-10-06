@@ -82,7 +82,7 @@ public final class OrynInstanceManager {
             i.createdAt = System.currentTimeMillis();
             i.lastPlayedAt = 0L;
             i.metadata.sanitize();
-        }, safeName);
+        }, safeName, modpack);
 
         // The root created by Instances is the only game directory owned by
         // this instance. Never fall back to shared_dir for new instances.
