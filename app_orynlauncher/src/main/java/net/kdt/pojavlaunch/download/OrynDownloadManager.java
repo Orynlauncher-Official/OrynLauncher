@@ -55,7 +55,7 @@ public final class OrynDownloadManager {
 
                 try (InputStream in = new BufferedInputStream(connection.getInputStream());
                      FileOutputStream out = new FileOutputStream(temp)) {
-                    byte[] buffer = new byte[32768];
+                    byte[] buffer = new byte[256 * 1024];
                     int read;
                     while ((read = in.read(buffer)) != -1) {
                         if (Thread.currentThread().isInterrupted()) {
