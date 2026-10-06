@@ -104,8 +104,15 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private LinearLayout shellBody;
     private LinearLayout sidebar;
     private LinearLayout filtersPanel;
+    private LinearLayout detailPanel;
     private EditText headerSearch;
     private TextView resultSummary;
+    private ImageView inlineDetailIcon;
+    private TextView inlineDetailTitle;
+    private TextView inlineDetailAuthor;
+    private TextView inlineDetailMeta;
+    private TextView inlineDetailDescription;
+    private Button inlineVersionsButton;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -215,14 +222,16 @@ public class OrynDownloadActivity extends AppCompatActivity {
         content.setPadding(dp(8), dp(8), dp(8), dp(8));
         shellBody.addView(content, new LinearLayout.LayoutParams(0, -1, 1));
 
-        filtersPanel = new LinearLayout(this);
-        filtersPanel.setOrientation(LinearLayout.VERTICAL);
-        filtersPanel.setPadding(dp(8), dp(8), dp(8), dp(8));
-        filtersPanel.setBackgroundColor(0xFF111317);
-        shellBody.addView(filtersPanel, new LinearLayout.LayoutParams(dp(215), -1));
+        detailPanel = new LinearLayout(this);
+        detailPanel.setOrientation(LinearLayout.VERTICAL);
+        detailPanel.setPadding(dp(10), dp(10), dp(10), dp(10));
+        detailPanel.setBackgroundColor(0xFF111317);
+        shellBody.addView(detailPanel, new LinearLayout.LayoutParams(dp(300), -1));
 
         root.addView(shellBody, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
+
+        buildInlineDetailsPanel();
 
         addSidebarItem("▣", "Mods", OrynDownloadState.Category.MOD);
         addSidebarItem("▤", "Packs", OrynDownloadState.Category.MODPACK);
@@ -239,6 +248,70 @@ public class OrynDownloadActivity extends AppCompatActivity {
             return true;
         });
         updateInstanceButton();
+    }
+
+
+    private void buildInlineDetailsPanel() {
+        detailPanel.removeAllViews();
+        TextView heading = text("PROJECT DETAILS", 12, Color.WHITE);
+        heading.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        detailPanel.addView(heading, new LinearLayout.LayoutParams(-1, dp(26)));
+
+        inlineDetailIcon = new ImageView(this);
+        inlineDetailIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        inlineDetailIcon.setImageResource(R.drawable.oryn_download_mod);
+        LinearLayout.LayoutParams iconLp = new LinearLayout.LayoutParams(dp(72), dp(72));
+        iconLp.gravity = Gravity.CENTER_HORIZONTAL;
+        iconLp.bottomMargin = dp(8);
+        detailPanel.addView(inlineDetailIcon, iconLp);
+
+        inlineDetailTitle = text("Select a project", 17, Color.WHITE);
+        inlineDetailTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        inlineDetailTitle.setGravity(Gravity.CENTER);
+        detailPanel.addView(inlineDetailTitle, new LinearLayout.LayoutParams(-1, dp(44)));
+
+        inlineDetailAuthor = text("Choose a Modrinth result to inspect it.", 10, 0xFF8E949E);
+        inlineDetailAuthor.setGravity(Gravity.CENTER);
+        detailPanel.addView(inlineDetailAuthor, new LinearLayout.LayoutParams(-1, dp(34)));
+
+        inlineDetailMeta = text("", 9, 0xFFB8BCC4);
+        inlineDetailMeta.setPadding(0, dp(8), 0, dp(8));
+        detailPanel.addView(inlineDetailMeta, new LinearLayout.LayoutParams(-1, dp(72)));
+
+        inlineDetailDescription = text("The selected project's description, supported versions, loader and download information will appear here.", 10, 0xFF9CA1AA);
+        inlineDetailDescription.setGravity(Gravity.TOP);
+        detailPanel.addView(inlineDetailDescription, new LinearLayout.LayoutParams(-1, 0, 1));
+
+        inlineVersionsButton = button("VIEW VERSIONS & INSTALL");
+        inlineVersionsButton.setEnabled(false);
+        inlineVersionsButton.setOnClickListener(v -> showVersions());
+        detailPanel.addView(inlineVersionsButton, new LinearLayout.LayoutParams(-1, dp(44)));
+    }
+
+    private void showInlineProjectDetails() {
+        if (detailPanel == null) return;
+        detailPanel.setVisibility(View.VISIBLE);
+        OrynDownloadState state = viewModel.getState();
+        ModrinthProject p = state.selectedProject;
+        if (p == null) return;
+        inlineDetailTitle.setText(p.title);
+        inlineDetailAuthor.setText("by " + safe(p.author));
+        inlineDetailMeta.setText(formatProjectMeta(p));
+        inlineDetailDescription.setText(p.description == null || p.description.isEmpty()
+                ? "No description available." : p.description);
+        inlineVersionsButton.setEnabled(!state.compatibleVersions.isEmpty());
+        inlineVersionsButton.setText(state.compatibleVersions.isEmpty()
+                ? "LOADING VERSIONS…" : "VIEW VERSIONS & INSTALL");
+        repository.loadIcon(p.iconUrl, new OrynContentRepository.Listener<Bitmap>() {
+            @Override public void onSuccess(Bitmap bitmap) {
+                runOnUiThread(() -> {
+                    if (inlineDetailIcon != null && bitmap != null && !bitmap.isRecycled()) {
+                        inlineDetailIcon.setImageBitmap(bitmap);
+                    }
+                });
+            }
+            @Override public void onError(Exception error) {}
+        });
     }
 
     private void addSidebarItem(String icon, String label, OrynDownloadState.Category value) {
@@ -279,8 +352,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void showHome() {
         screen = Screen.HOME;
         clearContent();
-        if (filtersPanel != null) filtersPanel.removeAllViews();
         if (filtersPanel != null) filtersPanel.setVisibility(View.GONE);
+        if (detailPanel != null) detailPanel.setVisibility(View.GONE);
         title.setText("DOWNLOAD CENTER");
         subtitle.setText("Discover Minecraft content from Modrinth");
         TextView heading = text("Choose a category", 18, Color.WHITE);
@@ -315,8 +388,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void showProjects() {
         screen = Screen.PROJECTS;
         clearContent();
-        if (filtersPanel != null) filtersPanel.removeAllViews();
-        if (filtersPanel != null) filtersPanel.setVisibility(View.VISIBLE);
+        if (detailPanel != null) detailPanel.setVisibility(View.VISIBLE);
         refreshSidebarSelection();
         title.setText(category.title.toUpperCase(Locale.ROOT));
         subtitle.setText("Real Modrinth projects • filtered for your Minecraft setup");
@@ -329,7 +401,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         projectList.setClipToPadding(false);
         projectList.setPadding(0, dp(3), 0, dp(6));
         projectList.setLayoutManager(new GridLayoutManager(this, 1));
-        projectAdapter = new OrynProjectAdapter(repository, project -> { viewModel.selectProject(project); showDetails(); });
+        projectAdapter = new OrynProjectAdapter(repository, project -> { viewModel.selectProject(project); showInlineProjectDetails(); });
         projectList.setAdapter(projectAdapter);
         content.addView(projectList, new LinearLayout.LayoutParams(-1, 0, 1));
         loadMore = button("LOAD MORE");
@@ -345,43 +417,51 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void buildFilterPanel() {
-        TextView filterTitle = text("FILTERS", 12, Color.WHITE);
+        filtersPanel = new LinearLayout(this);
+        filtersPanel.setOrientation(LinearLayout.HORIZONTAL);
+        filtersPanel.setGravity(Gravity.CENTER_VERTICAL);
+        filtersPanel.setPadding(dp(6), dp(5), dp(6), dp(5));
+        filtersPanel.setBackground(round(0xFF111317, dp(8)));
+
+        TextView filterTitle = text("FILTERS", 10, Color.WHITE);
         filterTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-        filtersPanel.addView(filterTitle, new LinearLayout.LayoutParams(-1, dp(28)));
-        TextView filterHint = text("Only compatible Modrinth results are shown.", 9, 0xFF777D88);
-        filtersPanel.addView(filterHint, new LinearLayout.LayoutParams(-1, dp(38)));
+        filtersPanel.addView(filterTitle, new LinearLayout.LayoutParams(dp(55), -1));
+
         minecraftSpinner = new Spinner(this);
-        filtersPanel.addView(labelFor("Minecraft version"));
-        filtersPanel.addView(minecraftSpinner, new LinearLayout.LayoutParams(-1, dp(40)));
+        filtersPanel.addView(minecraftSpinner, new LinearLayout.LayoutParams(0, dp(38), 1));
+
         if (category.usesLoader()) {
             loaderSpinner = new Spinner(this);
-            filtersPanel.addView(labelFor("Loader"));
-            filtersPanel.addView(loaderSpinner, new LinearLayout.LayoutParams(-1, dp(40)));
-        } else loaderSpinner = null;
-        Button refresh = button("APPLY FILTERS");
-        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(38));
-        rp.topMargin = dp(8);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(38), 0.8f);
+            lp.leftMargin = dp(5);
+            filtersPanel.addView(loaderSpinner, lp);
+        } else {
+            loaderSpinner = null;
+        }
+
+        Button refresh = button("APPLY");
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(dp(85), dp(38));
+        rp.leftMargin = dp(5);
         filtersPanel.addView(refresh, rp);
         refresh.setOnClickListener(v -> searchProjects());
-        Button instance = button("INSTANCE\n" + instanceName());
-        LinearLayout.LayoutParams ip = new LinearLayout.LayoutParams(-1, dp(48));
-        ip.topMargin = dp(6);
-        filtersPanel.addView(instance, ip);
-        instance.setOnClickListener(v -> chooseInstance());
-        TextView spacer = text("", 1, Color.TRANSPARENT);
-        filtersPanel.addView(spacer, new LinearLayout.LayoutParams(-1, 0, 1));
-        TextView note = text("Oryn uses the existing verified installation pipeline for downloads.", 9, 0xFF686E78);
-        filtersPanel.addView(note, new LinearLayout.LayoutParams(-1, dp(42)));
+
+        content.addView(filtersPanel, 1, new LinearLayout.LayoutParams(-1, dp(48)));
+
         updateProjectFilters();
         minecraftSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (!suppressFilterCallbacks) searchProjects(); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (!suppressFilterCallbacks) searchProjects();
+            }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
         if (loaderSpinner != null) loaderSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) { if (!suppressFilterCallbacks) searchProjects(); }
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+                if (!suppressFilterCallbacks) searchProjects();
+            }
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
     }
+
 
     private TextView labelFor(String label) {
         TextView v = text(label, 9, 0xFF858B96);
@@ -392,8 +472,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private void updateProjectColumns() {
         if (projectList == null) return;
         int width = (int) (projectList.getWidth() / getResources().getDisplayMetrics().density);
-        int columns = getResources().getConfiguration().smallestScreenWidthDp < 600
-                ? 1 : Math.max(1, Math.min(3, width / 320));
+        int columns = 1;
         RecyclerView.LayoutManager lm = projectList.getLayoutManager();
         if (!(lm instanceof GridLayoutManager) || ((GridLayoutManager) lm).getSpanCount() != columns) {
             projectList.setLayoutManager(new GridLayoutManager(this, columns));
@@ -658,6 +737,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 loadMore.setVisibility(state.hasMore ? View.VISIBLE : View.GONE);
                 loadMore.setEnabled(state.listStatus != OrynDownloadState.ListStatus.LOADING);
             }
+            if (state.selectedProject != null) showInlineProjectDetails();
         }
 
         if (screen == Screen.DETAILS) renderDetails(state);
