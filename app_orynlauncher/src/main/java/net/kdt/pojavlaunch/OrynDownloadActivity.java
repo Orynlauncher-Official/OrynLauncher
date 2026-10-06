@@ -61,7 +61,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private Spinner categorySpinner;
     private Spinner gameVersionSpinner;
     private Spinner loaderSpinner;
+    private TextView loaderLabel;
     private TextView status;
+
     private RecyclerView list;
     private ProjectAdapter adapter;
     private Button importButton;
@@ -74,6 +76,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private boolean controlsReady;
     private boolean suppressFilterEvents;
     private int selectedCategoryPosition;
+    // Loader selection is an independent Mods-only state. Leaving Mods never
+    // overwrites it, so returning to Mods restores the user's previous choice.
+    private String selectedModLoader = "";
     private boolean versionsReady;
     private boolean loadersReady;
     private boolean installingAfterTargetChoice;
@@ -227,9 +232,10 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
 
         gameVersionSpinner = spinner();
         loaderSpinner = spinner();
+        loaderLabel = label("Loader", 10);
         filters.addView(label("Minecraft", 10), new LinearLayout.LayoutParams(dp(76), dp(42)));
         filters.addView(gameVersionSpinner, new LinearLayout.LayoutParams(0, dp(42), 1));
-        filters.addView(label("Loader", 10), new LinearLayout.LayoutParams(dp(58), dp(42)));
+        filters.addView(loaderLabel, new LinearLayout.LayoutParams(dp(58), dp(42)));
         filters.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(165), dp(42)));
         root.addView(filters);
 
@@ -286,6 +292,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                 new android.widget.AdapterView.OnItemSelectedListener() {
                     @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
                         if (!controlsReady || suppressFilterEvents) return;
+                        if (p == loaderSpinner && selectedCategory() == OrynDownloadState.Category.MOD) {
+                            selectedModLoader = selectedLoader();
+                        }
                         runSearch();
                     }
                     @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
@@ -331,6 +340,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         versionsReady = false;
         loadersReady = false;
         controlsReady = false;
+        initializeSelectedModLoader();
 
         repository.loadGameVersions(new OrynContentRepository.Listener<List<String>>() {
             @Override public void onSuccess(List<String> value) {
@@ -414,37 +424,38 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         return result;
     }
 
+    private void initializeSelectedModLoader() {
+        if (selectedModLoader != null && !selectedModLoader.isEmpty()) return;
+        String currentLoader = "";
+        try {
+            Instance selected = Instances.loadSelectedInstance();
+            if (selected != null && selected.loaderType != null) {
+                currentLoader = selected.loaderType.toLowerCase(Locale.ROOT);
+            }
+        } catch (Throwable ignored) {}
+        if (!isSupportedModLoader(currentLoader)) currentLoader = "fabric";
+        selectedModLoader = currentLoader;
+    }
+
+    private boolean isSupportedModLoader(String loader) {
+        return "fabric".equals(loader) || "forge".equals(loader)
+                || "neoforge".equals(loader) || "quilt".equals(loader);
+    }
+
     private void setLoaderItems(List<String> values) {
         List<String> items = new ArrayList<>();
-        if (selectedCategory().usesLoader()) {
-            // Keep the selector intentionally small and predictable.
-            items.add("fabric");
-            items.add("forge");
-            items.add("neoforge");
-            items.add("quilt");
-        } else {
-            items.add("Not applicable");
-        }
+        items.add("fabric");
+        items.add("forge");
+        items.add("neoforge");
+        items.add("quilt");
 
         loaderSpinner.setAdapter(new ArrayAdapter<String>(
                 OrynDownloadActivity.this,
                 android.R.layout.simple_spinner_dropdown_item, items));
 
-        if (selectedCategory().usesLoader()) {
-            String currentLoader = "";
-            try {
-                Instance selected = Instances.loadSelectedInstance();
-                if (selected != null && selected.loaderType != null) {
-                    currentLoader = selected.loaderType.toLowerCase(Locale.ROOT);
-                }
-            } catch (Throwable ignored) {}
-
-            int position = items.indexOf(currentLoader);
-            if (position < 0) position = 0;
-            loaderSpinner.setSelection(position, false);
-        } else {
-            loaderSpinner.setSelection(0, false);
-        }
+        int position = items.indexOf(selectedModLoader);
+        if (position < 0) position = 0;
+        loaderSpinner.setSelection(position, false);
     }
 
     private void refreshLoaderFilter() {
@@ -454,17 +465,10 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         suppressFilterEvents = true;
         try {
             boolean enabled = selectedCategory().usesLoader();
+            loaderLabel.setVisibility(enabled ? View.VISIBLE : View.GONE);
+            loaderSpinner.setVisibility(enabled ? View.VISIBLE : View.GONE);
             loaderSpinner.setEnabled(enabled);
-            if (!enabled) {
-                List<String> items = new ArrayList<>();
-                items.add("Not applicable");
-                loaderSpinner.setAdapter(new ArrayAdapter<String>(
-                        OrynDownloadActivity.this,
-                        android.R.layout.simple_spinner_dropdown_item, items));
-                loaderSpinner.setSelection(0, false);
-            } else {
-                setLoaderItems(loaders);
-            }
+            if (enabled) setLoaderItems(loaders);
         } finally {
             suppressFilterEvents = false;
         }
@@ -484,9 +488,8 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private String selectedLoader() {
-        if (loaderSpinner == null || loaderSpinner.getSelectedItem() == null) return "";
-        String value = String.valueOf(loaderSpinner.getSelectedItem());
-        return "Not applicable".equals(value) ? "" : value.toLowerCase(Locale.ROOT);
+        if (selectedCategory() != OrynDownloadState.Category.MOD) return "";
+        return selectedModLoader == null ? "" : selectedModLoader;
     }
 
     private OrynDownloadState.Category selectedCategory() {
