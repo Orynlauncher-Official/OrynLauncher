@@ -72,6 +72,8 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private final Handler handler = new Handler();
     private Runnable searchRunnable;
     private boolean controlsReady;
+    private boolean suppressFilterEvents;
+    private int selectedCategoryPosition;
     private boolean versionsReady;
     private boolean loadersReady;
     private boolean installingAfterTargetChoice;
@@ -213,7 +215,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         });
         searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(54), 1));
 
-        categorySpinner = spinner();
+        // Dialog mode keeps every category fully clickable. Popup-mode Spinner can
+        // clip the first item when Resource Packs is selected.
+        categorySpinner = spinner(Spinner.MODE_DIALOG);
         searchRow.addView(categorySpinner, new LinearLayout.LayoutParams(dp(190), dp(54)));
         root.addView(searchRow);
 
@@ -263,10 +267,14 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
 
         categorySpinner.setAdapter(new ArrayAdapter<String>(this,
                 android.R.layout.simple_spinner_dropdown_item, categoryNames()));
-        categorySpinner.setSelection(0);
+        selectedCategoryPosition = 0;
+        categorySpinner.setSelection(0, false);
         categorySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                if (!controlsReady) return;
+                if (!controlsReady || suppressFilterEvents) return;
+                if (pos < 0 || pos >= categories.length) return;
+                // Use the callback position directly while Android completes the selection.
+                selectedCategoryPosition = pos;
                 refreshLoaderFilter();
                 updateImportButton();
                 runSearch();
@@ -277,7 +285,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         android.widget.AdapterView.OnItemSelectedListener filterListener =
                 new android.widget.AdapterView.OnItemSelectedListener() {
                     @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                        if (!controlsReady) return;
+                        if (!controlsReady || suppressFilterEvents) return;
                         runSearch();
                     }
                     @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
@@ -297,7 +305,11 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private Spinner spinner() {
-        Spinner s = new Spinner(this);
+        return spinner(Spinner.MODE_DROPDOWN);
+    }
+
+    private Spinner spinner(int mode) {
+        Spinner s = new Spinner(this, mode);
         s.setBackground(bg(0xFF14131D, 8));
         s.setPadding(dp(5), 0, dp(5), 0);
         return s;
@@ -436,19 +448,25 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private void refreshLoaderFilter() {
-        boolean enabled = selectedCategory().usesLoader();
-        loaderSpinner.setEnabled(enabled);
-        if (!enabled) {
-            List<String> items = new ArrayList<>();
-            items.add("Not applicable");
-            loaderSpinner.setAdapter(new ArrayAdapter<String>(
-                    OrynDownloadActivity.this,
-                    android.R.layout.simple_spinner_dropdown_item, items));
-            loaderSpinner.setSelection(0);
-        } else if (loaderSpinner.getAdapter() == null
-                || loaderSpinner.getAdapter().getCount() <= 1
-                || "Not applicable".equals(String.valueOf(loaderSpinner.getSelectedItem()))) {
-            setLoaderItems(loaders);
+        // Category changes also change whether the loader selector is relevant.
+        // Update it as one atomic UI operation so its own Spinner callback cannot
+        // launch a stale search for the previous category.
+        suppressFilterEvents = true;
+        try {
+            boolean enabled = selectedCategory().usesLoader();
+            loaderSpinner.setEnabled(enabled);
+            if (!enabled) {
+                List<String> items = new ArrayList<>();
+                items.add("Not applicable");
+                loaderSpinner.setAdapter(new ArrayAdapter<String>(
+                        OrynDownloadActivity.this,
+                        android.R.layout.simple_spinner_dropdown_item, items));
+                loaderSpinner.setSelection(0, false);
+            } else {
+                setLoaderItems(loaders);
+            }
+        } finally {
+            suppressFilterEvents = false;
         }
     }
 
@@ -472,7 +490,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private OrynDownloadState.Category selectedCategory() {
-        int p = categorySpinner == null ? 0 : categorySpinner.getSelectedItemPosition();
+        int p = selectedCategoryPosition;
         if (p < 0 || p >= categories.length) p = 0;
         return categories[p];
     }
