@@ -20,18 +20,23 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import git.artdeell.mojo.BuildConfig;
 import git.artdeell.mojo.R;
+
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Checks the official OrynLauncher GitHub release for a newer launcher version.
  *
  * This is deliberately independent from the generated Gradle versionName because
  * that value is currently build/commit based. The public release version is kept
- * here so v2.1 can correctly detect v2.2+ releases.
+ * from the current OrynLauncher branch/build so development builds do not
+ * incorrectly report an older public release as an available update.
  */
 public final class OrynUpdateChecker {
     private static final String TAG = "OrynUpdateChecker";
-    private static final String CURRENT_VERSION = "2.1";
     private static final String LATEST_RELEASE_API =
             "https://api.github.com/repos/Orynlauncher-Official/OrynLauncher/releases/latest";
 
@@ -68,7 +73,9 @@ public final class OrynUpdateChecker {
                         "https://github.com/Orynlauncher-Official/OrynLauncher/releases"
                 );
 
-                if (latestVersion.isEmpty() || !isNewer(latestVersion, CURRENT_VERSION)) {
+                String installedVersion = getInstalledVersion();
+                if (latestVersion.isEmpty() || installedVersion.isEmpty()
+                        || !isNewer(latestVersion, installedVersion)) {
                     return;
                 }
 
@@ -108,6 +115,26 @@ public final class OrynUpdateChecker {
                 .setNegativeButton(R.string.oryn_update_later, null)
                 .setCancelable(true)
                 .show();
+    }
+
+    private static String getInstalledVersion() {
+        String buildVersion = BuildConfig.VERSION_NAME == null ? "" : BuildConfig.VERSION_NAME;
+        Matcher matcher = Pattern.compile("OrynLauncherV(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?",
+                Pattern.CASE_INSENSITIVE).matcher(buildVersion);
+        if (matcher.find()) {
+            String major = matcher.group(1);
+            String minor = matcher.group(2) == null ? "0" : matcher.group(2);
+            String patch = matcher.group(3) == null ? "0" : matcher.group(3);
+            return major + "." + minor + "." + patch;
+        }
+
+        // V4.1 is the active Oryn development branch. If a local Gradle build
+        // cannot expose its branch name, never fall back to the old v2.1 value.
+        String normalized = buildVersion.toLowerCase(Locale.ROOT);
+        if (normalized.contains("orynlauncher")) {
+            return "4.1.0";
+        }
+        return "";
     }
 
     private static String normalizeVersion(String value) {
