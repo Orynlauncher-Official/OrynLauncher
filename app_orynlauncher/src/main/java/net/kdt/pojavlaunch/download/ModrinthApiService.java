@@ -59,6 +59,23 @@ public final class ModrinthApiService {
                         + project.projectType + " expected=" + projectType);
                 continue;
             }
+            // The search endpoint returns project-level metadata. Keep only projects
+            // that actually advertise the requested Minecraft version/loader as well;
+            // this prevents old projects from appearing just because their project
+            // has some other historical version.
+            if (minecraftVersion != null && !minecraftVersion.isEmpty()
+                    && !containsIgnoreCase(project.gameVersions, minecraftVersion)) {
+                Log.d(TAG, "Discarding project " + project.id + " because it does not support "
+                        + minecraftVersion);
+                continue;
+            }
+            if (loader != null && !loader.isEmpty()
+                    && ("mod".equals(projectType) || "modpack".equals(projectType))
+                    && !containsIgnoreCase(project.loaders, loader)) {
+                Log.d(TAG, "Discarding project " + project.id + " because it does not support loader "
+                        + loader);
+                continue;
+            }
             projects.add(project);
         }
 
@@ -293,6 +310,14 @@ public final class ModrinthApiService {
     private static boolean containsIgnoreCase(JsonArray array, String value) {
         for (JsonElement element : array) {
             if (value.equalsIgnoreCase(element.getAsString())) return true;
+        }
+        return false;
+    }
+
+    private static boolean containsIgnoreCase(List<String> values, String value) {
+        if (values == null || value == null) return false;
+        for (String item : values) {
+            if (value.equalsIgnoreCase(item)) return true;
         }
         return false;
     }
