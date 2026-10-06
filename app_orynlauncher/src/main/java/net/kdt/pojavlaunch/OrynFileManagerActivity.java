@@ -23,6 +23,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
+import net.kdt.pojavlaunch.extra.ExtraConstants;
+import net.kdt.pojavlaunch.extra.ExtraCore;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -395,11 +397,32 @@ public class OrynFileManagerActivity extends AppCompatActivity {
                 .setMessage("This permanently deletes the selected item.")
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Delete", (d, w) -> {
-                    if (!deleteRecursive(file))
+                    boolean instanceDirectory = isInstanceDirectory(file);
+                    boolean deleted = deleteRecursive(file);
+                    if (!deleted) {
                         Toast.makeText(this, "Delete failed", Toast.LENGTH_LONG).show();
+                    } else if (instanceDirectory) {
+                        // Keep the main launcher instance selector synchronized with
+                        // filesystem changes without requiring an app restart.
+                        ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, Boolean.TRUE);
+                    }
                     refresh();
                 })
                 .show();
+    }
+
+    private boolean isInstanceDirectory(File file) {
+        if (file == null || !file.isDirectory()) return false;
+        File instancesRoot = new File(Tools.DIR_GAME_HOME, "instances");
+        try {
+            File canonicalFile = file.getCanonicalFile();
+            File canonicalRoot = instancesRoot.getCanonicalFile();
+            return canonicalFile.getParentFile() != null
+                    && canonicalRoot.equals(canonicalFile.getParentFile())
+                    && new File(canonicalFile, "mojo_instance.json").isFile();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private boolean deleteRecursive(File file) {
