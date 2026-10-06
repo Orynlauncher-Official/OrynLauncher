@@ -380,15 +380,34 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private void setLoaderItems(List<String> values) {
         List<String> items = new ArrayList<>();
         if (selectedCategory().usesLoader()) {
-            items.add("Any loader");
-            if (values != null) items.addAll(values);
+            // Keep the selector intentionally small and predictable.
+            items.add("fabric");
+            items.add("forge");
+            items.add("neoforge");
+            items.add("quilt");
         } else {
             items.add("Not applicable");
         }
+
         loaderSpinner.setAdapter(new ArrayAdapter<String>(
                 OrynDownloadActivity.this,
                 android.R.layout.simple_spinner_dropdown_item, items));
-        loaderSpinner.setSelection(0);
+
+        if (selectedCategory().usesLoader()) {
+            String currentLoader = "";
+            try {
+                Instance selected = Instances.loadSelectedInstance();
+                if (selected != null && selected.loaderType != null) {
+                    currentLoader = selected.loaderType.toLowerCase(Locale.ROOT);
+                }
+            } catch (Throwable ignored) {}
+
+            int position = items.indexOf(currentLoader);
+            if (position < 0) position = 0;
+            loaderSpinner.setSelection(position, false);
+        } else {
+            loaderSpinner.setSelection(0, false);
+        }
     }
 
     private void refreshLoaderFilter() {
@@ -424,7 +443,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private String selectedLoader() {
         if (loaderSpinner == null || loaderSpinner.getSelectedItem() == null) return "";
         String value = String.valueOf(loaderSpinner.getSelectedItem());
-        return "Any loader".equals(value) || "Not applicable".equals(value) ? "" : value.toLowerCase(Locale.ROOT);
+        return "Not applicable".equals(value) ? "" : value.toLowerCase(Locale.ROOT);
     }
 
     private OrynDownloadState.Category selectedCategory() {
