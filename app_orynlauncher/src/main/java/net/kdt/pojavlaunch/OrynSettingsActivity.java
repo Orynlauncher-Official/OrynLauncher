@@ -418,9 +418,6 @@ public class OrynSettingsActivity extends BaseActivity {
         Button files = textButton("Open");
         files.setOnClickListener(v -> startActivity(new Intent(this, OrynFileManagerActivity.class)));
         addSetting("Oryn Files", "Browse and manage launcher files", files);
-        Button downloads = textButton("Open");
-        downloads.setOnClickListener(v -> startActivity(new Intent(this, OrynDownloadActivity.class)));
-        addSetting("Oryn Downloads", "Mods, resource packs, shaders and modpacks", downloads);
         Button cosmetics = textButton("Open");
         cosmetics.setOnClickListener(v -> startActivity(new Intent(this, OrynCosmeticsActivity.class)));
         addSetting("Oryn Cosmetics", "Manage your existing Skin and Cape", cosmetics);
