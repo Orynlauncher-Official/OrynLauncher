@@ -90,9 +90,12 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
 
         repository = new OrynContentRepository();
         viewModel = new OrynDownloadViewModel(selected);
-        viewModel.observe(this);
 
+        // Build and attach every view before observing the ViewModel.
+        // observe() may immediately emit the current state, so onStateChanged()
+        // must never run while loading/status/adapter are still null.
         buildUi();
+        viewModel.observe(this);
         loadFilterValues();
     }
 
