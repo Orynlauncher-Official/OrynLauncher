@@ -106,6 +106,24 @@ public class Instances {
     }
 
     private static File findNewInstanceRoot(String prefix) {
+        return findNewInstanceRoot(prefix, false);
+    }
+
+    private static File findNewInstanceRoot(String prefix, boolean cleanDirectoryName) {
+        if (cleanDirectoryName && prefix != null && !prefix.trim().isEmpty()) {
+            String safePrefix = FileUtils.escapeFileName(prefix.trim());
+            if (safePrefix == null || safePrefix.trim().isEmpty()) {
+                safePrefix = "Oryn Instance";
+            }
+            File candidate = new File(sInstancePath, safePrefix);
+            int suffix = 2;
+            while (candidate.exists()) {
+                candidate = new File(sInstancePath, safePrefix + " (" + suffix + ")");
+                suffix++;
+            }
+            return candidate;
+        }
+
         File instanceRoot;
         do {
             String proposedDirectoryName = UUID.randomUUID().toString();
