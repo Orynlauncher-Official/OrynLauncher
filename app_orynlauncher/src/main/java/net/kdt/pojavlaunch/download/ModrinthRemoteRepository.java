@@ -151,8 +151,9 @@ public final class ModrinthRemoteRepository {
                     throw new Exception("Modrinth project type mismatch: expected "
                             + projectType + " but received " + fullProject.projectType);
                 }
-                List<ModrinthVersion> versions = availableVersions(
-                        api.getProjectVersions(selected.id, null, null), projectType);
+                List<ModrinthVersion> versions = compatibleVersions(
+                        api.getProjectVersions(selected.id, null, null), projectType,
+                        minecraftVersion, loader);
                 Log.d(TAG, "Project detail: " + selected.id + " • available versions=" + versions.size());
                 synchronized (this) {
                     detailCache.put(key, new DetailEntry(System.currentTimeMillis(), fullProject, versions));
