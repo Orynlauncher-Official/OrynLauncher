@@ -54,6 +54,10 @@ import net.kdt.pojavlaunch.extra.ExtraCore;
 
 public class OrynDownloadActivity extends AppCompatActivity implements OrynDownloadViewModel.Observer {
 
+    private interface ChoiceCallback {
+        void onSelected(int position);
+    }
+
     private static final int PICK_MODPACK = 4107;
 
     private LinearLayout root;
@@ -275,32 +279,56 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                 android.R.layout.simple_spinner_dropdown_item, categoryNames()));
         selectedCategoryPosition = 0;
         categorySpinner.setSelection(0, false);
-        categorySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                if (!controlsReady || suppressFilterEvents) return;
-                if (pos < 0 || pos >= categories.length) return;
-                // Use the callback position directly while Android completes the selection.
-                selectedCategoryPosition = pos;
+
+        // Do not rely on Android Spinner's popup/selection lifecycle for the
+        // Download Center filters. Rebinding the result list can otherwise cause
+        // the popup to lose its touch/selection state, leaving category/version/
+        // loader controls stuck after the first search. Each filter now opens a
+        // stable single-choice dialog and commits its value only after the user
+        // taps an item.
+        categorySpinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() != android.view.MotionEvent.ACTION_UP || !controlsReady) return true;
+            showChoiceDialog("Category", categoryNames(), selectedCategoryPosition, position -> {
+                selectedCategoryPosition = position;
+                categorySpinner.setSelection(position, false);
                 refreshLoaderFilter();
                 updateImportButton();
                 runSearch();
-            }
-            @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
+            });
+            return true;
         });
 
-        android.widget.AdapterView.OnItemSelectedListener filterListener =
-                new android.widget.AdapterView.OnItemSelectedListener() {
-                    @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                        if (!controlsReady || suppressFilterEvents) return;
-                        if (p == loaderSpinner && selectedCategory() == OrynDownloadState.Category.MOD) {
-                            selectedModLoader = selectedLoader();
-                        }
-                        runSearch();
-                    }
-                    @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
-                };
-        gameVersionSpinner.setOnItemSelectedListener(filterListener);
-        loaderSpinner.setOnItemSelectedListener(filterListener);
+        gameVersionSpinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() != android.view.MotionEvent.ACTION_UP || !controlsReady) return true;
+            List<String> values = new ArrayList<>();
+            values.add("Select version");
+            values.addAll(gameVersions);
+            int checked = gameVersionSpinner.getSelectedItemPosition();
+            if (checked < 0 || checked >= values.size()) checked = 0;
+            showChoiceDialog("Minecraft version", values, checked, position -> {
+                gameVersionSpinner.setSelection(position, false);
+                runSearch();
+            });
+            return true;
+        });
+
+        loaderSpinner.setOnTouchListener((v, event) -> {
+            if (event.getAction() != android.view.MotionEvent.ACTION_UP || !controlsReady
+                    || selectedCategory() != OrynDownloadState.Category.MOD) return true;
+            List<String> values = new ArrayList<>();
+            values.add("fabric");
+            values.add("forge");
+            values.add("neoforge");
+            values.add("quilt");
+            int checked = values.indexOf(selectedModLoader);
+            if (checked < 0) checked = 0;
+            showChoiceDialog("Mod loader", values, checked, position -> {
+                selectedModLoader = values.get(position);
+                loaderSpinner.setSelection(position, false);
+                runSearch();
+            });
+            return true;
+        });
 
         list.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override public void onScrolled(RecyclerView rv, int dx, int dy) {
@@ -328,6 +356,22 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         TextView v = text(value, size, 0xFF92929D);
         v.setGravity(Gravity.CENTER);
         return v;
+    }
+
+    private void showChoiceDialog(String title, List<String> values, int checked,
+                                  ChoiceCallback callback) {
+        if (!controlsReady || values == null || values.isEmpty()) return;
+        final String[] items = values.toArray(new String[0]);
+        final int safeChecked = Math.max(0, Math.min(checked, items.length - 1));
+
+        new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setSingleChoiceItems(items, safeChecked, (dialog, which) -> {
+                    dialog.dismiss();
+                    if (which >= 0 && which < items.length) callback.onSelected(which);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private String[] categoryNames() {
