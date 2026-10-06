@@ -70,7 +70,7 @@ public final class ModrinthApiService {
                 continue;
             }
             if (loader != null && !loader.isEmpty()
-                    && ("mod".equals(projectType) || "modpack".equals(projectType))
+                    && "mod".equals(projectType)
                     && !containsIgnoreCase(project.loaders, loader)) {
                 Log.d(TAG, "Discarding project " + project.id + " because it does not support loader "
                         + loader);
@@ -335,9 +335,10 @@ public final class ModrinthApiService {
         if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
             facets.append(",[\"versions:").append(minecraftVersion).append("\"]");
         }
-        if (loader != null && !loader.isEmpty()
-                && ("mod".equals(projectType) || "modpack".equals(projectType))) {
+        if (loader != null && !loader.isEmpty() && "mod".equals(projectType)) {
             // Modrinth search exposes loader tags through the categories facet.
+            // Loader facets are intentionally sent only for Mods; Modpacks are
+            // browsed by project type + Minecraft version and validated separately.
             facets.append(",[\"categories:").append(loader).append("\"]");
         }
         facets.append("]");
