@@ -238,6 +238,20 @@ public final class ModrinthApiService {
     }
 
     private ModrinthProject parseProject(JsonObject object) {
+        // Modrinth /search project hits expose loader tags through the
+        // categories/display_categories arrays. They do not reliably include
+        // a separate "loaders" field in the search response. Keep the real
+        // project/version metadata and derive the loader list from those tags
+        // so Mods are not incorrectly discarded as loader-less.
+        List<String> categories = strings(object, "categories", "display_categories");
+        List<String> loaders = strings(object, "loaders");
+        if (loaders.isEmpty()) {
+            loaders = new ArrayList<>();
+            for (String category : categories) {
+                if (isSupportedModLoaderTag(category)) loaders.add(category);
+            }
+        }
+
         return new ModrinthProject(
                 string(object, "project_id", string(object, "id", "")),
                 string(object, "title", "Unknown project"),
@@ -247,9 +261,9 @@ public final class ModrinthApiService {
                 string(object, "project_type", ""),
                 number(object, "downloads"),
                 number(object, "followers", number(object, "follows")),
-                strings(object, "categories", "display_categories"),
+                categories,
                 strings(object, "versions"),
-                strings(object, "loaders")
+                loaders
         );
     }
 
@@ -312,6 +326,14 @@ public final class ModrinthApiService {
             if (value.equalsIgnoreCase(element.getAsString())) return true;
         }
         return false;
+    }
+
+    private static boolean isSupportedModLoaderTag(String value) {
+        if (value == null) return false;
+        return "fabric".equalsIgnoreCase(value)
+                || "forge".equalsIgnoreCase(value)
+                || "neoforge".equalsIgnoreCase(value)
+                || "quilt".equalsIgnoreCase(value);
     }
 
     private static boolean containsIgnoreCase(List<String> values, String value) {
