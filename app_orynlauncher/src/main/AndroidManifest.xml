@@ -42,7 +42,7 @@
         android:enableOnBackInvokedCallback="false"
         tools:ignore="UnusedAttribute">
         <activity android:name=".OrynInstanceContentActivity" android:screenOrientation="portrait" />
-        <activity
+        <activity\n            android:name="net.kdt.pojavlaunch.OrynDownloadActivity"\n            android:screenOrientation="landscape"\n            android:configChanges="orientation|screenSize|keyboardHidden"\n            android:label="Oryn Downloads"\n            android:exported="false" />\n        <activity
             android:name="net.kdt.pojavlaunch.OrynFileManagerActivity"
             android:screenOrientation="landscape"
             android:label="Oryn File Manager" />
