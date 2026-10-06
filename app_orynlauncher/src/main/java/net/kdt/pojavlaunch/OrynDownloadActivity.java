@@ -300,7 +300,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                 gameVersions = value == null ? new ArrayList<String>() : value;
                 runOnUiThread(() -> {
                     List<String> values = new ArrayList<>();
-                    values.add("Use instance version");
+                    values.add("Select version");
                     values.addAll(gameVersions);
                     gameVersionSpinner.setAdapter(new ArrayAdapter<String>(
                             OrynDownloadActivity.this,
@@ -317,7 +317,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
 
                     int pos = current == null ? 0 : values.indexOf(current);
                     if (pos < 0) pos = 0;
-                    gameVersionSpinner.setSelection(pos);
+                    gameVersionSpinner.setSelection(pos, false);
                     versionsReady = true;
                     finishFilterSetupIfReady();
                 });
@@ -328,7 +328,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                     gameVersionSpinner.setAdapter(new ArrayAdapter<String>(
                             OrynDownloadActivity.this,
                             android.R.layout.simple_spinner_dropdown_item,
-                            new String[]{"Use instance version"}));
+                            new String[]{"Select version"}));
                     versionsReady = true;
                     finishFilterSetupIfReady();
                     Toast.makeText(OrynDownloadActivity.this,
@@ -366,24 +366,15 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private List<String> filterClientLoaders(List<String> source) {
+        // OrynLauncher only exposes the four supported client mod loaders.
+        // Do not mirror every loader tag returned by Modrinth (server loaders,
+        // niche loaders and project-specific tags make the selector confusing).
         List<String> result = new ArrayList<>();
-        if (source == null) return result;
-        for (String value : source) {
-            if (value == null || value.trim().isEmpty()) continue;
-            String loader = value.toLowerCase(Locale.ROOT);
-            if (isServerOnlyLoader(loader)) continue;
-            if (!result.contains(loader)) result.add(loader);
-        }
+        result.add("fabric");
+        result.add("forge");
+        result.add("neoforge");
+        result.add("quilt");
         return result;
-    }
-
-    private boolean isServerOnlyLoader(String loader) {
-        return "bukkit".equals(loader) || "spigot".equals(loader)
-                || "paper".equals(loader) || "purpur".equals(loader)
-                || "folia".equals(loader) || "bungeecord".equals(loader)
-                || "waterfall".equals(loader) || "velocity".equals(loader)
-                || "sponge".equals(loader) || "geyser".equals(loader)
-                || "datapack".equals(loader) || "plugin".equals(loader);
     }
 
     private void setLoaderItems(List<String> values) {
@@ -427,7 +418,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private String selectedVersion() {
         if (gameVersionSpinner == null || gameVersionSpinner.getSelectedItem() == null) return "";
         String value = String.valueOf(gameVersionSpinner.getSelectedItem());
-        return "Use instance version".equals(value) ? "" : value;
+        return "Select version".equals(value) ? "" : value;
     }
 
     private String selectedLoader() {
@@ -446,10 +437,11 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         if (!controlsReady || viewModel == null) return;
         String version = selectedVersion();
         if (version.isEmpty()) {
-            try {
-                Instance i = Instances.loadSelectedInstance();
-                if (i != null && i.minecraftVersion != null) version = i.minecraftVersion;
-            } catch (Throwable ignored) {}
+            // No implicit fallback here: the user must choose a real Minecraft
+            // version. This prevents the spinner from appearing selectable while
+            // the search silently keeps using the instance version.
+            status.setText("Select a Minecraft version");
+            return;
         }
         viewModel.setFilters(selectedCategory(), version, selectedLoader(),
                 search == null ? "" : search.getText().toString().trim());
