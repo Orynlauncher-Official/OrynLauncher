@@ -81,6 +81,13 @@ public final class OrynInstallationManager {
             throw new Exception("Could not create " + folder.getName() + " folder");
         }
 
+        String lower = filename.toLowerCase(java.util.Locale.ROOT);
+        boolean extensionOk = ("mod".equals(projectType) && lower.endsWith(".jar"))
+                || (("resourcepack".equals(projectType) || "shader".equals(projectType)) && lower.endsWith(".zip"));
+        if (!extensionOk) {
+            throw new Exception("Installation rejected: invalid file type for " + projectType);
+        }
+
         File destination = new File(folder, filename);
         File temporary = new File(folder, "." + filename + ".oryn-part");
         if (temporary.exists() && !temporary.delete()) {
@@ -110,10 +117,7 @@ public final class OrynInstallationManager {
         if (!downloadedFile.delete() && downloadedFile.exists()) {
             Log.w(TAG, "Installed file but could not clean download cache: " + downloadedFile);
         }
-        String lower = filename.toLowerCase(java.util.Locale.ROOT);
-        boolean extensionOk = ("mod".equals(projectType) && lower.endsWith(".jar"))
-                || (("resourcepack".equals(projectType) || "shader".equals(projectType)) && lower.endsWith(".zip"));
-        if (!extensionOk) throw new Exception("Installation verification failed: invalid file type");
+        // Extension was validated before the destination was touched.
         installedStore.markInstalled(gameDirectory, project.id, projectType, filename);
         OrynInstanceManager.recordInstalledContent(instance, projectType + ":" + project.id, filename);
         OrynInstanceManager.publishContentInstalled(new OrynInstanceContentEvent(
