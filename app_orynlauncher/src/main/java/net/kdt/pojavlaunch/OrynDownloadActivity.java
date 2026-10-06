@@ -712,9 +712,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
 
                 boolean canInstall = state.selectedVersion != null
                         && state.detailStatus == OrynDownloadState.DetailStatus.READY
-                        && (state.installState == null || !state.installState.busy);
+                        && (state.installState == null || state.installState.status == net.kdt.pojavlaunch.download.OrynInstallState.Status.IDLE || state.installState.status == net.kdt.pojavlaunch.download.OrynInstallState.Status.FAILED);
                 install.setEnabled(canInstall);
-                install.setText(state.installState != null && state.installState.installed
+                install.setText(state.installState != null && state.installState.status == net.kdt.pojavlaunch.download.OrynInstallState.Status.INSTALLED
                         ? "INSTALLED" : "INSTALL");
                 install.setOnClickListener(v -> {
                     if (state.selectedVersion == null || state.selectedProject == null) return;
