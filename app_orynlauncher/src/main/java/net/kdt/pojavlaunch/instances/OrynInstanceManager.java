@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import net.kdt.pojavlaunch.download.OrynInstanceContentScanner;
+import net.kdt.pojavlaunch.extra.ExtraConstants;
+import net.kdt.pojavlaunch.extra.ExtraCore;
 
 /**
  * Single ownership boundary for OrynLauncher instances.
@@ -55,6 +57,9 @@ public final class OrynInstanceManager {
     public static void publishContentInstalled(OrynInstanceContentEvent event) {
         if (event == null) return;
         refreshInstanceContent(event.instanceId);
+        // The instance selector listens for this signal. ExtraCore ignores null
+        // values, so always publish a concrete value for immediate UI refresh.
+        ExtraCore.setValue(ExtraConstants.REFRESH_VERSION_SPINNER, Boolean.TRUE);
         for (ContentListener listener : CONTENT_LISTENERS) {
             try { listener.onContentInstalled(event); } catch (Exception e) { Log.w(TAG, "Content listener failed", e); }
         }
