@@ -77,6 +77,17 @@ public final class OrynDownloadViewModel {
         search(true);
     }
 
+    private String compatibilityLoader(OrynDownloadState snapshot) {
+        if (snapshot == null) return "";
+        if (snapshot.category == OrynDownloadState.Category.MOD) return snapshot.loader;
+        if (snapshot.category == OrynDownloadState.Category.MODPACK
+                && snapshot.selectedInstance != null
+                && snapshot.selectedInstance.loaderType != null) {
+            return snapshot.selectedInstance.loaderType.toLowerCase(java.util.Locale.ROOT);
+        }
+        return "";
+    }
+
     private void search(final boolean append) {
         if (append) {
             synchronized (this) {
@@ -171,7 +182,7 @@ public final class OrynDownloadViewModel {
         final int generation;
         synchronized (this) { generation = searchGeneration; }
         repository.getProjectDetails(project, state.category.projectType,
-                state.minecraftVersion, state.category.usesLoader() ? state.loader : null,
+                state.minecraftVersion, compatibilityLoader(state),
                 new OrynContentRepository.Listener<OrynContentRepository.ProjectDetails>() {
                     @Override public void onSuccess(OrynContentRepository.ProjectDetails details) {
                         synchronized (OrynDownloadViewModel.this) {
@@ -197,7 +208,7 @@ public final class OrynDownloadViewModel {
             if (closed || version == null) return false;
             return repository.isCompatible(version, state.category.projectType,
                     state.minecraftVersion,
-                    state.category.usesLoader() ? state.loader : null);
+                    compatibilityLoader(state));
         }
     }
 
@@ -206,7 +217,8 @@ public final class OrynDownloadViewModel {
             if (closed || version == null) return false;
             return repository.isCompatible(version, state.category.projectType,
                     minecraftVersion,
-                    state.category.usesLoader() ? loader : null);
+                    state.category == OrynDownloadState.Category.MODPACK
+                            ? loader : (state.category.usesLoader() ? loader : null));
         }
     }
 
@@ -243,7 +255,7 @@ public final class OrynDownloadViewModel {
 
         if (!repository.isCompatible(snapshot.selectedVersion, snapshot.category.projectType,
                 snapshot.minecraftVersion,
-                snapshot.category.usesLoader() ? snapshot.loader : null)) {
+                compatibilityLoader(snapshot))) {
             synchronized (this) {
                 state = state.withInstallState(
                         OrynInstallState.failed("This version is not compatible with the selected instance"));
