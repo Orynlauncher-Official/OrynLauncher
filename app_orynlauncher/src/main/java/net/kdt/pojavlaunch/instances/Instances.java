@@ -168,7 +168,12 @@ public class Instances {
      * method during initialization.
      */
     private static Instance internalCreateInstance(InstanceSetter instanceSetter, String namePrefix) throws IOException{
-        File root = findNewInstanceRoot(namePrefix);
+        return internalCreateInstance(instanceSetter, namePrefix, false);
+    }
+
+    private static Instance internalCreateInstance(InstanceSetter instanceSetter, String namePrefix,
+                                                   boolean cleanDirectoryName) throws IOException{
+        File root = findNewInstanceRoot(namePrefix, cleanDirectoryName);
         FileUtils.ensureDirectory(root);
         Instance instance = new Instance();
         instance.mInstanceRoot = root;
@@ -194,7 +199,17 @@ public class Instances {
      * @throws IOException if directory creation/instance writing fails
      */
     public static Instance createInstance(InstanceSetter instanceSetter, String namePrefix) throws IOException {
-        return internalCreateInstance(instanceSetter, namePrefix);
+        return internalCreateInstance(instanceSetter, namePrefix, false);
+    }
+
+    /**
+     * Create an instance with a clean, human-readable directory name.
+     * This is used only for complete modpack installs so the File Manager
+     * reflects the actual modpack name instead of exposing an internal UUID.
+     */
+    public static Instance createInstance(InstanceSetter instanceSetter, String namePrefix,
+                                          boolean cleanDirectoryName) throws IOException {
+        return internalCreateInstance(instanceSetter, namePrefix, cleanDirectoryName);
     }
 
     /**
