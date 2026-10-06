@@ -76,10 +76,19 @@ public final class OrynDownloadState {
     }
 
     public static OrynDownloadState initial(Instance instance) {
+        String version = "";
+        String loader = "";
+        if (instance != null) {
+            version = instance.minecraftVersion == null
+                    ? (instance.versionId == null ? "" : instance.versionId)
+                    : instance.minecraftVersion;
+            loader = instance.loaderType == null
+                    ? "" : instance.loaderType.toLowerCase(java.util.Locale.ROOT);
+        }
         return new OrynDownloadState(
-                Category.MOD, "1.21.11", "fabric", "", instance,
+                Category.MOD, version, loader, "", instance,
                 Collections.<ModrinthProject>emptyList(), 0, 0, false,
-                ListStatus.IDLE, "Discovering Modrinth content…",
+                ListStatus.IDLE, "Select a category and start browsing.",
                 null, Collections.<ModrinthVersion>emptyList(), null,
                 DetailStatus.IDLE, "Select a project to view details.",
                 OrynInstallState.idle());
