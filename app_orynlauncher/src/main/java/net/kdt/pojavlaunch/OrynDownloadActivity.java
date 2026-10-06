@@ -288,7 +288,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         // taps an item.
         categorySpinner.setOnTouchListener((v, event) -> {
             if (event.getAction() != android.view.MotionEvent.ACTION_UP || !controlsReady) return true;
-            showChoiceDialog("Category", categoryNames(), selectedCategoryPosition, position -> {
+            showChoiceDialog("Category", java.util.Arrays.asList(categoryNames()), selectedCategoryPosition, position -> {
                 selectedCategoryPosition = position;
                 categorySpinner.setSelection(position, false);
                 refreshLoaderFilter();
