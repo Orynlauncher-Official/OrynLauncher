@@ -493,12 +493,19 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
     private List<String> loaderChoices() {
         ArrayList<String> values = new ArrayList<>();
-        if (category.usesLoader()) {
-            values.add("fabric");
-            values.add("forge");
-            values.add("neoforge");
-            values.add("quilt");
+        if (!category.usesLoader()) return values;
+
+        // Follow the selected Minecraft instance's loader.
+        if (selectedInstance != null) {
+            String loader = currentLoader();
+            if (!loader.isEmpty()) values.add(loader);
+            return values;
         }
+
+        values.add("fabric");
+        values.add("forge");
+        values.add("neoforge");
+        values.add("quilt");
         return values;
     }
 
