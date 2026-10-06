@@ -38,6 +38,7 @@ import net.kdt.pojavlaunch.extra.ExtraCore;
 import net.kdt.pojavlaunch.instances.DisplayInstance;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
+import net.kdt.pojavlaunch.download.OrynInstanceContentScanner;
 import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
 import net.kdt.pojavlaunch.utils.FileUtils;
 
@@ -140,6 +141,17 @@ public class MainMenuFragment extends Fragment {
     public void onResume() {
         super.onResume();
         ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+
+        // Refresh installed Mods/Resource Packs/Shaders immediately when the
+        // launcher screen becomes visible again. Downloads happen on a worker
+        // thread, so relying on a full activity restart can otherwise leave
+        // stale content counts/lists until the user closes and reopens the app.
+        try {
+            Instance selected = Instances.loadSelectedInstance();
+            if (selected != null) OrynInstanceContentScanner.refreshAsync(selected);
+        } catch (Throwable ignored) {
+            // Content refresh is non-critical to launcher startup.
+        }
     }
 
     private void runInstallerWithConfirmation() {
