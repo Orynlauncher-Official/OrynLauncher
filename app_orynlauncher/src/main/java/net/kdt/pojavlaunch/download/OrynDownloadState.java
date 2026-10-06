@@ -22,7 +22,10 @@ public final class OrynDownloadState {
         }
 
         public boolean usesLoader() {
-            return this == MOD || this == MODPACK;
+            // A loader is a user-selectable filter only for Mods. Modpacks may
+            // contain loader metadata, but browsing them must never require a
+            // manually selected loader.
+            return this == MOD;
         }
     }
 
