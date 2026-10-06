@@ -417,11 +417,11 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         }
 
         String[] names = new String[instances.size()];
-        for (int i = 0; i < instances.size(); i++) {
-            Instance i = instances.get(i);
-            names[i] = (i.name == null ? "Instance" : i.name) + "  •  "
-                    + (i.minecraftVersion == null ? i.versionId : i.minecraftVersion)
-                    + "  •  " + (i.loaderType == null ? "Vanilla" : i.loaderType);
+        for (int index = 0; index < instances.size(); index++) {
+            Instance instance = instances.get(index);
+            names[index] = (instance.name == null ? "Instance" : instance.name) + "  •  "
+                    + (instance.minecraftVersion == null ? instance.versionId : instance.minecraftVersion)
+                    + "  •  " + (instance.loaderType == null ? "Vanilla" : instance.loaderType);
         }
 
         new AlertDialog.Builder(this)
@@ -517,7 +517,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         super.onDestroy();
     }
 
-    private final class ProjectAdapter extends RecyclerView.Adapter<ProjectHolder> {
+    private final class ProjectAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
         private final List<ModrinthProject> items = new ArrayList<>();
         private OrynDownloadState state;
         private String expandedId;
@@ -538,8 +538,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
             return new ProjectHolder(createCard(parent));
         }
 
-        @Override public void onBindViewHolder(ProjectHolder holder, int position) {
-            holder.bind(items.get(position), items.get(position).id != null
+        @Override public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+            ProjectHolder projectHolder = (ProjectHolder) holder;
+            projectHolder.bind(items.get(position), items.get(position).id != null
                     && items.get(position).id.equals(expandedId));
         }
 
