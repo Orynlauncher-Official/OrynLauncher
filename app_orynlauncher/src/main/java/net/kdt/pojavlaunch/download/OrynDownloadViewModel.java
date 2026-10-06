@@ -79,12 +79,11 @@ public final class OrynDownloadViewModel {
 
     private String compatibilityLoader(OrynDownloadState snapshot) {
         if (snapshot == null) return "";
+        // Modrinth modpacks are complete instances. Their loader is defined by
+        // modrinth.index.json and must not be constrained by the currently
+        // selected instance's loader because that instance is never the target.
+        if (snapshot.category == OrynDownloadState.Category.MODPACK) return "";
         if (snapshot.category == OrynDownloadState.Category.MOD) return snapshot.loader;
-        if (snapshot.category == OrynDownloadState.Category.MODPACK
-                && snapshot.selectedInstance != null
-                && snapshot.selectedInstance.loaderType != null) {
-            return snapshot.selectedInstance.loaderType.toLowerCase(java.util.Locale.ROOT);
-        }
         return "";
     }
 
