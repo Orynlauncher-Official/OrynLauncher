@@ -71,6 +71,8 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     private final Handler handler = new Handler();
     private Runnable searchRunnable;
     private boolean controlsReady;
+    private boolean versionsReady;
+    private boolean loadersReady;
     private boolean installingAfterTargetChoice;
     private String pendingProjectId;
     private String pendingVersionId;
@@ -187,7 +189,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(54), 1));
 
         categorySpinner = spinner();
-        searchRow.addView(categorySpinner, new LinearLayout.LayoutParams(dp(150), dp(54)));
+        searchRow.addView(categorySpinner, new LinearLayout.LayoutParams(dp(190), dp(54)));
         root.addView(searchRow);
 
         LinearLayout filters = new LinearLayout(this);
@@ -199,7 +201,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         filters.addView(label("Minecraft", 10), new LinearLayout.LayoutParams(dp(76), dp(42)));
         filters.addView(gameVersionSpinner, new LinearLayout.LayoutParams(0, dp(42), 1));
         filters.addView(label("Loader", 10), new LinearLayout.LayoutParams(dp(58), dp(42)));
-        filters.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(125), dp(42)));
+        filters.addView(loaderSpinner, new LinearLayout.LayoutParams(dp(165), dp(42)));
         root.addView(filters);
 
         status = text("Loading Modrinth content…", 10, 0xFF858691);
@@ -226,6 +228,7 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         importButton.setTextSize(12);
         importButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
         importButton.setBackground(bg(0xFF24202F, 18));
+        importButton.setVisibility(View.GONE);
         importButton.setOnClickListener(v -> pickLocalModpack());
         LinearLayout.LayoutParams importLp = new LinearLayout.LayoutParams(-1, dp(52));
         importLp.setMargins(dp(14), dp(2), dp(14), dp(12));
@@ -239,6 +242,8 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
         categorySpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
                 if (!controlsReady) return;
+                refreshLoaderFilter();
+                updateImportButton();
                 runSearch();
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p) {}
@@ -286,67 +291,149 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
     }
 
     private void loadFilterValues() {
+        versionsReady = false;
+        loadersReady = false;
+        controlsReady = false;
+
         repository.loadGameVersions(new OrynContentRepository.Listener<List<String>>() {
             @Override public void onSuccess(List<String> value) {
                 gameVersions = value == null ? new ArrayList<String>() : value;
                 runOnUiThread(() -> {
                     List<String> values = new ArrayList<>();
-                    values.add("Select version");
+                    values.add("Use instance version");
                     values.addAll(gameVersions);
-                    gameVersionSpinner.setAdapter(new ArrayAdapter<String>(OrynDownloadActivity.this,
+                    gameVersionSpinner.setAdapter(new ArrayAdapter<String>(
+                            OrynDownloadActivity.this,
                             android.R.layout.simple_spinner_dropdown_item, values));
+
                     String current = null;
                     try {
-                        Instance i = Instances.loadSelectedInstance();
-                        if (i != null) current = i.minecraftVersion;
+                        Instance selected = Instances.loadSelectedInstance();
+                        if (selected != null) {
+                            current = selected.minecraftVersion == null
+                                    ? selected.versionId : selected.minecraftVersion;
+                        }
                     } catch (Throwable ignored) {}
+
                     int pos = current == null ? 0 : values.indexOf(current);
                     if (pos < 0) pos = 0;
                     gameVersionSpinner.setSelection(pos);
+                    versionsReady = true;
+                    finishFilterSetupIfReady();
                 });
             }
+
             @Override public void onError(Exception error) {
-                runOnUiThread(() -> Toast.makeText(OrynDownloadActivity.this,
-                        "Could not load Minecraft versions", Toast.LENGTH_SHORT).show());
+                runOnUiThread(() -> {
+                    gameVersionSpinner.setAdapter(new ArrayAdapter<String>(
+                            OrynDownloadActivity.this,
+                            android.R.layout.simple_spinner_dropdown_item,
+                            new String[]{"Use instance version"}));
+                    versionsReady = true;
+                    finishFilterSetupIfReady();
+                    Toast.makeText(OrynDownloadActivity.this,
+                            "Could not load Minecraft versions", Toast.LENGTH_SHORT).show();
+                });
             }
         });
 
         repository.loadLoaders(new OrynContentRepository.Listener<List<String>>() {
             @Override public void onSuccess(List<String> value) {
-                loaders = value == null ? new ArrayList<String>() : value;
+                loaders = value == null ? new ArrayList<String>() : filterClientLoaders(value);
                 runOnUiThread(() -> {
-                    List<String> values = new ArrayList<>();
-                    values.add("Any loader");
-                    values.addAll(loaders);
-                    loaderSpinner.setAdapter(new ArrayAdapter<String>(OrynDownloadActivity.this,
-                            android.R.layout.simple_spinner_dropdown_item, values));
-                    loaderSpinner.setSelection(0);
-                    controlsReady = true;
-                    runSearch();
+                    setLoaderItems(loaders);
+                    loadersReady = true;
+                    finishFilterSetupIfReady();
                 });
             }
+
             @Override public void onError(Exception error) {
                 runOnUiThread(() -> {
-                    loaderSpinner.setAdapter(new ArrayAdapter<String>(OrynDownloadActivity.this,
-                            android.R.layout.simple_spinner_dropdown_item,
-                            new String[]{"Any loader", "fabric", "forge", "neoforge", "quilt"}));
-                    controlsReady = true;
-                    runSearch();
+                    setLoaderItems(new ArrayList<String>());
+                    loadersReady = true;
+                    finishFilterSetupIfReady();
                 });
             }
         });
     }
 
+    private void finishFilterSetupIfReady() {
+        if (!versionsReady || !loadersReady) return;
+        controlsReady = true;
+        refreshLoaderFilter();
+        updateImportButton();
+        runSearch();
+    }
+
+    private List<String> filterClientLoaders(List<String> source) {
+        List<String> result = new ArrayList<>();
+        if (source == null) return result;
+        for (String value : source) {
+            if (value == null || value.trim().isEmpty()) continue;
+            String loader = value.toLowerCase(Locale.ROOT);
+            if (isServerOnlyLoader(loader)) continue;
+            if (!result.contains(loader)) result.add(loader);
+        }
+        return result;
+    }
+
+    private boolean isServerOnlyLoader(String loader) {
+        return "bukkit".equals(loader) || "spigot".equals(loader)
+                || "paper".equals(loader) || "purpur".equals(loader)
+                || "folia".equals(loader) || "bungeecord".equals(loader)
+                || "waterfall".equals(loader) || "velocity".equals(loader)
+                || "sponge".equals(loader) || "geyser".equals(loader)
+                || "datapack".equals(loader) || "plugin".equals(loader);
+    }
+
+    private void setLoaderItems(List<String> values) {
+        List<String> items = new ArrayList<>();
+        if (selectedCategory().usesLoader()) {
+            items.add("Any loader");
+            if (values != null) items.addAll(values);
+        } else {
+            items.add("Not applicable");
+        }
+        loaderSpinner.setAdapter(new ArrayAdapter<String>(
+                OrynDownloadActivity.this,
+                android.R.layout.simple_spinner_dropdown_item, items));
+        loaderSpinner.setSelection(0);
+    }
+
+    private void refreshLoaderFilter() {
+        boolean enabled = selectedCategory().usesLoader();
+        loaderSpinner.setEnabled(enabled);
+        if (!enabled) {
+            List<String> items = new ArrayList<>();
+            items.add("Not applicable");
+            loaderSpinner.setAdapter(new ArrayAdapter<String>(
+                    OrynDownloadActivity.this,
+                    android.R.layout.simple_spinner_dropdown_item, items));
+            loaderSpinner.setSelection(0);
+        } else if (loaderSpinner.getAdapter() == null
+                || loaderSpinner.getAdapter().getCount() <= 1
+                || "Not applicable".equals(String.valueOf(loaderSpinner.getSelectedItem()))) {
+            setLoaderItems(loaders);
+        }
+    }
+
+    private void updateImportButton() {
+        if (importButton != null) {
+            importButton.setVisibility(
+                    selectedCategory() == OrynDownloadState.Category.MODPACK ? View.VISIBLE : View.GONE);
+        }
+    }
+
     private String selectedVersion() {
         if (gameVersionSpinner == null || gameVersionSpinner.getSelectedItem() == null) return "";
         String value = String.valueOf(gameVersionSpinner.getSelectedItem());
-        return "Select version".equals(value) ? "" : value;
+        return "Use instance version".equals(value) ? "" : value;
     }
 
     private String selectedLoader() {
         if (loaderSpinner == null || loaderSpinner.getSelectedItem() == null) return "";
         String value = String.valueOf(loaderSpinner.getSelectedItem());
-        return "Any loader".equals(value) ? "" : value.toLowerCase(Locale.ROOT);
+        return "Any loader".equals(value) || "Not applicable".equals(value) ? "" : value.toLowerCase(Locale.ROOT);
     }
 
     private OrynDownloadState.Category selectedCategory() {
@@ -555,6 +642,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
             card.setPadding(dp(8), dp(7), dp(8), dp(8));
             card.setBackground(bg(0xFF0E0D14, 4));
             card.setClickable(true);
+            RecyclerView.LayoutParams cardLp = new RecyclerView.LayoutParams(-1, -2);
+            cardLp.bottomMargin = dp(8);
+            card.setLayoutParams(cardLp);
 
             LinearLayout summary = new LinearLayout(parent.getContext());
             summary.setGravity(Gravity.CENTER_VERTICAL);
@@ -645,7 +735,9 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                 author.setText("by " + safe(project.author));
                 desc.setText(project.description == null || project.description.isEmpty()
                         ? "No description available." : project.description);
-                meta.setText("Minecraft " + first(project.gameVersions)
+                String activeVersion = state == null || state.minecraftVersion == null || state.minecraftVersion.isEmpty()
+                        ? first(project.gameVersions) : state.minecraftVersion;
+                meta.setText("Minecraft " + activeVersion
                         + "  •  " + compact(project.downloads) + " downloads");
 
                 icon.setTag(project.iconUrl);
