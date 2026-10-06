@@ -118,6 +118,7 @@ public final class OrynInstallationManager {
         OrynInstanceManager.recordInstalledContent(instance, projectType + ":" + project.id, filename);
         OrynInstanceManager.publishContentInstalled(new OrynInstanceContentEvent(
                 instance.id, projectType, filename, project.id, version.id));
+        OrynInstanceContentScanner.refreshAsync(instance);
         Log.d(TAG, "[ORYN-DOWNLOAD] destination=" + destination.getAbsolutePath()
                 + " downloaded=true installed=true fileExists=" + destination.isFile());
     }
