@@ -406,6 +406,18 @@ public class OrynDownloadActivity extends AppCompatActivity implements OrynDownl
                         }
                     } catch (Throwable ignored) {}
 
+                    // Keep the active instance version selectable even when
+                    // Modrinth tags it as a snapshot/beta or the tag list is temporarily
+                    // incomplete. The search API can still filter projects by that exact
+                    // version, so falling back to "Select version" would make the entire
+                    // Mods tab appear empty for affected instances.
+                    if (current != null && !current.isEmpty() && !values.contains(current)) {
+                        values.add(1, current);
+                        gameVersionSpinner.setAdapter(new ArrayAdapter<String>(
+                                OrynDownloadActivity.this,
+                                android.R.layout.simple_spinner_dropdown_item, values));
+                    }
+
                     int pos = current == null ? 0 : values.indexOf(current);
                     if (pos < 0) pos = 0;
                     gameVersionSpinner.setSelection(pos, false);
