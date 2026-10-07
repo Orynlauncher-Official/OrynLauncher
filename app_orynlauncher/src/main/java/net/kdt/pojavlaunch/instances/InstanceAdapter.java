@@ -7,8 +7,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import androidx.core.graphics.ColorUtils;
-
 import git.artdeell.mojo.R;
 
 import net.kdt.pojavlaunch.Tools;
@@ -92,10 +90,9 @@ public class InstanceAdapter extends BaseAdapter {
             extendedTextView.setText(versionName);
         else extendedTextView.setText(String.format("%s - %s", profileName, versionName));
 
-        // Instance rows must remain readable in every Oryn theme.
-        // The theme manager deliberately skips this row, and this explicit
-        // color also protects recycled Spinner views from inherited styling.
-        extendedTextView.setTextColor(Color.WHITE);
+        // Instance/profile text is always cyan, regardless of the selected Oryn theme.
+        // Set it here on every bind so recycled Spinner rows cannot inherit another color.
+        extendedTextView.setTextColor(Color.CYAN);
 
         // Set selected background if needed
         if(idx == mSelectionIndex && displaySelection) {
@@ -109,6 +106,7 @@ public class InstanceAdapter extends BaseAdapter {
         ExtendedTextView extendedTextView = (ExtendedTextView) v;
         extendedTextView.setCompoundDrawablesRelative(extra.icon, null, extendedTextView.getCompoundsDrawables()[2], null);
         extendedTextView.setText(extra.name);
+        extendedTextView.setTextColor(Color.CYAN);
         extendedTextView.setSelected(false);
     }
 
