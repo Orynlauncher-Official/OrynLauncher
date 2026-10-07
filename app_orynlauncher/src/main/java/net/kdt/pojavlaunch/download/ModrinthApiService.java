@@ -44,6 +44,28 @@ public final class ModrinthApiService {
                 ? response.getAsJsonArray("hits") : new JsonArray();
         int total = response.has("total_hits") ? response.get("total_hits").getAsInt() : 0;
 
+        // Modrinth's loader tags are represented through the categories facet.
+        // Some API/cache combinations can return an empty page for a valid
+        // loader facet even though matching projects exist. Retry once without
+        // the loader facet in that case; the project metadata below still
+        // validates the requested loader before exposing a result.
+        if (loader != null && !loader.isEmpty() && hits.size() == 0) {
+            String fallbackFacets = buildFacets(projectType, minecraftVersion, null);
+            StringBuilder fallbackUrl = new StringBuilder(BASE).append("/search");
+            fallbackUrl.append("?query=").append(encode(query == null ? "" : query));
+            fallbackUrl.append("&limit=").append(limit);
+            fallbackUrl.append("&offset=").append(offset);
+            fallbackUrl.append("&index=relevance");
+            fallbackUrl.append("&facets=").append(encode(fallbackFacets));
+
+            Log.w(TAG, "Loader-filtered Modrinth search returned 0 results for "
+                    + loader + "; retrying without loader facet and validating locally");
+            response = getObject(fallbackUrl.toString());
+            hits = response.has("hits") && response.get("hits").isJsonArray()
+                    ? response.getAsJsonArray("hits") : new JsonArray();
+            total = response.has("total_hits") ? response.get("total_hits").getAsInt() : 0;
+        }
+
         List<ModrinthProject> projects = new ArrayList<>();
         for (JsonElement element : hits) {
             if (!element.isJsonObject()) continue;
