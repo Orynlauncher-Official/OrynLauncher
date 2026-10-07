@@ -52,6 +52,11 @@ public final class OrynThemeManager {
     private static void applyView(View view, int color) {
         int id = view.getId();
 
+        // Instance/profile rows have their own dark background and white text.
+        // Never recolor them with the user's accent: black/monochrome themes
+        // otherwise turn the instance name black on a dark/white selectable row.
+        if (id == R.id.instance_profile_item) return;
+
         // V4 has its own fixed blue visual language from the reference design.
         // Do not let the legacy/custom accent preference recolor the V4 home screen.
         if (id == R.id.fragment_menu_main || id == R.id.oryn_brand || id == R.id.account_spinner) {
