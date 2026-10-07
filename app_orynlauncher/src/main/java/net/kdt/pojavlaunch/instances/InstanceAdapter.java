@@ -92,6 +92,11 @@ public class InstanceAdapter extends BaseAdapter {
             extendedTextView.setText(versionName);
         else extendedTextView.setText(String.format("%s - %s", profileName, versionName));
 
+        // Instance rows must remain readable in every Oryn theme.
+        // The theme manager deliberately skips this row, and this explicit
+        // color also protects recycled Spinner views from inherited styling.
+        extendedTextView.setTextColor(Color.WHITE);
+
         // Set selected background if needed
         if(idx == mSelectionIndex && displaySelection) {
             extendedTextView.setSelected(true);
