@@ -1,6 +1,9 @@
 package net.kdt.pojavlaunch.profiles;
 
 import android.content.Context;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -103,20 +106,48 @@ public class VersionListAdapter extends BaseExpandableListAdapter implements Exp
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
-        if(convertView == null)
-            convertView = mLayoutInflater.inflate(android.R.layout.simple_expandable_list_item_1, parent, false);
-
-        ((TextView) convertView).setText(mGroups[groupPosition]);
-
-        return convertView;
+        TextView view = createRow(convertView, parent);
+        view.setText(mGroups[groupPosition]);
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(16);
+        view.setTypeface(Typeface.DEFAULT, Typeface.NORMAL);
+        view.setGravity(Gravity.CENTER);
+        view.setBackgroundColor(Color.TRANSPARENT);
+        view.setPadding(dp(parent.getContext(), 8), dp(parent.getContext(), 10),
+                dp(parent.getContext(), 8), dp(parent.getContext(), 10));
+        view.setMinHeight(dp(parent.getContext(), 56));
+        return view;
     }
 
     @Override
     public View getChildView(int groupPosition, int childPosition, boolean isLastChild, View convertView, ViewGroup parent) {
-        if(convertView == null)
-            convertView = mLayoutInflater.inflate(android.R.layout.simple_expandable_list_item_1, parent, false);
-        ((TextView) convertView).setText(getChild(groupPosition, childPosition));
-        return convertView;
+        TextView view = createRow(convertView, parent);
+        view.setText(getChild(groupPosition, childPosition));
+        view.setTextColor(Color.WHITE);
+        view.setTextSize(14);
+        view.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        view.setPadding(dp(parent.getContext(), 24), dp(parent.getContext(), 10),
+                dp(parent.getContext(), 16), dp(parent.getContext(), 10));
+        view.setMinHeight(dp(parent.getContext(), 52));
+        view.setBackgroundColor(Color.rgb(28, 28, 28));
+        return view;
+    }
+
+    private TextView createRow(View convertView, ViewGroup parent) {
+        if (convertView instanceof TextView) {
+            return (TextView) convertView;
+        }
+        TextView view = new TextView(parent.getContext());
+        view.setLayoutParams(new ExpandableListView.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT));
+        view.setIncludeFontPadding(false);
+        view.setSingleLine(true);
+        return view;
+    }
+
+    private static int dp(Context context, int value) {
+        return (int) (value * context.getResources().getDisplayMetrics().density + 0.5f);
     }
 
     @Override
