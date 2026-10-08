@@ -145,7 +145,7 @@ jobs:
               raise SystemExit(0)
           success = os.environ.get("BUILD_RESULT") == "success"
           emoji = "✅" if success else "❌"
-          title = "OrynLauncher V4 Build Successful" if success else "OrynLauncher V4 Build Failed"
+          title = "OrynLauncher V5 Build Successful" if success else "OrynLauncher V5 Build Failed"
           try:
               with open("out/build-debug.log", "r", encoding="utf-8", errors="replace") as f: log = f.read()
           except FileNotFoundError:
