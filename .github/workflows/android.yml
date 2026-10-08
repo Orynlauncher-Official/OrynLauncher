@@ -118,7 +118,7 @@ jobs:
             sleep 15
           done
           if [ "$build_status" -ne 0 ]; then exit "$build_status"; fi
-          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/orynlauncher-x64armb.apk
+          mv app_orynlauncher/build/outputs/apk/full/debug/app_orynlauncher-full-debug.apk out/OrynLauncherV5-Debug.apk
 
       - name: Upload Debug Build Log
         if: always()
