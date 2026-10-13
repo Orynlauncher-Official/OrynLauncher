@@ -129,7 +129,7 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
         reload();
 
         // V4 uses the rounded Oryn account pill instead of the legacy rectangular spinner background.
-        setBackgroundResource(R.drawable.oryn_account_pill);
+        setBackgroundColor(Color.TRANSPARENT);
         mLoginBarPaint.setColor(getResources().getColor(R.color.minebutton_color));
         mLoginBarPaint.setStrokeWidth(getResources().getDimensionPixelOffset(R.dimen._2sdp));
         mLoginStepAnimator.addUpdateListener(this);

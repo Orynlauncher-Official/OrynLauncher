@@ -29,56 +29,6 @@
         <ImageButton android:id="@+id/install_jar_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Settings" android:background="@android:color/transparent" android:padding="8dp"/>
     </LinearLayout>
 
-    <!-- Header row matching the Oryn Launcher Plus reference design. -->
-    <TextView
-        android:id="@+id/oryn_plus_title"
-        android:layout_width="wrap_content"
-        android:layout_height="34dp"
-        android:gravity="center_vertical"
-        android:text="Oryn Launcher Plus"
-        android:textColor="#4C9BFF"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_marginStart="10dp"
-        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <LinearLayout
-        android:id="@+id/oryn_account_header"
-        android:layout_width="230dp"
-        android:layout_height="36dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="10dp"
-        android:paddingEnd="10dp"
-        android:background="@drawable/oryn_account_pill"
-        android:clickable="true"
-        android:focusable="true"
-        android:contentDescription="Account selector"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/oryn_nav_home"
-            android:contentDescription="Account" />
-        <TextView
-            android:id="@+id/oryn_account_header_name"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Raze"
-            android:textColor="#F4F7FC"
-            android:textSize="14sp" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="⌄"
-            android:textColor="#4C9BFF"
-            android:textSize="16sp" />
-    </LinearLayout>
-
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/oryn_launch_group"
         android:layout_width="0dp"

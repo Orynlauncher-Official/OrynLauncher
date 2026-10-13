@@ -399,7 +399,7 @@ public class LauncherActivity extends BaseActivity {
         View discordButton = findViewById(R.id.oryn_discord_button);
         View youtubeButton = findViewById(R.id.oryn_youtube_button);
         View websiteButton = findViewById(R.id.oryn_website_button);
-        if (discordButton != null) discordButton.setOnClickListener(v -> openSocialLink("https://discord.gg/PwNYmrCKtu"));
+        if (discordButton != null) discordButton.setOnClickListener(v -> openSocialLink("https://discord.gg/wA9PSxhMsh"));
         if (youtubeButton != null) youtubeButton.setOnClickListener(v -> openSocialLink("https://youtube.com/@orynlauncher?si=zhYUMv53VnIpFm2H"));
         if (websiteButton != null) websiteButton.setOnClickListener(v -> openSocialLink("https://github.com/Orynlauncher-Official/OrynLauncher"));
     }
