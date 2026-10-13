@@ -86,17 +86,7 @@
             android:padding="10dp"/>
     </LinearLayout>
 
-    <!-- Header -->
-    <ImageView
-        android:id="@+id/oryn_center_logo"
-        android:layout_width="28dp"
-        android:layout_height="34dp"
-        android:src="@drawable/oryn_official_logo_v4"
-        android:scaleType="fitCenter"
-        android:contentDescription="Oryn Launcher Plus"
-        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="14dp"/>
+    <!-- Single clean header title; logo asset already contains its own wordmark. -->
     <TextView
         android:id="@+id/oryn_plus_title"
         android:layout_width="wrap_content"
@@ -106,9 +96,9 @@
         android:textColor="#EAF1FC"
         android:textStyle="bold"
         android:textSize="18sp"
-        app:layout_constraintStart_toEndOf="@id/oryn_center_logo"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="8dp"/>
+        android:layout_marginStart="14dp"/>
     <ImageButton
         android:id="@+id/social_media_button"
         android:layout_width="34dp"
@@ -144,26 +134,20 @@
         android:background="@drawable/oryn_home_bg"
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
-        app:layout_constraintTop_toBottomOf="@id/oryn_center_logo"
+        app:layout_constraintTop_toBottomOf="@id/oryn_plus_title"
         app:layout_constraintBottom_toTopOf="@id/oryn_status_card">
 
         <FrameLayout
             android:id="@+id/oryn_custom_player_image"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="#14263D"
+            android:background="@drawable/ic_setting_sign_in_background"
+            android:clipToOutline="true"
             app:layout_constraintWidth_percent="0.43"
             app:layout_constraintHeight_percent="0.88"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
-            <ImageView
-                android:layout_width="76dp"
-                android:layout_height="96dp"
-                android:layout_gravity="center"
-                android:src="@drawable/oryn_official_logo_v4"
-                android:scaleType="fitCenter"
-                android:contentDescription="Oryn Plus artwork"/>
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -295,7 +279,7 @@
         android:background="@drawable/oryn_home_bg"
         app:layout_constraintWidth_percent="0.27"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/oryn_center_logo"
+        app:layout_constraintTop_toBottomOf="@id/oryn_plus_title"
         app:layout_constraintBottom_toTopOf="@id/oryn_status_card"
         android:layout_marginTop="10dp"
         android:layout_marginStart="4dp"
@@ -326,7 +310,9 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="14dp"
+            android:minHeight="58dp"
+            android:gravity="center_vertical"
             android:padding="12dp"
             android:background="@drawable/oryn_pill"
             android:text="🟩  Default\n      Minecraft • Forge"
@@ -336,6 +322,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:minHeight="58dp"
+            android:gravity="center_vertical"
             android:padding="12dp"
             android:background="@drawable/oryn_account_pill"
             android:text="🟩  Survival\n      Minecraft • Fabric"
