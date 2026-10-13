@@ -98,27 +98,17 @@
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="14dp"/>
     <TextView
+        android:id="@+id/oryn_plus_title"
         android:layout_width="wrap_content"
         android:layout_height="34dp"
         android:gravity="center_vertical"
-        android:text="Oryn Launcher "
+        android:text="Oryn Launcher Plus"
         android:textColor="#EAF1FC"
         android:textStyle="bold"
         android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@id/oryn_center_logo"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="8dp"/>
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="34dp"
-        android:gravity="center_vertical"
-        android:text="Plus"
-        android:textColor="#168FFF"
-        android:textStyle="bold"
-        android:textSize="18sp"
-        app:layout_constraintStart_toEndOf="@id/oryn_center_logo"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginStart="124dp"/>
     <ImageButton
         android:id="@+id/social_media_button"
         android:layout_width="34dp"
