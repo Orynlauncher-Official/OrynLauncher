@@ -34,7 +34,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="48dp"
+        android:layout_marginTop="45dp"
         android:layout_marginEnd="5dp"
         android:layout_marginBottom="5dp"
         android:padding="8dp"
@@ -61,7 +61,8 @@
                 android:layout_gravity="bottom"
                 android:padding="8dp"
                 android:background="#CC060B14"
-                android:text="Selected Minecraft instance"
+                android:id="@+id/oryn_selected_instance_name"
+                android:text="Selected instance"
                 android:textColor="#F4F7FC"
                 android:textStyle="bold"
                 android:textSize="11sp"/>
@@ -100,12 +101,12 @@
                 android:layout_marginTop="8dp"
                 android:background="@drawable/oryn_version_badge">
                 <ImageView android:layout_width="20dp" android:layout_height="20dp" android:layout_gravity="start|center_vertical" android:layout_marginStart="8dp" android:src="@drawable/oryn_nav_cube" android:contentDescription="Minecraft version"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="36dp" android:layout_marginTop="6dp" android:text="Minecraft version" android:textColor="#B9C7DB" android:textSize="10sp"/>
-                <TextView android:id="@+id/oryn_selected_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="36dp" android:layout_marginTop="23dp" android:text="Select version" android:textColor="#FFFFFF" android:textSize="11sp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="36dp" android:layout_marginTop="6dp" android:text="SELECTED VERSION" android:textColor="#B9C7DB" android:textSize="10sp"/>
+                <TextView android:id="@+id/oryn_selected_version" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="36dp" android:layout_marginTop="23dp" android:text="Choose a version" android:textColor="#FFFFFF" android:textSize="11sp"/>
                 <com.kdt.mcgui.mcVersionSpinner android:id="@+id/mc_version_spinner" android:tag="oryn_plus" android:layout_width="match_parent" android:layout_height="match_parent" android:alpha="0.01" android:background="@android:color/transparent" android:contentDescription="Select Minecraft version"/>
                 <ImageButton android:id="@+id/edit_profile_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" android:contentDescription="Edit selected profile"/>
             </FrameLayout>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Select a version above to configure your launch." android:textColor="#8194B0" android:textSize="10sp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Choose a profile and press Launch to start Minecraft." android:textColor="#8194B0" android:textSize="10sp"/>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -127,12 +128,93 @@
             <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Instances" android:textColor="#EAF1FC" android:textSize="13sp" android:textStyle="bold"/>
             <ImageButton android:id="@+id/open_files_button" android:layout_width="28dp" android:layout_height="28dp" android:src="@drawable/ic_add" android:contentDescription="Add or manage instances" android:background="@drawable/oryn_pill" android:padding="6dp"/>
         </LinearLayout>
-        <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="false" android:overScrollMode="never">
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:minHeight="46dp" android:gravity="center_vertical" android:padding="8dp" android:background="@drawable/oryn_pill" android:text="Current selected version\nManage versions with the selector" android:textColor="#F0F5FC" android:textSize="10sp"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:padding="8dp" android:background="@drawable/oryn_account_pill" android:text="Launch options\nConfigure your profile in settings" android:textColor="#C6D2E5" android:textSize="10sp"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:padding="8dp" android:background="@drawable/oryn_account_pill" android:text="News\nCheck the official Oryn announcements" android:textColor="#C6D2E5" android:textSize="10sp"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:padding="8dp" android:background="@drawable/oryn_account_pill" android:text="About Oryn Launcher Plus" android:textColor="#C6D2E5" android:textSize="10sp"/>
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="6dp"
+            android:fillViewport="false"
+            android:overScrollMode="never">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="ACTIVE INSTANCE"
+                    android:textColor="#8194B0"
+                    android:textSize="9sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/oryn_instance_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:minHeight="42dp"
+                    android:gravity="center_vertical"
+                    android:padding="9dp"
+                    android:background="@drawable/oryn_pill"
+                    android:text="Loading instance…"
+                    android:textColor="#F0F5FC"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="GAME VERSION"
+                    android:textColor="#8194B0"
+                    android:textSize="9sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:id="@+id/oryn_instance_version"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:padding="9dp"
+                    android:background="@drawable/oryn_account_pill"
+                    android:text="Select from the version card"
+                    android:textColor="#C6D2E5"
+                    android:textSize="10sp"
+                    android:maxLines="2"
+                    android:ellipsize="end"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="QUICK ACTIONS"
+                    android:textColor="#8194B0"
+                    android:textSize="9sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:padding="9dp"
+                    android:background="@drawable/oryn_account_pill"
+                    android:text="Downloads  •  Files  •  Controls"
+                    android:textColor="#C6D2E5"
+                    android:textSize="10sp"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="ORYNLAUNCHER PLUS"
+                    android:textColor="#8194B0"
+                    android:textSize="9sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:padding="9dp"
+                    android:background="@drawable/oryn_account_pill"
+                    android:text="Choose a profile, check the version, then launch."
+                    android:textColor="#C6D2E5"
+                    android:textSize="10sp"/>
             </LinearLayout>
         </ScrollView>
     </LinearLayout>

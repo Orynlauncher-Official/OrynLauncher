@@ -73,13 +73,40 @@ public class MainMenuFragment extends Fragment {
         Button mPlayButton = view.findViewById(R.id.play_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
         TextView mSelectedVersion = view.findViewById(R.id.oryn_selected_version);
+        TextView mSelectedInstanceName = view.findViewById(R.id.oryn_selected_instance_name);
+        TextView mInstanceName = view.findViewById(R.id.oryn_instance_name);
+        TextView mInstanceVersion = view.findViewById(R.id.oryn_instance_version);
+        // Populate the Plus home screen from the launcher's persisted selected profile.
+        try {
+            Instance selectedInstance = Instances.loadSelectedInstance();
+            if (selectedInstance != null) {
+                String instanceName = Tools.isValidString(selectedInstance.name)
+                        ? selectedInstance.name : "Minecraft";
+                String versionName = Tools.isValidString(selectedInstance.versionId)
+                        ? selectedInstance.versionId : "Version not selected";
+                if (mSelectedInstanceName != null) mSelectedInstanceName.setText(instanceName);
+                if (mInstanceName != null) mInstanceName.setText(instanceName);
+                if (mInstanceVersion != null) mInstanceVersion.setText(versionName);
+                if (mSelectedVersion != null) mSelectedVersion.setText(versionName);
+            } else {
+                if (mSelectedInstanceName != null) mSelectedInstanceName.setText("No instance selected");
+                if (mInstanceName != null) mInstanceName.setText("No instance selected");
+                if (mInstanceVersion != null) mInstanceVersion.setText("Create or select an instance");
+            }
+        } catch (RuntimeException exception) {
+            if (mSelectedInstanceName != null) mSelectedInstanceName.setText("Minecraft");
+            if (mInstanceName != null) mInstanceName.setText("Minecraft");
+        }
+
         if (mVersionSpinner != null) {
             mVersionSpinner.setOnSelectionChangedListener(instance -> {
                 if (mSelectedVersion == null) return;
                 if (instance != null && Tools.isValidString(instance.versionId)) {
                     mSelectedVersion.setText(instance.versionId);
+                    if (mInstanceVersion != null) mInstanceVersion.setText(instance.versionId);
                 } else {
                     mSelectedVersion.setText("1.12.2");
+                    if (mInstanceVersion != null) mInstanceVersion.setText("1.12.2");
                 }
             });
         }
