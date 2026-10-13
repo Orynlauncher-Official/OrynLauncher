@@ -315,46 +315,17 @@
                 android:background="@drawable/oryn_pill"
                 android:padding="7dp"/>
         </LinearLayout>
-        <TextView
+        <!-- Populated from Instances.loadDisplay() by MainMenuFragment.
+             Keep this container data-driven: never show fabricated example profiles. -->
+        <LinearLayout
+            android:id="@+id/oryn_instance_name"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="1"
             android:layout_marginTop="14dp"
-            android:minHeight="58dp"
-            android:gravity="center_vertical"
-            android:padding="12dp"
-            android:background="@drawable/oryn_pill"
-            android:text="🟩  Default\n      Minecraft • Forge"
-            android:textColor="#F0F5FC"
-            android:textSize="12sp"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:minHeight="58dp"
-            android:gravity="center_vertical"
-            android:padding="12dp"
-            android:background="@drawable/oryn_account_pill"
-            android:text="🟩  Survival\n      Minecraft • Fabric"
-            android:textColor="#C6D2E5"
-            android:textSize="12sp"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:padding="12dp"
-            android:background="@drawable/oryn_account_pill"
-            android:text="🟩  Skyblock\n      Minecraft • Forge"
-            android:textColor="#C6D2E5"
-            android:textSize="12sp"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:padding="12dp"
-            android:background="@drawable/oryn_account_pill"
-            android:text="🟩  PvP\n      Minecraft • Forge"
-            android:textColor="#C6D2E5"
-            android:textSize="12sp"/>
+            android:orientation="vertical"
+            android:clipToPadding="false"
+            android:paddingBottom="4dp"/>
     </LinearLayout>
 
     <!-- Lower info strip -->
