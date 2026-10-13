@@ -135,7 +135,7 @@
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
         app:layout_constraintTop_toBottomOf="@id/oryn_plus_title"
-        app:layout_constraintBottom_toTopOf="@id/oryn_status_card">
+        app:layout_constraintBottom_toTopOf="@id/oryn_news_about_row">
 
         <FrameLayout
             android:id="@+id/oryn_custom_player_image"
@@ -288,7 +288,7 @@
         app:layout_constraintWidth_percent="0.27"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/oryn_plus_title"
-        app:layout_constraintBottom_toTopOf="@id/oryn_status_card"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginTop="10dp"
         android:layout_marginStart="4dp"
         android:layout_marginBottom="4dp">
@@ -328,41 +328,177 @@
             android:paddingBottom="4dp"/>
     </LinearLayout>
 
-    <!-- Lower info strip -->
+    <!-- News and About cards, matching the requested home-screen layout -->
+    <LinearLayout
+        android:id="@+id/oryn_news_about_row"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="4dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
+        app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
+        app:layout_constraintTop_toBottomOf="@id/oryn_launch_group"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/oryn_news_card"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2.2"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/oryn_home_bg">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="⚑   News                         View All"
+                android:textColor="#EAF1FC"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@drawable/oryn_official_logo_v4"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Oryn Launcher news"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="10dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Oryn Launcher Plus"
+                        android:textColor="#EAF1FC"
+                        android:textSize="12sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="New features, better performance and more!"
+                        android:textColor="#8194B0"
+                        android:textSize="10sp"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#263247"/>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:src="@drawable/oryn_minecraft_preview"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="Community news"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="10dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Join our Discord"
+                        android:textColor="#EAF1FC"
+                        android:textSize="12sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Get help, share ideas and stay updated!"
+                        android:textColor="#8194B0"
+                        android:textSize="10sp"/>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/oryn_about_card"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:background="@drawable/oryn_home_bg">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ⓘ   About"
+                android:textColor="#EAF1FC"
+                android:textSize="14sp"
+                android:textStyle="bold"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="54dp"
+                    android:src="@drawable/oryn_official_logo_v4"
+                    android:contentDescription="Oryn Launcher Plus logo"/>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="8dp">
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Oryn Launcher Plus"
+                        android:textColor="#EAF1FC"
+                        android:textSize="12sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Simple. Fast. Powerful."
+                        android:textColor="#8194B0"
+                        android:textSize="10sp"/>
+                </LinearLayout>
+            </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Version   1.1.0   Plus"
+                android:textColor="#9BAEC9"
+                android:textSize="10sp"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Retain the legacy status view for Java compatibility, but keep it off-screen. -->
     <LinearLayout
         android:id="@+id/oryn_status_card"
-        android:layout_width="0dp"
-        android:layout_height="44dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:background="@drawable/oryn_account_pill"
-        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginStart="12dp">
-        <ImageView
-            android:layout_width="24dp"
-            android:layout_height="28dp"
-            android:src="@drawable/oryn_official_logo_v4"
-            android:contentDescription="Oryn Plus"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="9dp"
-            android:text="Oryn Launcher Plus"
-            android:textColor="#EAF1FC"
-            android:textStyle="bold"
-            android:textSize="12sp"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:text="Simple. Fast. Powerful."
-            android:textColor="#8194B0"
-            android:textSize="11sp"/>
-    </LinearLayout>
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"/>
 
     <ImageButton
         android:id="@+id/crash_viewer_button"
