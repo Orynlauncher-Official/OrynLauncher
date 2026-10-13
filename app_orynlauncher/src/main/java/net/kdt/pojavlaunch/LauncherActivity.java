@@ -379,6 +379,15 @@ public class LauncherActivity extends BaseActivity {
                 .apply();
     }
 
+    private void openSocialLink(String url) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url));
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException exception) {
+            Toast.makeText(this, "No app available to open this link", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     /** Stuff all the view boilerplate here */
     private void bindViews(){
         mFragmentView = findViewById(R.id.container_fragment);
@@ -386,5 +395,12 @@ public class LauncherActivity extends BaseActivity {
         mOrynBrand = findViewById(R.id.oryn_brand);
         mAccountHeader = findViewById(R.id.oryn_account_header);
         mProgressLayout = findViewById(R.id.progress_layout);
+
+        View discordButton = findViewById(R.id.oryn_discord_button);
+        View youtubeButton = findViewById(R.id.oryn_youtube_button);
+        View websiteButton = findViewById(R.id.oryn_website_button);
+        if (discordButton != null) discordButton.setOnClickListener(v -> openSocialLink("https://discord.gg/PwNYmrCKtu"));
+        if (youtubeButton != null) youtubeButton.setOnClickListener(v -> openSocialLink("https://youtube.com/@orynlauncher?si=zhYUMv53VnIpFm2H"));
+        if (websiteButton != null) websiteButton.setOnClickListener(v -> openSocialLink("https://github.com/Orynlauncher-Official/OrynLauncher"));
     }
 }
