@@ -139,7 +139,15 @@ public class MainMenuFragment extends Fragment {
 
         if (mShareLogsButton != null) mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 
-        if (mOpenDirectoryButton != null) mOpenDirectoryButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynFileManagerActivity.class)));
+        // The plus button in the Instances panel opens the real profile/instance editor.
+        // File browsing remains available from the dedicated Files navigation button.
+        if (mOpenDirectoryButton != null) mOpenDirectoryButton.setOnClickListener(v -> {
+            if (mVersionSpinner != null) {
+                mVersionSpinner.openProfileEditor(requireActivity());
+            } else {
+                Toast.makeText(requireContext(), "Instance editor is unavailable right now", Toast.LENGTH_SHORT).show();
+            }
+        });
         if (mDownloadButton != null) mDownloadButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
         if (mCrashButton != null) mCrashButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
         if (mCosmeticsButton != null) mCosmeticsButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCosmeticsActivity.class)));
