@@ -127,7 +127,7 @@ public class InstancesManagementFragment extends Fragment {
 
         boolean active=isSelected(p);
         TextView badge=new TextView(c); badge.setText(active?"ACTIVE":"SELECT");
-        badge.setTextColor(active?0xFF75C2FF:MUTED); badge.setTextSize(10); badge.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
+        badge.setTextColor(active?Color.WHITE:MUTED); badge.setTextSize(10); badge.setTypeface(Typeface.DEFAULT,Typeface.BOLD);
         badge.setPadding(dp(8),dp(6),dp(8),dp(6)); badge.setBackground(shape(active?0xFF143657:0xFF253348,0xFF30445C,16));
         card.addView(badge);
         TextView more=new TextView(c); more.setText("⋮"); more.setTextColor(TEXT); more.setTextSize(24);
