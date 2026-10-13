@@ -42,7 +42,7 @@
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toTopOf="@id/oryn_news_about_row">
 
         <FrameLayout
             android:id="@+id/oryn_custom_player_image"
@@ -216,6 +216,79 @@
                     android:textSize="10sp"/>
             </LinearLayout>
         </ScrollView>
+    </LinearLayout>
+
+
+    <!-- Compact News and About cards are present in landscape too. -->
+    <LinearLayout
+        android:id="@+id/oryn_news_about_row"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="horizontal"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="5dp"
+        android:layout_marginBottom="5dp"
+        android:layout_marginTop="6dp"
+        app:layout_constraintHeight_percent="0.27"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
+        app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
+        app:layout_constraintTop_toBottomOf="@id/oryn_launch_group"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <LinearLayout
+            android:id="@+id/oryn_news_card"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="@drawable/oryn_home_bg">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="News  •  Oryn Launcher Plus"
+                android:textColor="#EAF1FC"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:text="New features, performance improvements and community updates."
+                android:textColor="#9BAEC9"
+                android:textSize="10sp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/oryn_about_card"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:background="@drawable/oryn_home_bg">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="About"
+                android:textColor="#EAF1FC"
+                android:textSize="12sp"
+                android:textStyle="bold"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:gravity="center_vertical"
+                android:maxLines="2"
+                android:ellipsize="end"
+                android:text="Oryn Launcher Plus  •  Simple. Fast. Powerful."
+                android:textColor="#9BAEC9"
+                android:textSize="10sp"/>
+        </LinearLayout>
     </LinearLayout>
 
     <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:contentDescription="Crash viewer"/>
