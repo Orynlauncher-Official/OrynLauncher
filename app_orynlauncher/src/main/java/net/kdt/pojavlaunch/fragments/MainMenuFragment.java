@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -74,28 +75,46 @@ public class MainMenuFragment extends Fragment {
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
         TextView mSelectedVersion = view.findViewById(R.id.oryn_selected_version);
         TextView mSelectedInstanceName = view.findViewById(R.id.oryn_selected_instance_name);
-        TextView mInstanceName = view.findViewById(R.id.oryn_instance_name);
+        LinearLayout mInstanceName = view.findViewById(R.id.oryn_instance_name);
         TextView mInstanceVersion = view.findViewById(R.id.oryn_instance_version);
-        // Populate the Plus home screen from the launcher's persisted selected profile.
+        // Render the real saved instance list and mark the active profile.
         try {
-            Instance selectedInstance = Instances.loadSelectedInstance();
-            if (selectedInstance != null) {
-                String instanceName = Tools.isValidString(selectedInstance.name)
-                        ? selectedInstance.name : "Minecraft";
-                String versionName = Tools.isValidString(selectedInstance.versionId)
-                        ? selectedInstance.versionId : "Version not selected";
-                if (mSelectedInstanceName != null) mSelectedInstanceName.setText(instanceName);
-                if (mInstanceName != null) mInstanceName.setText(instanceName);
-                if (mInstanceVersion != null) mInstanceVersion.setText(versionName);
-                if (mSelectedVersion != null) mSelectedVersion.setText(versionName);
-            } else {
-                if (mSelectedInstanceName != null) mSelectedInstanceName.setText("No instance selected");
-                if (mInstanceName != null) mInstanceName.setText("No instance selected");
-                if (mInstanceVersion != null) mInstanceVersion.setText("Create or select an instance");
+            net.kdt.pojavlaunch.instances.Instances instanceCollection =
+                    net.kdt.pojavlaunch.instances.Instances.loadDisplay();
+            if (mInstanceName != null) {
+                mInstanceName.removeAllViews();
+                for (DisplayInstance profile : instanceCollection.list) {
+                    TextView profileCard = new TextView(requireContext());
+                    String profileName = Tools.isValidString(profile.name) ? profile.name : "Minecraft";
+                    String profileVersion = Tools.isValidString(profile.versionId) ? profile.versionId : "Version not selected";
+                    profileCard.setText(profileName + "\\n" + profileVersion);
+                    profileCard.setTextColor(0xFFF0F5FC);
+                    profileCard.setTextSize(11);
+                    profileCard.setPadding(10, 9, 10, 9);
+                    profileCard.setMaxLines(2);
+                    profileCard.setEllipsize(android.text.TextUtils.TruncateAt.END);
+                    profileCard.setBackgroundResource(R.drawable.oryn_account_pill);
+                    LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                    cardParams.bottomMargin = (int) (5 * getResources().getDisplayMetrics().density);
+                    profileCard.setLayoutParams(cardParams);
+                    boolean isSelected = instanceCollection.list.indexOf(profile) == instanceCollection.selectedIndex;
+                    if (isSelected) profileCard.setBackgroundResource(R.drawable.oryn_pill);
+                    profileCard.setOnClickListener(v -> {
+                        Instances.setSelectedInstance(profile);
+                        updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion);
+                        for (int i = 0; i < mInstanceName.getChildCount(); i++) {
+                            View child = mInstanceName.getChildAt(i);
+                            child.setBackgroundResource(child == profileCard ? R.drawable.oryn_pill : R.drawable.oryn_account_pill);
+                        }
+                    });
+                    mInstanceName.addView(profileCard);
+                    if (isSelected) updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion);
+                }
             }
-        } catch (RuntimeException exception) {
+        } catch (java.io.IOException | RuntimeException exception) {
             if (mSelectedInstanceName != null) mSelectedInstanceName.setText("Minecraft");
-            if (mInstanceName != null) mInstanceName.setText("Minecraft");
+            if (mInstanceVersion != null) mInstanceVersion.setText("Instance list unavailable");
         }
 
         if (mVersionSpinner != null) {
@@ -128,6 +147,16 @@ public class MainMenuFragment extends Fragment {
         if (mCrashNavButton != null) mCrashNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
 
 
+    }
+
+
+    private void updateSelectedProfile(DisplayInstance profile, TextView heroName,
+                                       TextView profileVersion, TextView selectedVersion) {
+        String name = Tools.isValidString(profile.name) ? profile.name : "Minecraft";
+        String version = Tools.isValidString(profile.versionId) ? profile.versionId : "Version not selected";
+        if (heroName != null) heroName.setText(name);
+        if (profileVersion != null) profileVersion.setText(version);
+        if (selectedVersion != null) selectedVersion.setText(version);
     }
 
     private void openGameDirectory(Context context) {

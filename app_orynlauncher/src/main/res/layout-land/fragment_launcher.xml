@@ -146,21 +146,12 @@
                     android:textColor="#8194B0"
                     android:textSize="9sp"
                     android:textStyle="bold"/>
-                <TextView
+                <LinearLayout
                     android:id="@+id/oryn_instance_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:minHeight="42dp"
-                    android:gravity="center_vertical"
-                    android:padding="9dp"
-                    android:background="@drawable/oryn_pill"
-                    android:text="Loading instance…"
-                    android:textColor="#F0F5FC"
-                    android:textStyle="bold"
-                    android:textSize="11sp"
-                    android:maxLines="2"
-                    android:ellipsize="end"/>
+                    android:orientation="vertical"/>
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
