@@ -1,71 +1,416 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/fragment_menu_main" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/oryn_home_bg">
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_menu_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#080D17"
+    android:padding="12dp">
 
-    <LinearLayout android:id="@+id/oryn_sidebar" android:layout_width="64dp" android:layout_height="280dp"
-        android:orientation="vertical" android:gravity="center" android:padding="7dp"
-        android:background="@drawable/oryn_sidebar" android:layout_marginStart="24dp"
-        app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-        <ImageButton android:id="@+id/oryn_home" android:layout_width="50dp" android:layout_height="50dp"
-            android:src="@drawable/oryn_nav_home" android:contentDescription="Home"
-            android:background="@drawable/oryn_pill" android:padding="13dp"/>
-        <ImageButton android:id="@+id/custom_control_button" android:layout_width="50dp" android:layout_height="58dp"
-            android:src="@drawable/oryn_nav_gamepad" android:contentDescription="@string/mcl_option_customcontrol"
-            android:background="@android:color/transparent" android:padding="13dp"/>
-        <ImageButton android:id="@+id/open_files_button" android:layout_width="50dp" android:layout_height="58dp"
-            android:src="@drawable/oryn_nav_folder" android:contentDescription="@string/mcl_button_open_directory"
-            android:background="@android:color/transparent" android:padding="13dp"/>
-        <ImageButton android:id="@+id/install_jar_button" android:layout_width="50dp" android:layout_height="58dp"
-            android:src="@drawable/oryn_nav_settings" android:contentDescription="@string/main_install_jar_file"
-            android:background="@android:color/transparent" android:padding="13dp"/>
+    <!-- Left navigation rail -->
+    <LinearLayout
+        android:id="@+id/oryn_sidebar"
+        android:layout_width="54dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:background="@drawable/oryn_sidebar"
+        android:elevation="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageButton
+            android:id="@+id/oryn_home"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_home"
+            android:contentDescription="Home"
+            android:background="@drawable/oryn_nav_selected"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/download_button"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_cube"
+            android:contentDescription="@string/oryn_download"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/custom_control_button"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_gamepad"
+            android:contentDescription="@string/mcl_option_customcontrol"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/cosmetics_button"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_cosmetics"
+            android:contentDescription="Cosmetics"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/oryn_files_nav"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/ic_px_file"
+            android:contentDescription="Files"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/oryn_crash_nav"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_crash"
+            android:contentDescription="Crash Viewer"
+            android:background="@android:color/transparent"
+            android:padding="10dp"
+            android:layout_marginBottom="7dp"/>
+        <ImageButton
+            android:id="@+id/install_jar_button"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:src="@drawable/oryn_nav_settings"
+            android:contentDescription="Settings"
+            android:background="@android:color/transparent"
+            android:padding="10dp"/>
     </LinearLayout>
 
+    <!-- Header -->
+    <ImageView
+        android:id="@+id/oryn_center_logo"
+        android:layout_width="28dp"
+        android:layout_height="34dp"
+        android:src="@drawable/oryn_official_logo_v4"
+        android:scaleType="fitCenter"
+        android:contentDescription="Oryn Launcher Plus"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="14dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="34dp"
+        android:gravity="center_vertical"
+        android:text="Oryn Launcher "
+        android:textColor="#EAF1FC"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@id/oryn_center_logo"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="8dp"/>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="34dp"
+        android:gravity="center_vertical"
+        android:text="Plus"
+        android:textColor="#168FFF"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        app:layout_constraintStart_toEndOf="@id/oryn_center_logo"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="124dp"/>
+    <ImageButton
+        android:id="@+id/social_media_button"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:src="@drawable/ic_discord"
+        android:contentDescription="Discord"
+        android:background="@android:color/transparent"
+        android:padding="7dp"
+        app:layout_constraintEnd_toStartOf="@id/share_logs_button"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginEnd="8dp"/>
+    <ImageButton
+        android:id="@+id/share_logs_button"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:src="@drawable/oryn_external"
+        android:contentDescription="Share logs"
+        android:background="@android:color/transparent"
+        android:padding="7dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <!-- Main content region -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/oryn_launch_group"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginBottom="4dp"
+        android:padding="12dp"
+        android:background="@drawable/oryn_home_bg"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
+        app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
+        app:layout_constraintTop_toBottomOf="@id/oryn_center_logo"
+        app:layout_constraintBottom_toTopOf="@id/oryn_status_card">
+
+        <FrameLayout
+            android:id="@+id/oryn_custom_player_image"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="#14263D"
+            app:layout_constraintWidth_percent="0.43"
+            app:layout_constraintHeight_percent="0.88"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+            <ImageView
+                android:layout_width="76dp"
+                android:layout_height="96dp"
+                android:layout_gravity="center"
+                android:src="@drawable/oryn_official_logo_v4"
+                android:scaleType="fitCenter"
+                android:contentDescription="Oryn Plus artwork"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:padding="12dp"
+                android:background="#99060B14"
+                android:text="Default  •  Minecraft"
+                android:textColor="#F4F7FC"
+                android:textStyle="bold"
+                android:textSize="14sp"/>
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/oryn_details"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
+            app:layout_constraintStart_toEndOf="@id/oryn_custom_player_image"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Default"
+                    android:textColor="#F4F7FC"
+                    android:textSize="22sp"
+                    android:textStyle="bold"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:paddingStart="9dp"
+                    android:paddingEnd="9dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:background="@drawable/oryn_pill"
+                    android:text="Active"
+                    android:textColor="#5CB3FF"
+                    android:textSize="11sp"/>
+            </LinearLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="◇   Minecraft version  •  Mod loader"
+                android:textColor="#9BAEC9"
+                android:textSize="13sp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Your next world is one click away."
+                android:textColor="#8194B0"
+                android:textSize="12sp"/>
+            <Button
+                android:id="@+id/play_button"
+                android:layout_width="match_parent"
+                android:layout_height="54dp"
+                android:layout_marginTop="18dp"
+                android:text="▶   Launch"
+                android:textAllCaps="false"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:background="@drawable/oryn_launch_button"
+                android:elevation="3dp"/>
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/oryn_version_badge">
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="start|center_vertical"
+                    android:layout_marginStart="12dp"
+                    android:src="@drawable/oryn_nav_cube"
+                    android:contentDescription="Minecraft version"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="46dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Selected version"
+                    android:textColor="#B9C7DB"
+                    android:textSize="11sp"/>
+                <TextView
+                    android:id="@+id/oryn_selected_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="46dp"
+                    android:layout_marginTop="26dp"
+                    android:text="1.12.2"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"/>
+                <com.kdt.mcgui.mcVersionSpinner
+                    android:id="@+id/mc_version_spinner"
+                    android:tag="oryn_plus"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:alpha="0.01"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Select Minecraft instance"/>
+                <ImageButton
+                    android:id="@+id/edit_profile_button"
+                    android:layout_width="1dp"
+                    android:layout_height="1dp"
+                    android:visibility="invisible"
+                    android:contentDescription="Edit instance"/>
+            </FrameLayout>
+        </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Right instances panel -->
     <LinearLayout
         android:id="@+id/oryn_feature_panel"
-        android:layout_width="330dp" android:layout_height="64dp"
-        android:orientation="horizontal" android:gravity="center"
-        android:background="@drawable/oryn_pill"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" android:layout_marginTop="12dp">
-        <ImageButton android:id="@+id/download_button" android:layout_width="88dp" android:layout_height="60dp"
-            android:src="@drawable/oryn_nav_download" android:contentDescription="@string/oryn_download"
-            android:background="@drawable/oryn_pill" android:padding="18dp"/>
-        <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="88dp" android:layout_height="60dp"
-            android:src="@drawable/oryn_nav_crash" android:contentDescription="@string/oryn_crash_viewer"
-            android:background="@android:color/transparent" android:padding="18dp"/>
-        <ImageButton android:id="@+id/cosmetics_button" android:layout_width="88dp" android:layout_height="60dp"
-            android:src="@drawable/oryn_nav_cosmetics" android:contentDescription="Oryn Cosmetics"
-            android:background="@android:color/transparent" android:padding="18dp"/>
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="@drawable/oryn_home_bg"
+        app:layout_constraintWidth_percent="0.27"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/oryn_center_logo"
+        app:layout_constraintBottom_toTopOf="@id/oryn_status_card"
+        android:layout_marginTop="10dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginBottom="4dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="◇  Instances"
+                android:textColor="#EAF1FC"
+                android:textSize="15sp"
+                android:textStyle="bold"/>
+            <ImageButton
+                android:id="@+id/open_files_button"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/ic_add"
+                android:contentDescription="Add instance"
+                android:background="@drawable/oryn_pill"
+                android:padding="7dp"/>
+        </LinearLayout>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_pill"
+            android:text="🟩  Default\n      Minecraft • Forge"
+            android:textColor="#F0F5FC"
+            android:textSize="12sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_account_pill"
+            android:text="🟩  Survival\n      Minecraft • Fabric"
+            android:textColor="#C6D2E5"
+            android:textSize="12sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_account_pill"
+            android:text="🟩  Skyblock\n      Minecraft • Forge"
+            android:textColor="#C6D2E5"
+            android:textSize="12sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_account_pill"
+            android:text="🟩  PvP\n      Minecraft • Forge"
+            android:textColor="#C6D2E5"
+            android:textSize="12sp"/>
     </LinearLayout>
 
-    <LinearLayout android:id="@+id/oryn_launch_group" android:layout_width="260dp" android:layout_height="74dp"
-        android:gravity="center" android:background="@drawable/oryn_pill"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toBottomOf="parent">
-        <Button android:id="@+id/play_button" android:layout_width="match_parent" android:layout_height="match_parent"
-            android:text="▶  │  Launch" android:textAllCaps="false" android:textSize="22sp" android:textStyle="bold"
-            android:textColor="#F7F7F8" android:background="@android:color/transparent"/>
+    <!-- Lower info strip -->
+    <LinearLayout
+        android:id="@+id/oryn_status_card"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:background="@drawable/oryn_account_pill"
+        app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginStart="12dp">
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="28dp"
+            android:src="@drawable/oryn_official_logo_v4"
+            android:contentDescription="Oryn Plus"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="9dp"
+            android:text="Oryn Launcher Plus"
+            android:textColor="#EAF1FC"
+            android:textStyle="bold"
+            android:textSize="12sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:text="Simple. Fast. Powerful."
+            android:textColor="#8194B0"
+            android:textSize="11sp"/>
     </LinearLayout>
 
-    <LinearLayout android:id="@+id/oryn_bottom" android:layout_width="236dp" android:layout_height="50dp"
-        android:layout_marginEnd="28dp" android:layout_marginBottom="24dp" android:gravity="center_vertical"
-        android:paddingHorizontal="14dp" android:background="@drawable/oryn_pill"
-        app:layout_constraintEnd_toEndOf="parent" app:layout_constraintBottom_toBottomOf="parent">
-        <TextView android:layout_width="30dp" android:layout_height="match_parent" android:gravity="center"
-            android:text="●" android:textSize="12sp" android:textColor="#F3F3F5"/>
-        <com.kdt.mcgui.mcVersionSpinner android:id="@+id/mc_version_spinner" app:drawableStartSize="24dp"
-            app:drawableStartIntegerScaling="false" android:singleLine="true" android:ellipsize="end"
-            android:textColor="#F5F5F7" android:layout_width="160dp" android:layout_height="44dp"
-            android:background="@android:color/transparent"/>
-        <ImageButton android:id="@+id/edit_profile_button" android:layout_width="30dp" android:layout_height="36dp"
-            android:src="@drawable/ic_px_edit" android:contentDescription="Edit profile"
-            android:background="@android:color/transparent" android:padding="8dp"/>
-    </LinearLayout>
-
-    <LinearLayout android:layout_width="2dp" android:layout_height="2dp" android:visibility="gone"
-        app:layout_constraintStart_toStartOf="parent" app:layout_constraintTop_toTopOf="parent">
-        <Button android:id="@+id/social_media_button" android:layout_width="1dp" android:layout_height="1dp"/>
-        <Button android:id="@+id/share_logs_button" android:layout_width="1dp" android:layout_height="1dp"/>
-    </LinearLayout>
+    <ImageButton
+        android:id="@+id/crash_viewer_button"
+        android:layout_width="1dp"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:contentDescription="Crash viewer"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
