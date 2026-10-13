@@ -138,8 +138,15 @@ public class InstancesManagementFragment extends Fragment {
     }
 
     private boolean isSelected(DisplayInstance p) {
-        try { Instances data=Instances.loadDisplay(); return data.selectedIndex>=0 && data.selectedIndex<profiles.size()
-                && profiles.get(data.selectedIndex)==p; } catch (Exception e) { return false; }
+        try {
+            Instance selected = Instances.loadSelectedInstance();
+            if (selected == null) return false;
+            return safeEquals(selected.name, p.name) && safeEquals(selected.versionId, p.versionId);
+        } catch (RuntimeException e) { return false; }
+    }
+
+    private boolean safeEquals(String first, String second) {
+        return first == null ? second == null : first.equals(second);
     }
 
     private void select(DisplayInstance p) {
