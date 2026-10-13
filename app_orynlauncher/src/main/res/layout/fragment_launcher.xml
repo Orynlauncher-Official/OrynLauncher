@@ -141,13 +141,21 @@
             android:id="@+id/oryn_custom_player_image"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@drawable/ic_setting_sign_in_background"
+            android:background="#101C2E"
             android:clipToOutline="true"
             app:layout_constraintWidth_percent="0.43"
             app:layout_constraintHeight_percent="0.88"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
+            <ImageView
+                android:id="@+id/oryn_minecraft_preview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_setting_sign_in_background"
+                android:scaleType="centerCrop"
+                android:contentDescription="Minecraft landscape preview"/>
+            
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
