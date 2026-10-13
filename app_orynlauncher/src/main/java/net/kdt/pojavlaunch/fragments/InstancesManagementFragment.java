@@ -49,7 +49,7 @@ public class InstancesManagementFragment extends Fragment {
         list = view.findViewById(R.id.instances_list);
         filters = view.findViewById(R.id.instances_filter_row);
         count = view.findViewById(R.id.instances_count_label);
-        ((TextView)view.findViewById(R.id.instances_directory_path)).setText(Tools.DIR_GAME_HOME.getAbsolutePath());
+        ((TextView)view.findViewById(R.id.instances_directory_path)).setText(new File(Tools.DIR_GAME_HOME).getAbsolutePath());
         view.findViewById(R.id.instances_back).setOnClickListener(v -> Tools.backToMainMenu(requireActivity()));
         view.findViewById(R.id.instances_refresh).setOnClickListener(v -> refresh());
         view.findViewById(R.id.instances_open_directory).setOnClickListener(v -> openGameFolder());
@@ -197,7 +197,7 @@ public class InstancesManagementFragment extends Fragment {
 
     private void openGameFolder() {
         try {
-            File folder=Tools.DIR_GAME_HOME;
+            File folder=new File(Tools.DIR_GAME_HOME);
             if(!folder.exists()&&!folder.mkdirs()) throw new IOException("Cannot create game directory");
             Tools.openPath(requireContext(),folder,false);
         } catch(Exception e) { Toast.makeText(requireContext(),"Couldn't open game folder: "+e.getMessage(),Toast.LENGTH_LONG).show(); }
