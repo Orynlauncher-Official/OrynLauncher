@@ -20,9 +20,9 @@ public final class OrynThemeManager {
     private OrynThemeManager() {}
 
     public static int getColor(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences("oryn_theme", Context.MODE_PRIVATE);
-        SharedPreferences custom = context.getSharedPreferences(CUSTOM_PREFS, Context.MODE_PRIVATE);
-        return custom.getInt(CUSTOM_ACCENT, prefs.getInt(PREF_KEY, DEFAULT_COLOR));
+        // OrynLauncher Plus uses its fixed blue accent. Older saved theme/customization
+        // values must not recolor the launcher UI after the customization controls are removed.
+        return DEFAULT_COLOR;
     }
 
     public static void stylePreferenceItem(Context context, View view) {
