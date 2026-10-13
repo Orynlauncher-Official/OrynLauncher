@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="#080D17" android:padding="16dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
+            android:text="Instances" android:textColor="#F2F6FF" android:textSize="24sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/instances_back" android:layout_width="wrap_content" android:layout_height="40dp"
+            android:gravity="center" android:paddingStart="16dp" android:paddingEnd="16dp"
+            android:background="@drawable/oryn_account_pill" android:text="← Home" android:textColor="#C9D8EF" android:textSize="13sp"/>
+    </LinearLayout>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp"
+        android:text="Manage profiles, versions and game files" android:textColor="#8FA4C2" android:textSize="13sp"/>
+    <LinearLayout android:id="@+id/instances_directory_card" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" android:orientation="vertical" android:padding="13dp" android:background="@drawable/oryn_home_bg">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="GAME DIRECTORY"
+            android:textColor="#68B7FF" android:textSize="11sp" android:textStyle="bold"/>
+        <TextView android:id="@+id/instances_directory_path" android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="5dp" android:textColor="#EAF1FC" android:textSize="13sp" android:maxLines="2" android:ellipsize="middle"/>
+        <TextView android:id="@+id/instances_open_directory" android:layout_width="wrap_content" android:layout_height="38dp"
+            android:layout_marginTop="8dp" android:gravity="center" android:paddingStart="14dp" android:paddingEnd="14dp"
+            android:background="@drawable/oryn_pill" android:text="Open game folder" android:textColor="#65B8FF" android:textSize="12sp"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
+        android:gravity="center_vertical" android:orientation="horizontal">
+        <TextView android:id="@+id/instances_refresh" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="1"
+            android:layout_marginEnd="6dp" android:gravity="center" android:background="@drawable/oryn_account_pill"
+            android:text="↻  Refresh" android:textColor="#DCE8F8" android:textSize="14sp"/>
+        <TextView android:id="@+id/instances_install_new" android:layout_width="0dp" android:layout_height="46dp" android:layout_weight="1.25"
+            android:layout_marginStart="6dp" android:gravity="center" android:background="@drawable/oryn_launch_button"
+            android:text="+  Install / Create" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/instances_filter_row" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="14dp" android:orientation="horizontal"/>
+    <TextView android:id="@+id/instances_count_label" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="15dp" android:layout_marginBottom="7dp" android:text="INSTALLED PROFILES"
+        android:textColor="#8FA4C2" android:textSize="11sp" android:textStyle="bold"/>
+    <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <ScrollView android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false"
+            android:fillViewport="true" android:scrollbars="vertical">
+            <LinearLayout android:id="@+id/instances_list" android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:paddingBottom="12dp"/>
+        </ScrollView>
+    </FrameLayout>
+</LinearLayout>
