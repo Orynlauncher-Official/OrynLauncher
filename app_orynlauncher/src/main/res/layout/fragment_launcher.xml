@@ -201,7 +201,7 @@
                     android:paddingBottom="4dp"
                     android:background="@drawable/oryn_pill"
                     android:text="Active"
-                    android:textColor="#5CB3FF"
+                    android:textColor="#FFFFFF"
                     android:textSize="11sp"/>
             </LinearLayout>
             <TextView
