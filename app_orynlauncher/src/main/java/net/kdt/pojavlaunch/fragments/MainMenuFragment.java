@@ -125,7 +125,7 @@ public class MainMenuFragment extends Fragment {
                 } else {
                     mSelectedVersion.setText("No version installed");
                     if (mInstanceVersion != null) mInstanceVersion.setText("No version installed");
-                    mPlayButton.setText("▶  PLAY\\nNo version installed");
+                    mPlayButton.setText("INSTALL GAME\nNo version installed");
                 }
             });
         }
@@ -164,7 +164,7 @@ public class MainMenuFragment extends Fragment {
         if (profileVersion != null) profileVersion.setText(versionLabel);
         if (selectedVersion != null) selectedVersion.setText(versionLabel);
         if (playButton != null) {
-            playButton.setText(installed ? "▶  PLAY\\n" + versionId : "▶  PLAY\\nNo version installed");
+            playButton.setText(!Tools.isValidString(versionId) ? "SELECT VERSION\nNo version selected" : (installed ? "▶  PLAY\n" + versionId : "INSTALL GAME\n" + versionId));
         }
     }
 
