@@ -302,7 +302,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="INSTALLATION MANAGER"
+                android:text="YOUR WORLDS"
                 android:textColor="#EAF1FC"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
@@ -356,7 +356,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="⚑   News                         View All"
+                android:text="ORYNLAUNCHER PLUS"
                 android:textColor="#EAF1FC"
                 android:textSize="14sp"
                 android:textStyle="bold"
@@ -383,14 +383,14 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Oryn Launcher Plus"
+                        android:text="Mods, Resource Packs, Shaders"
                         android:textColor="#EAF1FC"
                         android:textSize="12sp"
                         android:textStyle="bold"/>
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="New features, better performance and more!"
+                        android:text="Browse and manage your Minecraft content."
                         android:textColor="#8194B0"
                         android:textSize="10sp"/>
                 </LinearLayout>
@@ -422,14 +422,14 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Join our Discord"
+                        android:text="INSTALLATION MANAGER"
                         android:textColor="#EAF1FC"
                         android:textSize="12sp"
                         android:textStyle="bold"/>
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Get help, share ideas and stay updated!"
+                        android:text="Manage versions, installations and modpacks."
                         android:textColor="#8194B0"
                         android:textSize="10sp"/>
                 </LinearLayout>
@@ -472,14 +472,14 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Oryn Launcher Plus"
+                        android:text="Your launcher, your worlds."
                         android:textColor="#EAF1FC"
                         android:textSize="12sp"
                         android:textStyle="bold"/>
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Simple. Fast. Powerful."
+                        android:text="FASTER • SMOOTHER • YOURS"
                         android:textColor="#8194B0"
                         android:textSize="10sp"/>
                 </LinearLayout>
@@ -488,7 +488,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Version   1.1.0   Plus"
+                android:text="Premium Minecraft launcher"
                 android:textColor="#9BAEC9"
                 android:textSize="10sp"/>
         </LinearLayout>
