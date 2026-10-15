@@ -212,10 +212,9 @@
                 android:contentDescription="Minecraft landscape preview"/>
             
             <TextView
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|start"
-                android:layout_width="wrap_content"
                 android:paddingStart="18dp"
                 android:paddingEnd="18dp"
                 android:paddingTop="12dp"
