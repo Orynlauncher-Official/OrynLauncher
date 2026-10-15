@@ -102,14 +102,14 @@ public class MainMenuFragment extends Fragment {
                     if (isSelected) profileCard.setBackgroundResource(R.drawable.oryn_pill);
                     profileCard.setOnClickListener(v -> {
                         Instances.setSelectedInstance(profile);
-                        updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion);
+                        updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion, mPlayButton);
                         for (int i = 0; i < mInstanceName.getChildCount(); i++) {
                             View child = mInstanceName.getChildAt(i);
                             child.setBackgroundResource(child == profileCard ? R.drawable.oryn_pill : R.drawable.oryn_account_pill);
                         }
                     });
                     mInstanceName.addView(profileCard);
-                    if (isSelected) updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion);
+                    if (isSelected) updateSelectedProfile(profile, mSelectedInstanceName, mInstanceVersion, mSelectedVersion, mPlayButton);
                 }
             }
         } catch (java.io.IOException | RuntimeException exception) {
@@ -120,12 +120,12 @@ public class MainMenuFragment extends Fragment {
         if (mVersionSpinner != null) {
             mVersionSpinner.setOnSelectionChangedListener(instance -> {
                 if (mSelectedVersion == null) return;
-                if (instance != null && Tools.isValidString(instance.versionId)) {
-                    mSelectedVersion.setText(instance.versionId);
-                    if (mInstanceVersion != null) mInstanceVersion.setText(instance.versionId);
+                if (instance != null) {
+                    updateSelectedProfile(instance, mSelectedInstanceName, mInstanceVersion, mSelectedVersion, mPlayButton);
                 } else {
-                    mSelectedVersion.setText("1.12.2");
-                    if (mInstanceVersion != null) mInstanceVersion.setText("1.12.2");
+                    mSelectedVersion.setText("No version installed");
+                    if (mInstanceVersion != null) mInstanceVersion.setText("No version installed");
+                    mPlayButton.setText("▶  PLAY\\nNo version installed");
                 }
             });
         }
@@ -154,12 +154,26 @@ public class MainMenuFragment extends Fragment {
 
 
     private void updateSelectedProfile(DisplayInstance profile, TextView heroName,
-                                       TextView profileVersion, TextView selectedVersion) {
+                                       TextView profileVersion, TextView selectedVersion,
+                                       Button playButton) {
         String name = Tools.isValidString(profile.name) ? profile.name : "Minecraft";
-        String version = Tools.isValidString(profile.versionId) ? profile.versionId : "Version not selected";
+        String versionId = Tools.isValidString(profile.versionId) ? profile.versionId : "";
+        boolean installed = isVersionInstalled(versionId);
+        String versionLabel = installed ? versionId : "No version installed";
         if (heroName != null) heroName.setText(name);
-        if (profileVersion != null) profileVersion.setText(version);
-        if (selectedVersion != null) selectedVersion.setText(version);
+        if (profileVersion != null) profileVersion.setText(versionLabel);
+        if (selectedVersion != null) selectedVersion.setText(versionLabel);
+        if (playButton != null) {
+            playButton.setText(installed ? "▶  PLAY\\n" + versionId : "▶  PLAY\\nNo version installed");
+        }
+    }
+
+    /** Only display a game version as installed when its metadata exists on disk. */
+    private boolean isVersionInstalled(String versionId) {
+        if (!Tools.isValidString(versionId) || !Tools.isValidString(Tools.DIR_HOME_VERSION)) return false;
+        File versionDirectory = new File(Tools.DIR_HOME_VERSION, versionId);
+        File versionJson = new File(versionDirectory, versionId + ".json");
+        return versionJson.isFile();
     }
 
     private void openGameDirectory(Context context) {
