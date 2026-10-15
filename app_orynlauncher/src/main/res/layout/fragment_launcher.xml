@@ -4,7 +4,7 @@
     android:id="@+id/fragment_menu_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#030711"
+    android:background="#030914"
     android:padding="10dp">
 
     <!-- Left navigation rail -->
@@ -162,7 +162,7 @@
                 android:layout_gravity="bottom"
                 android:padding="12dp"
                 android:background="#99060B14"
-                android:text="Default  •  Minecraft"
+                android:text="WINTER REALM  •  MINECRAFT"
                 android:textColor="#F4F7FC"
                 android:textStyle="bold"
                 android:textSize="14sp"/>
@@ -208,14 +208,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="◇   Minecraft version  •  Mod loader"
+                android:text="✦   MINECRAFT JAVA  •  YOUR PROFILE"
                 android:textColor="#9BAEC9"
                 android:textSize="13sp"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Your next world is one click away."
+                android:text="Step into your next world."
                 android:textColor="#8194B0"
                 android:textSize="12sp"/>
             <Button
@@ -223,7 +223,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:layout_marginTop="18dp"
-                android:text="▶   Launch"
+                android:text="❄   PLAY NOW"
                 android:textAllCaps="false"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -247,7 +247,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="46dp"
                     android:layout_marginTop="8dp"
-                    android:text="Selected version"
+                    android:text="GAME VERSION"
                     android:textColor="#B9C7DB"
                     android:textSize="11sp"/>
                 <TextView
@@ -302,7 +302,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="◇  Instances"
+                android:text="✦  Your worlds"
                 android:textColor="#EAF1FC"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
