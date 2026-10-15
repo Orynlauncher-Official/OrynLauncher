@@ -4,8 +4,8 @@
     android:id="@+id/fragment_menu_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#080D17"
-    android:padding="12dp">
+    android:background="#030711"
+    android:padding="10dp">
 
     <!-- Left navigation rail -->
     <LinearLayout
@@ -92,7 +92,7 @@
         android:layout_width="wrap_content"
         android:layout_height="34dp"
         android:gravity="center_vertical"
-        android:text="Oryn Launcher Plus"
+        android:text="ORYNLAUNCHER PLUS"
         android:textColor="#EAF1FC"
         android:textStyle="bold"
         android:textSize="18sp"
