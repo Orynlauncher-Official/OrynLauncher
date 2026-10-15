@@ -207,7 +207,7 @@
                 android:id="@+id/oryn_minecraft_preview"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:src="@drawable/oryn_minecraft_preview"
+                android:src="@drawable/orynlauncher_snow_hero"
                 android:scaleType="centerCrop"
                 android:contentDescription="Minecraft landscape preview"/>
             
