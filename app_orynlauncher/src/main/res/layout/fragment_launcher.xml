@@ -143,7 +143,7 @@
             android:layout_height="0dp"
             android:background="#101C2E"
             android:clipToOutline="true"
-            app:layout_constraintWidth_percent="0.43"
+            app:layout_constraintWidth_percent="0.50"
             app:layout_constraintHeight_percent="0.88"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -162,7 +162,7 @@
                 android:layout_gravity="bottom"
                 android:padding="12dp"
                 android:background="#99060B14"
-                android:text="WINTER REALM  •  MINECRAFT"
+                android:text="PLAY YOUR OWN STORY"
                 android:textColor="#F4F7FC"
                 android:textStyle="bold"
                 android:textSize="14sp"/>
@@ -187,7 +187,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Default"
+                    android:text="ORYNLAUNCHER PLUS"
                     android:textColor="#F4F7FC"
                     android:textSize="22sp"
                     android:textStyle="bold"/>
@@ -208,14 +208,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="✦   MINECRAFT JAVA  •  YOUR PROFILE"
+                android:text="A quieter world. A brighter adventure."
                 android:textColor="#9BAEC9"
                 android:textSize="13sp"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Step into your next world."
+                android:text="WINTER WORLDS  •  YOUR NEXT ADVENTURE"
                 android:textColor="#8194B0"
                 android:textSize="12sp"/>
             <Button
@@ -223,7 +223,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="54dp"
                 android:layout_marginTop="18dp"
-                android:text="❄   PLAY NOW"
+                android:text="▶   PLAY"
                 android:textAllCaps="false"
                 android:textSize="17sp"
                 android:textStyle="bold"
@@ -302,7 +302,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="✦  Your worlds"
+                android:text="INSTALLATION MANAGER"
                 android:textColor="#EAF1FC"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
@@ -448,7 +448,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ⓘ   About"
+                android:text="RESOURCE LIBRARY"
                 android:textColor="#EAF1FC"
                 android:textSize="14sp"
                 android:textStyle="bold"/>
