@@ -86,19 +86,74 @@
             android:padding="10dp"/>
     </LinearLayout>
 
-    <!-- Single clean header title; logo asset already contains its own wordmark. -->
+    <!-- Clean brand area; keep the existing sidebar and social actions. -->
     <TextView
         android:id="@+id/oryn_plus_title"
         android:layout_width="wrap_content"
-        android:layout_height="34dp"
+        android:layout_height="44dp"
         android:gravity="center_vertical"
         android:text="ORYNLAUNCHER PLUS"
-        android:textColor="#EAF1FC"
+        android:textColor="#F4F8FF"
         android:textStyle="bold"
         android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintTop_toTopOf="parent"
         android:layout_marginStart="14dp"/>
+
+    <LinearLayout
+        android:id="@+id/oryn_top_navigation"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/oryn_sidebar"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/oryn_plus_title"
+        app:layout_constraintStart_toEndOf="@id/oryn_plus_title"
+        app:layout_constraintEnd_toStartOf="@id/social_media_button"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="12dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="⌂  Home"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:textSize="13sp"
+            android:background="@drawable/oryn_nav_selected"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="◇  Versions"
+            android:textColor="#B8CBE6"
+            android:textSize="13sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="▱  Modpacks"
+            android:textColor="#B8CBE6"
+            android:textSize="13sp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:text="⚙  Settings"
+            android:textColor="#B8CBE6"
+            android:textSize="13sp"/>
+    </LinearLayout>
     <ImageButton
         android:id="@+id/social_media_button"
         android:layout_width="34dp"
@@ -143,8 +198,8 @@
             android:layout_height="0dp"
             android:background="#101C2E"
             android:clipToOutline="true"
-            app:layout_constraintWidth_percent="0.50"
-            app:layout_constraintHeight_percent="0.88"
+            app:layout_constraintWidth_percent="0.54"
+            app:layout_constraintHeight_percent="0.94"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
@@ -200,7 +255,7 @@
                     android:paddingTop="4dp"
                     android:paddingBottom="4dp"
                     android:background="@drawable/oryn_pill"
-                    android:text="Active"
+                    android:text="Ready"
                     android:textColor="#FFFFFF"
                     android:textSize="11sp"/>
             </LinearLayout>
@@ -215,17 +270,17 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="WINTER WORLDS  •  YOUR NEXT ADVENTURE"
+                android:text="PLAY YOUR OWN STORY  •  WINTER WORLDS"
                 android:textColor="#8194B0"
                 android:textSize="12sp"/>
             <Button
                 android:id="@+id/play_button"
                 android:layout_width="match_parent"
-                android:layout_height="54dp"
-                android:layout_marginTop="18dp"
+                android:layout_height="60dp"
+                android:layout_marginTop="16dp"
                 android:text="▶   PLAY"
                 android:textAllCaps="false"
-                android:textSize="17sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/oryn_launch_button"
@@ -326,9 +381,45 @@
             android:orientation="vertical"
             android:clipToPadding="false"
             android:paddingBottom="4dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="GAME VERSION"
+            android:textColor="#69B7FF"
+            android:textSize="11sp"
+            android:textStyle="bold"/>
+        <TextView
+            android:id="@+id/oryn_quick_access"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_version_badge"
+            android:text="Library   •   Files   •   Settings"
+            android:textColor="#7ABEFF"
+            android:textSize="12sp"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:text="ORYNLAUNCHER PLUS"
+            android:textColor="#69B7FF"
+            android:textSize="11sp"
+            android:textStyle="bold"/>
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:padding="12dp"
+            android:background="@drawable/oryn_version_badge"
+            android:text="Manage profiles and jump back into your world."
+            android:textColor="#A7C8EB"
+            android:textSize="12sp"/>
     </LinearLayout>
 
-    <!-- News and About cards, matching the requested home-screen layout -->
+    <!-- Bottom feature cards: Resource Library and Installation Manager. -->
     <LinearLayout
         android:id="@+id/oryn_news_about_row"
         android:layout_width="0dp"
@@ -338,7 +429,7 @@
         android:layout_marginEnd="10dp"
         android:layout_marginBottom="4dp"
         android:layout_marginTop="8dp"
-        app:layout_constraintHeight_percent="0.30"
+        app:layout_constraintHeight_percent="0.25"
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
         app:layout_constraintTop_toBottomOf="@id/oryn_launch_group"
@@ -348,91 +439,50 @@
             android:id="@+id/oryn_news_card"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="2.2"
+            android:layout_weight="1"
             android:orientation="vertical"
-            android:padding="12dp"
+            android:padding="16dp"
             android:background="@drawable/oryn_home_bg">
-
-            <TextView
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="ORYNLAUNCHER PLUS"
-                android:textColor="#EAF1FC"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:paddingBottom="8dp"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
                 <ImageView
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
                     android:src="@drawable/oryn_official_logo_v4"
                     android:scaleType="fitCenter"
-                    android:contentDescription="Oryn Launcher news"/>
+                    android:contentDescription="Resource Library"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginStart="10dp">
+                    android:layout_marginStart="12dp">
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:text="RESOURCE LIBRARY"
+                        android:textColor="#F4F8FF"
+                        android:textSize="16sp"
+                        android:textStyle="bold"/>
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
                         android:text="Mods, Resource Packs, Shaders"
-                        android:textColor="#EAF1FC"
-                        android:textSize="12sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Browse and manage your Minecraft content."
-                        android:textColor="#8194B0"
-                        android:textSize="10sp"/>
+                        android:textColor="#8FB9E8"
+                        android:textSize="12sp"/>
                 </LinearLayout>
-            </LinearLayout>
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:background="#263247"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-                <ImageView
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:src="@drawable/oryn_minecraft_preview"
-                    android:scaleType="centerCrop"
-                    android:contentDescription="Community news"/>
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="10dp">
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="INSTALLATION MANAGER"
-                        android:textColor="#EAF1FC"
-                        android:textSize="12sp"
-                        android:textStyle="bold"/>
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Manage versions, installations and modpacks."
-                        android:textColor="#8194B0"
-                        android:textSize="10sp"/>
-                </LinearLayout>
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="›"
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
+                    android:background="@drawable/oryn_pill"/>
             </LinearLayout>
         </LinearLayout>
 
@@ -443,54 +493,49 @@
             android:layout_weight="1"
             android:layout_marginStart="8dp"
             android:orientation="vertical"
-            android:padding="12dp"
+            android:padding="16dp"
             android:background="@drawable/oryn_home_bg">
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="RESOURCE LIBRARY"
-                android:textColor="#EAF1FC"
-                android:textSize="14sp"
-                android:textStyle="bold"/>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
                 <ImageView
-                    android:layout_width="44dp"
-                    android:layout_height="54dp"
-                    android:src="@drawable/oryn_official_logo_v4"
-                    android:contentDescription="Oryn Launcher Plus logo"/>
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:src="@drawable/oryn_nav_cube"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="Installation Manager"/>
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical"
-                    android:layout_marginStart="8dp">
+                    android:layout_marginStart="12dp">
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Your launcher, your worlds."
-                        android:textColor="#EAF1FC"
-                        android:textSize="12sp"
+                        android:text="INSTALLATION MANAGER"
+                        android:textColor="#F4F8FF"
+                        android:textSize="16sp"
                         android:textStyle="bold"/>
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="FASTER • SMOOTHER • YOURS"
-                        android:textColor="#8194B0"
-                        android:textSize="10sp"/>
+                        android:layout_marginTop="4dp"
+                        android:text="Manage Versions, Installations, Modpacks"
+                        android:textColor="#8FB9E8"
+                        android:textSize="12sp"/>
                 </LinearLayout>
+                <TextView
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:text="›"
+                    android:textColor="#FFFFFF"
+                    android:textSize="28sp"
+                    android:background="@drawable/oryn_pill"/>
             </LinearLayout>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="Premium Minecraft launcher"
-                android:textColor="#9BAEC9"
-                android:textSize="10sp"/>
         </LinearLayout>
     </LinearLayout>
 
