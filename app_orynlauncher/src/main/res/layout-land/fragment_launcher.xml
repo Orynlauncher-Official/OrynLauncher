@@ -4,7 +4,7 @@
     android:id="@+id/fragment_menu_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#06101F"
+    android:background="#050D19"
     android:padding="6dp">
 
     <LinearLayout
@@ -38,7 +38,7 @@
         android:gravity="center_vertical"
         android:paddingStart="12dp"
         android:paddingEnd="8dp"
-        android:background="#E8101B2B"
+        android:background="#E80A1729"
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -49,7 +49,7 @@
             android:layout_marginStart="8dp"
             android:gravity="center_vertical"
             android:text="ORYNLAUNCHER PLUS"
-            android:textColor="#FFFFFF"
+            android:textColor="#EAF6FF"
             android:textStyle="bold"
             android:textSize="15sp"/>
         <LinearLayout
@@ -142,11 +142,11 @@
         </LinearLayout>
         <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="7dp" android:fillViewport="false" android:overScrollMode="never">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="YOUR WORLDS" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="YOUR WORLDS" android:textColor="#39BFFF" android:textSize="9sp" android:textStyle="bold"/>
                 <LinearLayout android:id="@+id/oryn_instance_name" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:orientation="vertical"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="GAME VERSION" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="GAME VERSION" android:textColor="#39BFFF" android:textSize="9sp" android:textStyle="bold"/>
                 <TextView android:id="@+id/oryn_instance_version" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:padding="10dp" android:background="@drawable/oryn_account_pill" android:text="Select a game version" android:textColor="#FFFFFF" android:textSize="10sp" android:maxLines="2" android:ellipsize="end"/>
-                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="QUICK ACCESS" android:textColor="#FFFFFF" android:textSize="9sp" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:text="QUICK ACCESS" android:textColor="#39BFFF" android:textSize="9sp" android:textStyle="bold"/>
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:padding="10dp" android:background="@drawable/oryn_account_pill" android:text="Library  •  Files  •  Settings" android:textColor="#FFFFFF" android:textSize="10sp"/>
                 
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:padding="10dp" android:background="@drawable/oryn_account_pill" android:text="Manage profiles and jump back into your world." android:textColor="#FFFFFF" android:textSize="10sp"/>
@@ -172,7 +172,7 @@
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Profile\nSpunky Optimized Winter" android:textColor="#FFFFFF" android:textSize="10sp" android:gravity="center_vertical" android:paddingStart="8dp"/>
         <Button android:id="@+id/play_button" android:layout_width="0dp" android:layout_height="58dp" android:layout_weight="1.35" android:layout_marginStart="8dp" android:layout_marginEnd="10dp" android:text="▶   PLAY" android:textAllCaps="false" android:textSize="22sp" android:textStyle="bold" android:textColor="#FFFFFF" android:background="@drawable/oryn_launch_button" android:elevation="4dp"/>
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.8" android:gravity="center_vertical" android:orientation="vertical">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●  Ready" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="14sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●  Ready" android:textColor="#35E89A" android:textStyle="bold" android:textSize="14sp"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Everything is set!" android:textColor="#FFFFFF" android:textSize="9sp"/>
         </LinearLayout>
     </LinearLayout>
@@ -189,12 +189,12 @@
         app:layout_constraintEnd_toStartOf="@id/oryn_feature_panel"
         app:layout_constraintBottom_toBottomOf="parent">
         <LinearLayout android:id="@+id/oryn_news_card" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1.1" android:orientation="vertical" android:padding="8dp" android:background="@drawable/oryn_home_bg">
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="RESOURCE LIBRARY" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="RESOURCE LIBRARY" android:textColor="#39BFFF" android:textStyle="bold" android:textSize="12sp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Mods, Resource Packs, Shaders" android:textColor="#FFFFFF" android:textSize="10sp"/>
             <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:contentDescription="Crash viewer"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/oryn_about_card" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="7dp" android:orientation="vertical" android:padding="8dp" android:background="@drawable/oryn_home_bg">
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INSTALLATION MANAGER" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="INSTALLATION MANAGER" android:textColor="#39BFFF" android:textStyle="bold" android:textSize="12sp"/>
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Manage versions, installations and modpacks" android:textColor="#FFFFFF" android:textSize="10sp"/>
         </LinearLayout>
     </LinearLayout>
