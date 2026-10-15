@@ -44,7 +44,7 @@
         app:layout_constraintTop_toTopOf="parent">
         <ImageView android:layout_width="26dp" android:layout_height="30dp" android:layout_marginEnd="2dp" android:src="@drawable/oryn_v4_crystal" android:contentDescription="OrynLauncher logo" android:scaleType="fitCenter"/>
         <TextView
-            android:layout_width="112dp"
+            android:layout_width="148dp"
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:gravity="center_vertical"
