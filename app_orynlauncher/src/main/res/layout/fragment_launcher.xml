@@ -246,13 +246,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="ORYNLAUNCHER PLUS"
-                    android:textColor="#FFFFFF"
-                    android:textSize="22sp"
-                    android:textStyle="bold"/>
+                
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -407,14 +401,7 @@
             android:text="Library   •   Files   •   Settings"
             android:textColor="#FFFFFF"
             android:textSize="12sp"/>
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:text="ORYNLAUNCHER PLUS"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:textStyle="bold"/>
+        
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
