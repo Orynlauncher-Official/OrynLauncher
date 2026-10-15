@@ -50,7 +50,7 @@
             android:layout_height="0dp"
             android:background="#101C2E"
             android:clipToOutline="true"
-            app:layout_constraintWidth_percent="0.40"
+            app:layout_constraintWidth_percent="0.46"
             app:layout_constraintHeight_percent="1.0"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -87,16 +87,16 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Minecraft" android:textColor="#F4F7FC" android:textSize="18sp" android:textStyle="bold"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ORYNLAUNCHER PLUS" android:textColor="#F4F7FC" android:textSize="17sp" android:textStyle="bold"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="7dp" android:paddingStart="7dp" android:paddingEnd="7dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:background="@drawable/oryn_pill" android:text="Ready" android:textColor="#5CB3FF" android:textSize="10sp"/>
             </LinearLayout>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Choose a version and launch your game." android:textColor="#9BAEC9" android:textSize="11sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Your world. Your settings. Your adventure." android:textColor="#B8C9E2" android:textSize="11sp"/>
             <Button
                 android:id="@+id/play_button"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_marginTop="12dp"
-                android:text="▶   Launch"
+                android:text="▶   PLAY NOW"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -114,7 +114,7 @@
                 <com.kdt.mcgui.mcVersionSpinner android:id="@+id/mc_version_spinner" android:tag="oryn_plus" android:layout_width="match_parent" android:layout_height="match_parent" android:alpha="0.01" android:background="@android:color/transparent" android:contentDescription="Select Minecraft version"/>
                 <ImageButton android:id="@+id/edit_profile_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="invisible" android:contentDescription="Edit selected profile"/>
             </FrameLayout>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Choose a profile and press Launch to start Minecraft." android:textColor="#8194B0" android:textSize="10sp"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="CINEMATIC GAME EXPERIENCE  •  READY TO PLAY" android:textColor="#91A9C8" android:textSize="9sp"/>
         </LinearLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -150,7 +150,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="ACTIVE INSTANCE"
+                    android:text="YOUR PROFILES"
                     android:textColor="#8194B0"
                     android:textSize="9sp"
                     android:textStyle="bold"/>
@@ -164,7 +164,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="GAME VERSION"
+                    android:text="SELECTED VERSION"
                     android:textColor="#8194B0"
                     android:textSize="9sp"
                     android:textStyle="bold"/>
@@ -184,7 +184,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:text="QUICK ACTIONS"
+                    android:text="QUICK ACCESS"
                     android:textColor="#8194B0"
                     android:textSize="9sp"
                     android:textStyle="bold"/>
@@ -211,7 +211,7 @@
                     android:layout_marginTop="4dp"
                     android:padding="9dp"
                     android:background="@drawable/oryn_account_pill"
-                    android:text="Choose a profile, check the version, then launch."
+                    android:text="Manage profiles and jump back into your world."
                     android:textColor="#C6D2E5"
                     android:textSize="10sp"/>
             </LinearLayout>
