@@ -93,7 +93,7 @@
         android:layout_height="44dp"
         android:gravity="center_vertical"
         android:text="ORYNLAUNCHER PLUS"
-        android:textColor="#F4F8FF"
+        android:textColor="#FFFFFF"
         android:textStyle="bold"
         android:textSize="18sp"
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
@@ -133,7 +133,7 @@
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:text="◇  Versions"
-            android:textColor="#B8CBE6"
+            android:textColor="#FFFFFF"
             android:textSize="13sp"/>
         <TextView
             android:layout_width="wrap_content"
@@ -142,7 +142,7 @@
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:text="▱  Modpacks"
-            android:textColor="#B8CBE6"
+            android:textColor="#FFFFFF"
             android:textSize="13sp"/>
         <TextView
             android:layout_width="wrap_content"
@@ -151,7 +151,7 @@
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:text="⚙  Settings"
-            android:textColor="#B8CBE6"
+            android:textColor="#FFFFFF"
             android:textSize="13sp"/>
     </LinearLayout>
     <ImageButton
@@ -222,7 +222,7 @@
                 android:background="#CC060B14"
                 android:text="PLAY YOUR\nOWN STORY"
                 android:letterSpacing="0.16"
-                android:textColor="#F4F7FC"
+                android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:textSize="20sp"/>
         </FrameLayout>
@@ -250,7 +250,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="ORYNLAUNCHER PLUS"
-                    android:textColor="#F4F7FC"
+                    android:textColor="#FFFFFF"
                     android:textSize="22sp"
                     android:textStyle="bold"/>
                 <TextView
@@ -271,14 +271,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="A quieter world. A brighter adventure."
-                android:textColor="#9BAEC9"
+                android:textColor="#FFFFFF"
                 android:textSize="13sp"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
                 android:text="PLAY YOUR OWN STORY  •  WINTER WORLDS"
-                android:textColor="#8194B0"
+                android:textColor="#FFFFFF"
                 android:textSize="12sp"/>
             <Button
                 android:id="@+id/play_button"
@@ -310,7 +310,7 @@
                     android:layout_marginStart="46dp"
                     android:layout_marginTop="8dp"
                     android:text="GAME VERSION"
-                    android:textColor="#B9C7DB"
+                    android:textColor="#FFFFFF"
                     android:textSize="11sp"/>
                 <TextView
                     android:id="@+id/oryn_selected_version"
@@ -365,7 +365,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="YOUR WORLDS"
-                android:textColor="#EAF1FC"
+                android:textColor="#FFFFFF"
                 android:textSize="15sp"
                 android:textStyle="bold"/>
             <ImageButton
@@ -394,7 +394,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:text="GAME VERSION"
-            android:textColor="#69B7FF"
+            android:textColor="#FFFFFF"
             android:textSize="11sp"
             android:textStyle="bold"/>
         <TextView
@@ -405,14 +405,14 @@
             android:padding="12dp"
             android:background="@drawable/oryn_version_badge"
             android:text="Library   •   Files   •   Settings"
-            android:textColor="#7ABEFF"
+            android:textColor="#FFFFFF"
             android:textSize="12sp"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:text="ORYNLAUNCHER PLUS"
-            android:textColor="#69B7FF"
+            android:textColor="#FFFFFF"
             android:textSize="11sp"
             android:textStyle="bold"/>
         <TextView
@@ -422,7 +422,7 @@
             android:padding="12dp"
             android:background="@drawable/oryn_version_badge"
             android:text="Manage profiles and jump back into your world."
-            android:textColor="#A7C8EB"
+            android:textColor="#FFFFFF"
             android:textSize="12sp"/>
     </LinearLayout>
 
@@ -471,7 +471,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="RESOURCE LIBRARY"
-                        android:textColor="#F4F8FF"
+                        android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -479,7 +479,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Mods, Resource Packs, Shaders"
-                        android:textColor="#8FB9E8"
+                        android:textColor="#FFFFFF"
                         android:textSize="12sp"/>
                 </LinearLayout>
                 <TextView
@@ -523,7 +523,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="INSTALLATION MANAGER"
-                        android:textColor="#F4F8FF"
+                        android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
                     <TextView
@@ -531,7 +531,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Manage Versions, Installations, Modpacks"
-                        android:textColor="#8FB9E8"
+                        android:textColor="#FFFFFF"
                         android:textSize="12sp"/>
                 </LinearLayout>
                 <TextView
