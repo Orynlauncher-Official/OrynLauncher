@@ -92,7 +92,8 @@ public class LauncherActivity extends BaseActivity {
                         .start();
             }
 
-            if (mOrynBrand != null) mOrynBrand.setVisibility(isHome ? View.VISIBLE : View.GONE);
+            // The landscape home layout has its own brand in its top bar; hide the legacy activity brand to prevent duplicate overlapping titles.
+            if (mOrynBrand != null) mOrynBrand.setVisibility(View.GONE);
             if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
 
             // Re-apply the selected Oryn theme whenever a fragment becomes active.
