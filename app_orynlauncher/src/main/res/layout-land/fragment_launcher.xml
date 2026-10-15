@@ -42,30 +42,33 @@
         app:layout_constraintStart_toEndOf="@id/oryn_sidebar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
-        <ImageView android:layout_width="30dp" android:layout_height="30dp" android:src="@drawable/oryn_v4_crystal" android:contentDescription="OrynLauncher logo"/>
+        <ImageView android:layout_width="26dp" android:layout_height="30dp" android:layout_marginEnd="2dp" android:src="@drawable/oryn_v4_crystal" android:contentDescription="OrynLauncher logo" android:scaleType="fitCenter"/>
         <TextView
-            android:layout_width="wrap_content"
+            android:layout_width="112dp"
             android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
+            android:layout_marginStart="4dp"
             android:gravity="center_vertical"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:ellipsize="end"
             android:text="ORYNLAUNCHER PLUS"
             android:textColor="#EAF6FF"
             android:textStyle="bold"
-            android:textSize="15sp"/>
+            android:textSize="12sp"/>
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:layout_marginStart="22dp"
+            android:layout_marginStart="8dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="⌂  Home" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="11sp" android:background="@drawable/oryn_nav_selected"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="◇  Versions" android:textColor="#FFFFFF" android:textSize="11sp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="▱  Modpacks" android:textColor="#FFFFFF" android:textSize="11sp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="12dp" android:paddingEnd="12dp" android:text="⚙  Settings" android:textColor="#FFFFFF" android:textSize="11sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="7dp" android:paddingEnd="7dp" android:text="⌂ Home" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="10sp" android:background="@android:color/transparent"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="7dp" android:paddingEnd="7dp" android:text="◇ Versions" android:textColor="#C7DDF5" android:textSize="10sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="7dp" android:paddingEnd="7dp" android:text="▱ Modpacks" android:textColor="#C7DDF5" android:textSize="10sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="match_parent" android:gravity="center" android:paddingStart="7dp" android:paddingEnd="7dp" android:text="⚙ Settings" android:textColor="#C7DDF5" android:textSize="10sp"/>
         </LinearLayout>
         <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
-        <ImageButton android:id="@+id/social_media_button" android:layout_width="32dp" android:layout_height="32dp" android:layout_marginStart="8dp" android:src="@drawable/ic_discord" android:contentDescription="Discord" android:background="@android:color/transparent" android:padding="6dp"/>
-        <ImageButton android:id="@+id/share_logs_button" android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/oryn_external" android:contentDescription="Share logs" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:id="@+id/social_media_button" android:layout_width="28dp" android:layout_height="30dp" android:layout_marginStart="3dp" android:src="@drawable/ic_discord" android:contentDescription="Discord" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:id="@+id/share_logs_button" android:layout_width="28dp" android:layout_height="30dp" android:src="@drawable/oryn_external" android:contentDescription="Share logs" android:background="@android:color/transparent" android:padding="6dp"/>
     </LinearLayout>
 
     <!-- Cinematic hero occupies the main canvas instead of the old boxed preview. -->
