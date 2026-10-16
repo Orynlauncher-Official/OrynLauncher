@@ -115,9 +115,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
         rail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         rail.setPadding(dp(8), dp(14), dp(8), dp(10));
         rail.setBackgroundColor(Color.rgb(14, 19, 29));
-        root.addView(rail, new LinearLayout.LayoutParams(dp(122), -1));
+        root.addView(rail, new LinearLayout.LayoutParams(dp(132), -1));
 
-        TextView railTitle = label("DOWNLOAD", 10);
+        TextView railTitle = label("ORYN  /  DISCOVER", 10);
         railTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         railTitle.setTextColor(0xFF8F93A0);
         railTitle.setGravity(Gravity.CENTER);
@@ -137,12 +137,12 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         LinearLayout center = new LinearLayout(this);
         center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(dp(16), dp(12), dp(12), dp(10));
+        center.setPadding(dp(18), dp(14), dp(14), dp(12));
         root.addView(center, new LinearLayout.LayoutParams(0, -1, 6.5f));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = label("ORYN DOWNLOAD CENTER", 20);
+        TextView title = label("Download Center", 22);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         title.setTextColor(0xFFF4F7FF);
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
@@ -218,8 +218,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout detail = new LinearLayout(this);
         detail.setOrientation(LinearLayout.VERTICAL);
         detail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        detail.setPadding(dp(14), dp(16), dp(14), dp(10));
-        detail.setBackgroundColor(Color.rgb(14, 19, 29));
+        detail.setPadding(dp(18), dp(20), dp(18), dp(14));
+        detail.setBackground(roundBg(0xFF0E1521, dp(16)));
         root.addView(detail, new LinearLayout.LayoutParams(0, -1, 3f));
 
         ImageView detailIcon = new ImageView(this);
@@ -300,8 +300,11 @@ public class OrynDownloadActivity extends AppCompatActivity {
             searchProjects(search.getText().toString().trim());
             for (int i = 1; i < parent.getChildCount() - 1; i++) {
                 View child = parent.getChildAt(i);
-                child.setBackground(roundBg(i == (value == Category.MOD ? 1 : value == Category.RESOURCEPACK ? 2 : 3)
-                        ? 0xFF363943 : 0x00252529, dp(9)));
+                int selectedIndex = value == Category.MOD ? 1
+                        : value == Category.RESOURCEPACK ? 2
+                        : value == Category.SHADER ? 3 : 4;
+                boolean selected = i == selectedIndex;
+                child.setBackground(roundBg(selected ? 0xFF123A68 : 0x00141923, dp(11)));
             }
         });
     }
@@ -382,8 +385,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout card = new LinearLayout(this);
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setPadding(dp(10), dp(9), dp(10), dp(9));
-        card.setBackground(roundBg(0xFF121A27, dp(12)));
+        card.setPadding(dp(12), dp(10), dp(12), dp(10));
+        card.setBackground(roundBg(0xFF111B2A, dp(13)));
 
         ImageView icon = new ImageView(this);
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
