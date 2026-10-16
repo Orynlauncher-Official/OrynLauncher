@@ -160,6 +160,12 @@ public class OrynCosmeticsActivity extends Activity {
         primary(combinedNav);
         left.addView(combinedNav, lp(-1, 46));
 
+        // Dedicated cape gallery entry in the actual launcher UI.
+        left.addView(new Space(this), lp(-1, 6));
+        Button capeGallery = button("  Cape Gallery");
+        capeGallery.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        left.addView(capeGallery, lp(-1, 42));
+
         left.addView(new Space(this), lp(-1, 10));
         left.addView(sectionLabel("Import"), lp(-1, 24));
 
@@ -344,6 +350,7 @@ public class OrynCosmeticsActivity extends Activity {
         setContentView(root);
 
         combinedNav.setOnClickListener(v -> status.setText("Skin & Cape • combined cosmetics profile"));
+        capeGallery.setOnClickListener(v -> showCapeGallery());
         importSkin.setOnClickListener(v -> pick(PICK_SKIN));
         importCape.setOnClickListener(v -> pick(PICK_CAPE));
         back.setOnClickListener(v -> finish());
@@ -454,6 +461,42 @@ public class OrynCosmeticsActivity extends Activity {
         saveButton.setOnClickListener(v -> saveCurrent("Cosmetics saved"));
         removeButton.setOnClickListener(v -> removeSkin());
         unequipButton.setOnClickListener(v -> removeCape());
+    }
+
+    private void showCapeGallery() {
+        List<File> files = store.listCapes();
+        if (files.isEmpty()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Cape Gallery")
+                    .setMessage("No capes yet. Import a compatible cape PNG to add it to your gallery. The selected cape will appear on the animated 3D character preview.")
+                    .setNegativeButton("Close", null)
+                    .setPositiveButton("Import Cape", (dialog, which) -> pick(PICK_CAPE))
+                    .show();
+            return;
+        }
+
+        String[] names = new String[files.size() + 1];
+        names[0] = "None — remove cape";
+        int selected = 0;
+        for (int i = 0; i < files.size(); i++) {
+            names[i + 1] = displayName(files.get(i));
+            if (files.get(i).getName().equals(active.cape)) selected = i + 1;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Cape Gallery")
+                .setMessage("Choose a cape to preview. The character preview animates the cape drape.")
+                .setSingleChoiceItems(names, selected, (dialog, which) -> {
+                    active.cape = which == 0 ? "" : files.get(which - 1).getName();
+                    active.capeEnabled = which != 0;
+                    refresh();
+                    status.setText(which == 0 ? "Cape removed from preview" :
+                            "Cape preview selected • " + displayName(files.get(which - 1)));
+                    dialog.dismiss();
+                })
+                .setNegativeButton("Close", null)
+                .setNeutralButton("Import Cape", (dialog, which) -> pick(PICK_CAPE))
+                .show();
     }
 
     private interface ChoiceAction { void run(int position); }
