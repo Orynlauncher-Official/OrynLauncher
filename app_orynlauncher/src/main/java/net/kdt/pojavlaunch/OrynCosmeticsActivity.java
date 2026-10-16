@@ -510,7 +510,7 @@ public class OrynCosmeticsActivity extends Activity {
         grid.setUseDefaultMargins(false);
         grid.setPadding(0, d(10), 0, d(8));
 
-        List<File> files = store.listCapes();
+        store.ensureOrynCapes();
         final boolean[] showOrynCapes = {true};
         Runnable renderCapeCards = () -> {
             grid.removeAllViews();
@@ -591,21 +591,6 @@ public class OrynCosmeticsActivity extends Activity {
             renderCapeCards.run();
         });
         renderCapeCards.run();
-        /* old gallery rendering replaced */
-
-        if (false) {
-            LinearLayout empty = new LinearLayout(this);
-            empty.setOrientation(LinearLayout.VERTICAL);
-            empty.setGravity(Gravity.CENTER);
-            empty.setPadding(d(16), d(18), d(16), d(18));
-            TextView emptyTitle = text("Your cape collection is empty", 15, WHITE);
-            emptyTitle.setGravity(Gravity.CENTER);
-            empty.addView(emptyTitle, lp(-1, 34));
-            TextView emptyText = text("Import a compatible cape PNG to add it here.", 12, MUTED);
-            emptyText.setGravity(Gravity.CENTER);
-            empty.addView(emptyText, lp(-1, 30));
-            grid.addView(empty, new GridLayout.LayoutParams());
-        }
         scroll.addView(grid);
         page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
