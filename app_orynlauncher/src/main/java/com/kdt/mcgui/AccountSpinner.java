@@ -42,6 +42,8 @@ import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 import fr.spse.extended_view.ExtendedTextView;
@@ -277,6 +279,7 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
 
     private class Adapter extends ArrayAdapter<Account> {
         private final HashMap<Integer, BitmapDrawable> mSkinHeadCache = new HashMap<>();
+        private final Set<String> mSkinFetchRequested = new HashSet<>();
         private final LayoutInflater mInflater;
 
 
@@ -342,10 +345,25 @@ public class AccountSpinner extends AppCompatSpinner implements LoginListener, A
 
             int headCacheHash = System.identityHashCode(account);
             BitmapDrawable accountHead = mSkinHeadCache.get(headCacheHash);
-            if (accountHead == null){
+            if (accountHead == null) {
                 Bitmap accountSkinFace = account.getSkinFace();
-                accountHead = new BitmapDrawable(resources, accountSkinFace);
-                mSkinHeadCache.put(headCacheHash, accountHead);
+                if (accountSkinFace == null && !account.isLocal()) {
+                    // Existing accounts may not have a cached head yet; fetch it once off the UI thread.
+                    String skinKey = account.profileId + "-" + account.authType.name();
+                    if (mSkinFetchRequested.add(skinKey)) {
+                        PojavApplication.sExecutorService.execute(() -> {
+                            account.updateSkinFace();
+                            Tools.runOnUiThread(() -> {
+                                mSkinHeadCache.remove(headCacheHash);
+                                notifyDataSetChanged();
+                            });
+                        });
+                    }
+                }
+                if (accountSkinFace != null) {
+                    accountHead = new BitmapDrawable(resources, accountSkinFace);
+                    mSkinHeadCache.put(headCacheHash, accountHead);
+                }
             }
 
             textview.setText(account.username);
