@@ -70,6 +70,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private TextView detailTitle;
     private TextView detailVersion;
     private android.widget.Spinner loaderSpinner;
+    private android.widget.Spinner minecraftVersionSpinner;
+    private String selectedMinecraftFilter;
     private String selectedLoader;
     private TextView detailDesc;
     private ImageView detailIcon;
@@ -148,10 +150,31 @@ public class OrynDownloadActivity extends AppCompatActivity {
         title.setTextColor(0xFFF4F7FF);
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
-        TextView mcVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 11);
-        mcVersion.setTextColor(0xFF9FA3AE);
-        mcVersion.setGravity(Gravity.CENTER);
-        top.addView(mcVersion, new LinearLayout.LayoutParams(dp(100), dp(34)));
+        minecraftVersionSpinner = new android.widget.Spinner(this);
+        String detectedVersion = getSelectedMinecraftVersion();
+        String[] versions = new String[]{"Instance", "1.21.11", "1.21.10", "1.21.9", "1.21.8", "1.21.7", "1.21.6", "1.21.5", "1.21.4", "1.21.3", "1.21.2", "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.19.2", "1.18.2", "1.16.5", "1.12.2"};
+        android.widget.ArrayAdapter<String> versionAdapter = new android.widget.ArrayAdapter<String>(
+                this, android.R.layout.simple_spinner_dropdown_item, versions);
+        minecraftVersionSpinner.setAdapter(versionAdapter);
+        selectedMinecraftFilter = detectedVersion;
+        int detectedPosition = 0;
+        for (int i = 1; i < versions.length; i++) {
+            if (versions[i].equals(detectedVersion)) detectedPosition = i;
+        }
+        minecraftVersionSpinner.setSelection(detectedPosition);
+        minecraftVersionSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            private boolean firstSelection = true;
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                String old = selectedMinecraftFilter;
+                selectedMinecraftFilter = position == 0 ? getSelectedMinecraftVersion() : versions[position];
+                if (!firstSelection && !java.util.Objects.equals(old, selectedMinecraftFilter) && search != null) {
+                    searchProjects(search.getText().toString().trim());
+                }
+                firstSelection = false;
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+        top.addView(minecraftVersionSpinner, new LinearLayout.LayoutParams(dp(112), dp(34)));
         loaderSpinner = new android.widget.Spinner(this);
         String[] loaderChoices = new String[]{"Auto", "Fabric", "Forge", "NeoForge", "Quilt"};
         android.widget.ArrayAdapter<String> loaderAdapter = new android.widget.ArrayAdapter<String>(
@@ -325,7 +348,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         // This prevents slow responses from an older search replacing newer results.
         final int requestId = ++searchRequestId;
         final Category requestedCategory = category;
-        final String minecraftVersion = getSelectedMinecraftVersion();
+        final String minecraftVersion = selectedMinecraftFilter == null
+                ? getSelectedMinecraftVersion() : selectedMinecraftFilter;
         final String loader = getSelectedLoader();
 
         progress.setVisibility(View.VISIBLE);
@@ -339,15 +363,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 params.put("limit", 30);
                 params.put("index", "relevance");
 
+                // Modrinth facets are ANDed across separate groups. Putting
+                // version and loader in one group means OR and causes incorrect results.
                 StringBuilder facets = new StringBuilder("[[\"project_type:")
                         .append(requestedCategory.projectType).append("\"]");
                 if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
-                    facets.append(",\"versions:").append(minecraftVersion).append("\"");
+                    facets.append(",[\"versions:").append(minecraftVersion).append("\"]");
                 }
                 if (loader != null && requestedCategory == Category.MOD) {
-                    facets.append(",\"categories:").append(loader).append("\"");
+                    facets.append(",[\"categories:").append(loader).append("\"]");
                 }
-                facets.append("]]");
+                facets.append("]");
                 params.put("facets", facets.toString());
 
                 JsonObject response = api.get("search", params, JsonObject.class);
