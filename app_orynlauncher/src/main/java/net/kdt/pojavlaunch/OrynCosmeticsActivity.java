@@ -559,8 +559,6 @@ public class OrynCosmeticsActivity extends Activity {
             params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
             params.setMargins(d(4), d(4), d(4), d(4));
             grid.addView(card, params);
-        }
-
             }
             if (grid.getChildCount() == 0) {
                 LinearLayout empty = new LinearLayout(this);
