@@ -117,18 +117,17 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
-        // Custom Oryn settings background image. Use oryn_settings_background.jpg from
-        // app_orynlauncher/src/main/res/drawable-nodpi/ in the repository.
-        android.graphics.drawable.Drawable settingsBackground =
-                androidx.core.content.ContextCompat.getDrawable(this, R.drawable.oryn_settings_background);
-        if (settingsBackground != null) {
-            root.setBackground(settingsBackground);
-        } else {
-            GradientDrawable fallbackBackground = new GradientDrawable(
-                    GradientDrawable.Orientation.TL_BR,
-                    new int[] { Color.rgb(8, 25, 43), BG, Color.rgb(3, 8, 16) });
-            root.setBackground(fallbackBackground);
-        }
+        // Keep the snowy wallpaper in its own full-screen ImageView layer,
+        // behind the settings UI, so child panels cannot accidentally hide it.
+        root.setBackgroundColor(Color.TRANSPARENT);
+        android.widget.FrameLayout screen = new android.widget.FrameLayout(this);
+        ImageView wallpaper = new ImageView(this);
+        wallpaper.setImageResource(R.drawable.oryn_settings_background);
+        wallpaper.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        screen.addView(wallpaper, new android.widget.FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        screen.addView(root, new android.widget.FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -177,7 +176,7 @@ public class OrynSettingsActivity extends BaseActivity {
         body.addView(scroll, cp);
 
         root.addView(body, new LinearLayout.LayoutParams(-1, 0, 1));
-        setContentView(root);
+        setContentView(screen);
 
         addNav("General", R.drawable.oryn_nav_settings, v -> showGeneral());
         addNav("Appearance", R.drawable.ic_px_image, v -> showAppearance());
