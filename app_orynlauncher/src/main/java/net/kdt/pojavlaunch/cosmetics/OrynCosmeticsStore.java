@@ -3,6 +3,8 @@ package net.kdt.pojavlaunch.cosmetics;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.net.Uri;
 
 import net.kdt.pojavlaunch.authenticator.AuthType;
@@ -90,6 +92,44 @@ public final class OrynCosmeticsStore {
                     out.write(data.getBytes(StandardCharsets.UTF_8));
                 }
             } catch (Exception ignored) {}
+        }
+    }
+
+    /** Creates bundled Oryn cape textures on first use so the Oryn Capes tab is populated offline. */
+    public void ensureOrynCapes() {
+        createOrynCape("oryn_ember.png", 0xFF10131B, 0xFFFF2424, 0xFF7A0000, 0xFFF5F5F5);
+        createOrynCape("oryn_ice.png", 0xFF071827, 0xFF39C5FF, 0xFF1456A0, 0xFFEAFBFF);
+        createOrynCape("oryn_void.png", 0xFF09090D, 0xFF7B3CFF, 0xFF35106E, 0xFFE7D9FF);
+        createOrynCape("oryn_forest.png", 0xFF0B1B13, 0xFF34E27A, 0xFF12643A, 0xFFD6FFE4);
+    }
+
+    private void createOrynCape(String name, int base, int accent, int shadow, int highlight) {
+        File out = new File(capes, name);
+        if (out.exists()) return;
+        Bitmap bitmap = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        Paint paint = new Paint();
+        paint.setAntiAlias(false);
+        paint.setColor(base); canvas.drawRect(0, 0, 64, 32, paint);
+        paint.setColor(shadow); canvas.drawRect(0, 0, 64, 4, paint);
+        canvas.drawRect(0, 28, 64, 32, paint);
+        canvas.drawRect(0, 0, 4, 32, paint);
+        canvas.drawRect(60, 0, 64, 32, paint);
+        paint.setColor(accent);
+        for (int y = 5; y < 28; y += 6) {
+            int x = (y / 6 % 2 == 0) ? 8 : 14;
+            canvas.drawRect(x, y, 64 - x, y + 2, paint);
+        }
+        canvas.drawRect(28, 5, 36, 27, paint);
+        paint.setColor(highlight);
+        canvas.drawRect(30, 7, 34, 25, paint);
+        canvas.drawRect(22, 14, 42, 18, paint);
+        try (FileOutputStream stream = new FileOutputStream(out)) {
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        } catch (Exception ignored) {
+            // A later gallery open can retry creation.
+        } finally {
+            bitmap.recycle();
         }
     }
 
