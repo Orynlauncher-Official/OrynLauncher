@@ -161,8 +161,15 @@ public class OrynSettingsActivity extends BaseActivity {
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(10), dp(10), dp(10), dp(10));
         sidebar.setBackground(bg(PANEL, 22));
+
+        // Keep every settings category reachable on short screens.
+        ScrollView sidebarScroll = new ScrollView(this);
+        sidebarScroll.setFillViewport(true);
+        sidebarScroll.setVerticalScrollBarEnabled(true);
+        sidebarScroll.setClipToPadding(false);
+        sidebarScroll.addView(sidebar, new ScrollView.LayoutParams(-1, -2));
         LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(refPx(0.225f), -1);
-        body.addView(sidebar, sp);
+        body.addView(sidebarScroll, sp);
 
         ScrollView scroll = new ScrollView(this);
         scroll.setFillViewport(true);
@@ -181,6 +188,7 @@ public class OrynSettingsActivity extends BaseActivity {
         addNav("General", R.drawable.oryn_nav_settings, v -> showGeneral());
         addNav("Appearance", R.drawable.ic_px_image, v -> showAppearance());
         addNav("Game", R.drawable.ic_px_gamepad, v -> showGame());
+        addNav("JVM", R.drawable.ic_px_sliders, v -> showJvm());
         addNav("Storage", R.drawable.ic_px_file, v -> showStorage());
         addNav("Privacy", R.drawable.ic_px_bell, v -> showPrivacy());
         addNav("Advanced", R.drawable.ic_px_sliders, v -> showAdvanced());
@@ -317,17 +325,7 @@ public class OrynSettingsActivity extends BaseActivity {
 
         addGap();
 
-        section("Appearance", R.drawable.ic_px_image);
-        addSetting("Theme", "Choose your preferred theme",
-                spinner(new String[]{"Dark", "Oryn Blue", "Oryn Purple", "AMOLED"}, 0));
-        addSetting("UI Scale", "Adjust the interface size",
-                spinner(new String[]{"Small", "Default", "Large"}, 1));
-
-        addGap();
-
         section("Game", R.drawable.ic_px_gamepad);
-        addSetting("Max FPS (Launcher)", "Limit the launcher framerate (0 = Uncapped)",
-                spinner(new String[]{"30 FPS", "60 FPS", "90 FPS", "120 FPS", "Uncapped"}, 1));
         addSetting("Animations", "Enable smooth UI animations",
                 toggle(uiPrefs.getBoolean("animations", true), (b, checked) ->
                         uiPrefs.edit().putBoolean("animations", checked).apply()));
@@ -338,36 +336,16 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showAppearance() {
         clear("Appearance", "Customize the look and feel of OrynLauncher");
         section("Appearance", R.drawable.ic_px_image);
-        Spinner theme = spinner(new String[]{"Dark", "Oryn Blue", "Oryn Purple", "AMOLED"}, 0);
-        theme.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
-            public void onItemSelected(android.widget.AdapterView<?> p, View v, int pos, long id) {
-                if (pos == 1) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.rgb(35,145,255));
-                if (pos == 2) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.rgb(150,90,255));
-                if (pos == 3) OrynThemeManager.setColor(OrynSettingsActivity.this, Color.WHITE);
-            }
-            public void onNothingSelected(android.widget.AdapterView<?> p) {}
-        });
-        addSetting("Theme", "Choose your preferred theme", theme);
         Spinner scale = spinner(new String[]{"Small", "Default", "Large"}, 1);
         addSetting("UI Scale", "Adjust the interface size", scale);
-        Button customization = textButton("Customize");
-        customization.setOnClickListener(v -> startActivity(new Intent(this, OrynCustomizationActivity.class)));
-        addSetting("Oryn Customization", "Backgrounds, colors, buttons and animations", customization);
     }
 
     private void showGame() {
         clear("Game", "Minecraft and launcher performance");
         section("Game", R.drawable.ic_px_gamepad);
-        Spinner fps = spinner(new String[]{"30 FPS", "60 FPS", "90 FPS", "120 FPS", "Uncapped"}, 1);
-        addSetting("Max FPS (Launcher)", "Limit the launcher framerate (0 = Uncapped)", fps);
         Switch animations = toggle(uiPrefs.getBoolean("animations", true), (b,c) ->
                 uiPrefs.edit().putBoolean("animations", c).apply());
         addSetting("Animations", "Enable smooth UI animations", animations);
-        Switch boost = toggle(LauncherPreferences.PREF_ORYN_FPS_BOOST, (b,c) -> {
-            LauncherPreferences.PREF_ORYN_FPS_BOOST = c;
-            LauncherPreferences.DEFAULT_PREF.edit().putBoolean("orynFpsBoost", c).apply();
-        });
-        addSetting("Oryn FPS Boost", "Apply real Minecraft rendering optimizations before launch", boost);
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
         addSetting("Game Controls", "Configure the existing in-game control layout", controls);
@@ -405,11 +383,16 @@ public class OrynSettingsActivity extends BaseActivity {
                 new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Oryn Crash Viewer", "View and inspect Minecraft crash logs",
                 new Intent(this, OrynCrashViewerActivity.class));
-        addActivitySetting("Oryn Customization", "Open the full Oryn customization center",
-                new Intent(this, OrynCustomizationActivity.class));
-        addActivitySetting("Java / Runtime Settings", "Open the existing launcher runtime preferences",
-                new Intent(this, OrynLegacySettingsActivity.class));
         addActivitySetting("Experimental Settings", "Open the existing experimental preferences",
+                new Intent(this, OrynLegacySettingsActivity.class));
+    }
+
+    private void showJvm() {
+        clear("JVM", "Java runtime and virtual machine settings");
+        section("JVM", R.drawable.ic_px_sliders);
+        addActivitySetting("Java / Runtime Settings", "Configure the existing Java runtime preferences",
+                new Intent(this, OrynLegacySettingsActivity.class));
+        addActivitySetting("Experimental JVM Options", "Open the launcher's existing advanced runtime preferences",
                 new Intent(this, OrynLegacySettingsActivity.class));
     }
 
