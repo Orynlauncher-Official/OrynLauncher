@@ -114,10 +114,18 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
-        GradientDrawable launcherBackground = new GradientDrawable(
-                GradientDrawable.Orientation.TL_BR,
-                new int[] { Color.rgb(8, 25, 43), BG, Color.rgb(3, 8, 16) });
-        root.setBackground(launcherBackground);
+        // Custom Oryn settings background image. Add oryn_settings_bg.jpg to
+        // app_orynlauncher/src/main/res/drawable-nodpi/ in the repository.
+        android.graphics.drawable.Drawable settingsBackground =
+                androidx.core.content.ContextCompat.getDrawable(this, R.drawable.oryn_settings_bg);
+        if (settingsBackground != null) {
+            root.setBackground(settingsBackground);
+        } else {
+            GradientDrawable fallbackBackground = new GradientDrawable(
+                    GradientDrawable.Orientation.TL_BR,
+                    new int[] { Color.rgb(8, 25, 43), BG, Color.rgb(3, 8, 16) });
+            root.setBackground(fallbackBackground);
+        }
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
