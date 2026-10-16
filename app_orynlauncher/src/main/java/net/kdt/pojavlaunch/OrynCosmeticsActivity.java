@@ -484,6 +484,20 @@ public class OrynCosmeticsActivity extends Activity {
         TextView subtitle = text("Choose a cape for your character • Your collection stays on this device", 12, MUTED);
         page.addView(subtitle, lp(-1, 32));
 
+        Button skinMcButton = button("Browse Custom Capes on SkinMC ↗");
+        skinMcButton.setBackground(bg(Color.rgb(18, 39, 65), 10, Color.rgb(55, 125, 235), 1));
+        skinMcButton.setTextColor(Color.rgb(170, 202, 255));
+        page.addView(skinMcButton, lp(-1, 42));
+        TextView skinMcHint = text("Download a cape PNG from SkinMC, then tap + Import Cape to add it to this gallery.", 10, MUTED);
+        page.addView(skinMcHint, lp(-1, 28));
+        skinMcButton.setOnClickListener(v -> {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://skinmc.net/capes/custom")));
+            } catch (Exception e) {
+                Toast.makeText(this, "Could not open SkinMC", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         TextView animatedNote = text("ANIMATED CAPES  •  In-game animation needs a compatible Minecraft cape renderer/mod.", 11, MUTED);
         animatedNote.setPadding(d(10), d(6), d(10), d(6));
         animatedNote.setBackground(bg(PANEL, 8, Color.rgb(43, 54, 70), 1));
