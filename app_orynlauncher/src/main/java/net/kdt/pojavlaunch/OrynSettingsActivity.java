@@ -75,19 +75,22 @@ public class OrynSettingsActivity extends BaseActivity {
         return Math.max(dp(1), (int) (screenW() * fraction));
     }
 
+    // Translucent glass panels: let the snowy wallpaper remain visible behind controls.
     private GradientDrawable bg(int color, float radius) {
+        int top = Color.argb(142,
+                Math.min(255, Color.red(color) + 8),
+                Math.min(255, Color.green(color) + 18),
+                Math.min(255, Color.blue(color) + 28));
+        int middle = Color.argb(112, Color.red(color), Color.green(color), Color.blue(color));
+        int bottom = Color.argb(132,
+                Math.max(0, Color.red(color) - 2),
+                Math.max(0, Color.green(color) - 3),
+                Math.max(0, Color.blue(color) - 5));
         GradientDrawable d = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[] { Color.rgb(
-                        Math.min(255, Color.red(color) + 8),
-                        Math.min(255, Color.green(color) + 18),
-                        Math.min(255, Color.blue(color) + 28)),
-                        color,
-                        Color.rgb(Math.max(0, Color.red(color) - 2),
-                                Math.max(0, Color.green(color) - 3),
-                                Math.max(0, Color.blue(color) - 5)) });
+                new int[] { top, middle, bottom });
         d.setCornerRadius(dp(radius));
-        d.setStroke(dp(1), BORDER);
+        d.setStroke(dp(1), Color.argb(205, Color.red(BORDER), Color.green(BORDER), Color.blue(BORDER)));
         return d;
     }
 
@@ -114,10 +117,10 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
-        // Custom Oryn settings background image. Add oryn_settings_bg.jpg to
+        // Custom Oryn settings background image. Use oryn_settings_background.jpg from
         // app_orynlauncher/src/main/res/drawable-nodpi/ in the repository.
         android.graphics.drawable.Drawable settingsBackground =
-                androidx.core.content.ContextCompat.getDrawable(this, R.drawable.oryn_settings_bg);
+                androidx.core.content.ContextCompat.getDrawable(this, R.drawable.oryn_settings_background);
         if (settingsBackground != null) {
             root.setBackground(settingsBackground);
         } else {
