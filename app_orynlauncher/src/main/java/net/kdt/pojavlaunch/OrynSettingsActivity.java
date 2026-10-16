@@ -23,8 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import git.artdeell.mojo.R;
-import net.kdt.pojavlaunch.prefs.LauncherPreferences;
-import net.kdt.pojavlaunch.utils.OrynThemeManager;
 
 /**
  * Oryn V4 settings UI.
