@@ -1,26 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Bright icy outer rim for the premium PLAY control -->
     <item>
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#F4FDFF" android:centerColor="#58CFFF" android:endColor="#D9F7FF" />
-            <corners android:radius="19dp" />
-            <stroke android:width="1dp" android:color="#DDF8FF" />
+            <gradient android:angle="270" android:startColor="#269BFF" android:centerColor="#147FF0" android:endColor="#0758C9" />
+            <corners android:radius="20dp" />
+            <stroke android:width="1dp" android:color="#579FFF" />
         </shape>
     </item>
-    <!-- Electric blue edge -->
-    <item android:left="1dp" android:top="1dp" android:right="1dp" android:bottom="1dp">
+    <item android:left="2dp" android:top="2dp" android:right="2dp" android:bottom="2dp">
         <shape android:shape="rectangle">
-            <gradient android:angle="0" android:startColor="#B5F0FF" android:centerColor="#29AFFF" android:endColor="#70D8FF" />
+            <gradient android:angle="270" android:startColor="#36A8FF" android:centerColor="#1688F8" android:endColor="#0B6CE0" />
             <corners android:radius="18dp" />
-        </shape>
-    </item>
-    <!-- Deep-to-bright blue face, inspired by the snowy reference UI -->
-    <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
-        <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#42B8FF" android:centerColor="#168BFA" android:endColor="#0864D8" />
-            <corners android:radius="16dp" />
-            <stroke android:width="1dp" android:color="#A8E9FF" />
+            <stroke android:width="1dp" android:color="#397FE8" />
         </shape>
     </item>
 </layer-list>
