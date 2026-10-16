@@ -32,13 +32,13 @@ import net.kdt.pojavlaunch.utils.OrynThemeManager;
  * existing feature activities and preference storage remain unchanged.
  */
 public class OrynSettingsActivity extends BaseActivity {
-    private static final int BG = Color.rgb(4, 13, 27);
-    private static final int PANEL = Color.rgb(8, 25, 45);
-    private static final int PANEL_2 = Color.rgb(12, 34, 58);
-    private static final int BORDER = Color.rgb(48, 135, 194);
+    private static final int BG = Color.rgb(5, 13, 25);
+    private static final int PANEL = Color.rgb(9, 23, 40);
+    private static final int PANEL_2 = Color.rgb(13, 31, 52);
+    private static final int BORDER = Color.rgb(35, 103, 166);
     private static final int TEXT = Color.rgb(241, 249, 255);
-    private static final int MUTED = Color.rgb(139, 190, 225);
-    private static final int BLUE = Color.rgb(45, 169, 255);
+    private static final int MUTED = Color.rgb(133, 170, 207);
+    private static final int BLUE = Color.rgb(39, 143, 247);
 
     private SharedPreferences uiPrefs;
     private LinearLayout content;
@@ -115,7 +115,7 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
         GradientDrawable snowyBackground = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
-                new int[] { Color.rgb(9, 36, 65), BG, Color.rgb(3, 9, 20) });
+                new int[] { Color.rgb(12, 29, 50), BG, Color.rgb(3, 8, 16) });
         root.setBackground(snowyBackground);
 
         LinearLayout header = new LinearLayout(this);
