@@ -402,21 +402,24 @@ public class OrynSettingsActivity extends BaseActivity {
         clear("Advanced", "Developer and OrynLauncher tools");
         section("Advanced", R.drawable.ic_px_sliders);
         addActivitySetting("Oryn Recorder", "Video quality, FPS and saved recordings",
-                new Intent(this, OrynLegacySettingsActivity.class));
+                preferenceIntent("recorder"));
         addActivitySetting("Oryn Crash Viewer", "View and inspect Minecraft crash logs",
                 new Intent(this, OrynCrashViewerActivity.class));
-        addActivitySetting("Experimental Settings", "Open the existing experimental preferences",
-                new Intent(this, OrynLegacySettingsActivity.class));
+        addActivitySetting("Experimental Settings", "Open experimental launcher options",
+                preferenceIntent("experimental"));
     }
 
     private void showJvm() {
         clear("JVM", "Java runtime and virtual machine settings");
         section("JVM", R.drawable.ic_px_sliders);
-        Button open = textButton("Not ready");
-        // Avoid routing through OrynLegacySettingsActivity: that compatibility activity redirects here.
-        open.setOnClickListener(v -> Toast.makeText(this,
-                "The separate JVM editor is not wired up in this branch yet.", Toast.LENGTH_LONG).show());
-        addSetting("JVM editor", "A dedicated JVM editor still needs implementation", open);
+        addActivitySetting("Java / JVM Runtime", "Memory allocation, Java arguments and runtime selection",
+                preferenceIntent("java"));
+    }
+
+    private Intent preferenceIntent(String screen) {
+        Intent intent = new Intent(this, OrynPreferenceHostActivity.class);
+        intent.putExtra(OrynPreferenceHostActivity.EXTRA_SCREEN, screen);
+        return intent;
     }
 
     private void addActivitySetting(String title, String subtitle, Intent intent) {
