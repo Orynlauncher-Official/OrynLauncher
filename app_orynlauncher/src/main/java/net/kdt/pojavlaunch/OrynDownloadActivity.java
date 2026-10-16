@@ -74,6 +74,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
     private TextView detailDesc;
     private ImageView detailIcon;
     private Button detailDownload;
+    private int searchRequestId = 0;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -310,6 +311,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
     }
 
     private void searchProjects(final String query) {
+        // Each search owns a snapshot of the selected category/version/loader.
+        // This prevents slow responses from an older search replacing newer results.
+        final int requestId = ++searchRequestId;
+        final Category requestedCategory = category;
+        final String minecraftVersion = getSelectedMinecraftVersion();
+        final String loader = getSelectedLoader();
+
         progress.setVisibility(View.VISIBLE);
         status.setText("Searching…");
         results.removeAllViews();
@@ -321,18 +329,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 params.put("limit", 30);
                 params.put("index", "relevance");
 
-                // ZalithLauncher-style Modrinth search: filter the project list
-                // itself by the selected Minecraft version and, for mods, the
-                // selected instance loader.
-                String minecraftVersion = getSelectedMinecraftVersion();
-                String loader = getSelectedLoader();
-                StringBuilder facets = new StringBuilder("[[\"project_type:")
-                        .append(category.projectType).append("\"]");
-                if (minecraftVersion != null) {
-                    facets.append(",\"versions:").append(minecraftVersion).append("\"");
+                StringBuilder facets = new StringBuilder("[[\\"project_type:")
+                        .append(requestedCategory.projectType).append("\\"]");
+                if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
+                    facets.append(",\\"versions:").append(minecraftVersion).append("\\"");
                 }
-                if (loader != null && category == Category.MOD) {
-                    facets.append(",\"categories:").append(loader).append("\"");
+                if (loader != null && requestedCategory == Category.MOD) {
+                    facets.append(",\\"categories:").append(loader).append("\\"");
                 }
                 facets.append("]]");
                 params.put("facets", facets.toString());
@@ -340,24 +343,24 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
 
-                // Some Modrinth projects do not expose loader/version facets consistently.
-                // Fall back progressively so the browser still shows content; the actual
-                // download step remains strict and checks the selected Minecraft version.
+                // If strict facets return nothing, retry with only project type.
+                // Download installation still validates the exact game version/loader.
                 if (hits == null || hits.size() == 0) {
                     HashMap<String, Object> fallback = new HashMap<>();
                     fallback.put("query", query);
                     fallback.put("limit", 30);
                     fallback.put("index", "relevance");
-                    fallback.put("facets", "[[\"project_type:" + category.projectType + "\"]]");
+                    fallback.put("facets", "[[\\"project_type:" + requestedCategory.projectType + "\\"]]");
                     response = api.get("search", fallback, JsonObject.class);
                     hits = response == null ? null : response.getAsJsonArray("hits");
                 }
 
                 final JsonArray searchHits = hits;
                 runOnUiThread(() -> {
+                    if (requestId != searchRequestId || isFinishing() || isDestroyed()) return;
                     progress.setVisibility(View.GONE);
                     if (searchHits == null || searchHits.size() == 0) {
-                        status.setText("No " + category.title.toLowerCase() + " found.");
+                        status.setText("No " + requestedCategory.title.toLowerCase(Locale.ROOT) + " found.");
                         return;
                     }
                     status.setText(searchHits.size() + " results");
@@ -367,6 +370,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
+                    if (requestId != searchRequestId || isFinishing() || isDestroyed()) return;
                     progress.setVisibility(View.GONE);
                     status.setText("Search failed. Check your Internet connection.");
                     Toast.makeText(this, e.getMessage() == null ? "Download service error" : e.getMessage(), Toast.LENGTH_SHORT).show();
