@@ -105,8 +105,8 @@
             android:paddingEnd="16dp"
             android:paddingBottom="18dp"
             android:background="#7A06101F">
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PLAY YOUR" android:letterSpacing="0.24" android:textColor="#FFFFFF" android:textSize="10sp"/>
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OWN STORY" android:letterSpacing="0.22" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="24sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="PLAY YOUR" android:letterSpacing="0.30" android:textColor="#8BD7FF" android:textStyle="bold" android:textSize="10sp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OWN STORY" android:letterSpacing="0.16" android:textColor="#F3FAFF" android:shadowColor="#803CAEFF" android:shadowDx="0" android:shadowDy="0" android:shadowRadius="8" android:textStyle="bold" android:textSize="25sp"/>
             <TextView android:id="@+id/oryn_selected_instance_name" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="7dp" android:text="Minecraft" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="12sp"/>
         </LinearLayout>
         <LinearLayout
@@ -183,7 +183,7 @@
             </LinearLayout>
             <ImageButton android:id="@+id/edit_profile_button" android:layout_width="34dp" android:layout_height="34dp" android:layout_marginStart="4dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Edit profile" android:background="@drawable/oryn_account_pill" android:padding="8dp"/>
         </LinearLayout>
-        <Button android:id="@+id/play_button" android:layout_width="0dp" android:layout_height="58dp" android:layout_weight="1.25" android:layout_marginStart="7dp" android:layout_marginEnd="8dp" android:text="▶  PLAY" android:textAllCaps="false" android:textSize="18sp" android:lineSpacingExtra="1dp" android:gravity="center" android:textStyle="bold" android:textColor="#F7FDFF" android:background="@drawable/oryn_launch_button" android:backgroundTint="@null" android:elevation="8dp"/>
+        <Button android:id="@+id/play_button" android:layout_width="0dp" android:layout_height="58dp" android:layout_weight="1.25" android:layout_marginStart="7dp" android:layout_marginEnd="8dp" android:text="▶  PLAY" android:textAllCaps="false" android:letterSpacing="0.04" android:textSize="20sp" android:lineSpacingExtra="1dp" android:gravity="center" android:textStyle="bold" android:textColor="#FFFFFF" android:shadowColor="#CCB8F4FF" android:shadowDx="0" android:shadowDy="0" android:shadowRadius="7" android:background="@drawable/oryn_launch_button" android:backgroundTint="@null" android:elevation="8dp"/>
         <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="0.65" android:gravity="center_vertical" android:orientation="vertical">
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●  Ready" android:textColor="#F0FAFF" android:textStyle="bold" android:textSize="14sp"/>
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Everything is set!" android:textColor="#D8EAF8" android:textSize="9sp"/>
