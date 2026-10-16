@@ -337,6 +337,18 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        // The view can be resized after the initial surface setup (rotation,
+        // split-screen, IME panning). Refresh the coordinate transform immediately
+        // so the visible cursor and click coordinates stay aligned.
+        if (w > 0 && h > 0 && windowWidth > 0 && windowHeight > 0) {
+            cursorRatioX = (double) w / windowWidth;
+            cursorRatioY = (double) h / windowHeight;
+        }
+    }
+
+    @Override
     public void onGrabState(boolean isGrabbing) {
         if(mLastGrabState != isGrabbing) {
             Log.i("MGLSurface", "Grabbing state changed! " + mLastGrabState + " -> " + isGrabbing);
