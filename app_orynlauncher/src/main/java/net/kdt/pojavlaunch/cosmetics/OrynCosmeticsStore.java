@@ -105,7 +105,8 @@ public final class OrynCosmeticsStore {
 
     private void createOrynCape(String name, int base, int accent, int shadow, int highlight) {
         File out = new File(capes, name);
-        if (out.exists()) return;
+        // Rewrite presets on every gallery open so previously generated bad textures are repaired.
+        if (out.exists() && !out.delete()) return;
         // Minecraft cape UV map: use the upper-left 22x17 area of a 64x32 texture.
         // Keep unused UV space transparent to avoid streaks and wrapped pixels.
         Bitmap bitmap = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
@@ -154,6 +155,36 @@ public final class OrynCosmeticsStore {
         canvas.drawBitmap(panel, 0, 0, paint);
         if (scaled) panel.recycle();
         return result;
+    }
+
+    /** Repairs capes created by older Oryn builds before they are previewed or applied. */
+    public void normalizeExistingCapes() {
+        File[] files = capes.listFiles();
+        if (files == null) return;
+        for (File file : files) {
+            if (!file.isFile() || !file.getName().toLowerCase().endsWith(".png")) continue;
+            Bitmap decoded = BitmapFactory.decodeFile(file.getAbsolutePath());
+            if (decoded == null) continue;
+            boolean valid = decoded.getWidth() == 64 && decoded.getHeight() == 32;
+            if (!valid && !((decoded.getWidth() == 22 && decoded.getHeight() == 17) ||
+                    (decoded.getWidth() == 44 && decoded.getHeight() == 34))) {
+                decoded.recycle();
+                continue;
+            }
+            Bitmap normalized = normalizeCape(decoded);
+            decoded.recycle();
+            if (normalized == null) continue;
+            File temp = new File(file.getParentFile(), file.getName() + ".tmp");
+            try (FileOutputStream stream = new FileOutputStream(temp)) {
+                normalized.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                if (file.delete()) temp.renameTo(file);
+                else temp.delete();
+            } catch (Exception ignored) {
+                temp.delete();
+            } finally {
+                normalized.recycle();
+            }
+        }
     }
 
     public List<File> listSkins() { return listPng(skins); }
