@@ -106,24 +106,29 @@ public final class OrynCosmeticsStore {
     private void createOrynCape(String name, int base, int accent, int shadow, int highlight) {
         File out = new File(capes, name);
         if (out.exists()) return;
+        // Minecraft cape UV map: use the upper-left 22x17 area of a 64x32 texture.
+        // Keep unused UV space transparent to avoid streaks and wrapped pixels.
         Bitmap bitmap = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
         paint.setAntiAlias(false);
-        paint.setColor(base); canvas.drawRect(0, 0, 64, 32, paint);
-        paint.setColor(shadow); canvas.drawRect(0, 0, 64, 4, paint);
-        canvas.drawRect(0, 28, 64, 32, paint);
-        canvas.drawRect(0, 0, 4, 32, paint);
-        canvas.drawRect(60, 0, 64, 32, paint);
+        paint.setColor(base);
+        canvas.drawRect(1, 1, 11, 17, paint);
+        canvas.drawRect(12, 1, 22, 17, paint);
+        paint.setColor(shadow);
+        canvas.drawRect(1, 1, 11, 3, paint);
+        canvas.drawRect(12, 1, 22, 3, paint);
+        canvas.drawRect(1, 15, 11, 17, paint);
+        canvas.drawRect(12, 15, 22, 17, paint);
         paint.setColor(accent);
-        for (int y = 5; y < 28; y += 6) {
-            int x = (y / 6 % 2 == 0) ? 8 : 14;
-            canvas.drawRect(x, y, 64 - x, y + 2, paint);
+        for (int y = 4; y < 14; y += 4) {
+            int x1 = (y / 4 % 2 == 0) ? 2 : 4;
+            canvas.drawRect(x1, y, 12 - x1, y + 2, paint);
+            canvas.drawRect(12 + x1, y, 24 - x1, y + 2, paint);
         }
-        canvas.drawRect(28, 5, 36, 27, paint);
         paint.setColor(highlight);
-        canvas.drawRect(30, 7, 34, 25, paint);
-        canvas.drawRect(22, 14, 42, 18, paint);
+        canvas.drawRect(5, 4, 7, 14, paint);
+        canvas.drawRect(16, 4, 18, 14, paint);
         try (FileOutputStream stream = new FileOutputStream(out)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
         } catch (Exception ignored) {
@@ -131,6 +136,24 @@ public final class OrynCosmeticsStore {
         } finally {
             bitmap.recycle();
         }
+    }
+
+    /** Normalizes legacy and modern cape PNGs into Minecraft's 64x32 texture size. */
+    private Bitmap normalizeCape(Bitmap source) {
+        if (source == null) return null;
+        Bitmap panel = source;
+        boolean scaled = false;
+        if (source.getWidth() == 44 && source.getHeight() == 34) {
+            panel = Bitmap.createScaledBitmap(source, 22, 17, false);
+            scaled = true;
+        }
+        Bitmap result = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(result);
+        Paint paint = new Paint();
+        paint.setFilterBitmap(false);
+        canvas.drawBitmap(panel, 0, 0, paint);
+        if (scaled) panel.recycle();
+        return result;
     }
 
     public List<File> listSkins() { return listPng(skins); }
@@ -153,13 +176,25 @@ public final class OrynCosmeticsStore {
     }
 
     public File importCape(Uri uri, String name) throws Exception {
-        Bitmap b = decode(uri);
-        if (b == null || !((b.getWidth() == 64 && b.getHeight() == 32) ||
-                (b.getWidth() == 22 && b.getHeight() == 17) ||
-                (b.getWidth() == 44 && b.getHeight() == 34)))
+        Bitmap decoded = decode(uri);
+        if (decoded == null || !((decoded.getWidth() == 64 && decoded.getHeight() == 32) ||
+                (decoded.getWidth() == 22 && decoded.getHeight() == 17) ||
+                (decoded.getWidth() == 44 && decoded.getHeight() == 34))) {
+            if (decoded != null) decoded.recycle();
             throw new IllegalArgumentException("Cape must be a compatible 64×32, 22×17, or 44×34 PNG.");
+        }
+        Bitmap normalized = normalizeCape(decoded);
+        if (normalized == null) {
+            decoded.recycle();
+            throw new IllegalArgumentException("Unable to normalize this cape texture.");
+        }
         File out = unique(capes, safeName(name, "cape") + ".png");
-        copyUri(uri, out);
+        try (FileOutputStream stream = new FileOutputStream(out)) {
+            normalized.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        } finally {
+            normalized.recycle();
+            decoded.recycle();
+        }
         return out;
     }
 
