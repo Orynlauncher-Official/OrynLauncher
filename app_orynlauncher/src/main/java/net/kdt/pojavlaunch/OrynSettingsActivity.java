@@ -334,8 +334,18 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showAppearance() {
         clear("Appearance", "Customize the look and feel of OrynLauncher");
         section("Appearance", R.drawable.ic_px_image);
-        Spinner scale = spinner(new String[]{"Small", "Default", "Large"}, 1);
-        addSetting("UI Scale", "Adjust the interface size", scale);
+        String[] scaleValues = new String[]{"Small", "Default", "Large"};
+        int savedScale = uiPrefs.getInt("ui_scale", 1);
+        Spinner scale = spinner(scaleValues, savedScale);
+        scale.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                uiPrefs.edit().putInt("ui_scale", position).apply();
+                Toast.makeText(OrynSettingsActivity.this,
+                        "UI scale saved. Reopen the launcher to apply it everywhere.", Toast.LENGTH_SHORT).show();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+        addSetting("UI Scale", "Save Small, Default or Large preference", scale);
     }
 
     private void showGame() {
@@ -366,12 +376,26 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showPrivacy() {
         clear("Privacy", "Permissions and local launcher preferences");
         section("Privacy", R.drawable.ic_px_bell);
-        Button notification = textButton("Request");
-        notification.setOnClickListener(v -> Toast.makeText(this, "Notification permission can be requested from the launcher.", Toast.LENGTH_SHORT).show());
-        addSetting("Notifications", "Control notification permission for the launcher", notification);
-        Button reset = textButton("Keep Data");
-        reset.setOnClickListener(v -> Toast.makeText(this, "No account, instance or world data is removed here.", Toast.LENGTH_SHORT).show());
-        addSetting("Data", "Launcher settings are stored locally on this device", reset);
+        Button notification = textButton("App Settings");
+        notification.setOnClickListener(v -> {
+            try {
+                Intent intent = new Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+                intent.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+                startActivity(intent);
+            } catch (Exception e) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                        android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
+            }
+        });
+        addSetting("Notifications", "Open Android notification permission settings", notification);
+        Button appInfo = textButton("Open");
+        appInfo.setOnClickListener(v -> {
+            Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    android.net.Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        });
+        addSetting("App Permissions", "Review OrynLauncher permissions in Android settings", appInfo);
     }
 
     private void showAdvanced() {
@@ -388,10 +412,13 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showJvm() {
         clear("JVM", "Java runtime and virtual machine settings");
         section("JVM", R.drawable.ic_px_sliders);
-        addActivitySetting("Java / Runtime Settings", "Configure the existing Java runtime preferences",
-                new Intent(this, OrynLegacySettingsActivity.class));
-        addActivitySetting("Experimental JVM Options", "Open the launcher's existing advanced runtime preferences",
-                new Intent(this, OrynLegacySettingsActivity.class));
+        addSetting("Runtime settings", "Open the original launcher settings screen to review Java options",
+                textButton("Use launcher"));
+        Button open = (Button) content.getChildAt(content.getChildCount() - 1);
+        // Avoid routing through OrynLegacySettingsActivity: that compatibility activity redirects here.
+        open.setOnClickListener(v -> {
+            Toast.makeText(this, "The separate JVM editor is not wired up in this branch yet.", Toast.LENGTH_LONG).show();
+        });
     }
 
     private void addActivitySetting(String title, String subtitle, Intent intent) {
