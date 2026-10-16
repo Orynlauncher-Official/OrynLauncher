@@ -105,31 +105,25 @@ public final class OrynCosmeticsStore {
 
     private void createOrynCape(String name, int base, int accent, int shadow, int highlight) {
         File out = new File(capes, name);
-        // Rewrite presets on every gallery open so previously generated bad textures are repaired.
+        // Always rewrite bundled presets to replace malformed textures from earlier builds.
         if (out.exists() && !out.delete()) return;
-        // Minecraft cape UV map: use the upper-left 22x17 area of a 64x32 texture.
-        // Keep unused UV space transparent to avoid streaks and wrapped pixels.
+        // Standard Minecraft cape texture: 64x32 with separate front/back and side UV faces.
         Bitmap bitmap = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
         Paint paint = new Paint();
         paint.setAntiAlias(false);
-        paint.setColor(base);
-        canvas.drawRect(1, 1, 11, 17, paint);
-        canvas.drawRect(12, 1, 22, 17, paint);
+        // Front and back faces are separate UV panels. Paint both consistently.
+        drawCapePanel(canvas, paint, 1, 1, base, accent, shadow, highlight);
+        drawCapePanel(canvas, paint, 12, 1, base, accent, shadow, highlight);
+        // Side strips and bottom/top edges; no extra overlaid cape layer is created.
         paint.setColor(shadow);
-        canvas.drawRect(1, 1, 11, 3, paint);
-        canvas.drawRect(12, 1, 22, 3, paint);
-        canvas.drawRect(1, 15, 11, 17, paint);
-        canvas.drawRect(12, 15, 22, 17, paint);
-        paint.setColor(accent);
-        for (int y = 4; y < 14; y += 4) {
-            int x1 = (y / 4 % 2 == 0) ? 2 : 4;
-            canvas.drawRect(x1, y, 12 - x1, y + 2, paint);
-            canvas.drawRect(12 + x1, y, 24 - x1, y + 2, paint);
-        }
-        paint.setColor(highlight);
-        canvas.drawRect(5, 4, 7, 14, paint);
-        canvas.drawRect(16, 4, 18, 14, paint);
+        canvas.drawRect(0, 1, 1, 17, paint);
+        canvas.drawRect(11, 1, 12, 17, paint);
+        canvas.drawRect(22, 1, 23, 17, paint);
+        canvas.drawRect(1, 0, 11, 1, paint);
+        canvas.drawRect(12, 0, 22, 1, paint);
+        canvas.drawRect(1, 17, 11, 18, paint);
+        canvas.drawRect(12, 17, 22, 18, paint);
         try (FileOutputStream stream = new FileOutputStream(out)) {
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
         } catch (Exception ignored) {
@@ -139,27 +133,47 @@ public final class OrynCosmeticsStore {
         }
     }
 
-    /** Normalizes legacy and modern cape PNGs into Minecraft's 64x32 texture size. */
+    private void drawCapePanel(Canvas canvas, Paint paint, int left, int top,
+                               int base, int accent, int shadow, int highlight) {
+        paint.setColor(base);
+        canvas.drawRect(left, top, left + 10, top + 16, paint);
+        paint.setColor(shadow);
+        canvas.drawRect(left, top, left + 10, top + 2, paint);
+        canvas.drawRect(left, top + 14, left + 10, top + 16, paint);
+        paint.setColor(accent);
+        for (int y = 3; y < 13; y += 4) {
+            int inset = (y / 4 % 2 == 0) ? 1 : 3;
+            canvas.drawRect(left + inset, top + y, left + 10 - inset, top + y + 2, paint);
+        }
+        paint.setColor(highlight);
+        canvas.drawRect(left + 4, top + 3, left + 6, top + 13, paint);
+    }
+
+    /**
+     * Preserve a full modern 64x32 UV map. For legacy flat panels, place the
+     * same artwork on the front and back UV faces without stacking extra layers.
+     */
     private Bitmap normalizeCape(Bitmap source) {
         if (source == null) return null;
-        Bitmap panel;
-        boolean recyclePanel = false;
-        if (source.getWidth() == 64 && source.getHeight() == 32) {
-            // Only the upper-left 22x17 UV area belongs to the cape mesh.
-            panel = Bitmap.createBitmap(source, 0, 0, 22, 17);
-            recyclePanel = true;
-        } else if (source.getWidth() == 44 && source.getHeight() == 34) {
-            panel = Bitmap.createScaledBitmap(source, 22, 17, false);
-            recyclePanel = true;
-        } else {
-            panel = source;
-        }
         Bitmap result = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(result);
         Paint paint = new Paint();
         paint.setFilterBitmap(false);
-        canvas.drawBitmap(panel, 0, 0, paint);
-        if (recyclePanel) panel.recycle();
+        if (source.getWidth() == 64 && source.getHeight() == 32) {
+            canvas.drawBitmap(source, 0, 0, paint);
+        } else {
+            Bitmap panel = source;
+            boolean scaled = false;
+            if (source.getWidth() == 44 && source.getHeight() == 34) {
+                panel = Bitmap.createScaledBitmap(source, 22, 17, false);
+                scaled = true;
+            }
+            canvas.drawBitmap(panel, 1, 1, paint);
+            // Legacy flat art is copied to the separate back-face UV panel, not
+            // overlaid on the front face.
+            canvas.drawBitmap(panel, 12, 1, paint);
+            if (scaled) panel.recycle();
+        }
         return result;
     }
 
