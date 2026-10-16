@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Frosted outer ice rim -->
+    <!-- Bright icy outer rim for the premium PLAY control -->
     <item>
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#FFFFFF" android:centerColor="#A9E8FF" android:endColor="#EAFBFF" />
+            <gradient android:angle="270" android:startColor="#F4FDFF" android:centerColor="#58CFFF" android:endColor="#D9F7FF" />
             <corners android:radius="19dp" />
-            <stroke android:width="1dp" android:color="#F5FDFF" />
+            <stroke android:width="1dp" android:color="#DDF8FF" />
         </shape>
     </item>
-    <!-- Cold luminous edge -->
+    <!-- Electric blue edge -->
     <item android:left="1dp" android:top="1dp" android:right="1dp" android:bottom="1dp">
         <shape android:shape="rectangle">
-            <gradient android:angle="0" android:startColor="#E7FAFF" android:centerColor="#52C8FF" android:endColor="#C7F3FF" />
+            <gradient android:angle="0" android:startColor="#B5F0FF" android:centerColor="#29AFFF" android:endColor="#70D8FF" />
             <corners android:radius="18dp" />
         </shape>
     </item>
-    <!-- Icy blue glass with a bright snow-lit top -->
+    <!-- Deep-to-bright blue face, inspired by the snowy reference UI -->
     <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#7EDCFF" android:centerColor="#168FEA" android:endColor="#0756A7" />
+            <gradient android:angle="270" android:startColor="#42B8FF" android:centerColor="#168BFA" android:endColor="#0864D8" />
             <corners android:radius="16dp" />
-            <stroke android:width="1dp" android:color="#DDF8FF" />
+            <stroke android:width="1dp" android:color="#A8E9FF" />
         </shape>
     </item>
 </layer-list>
