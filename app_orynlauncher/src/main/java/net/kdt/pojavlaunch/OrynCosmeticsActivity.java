@@ -511,6 +511,7 @@ public class OrynCosmeticsActivity extends Activity {
         grid.setPadding(0, d(10), 0, d(8));
 
         store.ensureOrynCapes();
+        store.normalizeExistingCapes();
         final boolean[] showOrynCapes = {true};
         Runnable renderCapeCards = () -> {
             grid.removeAllViews();
@@ -528,7 +529,19 @@ public class OrynCosmeticsActivity extends Activity {
             ImageView image = new ImageView(this);
             image.setScaleType(ImageView.ScaleType.FIT_CENTER);
             Bitmap bitmap = store.load(file);
-            if (bitmap != null) image.setImageBitmap(bitmap);
+            if (bitmap != null) {
+                // Show the actual cape front UV panel instead of shrinking the
+                // entire 64x32 texture (which includes unused transparent UV space).
+                Bitmap thumbnail = null;
+                if (bitmap.getWidth() >= 12 && bitmap.getHeight() >= 17) {
+                    thumbnail = Bitmap.createBitmap(bitmap, 1, 1, 10, 16);
+                    bitmap.recycle();
+                } else {
+                    thumbnail = bitmap;
+                }
+                image.setImageBitmap(thumbnail);
+                image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            }
             image.setBackground(bg(Color.rgb(10, 14, 21), 8, Color.TRANSPARENT, 0));
             card.addView(image, lp(-1, 86));
 
