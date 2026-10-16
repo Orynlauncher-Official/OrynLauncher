@@ -1,25 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Bright icy outer rim -->
+    <!-- Frosted outer ice rim -->
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="#F4FDFF" />
-            <corners android:radius="17dp" />
+            <gradient android:angle="270" android:startColor="#FFFFFF" android:centerColor="#A9E8FF" android:endColor="#EAFBFF" />
+            <corners android:radius="19dp" />
+            <stroke android:width="1dp" android:color="#F5FDFF" />
         </shape>
     </item>
-    <!-- Cold blue glow -->
+    <!-- Cold luminous edge -->
     <item android:left="1dp" android:top="1dp" android:right="1dp" android:bottom="1dp">
         <shape android:shape="rectangle">
-            <gradient android:startColor="#E8FCFF" android:centerColor="#75D8FF" android:endColor="#E5FAFF" android:angle="0" />
-            <corners android:radius="16dp" />
+            <gradient android:angle="0" android:startColor="#E7FAFF" android:centerColor="#52C8FF" android:endColor="#C7F3FF" />
+            <corners android:radius="18dp" />
         </shape>
     </item>
-    <!-- Snowy glass face -->
+    <!-- Icy blue glass with a bright snow-lit top -->
     <item android:left="3dp" android:top="3dp" android:right="3dp" android:bottom="3dp">
         <shape android:shape="rectangle">
-            <gradient android:startColor="#DFFAFF" android:centerColor="#249DFA" android:endColor="#0878D8" android:angle="270" />
-            <corners android:radius="14dp" />
-            <stroke android:width="1dp" android:color="#D9F8FF" />
+            <gradient android:angle="270" android:startColor="#7EDCFF" android:centerColor="#168FEA" android:endColor="#0756A7" />
+            <corners android:radius="16dp" />
+            <stroke android:width="1dp" android:color="#DDF8FF" />
         </shape>
     </item>
 </layer-list>
