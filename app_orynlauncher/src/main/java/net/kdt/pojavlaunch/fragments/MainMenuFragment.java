@@ -4,6 +4,7 @@ import net.kdt.pojavlaunch.OrynDownloadActivity;
 import net.kdt.pojavlaunch.OrynCrashViewerActivity;
 import net.kdt.pojavlaunch.OrynFileManagerActivity;
 import net.kdt.pojavlaunch.OrynCosmeticsActivity;
+import net.kdt.pojavlaunch.OrynSettingsActivity;
 
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.shareLog;
@@ -132,7 +133,7 @@ public class MainMenuFragment extends Fragment {
 
         if (mDiscordButton != null) mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
         if (mCustomControlButton != null) mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
-        if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> Tools.swapFragment(requireActivity(), LauncherPreferenceFragment.class, LauncherActivity.SETTING_FRAGMENT_TAG, null));
+        if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynSettingsActivity.class)));
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
         if (mPlayButton != null) mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
