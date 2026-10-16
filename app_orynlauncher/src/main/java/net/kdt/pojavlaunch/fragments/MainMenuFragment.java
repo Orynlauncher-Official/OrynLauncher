@@ -89,7 +89,7 @@ public class MainMenuFragment extends Fragment {
                     String profileName = Tools.isValidString(profile.name) ? profile.name : "Minecraft";
                     String profileVersion = Tools.isValidString(profile.versionId) ? profile.versionId : "Version not selected";
                     profileCard.setText(profileName + "\n" + profileVersion);
-                    profileCard.setTextColor(0xFFBDEBFF);
+                    profileCard.setTextColor(0xFFFFFFFF);
                     profileCard.setTextSize(11);
                     profileCard.setPadding(10, 9, 10, 9);
                     profileCard.setMaxLines(2);
