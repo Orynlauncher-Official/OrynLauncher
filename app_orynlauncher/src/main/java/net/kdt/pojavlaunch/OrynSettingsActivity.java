@@ -412,13 +412,11 @@ public class OrynSettingsActivity extends BaseActivity {
     private void showJvm() {
         clear("JVM", "Java runtime and virtual machine settings");
         section("JVM", R.drawable.ic_px_sliders);
-        addSetting("Runtime settings", "Open the original launcher settings screen to review Java options",
-                textButton("Use launcher"));
-        Button open = (Button) content.getChildAt(content.getChildCount() - 1);
+        Button open = textButton("Not ready");
         // Avoid routing through OrynLegacySettingsActivity: that compatibility activity redirects here.
-        open.setOnClickListener(v -> {
-            Toast.makeText(this, "The separate JVM editor is not wired up in this branch yet.", Toast.LENGTH_LONG).show();
-        });
+        open.setOnClickListener(v -> Toast.makeText(this,
+                "The separate JVM editor is not wired up in this branch yet.", Toast.LENGTH_LONG).show());
+        addSetting("JVM editor", "A dedicated JVM editor still needs implementation", open);
     }
 
     private void addActivitySetting(String title, String subtitle, Intent intent) {
