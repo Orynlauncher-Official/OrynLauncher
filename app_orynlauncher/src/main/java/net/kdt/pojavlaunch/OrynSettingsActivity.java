@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -113,10 +114,10 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
-        GradientDrawable snowyBackground = new GradientDrawable(
+        GradientDrawable launcherBackground = new GradientDrawable(
                 GradientDrawable.Orientation.TL_BR,
-                new int[] { Color.rgb(12, 29, 50), BG, Color.rgb(3, 8, 16) });
-        root.setBackground(snowyBackground);
+                new int[] { Color.rgb(8, 25, 43), BG, Color.rgb(3, 8, 16) });
+        root.setBackground(launcherBackground);
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
@@ -150,7 +151,7 @@ public class OrynSettingsActivity extends BaseActivity {
         sidebar.setOrientation(LinearLayout.VERTICAL);
         sidebar.setPadding(dp(10), dp(10), dp(10), dp(10));
         sidebar.setBackground(bg(PANEL, 22));
-        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(refPx(0.195f), -1);
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(refPx(0.225f), -1);
         body.addView(sidebar, sp);
 
         ScrollView scroll = new ScrollView(this);
@@ -192,9 +193,17 @@ public class OrynSettingsActivity extends BaseActivity {
         b.setTextColor(TEXT);
         b.setAllCaps(false);
         b.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
-        b.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0);
-        b.setCompoundDrawablePadding(dp(16));
-        b.setPadding(dp(18), 0, dp(10), 0);
+        Drawable navIcon = getDrawable(icon);
+        if (navIcon != null) {
+            int iconSize = dp(23);
+            navIcon.setBounds(0, 0, iconSize, iconSize);
+            b.setCompoundDrawables(navIcon, null, null, null);
+        }
+        b.setCompoundDrawablePadding(dp(12));
+        b.setPadding(dp(14), 0, dp(8), 0);
+        b.setTextSize(14);
+        b.setSingleLine(true);
+        b.setEllipsize(android.text.TextUtils.TruncateAt.END);
         b.setBackground(bg(PANEL, 14));
         b.setOnClickListener(v -> {
             if (activeNav != null) activeNav.setBackground(bg(PANEL, 14));
@@ -223,7 +232,8 @@ public class OrynSettingsActivity extends BaseActivity {
         h.setGravity(Gravity.CENTER_VERTICAL);
         ImageView i = new ImageView(this);
         i.setImageResource(icon);
-        i.setPadding(dp(2), dp(2), dp(2), dp(2));
+        i.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        i.setPadding(dp(3), dp(3), dp(3), dp(3));
         h.addView(i, new LinearLayout.LayoutParams(dp(42), dp(42)));
         TextView t = text(title, 17, TEXT);
         t.setTypeface(null, android.graphics.Typeface.BOLD);
