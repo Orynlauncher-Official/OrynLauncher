@@ -464,39 +464,130 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     private void showCapeGallery() {
+        final Dialog dialog = new Dialog(this);
+        LinearLayout page = new LinearLayout(this);
+        page.setOrientation(LinearLayout.VERTICAL);
+        page.setPadding(d(18), d(14), d(18), d(14));
+        page.setBackground(bg(BG, 18, Color.rgb(43, 54, 70), 1));
+
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setGravity(Gravity.CENTER_VERTICAL);
+        TextView title = text("CAPE GALLERY", 19, WHITE);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        titleRow.addView(title, new LinearLayout.LayoutParams(0, d(38), 1));
+        Button importButton = button("+ Import Cape");
+        importButton.setBackground(bg(BLUE, 10, BLUE, 1));
+        titleRow.addView(importButton, lp(132, 38));
+        page.addView(titleRow);
+
+        TextView subtitle = text("Choose a cape for your character • Your collection stays on this device", 12, MUTED);
+        page.addView(subtitle, lp(-1, 32));
+
+        TextView animatedNote = text("ANIMATED CAPES  •  In-game animation needs a compatible Minecraft cape renderer/mod.", 11, MUTED);
+        animatedNote.setPadding(d(10), d(6), d(10), d(6));
+        animatedNote.setBackground(bg(PANEL, 8, Color.rgb(43, 54, 70), 1));
+        page.addView(animatedNote, lp(-1, 40));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setFillViewport(false);
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(4);
+        grid.setUseDefaultMargins(false);
+        grid.setPadding(0, d(10), 0, d(8));
+
         List<File> files = store.listCapes();
+        for (File file : files) {
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.VERTICAL);
+            card.setGravity(Gravity.CENTER_HORIZONTAL);
+            card.setPadding(d(7), d(7), d(7), d(7));
+            card.setBackground(bg(CARD, 12,
+                    file.getName().equals(active.cape) ? BLUE : Color.rgb(43, 54, 70),
+                    file.getName().equals(active.cape) ? 2 : 1));
+
+            ImageView image = new ImageView(this);
+            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            Bitmap bitmap = store.load(file);
+            if (bitmap != null) image.setImageBitmap(bitmap);
+            image.setBackground(bg(Color.rgb(10, 14, 21), 8, Color.TRANSPARENT, 0));
+            card.addView(image, lp(-1, 86));
+
+            TextView name = text(displayName(file), 11, WHITE);
+            name.setGravity(Gravity.CENTER);
+            name.setMaxLines(2);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            card.addView(name, lp(-1, 34));
+
+            Button select = button(file.getName().equals(active.cape) ? "Equipped" : "Use Cape");
+            select.setTextSize(11);
+            select.setBackground(bg(file.getName().equals(active.cape) ? BLUE : PANEL, 9,
+                    file.getName().equals(active.cape) ? BLUE : Color.rgb(43, 54, 70), 1));
+            card.addView(select, lp(-1, 34));
+            View.OnClickListener choose = v -> {
+                active.cape = file.getName();
+                active.capeEnabled = true;
+                saveCurrent("Cape selected • " + displayName(file));
+                dialog.dismiss();
+            };
+            select.setOnClickListener(choose);
+            image.setOnClickListener(choose);
+            name.setOnClickListener(choose);
+
+            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+            params.width = 0;
+            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            params.setMargins(d(4), d(4), d(4), d(4));
+            grid.addView(card, params);
+        }
+
         if (files.isEmpty()) {
-            new AlertDialog.Builder(this)
-                    .setTitle("Cape Gallery")
-                    .setMessage("No capes yet. Import a compatible cape PNG to add it to your gallery. The selected cape will appear on the animated 3D character preview.")
-                    .setNegativeButton("Close", null)
-                    .setPositiveButton("Import Cape", (dialog, which) -> pick(PICK_CAPE))
-                    .show();
-            return;
+            LinearLayout empty = new LinearLayout(this);
+            empty.setOrientation(LinearLayout.VERTICAL);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(d(16), d(18), d(16), d(18));
+            TextView emptyTitle = text("Your cape collection is empty", 15, WHITE);
+            emptyTitle.setGravity(Gravity.CENTER);
+            empty.addView(emptyTitle, lp(-1, 34));
+            TextView emptyText = text("Import a compatible cape PNG to add it here.", 12, MUTED);
+            emptyText.setGravity(Gravity.CENTER);
+            empty.addView(emptyText, lp(-1, 30));
+            grid.addView(empty, new GridLayout.LayoutParams());
         }
+        scroll.addView(grid);
+        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
 
-        String[] names = new String[files.size() + 1];
-        names[0] = "None — remove cape";
-        int selected = 0;
-        for (int i = 0; i < files.size(); i++) {
-            names[i + 1] = displayName(files.get(i));
-            if (files.get(i).getName().equals(active.cape)) selected = i + 1;
-        }
+        LinearLayout bottom = new LinearLayout(this);
+        bottom.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
+        Button unequip = button("Unequip");
+        bottom.addView(unequip, lp(100, 38));
+        Button close = button("Close");
+        close.setBackground(bg(BLUE, 10, BLUE, 1));
+        LinearLayout.LayoutParams closeLp = lp(100, 38);
+        closeLp.leftMargin = d(8);
+        bottom.addView(close, closeLp);
+        page.addView(bottom, lp(-1, 46));
 
-        new AlertDialog.Builder(this)
-                .setTitle("Cape Gallery")
-                .setMessage("Choose a cape to preview. The character preview animates the cape drape.")
-                .setSingleChoiceItems(names, selected, (dialog, which) -> {
-                    active.cape = which == 0 ? "" : files.get(which - 1).getName();
-                    active.capeEnabled = which != 0;
-                    refresh();
-                    status.setText(which == 0 ? "Cape removed from preview" :
-                            "Cape preview selected • " + displayName(files.get(which - 1)));
-                    dialog.dismiss();
-                })
-                .setNegativeButton("Close", null)
-                .setNeutralButton("Import Cape", (dialog, which) -> pick(PICK_CAPE))
-                .show();
+        importButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            pick(PICK_CAPE);
+        });
+        unequip.setOnClickListener(v -> {
+            active.cape = "";
+            active.capeEnabled = false;
+            saveCurrent("Cape unequipped");
+            dialog.dismiss();
+        });
+        close.setOnClickListener(v -> dialog.dismiss());
+
+        dialog.setContentView(page);
+        WindowManager.LayoutParams window = new WindowManager.LayoutParams();
+        window.copyFrom(dialog.getWindow().getAttributes());
+        window.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.88f);
+        window.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.86f);
+        dialog.show();
+        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        dialog.getWindow().setLayout(window.width, window.height);
     }
 
     private interface ChoiceAction { void run(int position); }
