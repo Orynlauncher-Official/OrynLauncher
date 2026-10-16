@@ -164,11 +164,21 @@ public class OrynDownloadActivity extends AppCompatActivity {
         else if ("neoforge".equals(detectedLoader)) loaderSpinner.setSelection(3);
         else if ("quilt".equals(detectedLoader)) loaderSpinner.setSelection(4);
         loaderSpinner.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            private boolean firstSelection = true;
             @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                String previousLoader = selectedLoader;
                 selectedLoader = position == 1 ? "fabric" :
                         position == 2 ? "forge" :
                         position == 3 ? "neoforge" :
                         position == 4 ? "quilt" : getModrinthLoader(Instances.loadSelectedInstance());
+                // Android fires this listener once when the spinner is attached.
+                // Only refresh when the user actually changes the loader.
+                if (firstSelection) {
+                    firstSelection = false;
+                } else if (!java.util.Objects.equals(previousLoader, selectedLoader)
+                        && category == Category.MOD && search != null) {
+                    searchProjects(search.getText().toString().trim());
+                }
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
         });
@@ -343,17 +353,9 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 JsonObject response = api.get("search", params, JsonObject.class);
                 JsonArray hits = response == null ? null : response.getAsJsonArray("hits");
 
-                // If strict facets return nothing, retry with only project type.
-                // Download installation still validates the exact game version/loader.
-                if (hits == null || hits.size() == 0) {
-                    HashMap<String, Object> fallback = new HashMap<>();
-                    fallback.put("query", query);
-                    fallback.put("limit", 30);
-                    fallback.put("index", "relevance");
-                    fallback.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
-                    response = api.get("search", fallback, JsonObject.class);
-                    hits = response == null ? null : response.getAsJsonArray("hits");
-                }
+                // Do not silently drop version/loader facets when there are no matches:
+                // showing incompatible projects makes the catalogue look broken and can
+                // lead users to select content that cannot be installed in this instance.
 
                 final JsonArray searchHits = hits;
                 runOnUiThread(() -> {
