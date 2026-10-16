@@ -281,11 +281,19 @@
                 android:layout_marginTop="16dp"
                 android:text="▶   PLAY"
                 android:textAllCaps="false"
+                android:letterSpacing="0.03"
                 android:textSize="20sp"
+                android:gravity="center"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
+                android:shadowColor="#803A8DFF"
+                android:shadowDx="0"
+                android:shadowDy="1"
+                android:shadowRadius="3"
                 android:background="@drawable/oryn_launch_button"
-                android:elevation="3dp"/>
+                android:backgroundTint="@null"
+                android:stateListAnimator="@null"
+                android:elevation="4dp"/>
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
