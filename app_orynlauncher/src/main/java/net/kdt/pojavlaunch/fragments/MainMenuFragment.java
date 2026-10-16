@@ -187,26 +187,72 @@ public class MainMenuFragment extends Fragment {
         ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
         TextView accountName = root.findViewById(R.id.oryn_home_account_name);
         if (avatar == null) return;
+
+        // Set Steve immediately so an empty/local account never leaves the paper/user icon.
+        Bitmap defaultFace = loadOrynDefaultSteveFace();
+        if (defaultFace != null) avatar.setImageBitmap(defaultFace);
+
         PojavApplication.sExecutorService.execute(() -> {
-            Account account = Accounts.getCurrent();
-            if (account == null) return;
-            Bitmap face = account.getSkinFace();
-            if (face == null && !account.isLocal()) {
-                account.updateSkinFace();
-                face = account.getSkinFace();
-                if (face != null) {
-                    ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+            Bitmap face = null;
+            String username = null;
+            try {
+                // Cosmetics skin takes priority: this is the skin the user selected in
+                // Oryn Cosmetics, rather than only the Microsoft account skin.
+                net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore store =
+                        new net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore(requireContext());
+                net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore.CosmeticProfile profile =
+                        store.getActiveProfile();
+                if (profile != null && profile.skinEnabled && Tools.isValidString(profile.skin)) {
+                    File customSkin = new File(requireContext().getFilesDir(),
+                            "cosmetics/skins/" + new File(profile.skin).getName());
+                    Bitmap skinBitmap = android.graphics.BitmapFactory.decodeFile(customSkin.getAbsolutePath());
+                    if (skinBitmap != null) {
+                        face = new net.kdt.pojavlaunch.authenticator.accounts.SkinHeadRenderer()
+                                .render(128, skinBitmap);
+                        skinBitmap.recycle();
+                    }
                 }
+
+                Account account = Accounts.getCurrent();
+                if (face == null && account != null) {
+                    face = account.getSkinFace();
+                    if (face == null && !account.isLocal()) {
+                        account.updateSkinFace();
+                        face = account.getSkinFace();
+                        if (face != null) ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+                    }
+                }
+                if (account != null) username = account.username;
+            } catch (Exception ignored) {
+                // Keep the already displayed Steve fallback if cosmetic/account loading fails.
             }
-            final Bitmap skinFace = face;
-            final String username = account.username;
+
+            final Bitmap finalFace = face;
+            final String finalUsername = username;
             android.app.Activity activity = getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
-                if (skinFace != null) avatar.setImageBitmap(skinFace);
-                if (accountName != null && Tools.isValidString(username)) accountName.setText(username);
+                if (finalFace != null) avatar.setImageBitmap(finalFace);
+                if (accountName != null && Tools.isValidString(finalUsername)) {
+                    accountName.setText(finalUsername);
+                }
             });
         });
+    }
+
+    private Bitmap loadOrynDefaultSteveFace() {
+        Bitmap skin = null;
+        try (java.io.InputStream input = requireContext().getAssets().open("skinview/oryn_steve_skin.png")) {
+            skin = android.graphics.BitmapFactory.decodeStream(input);
+        } catch (Exception ignored) {}
+        if (skin == null) return null;
+        try {
+            return new net.kdt.pojavlaunch.authenticator.accounts.SkinHeadRenderer().render(128, skin);
+        } catch (Exception ignored) {
+            return null;
+        } finally {
+            skin.recycle();
+        }
     }
 
     private void updateSelectedProfile(DisplayInstance profile, TextView heroName,
