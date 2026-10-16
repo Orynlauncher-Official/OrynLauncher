@@ -67,8 +67,18 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
     private TouchEventProcessor mCurrentTouchProcessor = mInGUIProcessor;
     private AndroidPointerCapture mPointerCapture;
     private boolean mLastGrabState = false;
-    double cursorRatioX = 0;
-    double cursorRatioY = 0;
+    // Ratios are initialized before the first layout/resize to avoid NaN or
+    // infinite cursor coordinates when a mouse event arrives during startup.
+    double cursorRatioX = 1.0;
+    double cursorRatioY = 1.0;
+
+    private double safeCursorRatioX() {
+        return Double.isFinite(cursorRatioX) && cursorRatioX > 0 ? cursorRatioX : 1.0;
+    }
+
+    private double safeCursorRatioY() {
+        return Double.isFinite(cursorRatioY) && cursorRatioY > 0 ? cursorRatioY : 1.0;
+    }
 
     public GameView(Context context) {
         this(context, null);
@@ -133,8 +143,8 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
             // Mouse found
             // Avoid going through the JNI each time.
             if(Platform.isGrabbing()) return false;
-            Platform.cursorX = e.getX(i) / cursorRatioX;
-            Platform.cursorY = e.getY(i) / cursorRatioY;
+            Platform.cursorX = e.getX(i) / safeCursorRatioX();
+            Platform.cursorY = e.getY(i) / safeCursorRatioY();
             Platform.sendCursorPosition();
             return true; //mouse event handled successfully
         }
@@ -191,8 +201,8 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
         switch(event.getActionMasked()) {
             case MotionEvent.ACTION_HOVER_MOVE:
-                Platform.cursorX = event.getX(mouseCursorIndex) / cursorRatioX;
-                Platform.cursorY = event.getY(mouseCursorIndex) / cursorRatioY;
+                Platform.cursorX = event.getX(mouseCursorIndex) / safeCursorRatioX();
+                Platform.cursorY = event.getY(mouseCursorIndex) / safeCursorRatioY();
                 Platform.sendCursorPosition();
                 return true;
             case MotionEvent.ACTION_SCROLL:
@@ -288,8 +298,8 @@ public class GameView extends FrameLayout implements PlatformGrabListener, Surfa
 
         // Update cursor ratio values
         // Mouse events are sent in the full view coordinate space, the game accepts them only in the window space
-        this.cursorRatioX = (double) getWidth() / windowWidth;
-        this.cursorRatioY = (double) getHeight() / windowHeight;
+        this.cursorRatioX = getWidth() > 0 && windowWidth > 0 ? (double) getWidth() / windowWidth : 1.0;
+        this.cursorRatioY = getHeight() > 0 && windowHeight > 0 ? (double) getHeight() / windowHeight : 1.0;
 
         if(mSurface == null){
             Log.w("MGLSurface", "Attempt to refresh size on null surface");
