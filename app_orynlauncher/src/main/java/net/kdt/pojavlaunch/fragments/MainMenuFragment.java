@@ -70,6 +70,8 @@ public class MainMenuFragment extends Fragment {
         ImageButton mCosmeticsButton = view.findViewById(R.id.cosmetics_button);
         ImageButton mFilesNavButton = view.findViewById(R.id.oryn_files_nav);
         ImageButton mCrashNavButton = view.findViewById(R.id.oryn_crash_nav);
+        View resourceLibraryCard = view.findViewById(R.id.oryn_news_card);
+        View installationManagerCard = view.findViewById(R.id.oryn_about_card);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -150,6 +152,22 @@ public class MainMenuFragment extends Fragment {
         if (mFilesNavButton != null) mFilesNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynFileManagerActivity.class)));
         if (mCrashNavButton != null) mCrashNavButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynCrashViewerActivity.class)));
 
+        // Resource Library opens Oryn Download Center (mods, resource packs and shaders).
+        if (resourceLibraryCard != null) {
+            resourceLibraryCard.setClickable(true);
+            resourceLibraryCard.setFocusable(true);
+            resourceLibraryCard.setOnClickListener(v ->
+                    startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
+        }
+
+        // Installation Manager opens the existing instance/profile manager.
+        if (installationManagerCard != null) {
+            installationManagerCard.setClickable(true);
+            installationManagerCard.setFocusable(true);
+            installationManagerCard.setOnClickListener(v ->
+                    Tools.swapFragment(requireActivity(), InstancesManagementFragment.class,
+                            InstancesManagementFragment.TAG, null));
+        }
 
     }
 
