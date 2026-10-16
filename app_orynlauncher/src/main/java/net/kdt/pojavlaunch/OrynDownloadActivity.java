@@ -107,14 +107,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
         root.setPadding(dp(0), dp(0), dp(0), dp(0));
-        root.setBackgroundColor(Color.rgb(18, 19, 23));
+        root.setBackgroundColor(Color.rgb(8, 11, 17));
 
-        // Old ZalithLauncher-inspired layout: slim category rail + results + detail panel.
+        // Oryn premium download center: category rail, searchable catalogue and install details.
         LinearLayout rail = new LinearLayout(this);
         rail.setOrientation(LinearLayout.VERTICAL);
         rail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         rail.setPadding(dp(8), dp(14), dp(8), dp(10));
-        rail.setBackgroundColor(Color.rgb(25, 26, 31));
+        rail.setBackgroundColor(Color.rgb(14, 19, 29));
         root.addView(rail, new LinearLayout.LayoutParams(dp(122), -1));
 
         TextView railTitle = label("DOWNLOAD", 10);
@@ -137,13 +137,14 @@ public class OrynDownloadActivity extends AppCompatActivity {
 
         LinearLayout center = new LinearLayout(this);
         center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(dp(12), dp(10), dp(8), dp(8));
+        center.setPadding(dp(16), dp(12), dp(12), dp(10));
         root.addView(center, new LinearLayout.LayoutParams(0, -1, 6.5f));
 
         LinearLayout top = new LinearLayout(this);
         top.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = label("Download", 22);
+        TextView title = label("ORYN DOWNLOAD CENTER", 20);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
+        title.setTextColor(0xFFF4F7FF);
         top.addView(title, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         TextView mcVersion = label(getSelectedMinecraftVersion() == null ? "Minecraft" : getSelectedMinecraftVersion(), 11);
@@ -183,7 +184,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         search.setTextSize(13);
         search.setInputType(InputType.TYPE_CLASS_TEXT);
         search.setPadding(dp(12), 0, dp(12), 0);
-        search.setBackground(roundBg(0xFF292B32, dp(9)));
+        search.setBackground(roundBg(0xFF121B2A, dp(10)));
         searchRow.addView(search, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         Button searchButton = new Button(this);
@@ -191,7 +192,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         searchButton.setTextColor(Color.WHITE);
         searchButton.setTextSize(12);
         searchButton.setAllCaps(false);
-        searchButton.setBackground(roundBg(0xFF343740, dp(9)));
+        searchButton.setBackground(roundBg(0xFF1677F8, dp(10)));
         LinearLayout.LayoutParams sbLp = new LinearLayout.LayoutParams(dp(82), dp(42));
         sbLp.leftMargin = dp(7);
         searchRow.addView(searchButton, sbLp);
@@ -218,7 +219,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detail.setOrientation(LinearLayout.VERTICAL);
         detail.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         detail.setPadding(dp(14), dp(16), dp(14), dp(10));
-        detail.setBackgroundColor(Color.rgb(25, 26, 31));
+        detail.setBackgroundColor(Color.rgb(14, 19, 29));
         root.addView(detail, new LinearLayout.LayoutParams(0, -1, 3f));
 
         ImageView detailIcon = new ImageView(this);
@@ -252,7 +253,8 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDownload.setTextSize(13);
         detailDownload.setAllCaps(false);
         detailDownload.setEnabled(false);
-        detailDownload.setBackground(roundBg(0xFF3A3D48, dp(9)));
+        detailDownload.setAlpha(0.65f);
+        detailDownload.setBackground(roundBg(0xFF1677F8, dp(10)));
         detail.addView(detailDownload, new LinearLayout.LayoutParams(-1, dp(44)));
 
         searchButton.setOnClickListener(v -> searchProjects(search.getText().toString().trim()));
@@ -276,17 +278,17 @@ public class OrynDownloadActivity extends AppCompatActivity {
         item.setOrientation(LinearLayout.VERTICAL);
         item.setGravity(Gravity.CENTER);
         item.setPadding(dp(5), dp(8), dp(5), dp(8));
-        item.setBackground(roundBg(value == category ? 0xFF363943 : 0x00252529, dp(9)));
+        item.setBackground(roundBg(value == category ? 0xFF123A68 : 0x00141923, dp(11)));
 
         TextView icon = label(value == Category.MOD ? "▣" : value == Category.RESOURCEPACK ? "◆" : "◇", 22);
         icon.setGravity(Gravity.CENTER);
-        icon.setTextColor(value == category ? Color.WHITE : 0xFF9DA1AC);
+        icon.setTextColor(value == category ? 0xFF68B5FF : 0xFF9DA1AC);
         item.addView(icon, new LinearLayout.LayoutParams(-1, dp(28)));
 
         TextView name = label(shortText, 9);
         name.setGravity(Gravity.CENTER);
         name.setTypeface(null, android.graphics.Typeface.BOLD);
-        name.setTextColor(value == category ? Color.WHITE : 0xFF9DA1AC);
+        name.setTextColor(value == category ? 0xFFB9DBFF : 0xFF9DA1AC);
         item.addView(name, new LinearLayout.LayoutParams(-1, dp(20)));
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(68));
@@ -381,7 +383,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         card.setOrientation(LinearLayout.HORIZONTAL);
         card.setGravity(Gravity.CENTER_VERTICAL);
         card.setPadding(dp(10), dp(9), dp(10), dp(9));
-        card.setBackground(roundBg(0xFF292B32, dp(9)));
+        card.setBackground(roundBg(0xFF121A27, dp(12)));
 
         ImageView icon = new ImageView(this);
         icon.setScaleType(ImageView.ScaleType.CENTER_CROP);
@@ -434,6 +436,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
         detailDesc.setText(description == null || description.trim().isEmpty()
                 ? "No description available." : description);
         detailDownload.setEnabled(true);
+        detailDownload.setAlpha(1f);
         detailDownload.setText(category == Category.MODPACK ? "Install Modpack" : "Download");
         detailDownload.setOnClickListener(v -> {
             if (category == Category.MODPACK) {
