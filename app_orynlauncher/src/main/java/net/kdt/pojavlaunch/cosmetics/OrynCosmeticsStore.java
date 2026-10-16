@@ -142,18 +142,24 @@ public final class OrynCosmeticsStore {
     /** Normalizes legacy and modern cape PNGs into Minecraft's 64x32 texture size. */
     private Bitmap normalizeCape(Bitmap source) {
         if (source == null) return null;
-        Bitmap panel = source;
-        boolean scaled = false;
-        if (source.getWidth() == 44 && source.getHeight() == 34) {
+        Bitmap panel;
+        boolean recyclePanel = false;
+        if (source.getWidth() == 64 && source.getHeight() == 32) {
+            // Only the upper-left 22x17 UV area belongs to the cape mesh.
+            panel = Bitmap.createBitmap(source, 0, 0, 22, 17);
+            recyclePanel = true;
+        } else if (source.getWidth() == 44 && source.getHeight() == 34) {
             panel = Bitmap.createScaledBitmap(source, 22, 17, false);
-            scaled = true;
+            recyclePanel = true;
+        } else {
+            panel = source;
         }
         Bitmap result = Bitmap.createBitmap(64, 32, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(result);
         Paint paint = new Paint();
         paint.setFilterBitmap(false);
         canvas.drawBitmap(panel, 0, 0, paint);
-        if (scaled) panel.recycle();
+        if (recyclePanel) panel.recycle();
         return result;
     }
 
