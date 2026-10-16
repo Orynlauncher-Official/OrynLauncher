@@ -2,10 +2,23 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="100dp" android:height="120dp"
     android:viewportWidth="100" android:viewportHeight="120">
-    <path android:fillColor="#BDF5FF" android:pathData="M50,2 L84,28 L84,80 L50,118 L16,80 L16,28 Z"/>
-    <path android:fillColor="#F4FDFF" android:pathData="M50,2 L50,60 L16,28 Z"/>
-    <path android:fillColor="#5EDCFF" android:pathData="M50,60 L50,118 L16,80 L16,28 Z"/>
-    <path android:fillColor="#168FE5" android:pathData="M50,2 L84,28 L50,60 Z"/>
-    <path android:fillColor="#0870B8" android:pathData="M50,60 L84,28 L84,80 L50,118 Z"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M50,2 L61,29 L50,60 L39,29 Z"/>
+    <!-- Frosted O/Q emblem inspired by the cold OrynLauncher logo -->
+    <path
+        android:fillColor="#00FFFFFF"
+        android:strokeColor="#F4FDFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:pathData="M68,82 A36,36 0,1 1,78 69"/>
+    <path
+        android:fillColor="#9DEBFF"
+        android:pathData="M47,49 L60,49 L91,87 L78,87 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M47,49 L53,49 L84,87 L78,87 Z"/>
+    <path
+        android:fillColor="#2BBEFF"
+        android:pathData="M16,48 L20,38 L24,48 L20,58 Z"/>
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M74,14 L77,21 L84,24 L77,27 L74,34 L71,27 L64,24 L71,21 Z"/>
 </vector>
