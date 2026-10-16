@@ -122,7 +122,7 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setBackgroundColor(Color.TRANSPARENT);
         android.widget.FrameLayout screen = new android.widget.FrameLayout(this);
         ImageView wallpaper = new ImageView(this);
-        wallpaper.setImageResource(R.drawable.oryn_settings_background);
+        wallpaper.setImageResource(R.drawable.oryn_settings_bg);
         wallpaper.setScaleType(ImageView.ScaleType.CENTER_CROP);
         screen.addView(wallpaper, new android.widget.FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
