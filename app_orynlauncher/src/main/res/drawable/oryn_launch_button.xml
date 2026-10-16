@@ -1,17 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Deep frozen-blue base -->
     <item>
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#269BFF" android:centerColor="#147FF0" android:endColor="#0758C9" />
-            <corners android:radius="20dp" />
-            <stroke android:width="1dp" android:color="#579FFF" />
+            <gradient
+                android:angle="270"
+                android:startColor="#EAFBFF"
+                android:centerColor="#4DCBFF"
+                android:endColor="#0758B8" />
+            <corners android:radius="22dp" />
+            <stroke android:width="2dp" android:color="#F4FDFF" />
         </shape>
     </item>
+
+    <!-- Inner ice body -->
     <item android:left="2dp" android:top="2dp" android:right="2dp" android:bottom="2dp">
         <shape android:shape="rectangle">
-            <gradient android:angle="270" android:startColor="#36A8FF" android:centerColor="#1688F8" android:endColor="#0B6CE0" />
-            <corners android:radius="18dp" />
-            <stroke android:width="1dp" android:color="#397FE8" />
+            <gradient
+                android:angle="270"
+                android:startColor="#56CFFF"
+                android:centerColor="#1688D8"
+                android:endColor="#073E85" />
+            <corners android:radius="20dp" />
+            <stroke android:width="1dp" android:color="#BCEFFF" />
+        </shape>
+    </item>
+
+    <!-- Frost highlight across the top edge -->
+    <item android:left="7dp" android:top="3dp" android:right="7dp" android:height="3dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="0"
+                android:startColor="#00FFFFFF"
+                android:centerColor="#F2FDFF"
+                android:endColor="#00FFFFFF" />
+            <corners android:radius="2dp" />
         </shape>
     </item>
 </layer-list>
