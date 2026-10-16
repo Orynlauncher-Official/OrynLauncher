@@ -329,13 +329,13 @@ public class OrynDownloadActivity extends AppCompatActivity {
                 params.put("limit", 30);
                 params.put("index", "relevance");
 
-                StringBuilder facets = new StringBuilder("[[\\"project_type:")
-                        .append(requestedCategory.projectType).append("\\"]");
+                StringBuilder facets = new StringBuilder("[[\"project_type:")
+                        .append(requestedCategory.projectType).append("\"]");
                 if (minecraftVersion != null && !minecraftVersion.isEmpty()) {
-                    facets.append(",\\"versions:").append(minecraftVersion).append("\\"");
+                    facets.append(",\"versions:").append(minecraftVersion).append("\"");
                 }
                 if (loader != null && requestedCategory == Category.MOD) {
-                    facets.append(",\\"categories:").append(loader).append("\\"");
+                    facets.append(",\"categories:").append(loader).append("\"");
                 }
                 facets.append("]]");
                 params.put("facets", facets.toString());
@@ -350,7 +350,7 @@ public class OrynDownloadActivity extends AppCompatActivity {
                     fallback.put("query", query);
                     fallback.put("limit", 30);
                     fallback.put("index", "relevance");
-                    fallback.put("facets", "[[\\"project_type:" + requestedCategory.projectType + "\\"]]");
+                    fallback.put("facets", "[[\"project_type:" + requestedCategory.projectType + "\"]]");
                     response = api.get("search", fallback, JsonObject.class);
                     hits = response == null ? null : response.getAsJsonArray("hits");
                 }
