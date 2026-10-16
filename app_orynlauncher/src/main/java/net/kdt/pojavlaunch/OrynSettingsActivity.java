@@ -32,13 +32,13 @@ import net.kdt.pojavlaunch.utils.OrynThemeManager;
  * existing feature activities and preference storage remain unchanged.
  */
 public class OrynSettingsActivity extends BaseActivity {
-    private static final int BG = Color.rgb(5, 12, 20);
-    private static final int PANEL = Color.rgb(11, 20, 31);
-    private static final int PANEL_2 = Color.rgb(14, 25, 39);
-    private static final int BORDER = Color.rgb(25, 40, 59);
-    private static final int TEXT = Color.rgb(235, 241, 250);
-    private static final int MUTED = Color.rgb(126, 148, 178);
-    private static final int BLUE = Color.rgb(35, 145, 255);
+    private static final int BG = Color.rgb(4, 13, 27);
+    private static final int PANEL = Color.rgb(8, 25, 45);
+    private static final int PANEL_2 = Color.rgb(12, 34, 58);
+    private static final int BORDER = Color.rgb(48, 135, 194);
+    private static final int TEXT = Color.rgb(241, 249, 255);
+    private static final int MUTED = Color.rgb(139, 190, 225);
+    private static final int BLUE = Color.rgb(45, 169, 255);
 
     private SharedPreferences uiPrefs;
     private LinearLayout content;
@@ -75,8 +75,16 @@ public class OrynSettingsActivity extends BaseActivity {
     }
 
     private GradientDrawable bg(int color, float radius) {
-        GradientDrawable d = new GradientDrawable();
-        d.setColor(color);
+        GradientDrawable d = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[] { Color.rgb(
+                        Math.min(255, Color.red(color) + 8),
+                        Math.min(255, Color.green(color) + 18),
+                        Math.min(255, Color.blue(color) + 28)),
+                        color,
+                        Color.rgb(Math.max(0, Color.red(color) - 2),
+                                Math.max(0, Color.green(color) - 3),
+                                Math.max(0, Color.blue(color) - 5)) });
         d.setCornerRadius(dp(radius));
         d.setStroke(dp(1), BORDER);
         return d;
@@ -105,14 +113,19 @@ public class OrynSettingsActivity extends BaseActivity {
         root.setOrientation(LinearLayout.VERTICAL);
         int sideMargin = Math.max(dp(28), (int) (screenW() * 0.085f));
         root.setPadding(sideMargin, dp(20), sideMargin, dp(20));
-        root.setBackgroundColor(BG);
+        GradientDrawable snowyBackground = new GradientDrawable(
+                GradientDrawable.Orientation.TL_BR,
+                new int[] { Color.rgb(9, 36, 65), BG, Color.rgb(3, 9, 20) });
+        root.setBackground(snowyBackground);
 
         LinearLayout header = new LinearLayout(this);
         header.setGravity(Gravity.CENTER_VERTICAL);
 
         ImageView gear = new ImageView(this);
         gear.setImageResource(R.drawable.oryn_nav_settings);
-        gear.setPadding(dp(2), dp(2), dp(2), dp(2));
+        gear.setPadding(dp(12), dp(12), dp(12), dp(12));
+        gear.setBackground(bg(Color.rgb(15, 62, 99), 18));
+        gear.setElevation(dp(5));
         header.addView(gear, new LinearLayout.LayoutParams(dp(54), dp(54)));
 
         LinearLayout headerText = new LinearLayout(this);
