@@ -185,12 +185,16 @@ public class MainMenuFragment extends Fragment {
      */
     private void loadCurrentAccountSkin(View root) {
         ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
+        ImageView headerAvatar = requireActivity().findViewById(R.id.oryn_account_avatar_image);
         TextView accountName = root.findViewById(R.id.oryn_home_account_name);
         if (avatar == null) return;
 
         // Set Steve immediately so an empty/local account never leaves the paper/user icon.
         Bitmap defaultFace = loadOrynDefaultSteveFace();
-        if (defaultFace != null) avatar.setImageBitmap(defaultFace);
+        if (defaultFace != null) {
+            avatar.setImageBitmap(defaultFace);
+            if (headerAvatar != null) headerAvatar.setImageBitmap(defaultFace);
+        }
 
         PojavApplication.sExecutorService.execute(() -> {
             Bitmap face = null;
@@ -203,13 +207,16 @@ public class MainMenuFragment extends Fragment {
                 net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore.CosmeticProfile profile =
                         store.getActiveProfile();
                 if (profile != null && profile.skinEnabled && Tools.isValidString(profile.skin)) {
-                    File customSkin = new File(requireContext().getFilesDir(),
-                            "cosmetics/skins/" + new File(profile.skin).getName());
+                    File customSkin = new File(requireContext().getFilesDir(), "cosmetics/skins/" + profile.skin);
+                    if (!customSkin.isFile()) customSkin = new File(profile.skin);
                     Bitmap skinBitmap = android.graphics.BitmapFactory.decodeFile(customSkin.getAbsolutePath());
                     if (skinBitmap != null) {
-                        face = new net.kdt.pojavlaunch.authenticator.accounts.SkinHeadRenderer()
-                                .render(128, skinBitmap);
-                        skinBitmap.recycle();
+                        try {
+                            face = new net.kdt.pojavlaunch.authenticator.accounts.SkinHeadRenderer()
+                                    .render(128, skinBitmap);
+                        } finally {
+                            skinBitmap.recycle();
+                        }
                     }
                 }
 
@@ -232,7 +239,10 @@ public class MainMenuFragment extends Fragment {
             android.app.Activity activity = getActivity();
             if (activity == null) return;
             activity.runOnUiThread(() -> {
-                if (finalFace != null) avatar.setImageBitmap(finalFace);
+                if (finalFace != null) {
+                    avatar.setImageBitmap(finalFace);
+                    if (headerAvatar != null) headerAvatar.setImageBitmap(finalFace);
+                }
                 if (accountName != null && Tools.isValidString(finalUsername)) {
                     accountName.setText(finalUsername);
                 }
