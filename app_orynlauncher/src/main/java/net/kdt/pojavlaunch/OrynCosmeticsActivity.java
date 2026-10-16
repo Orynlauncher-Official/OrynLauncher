@@ -484,19 +484,19 @@ public class OrynCosmeticsActivity extends Activity {
         TextView subtitle = text("Choose a cape for your character • Your collection stays on this device", 12, MUTED);
         page.addView(subtitle, lp(-1, 32));
 
-        Button skinMcButton = button("Browse Custom Capes on SkinMC ↗");
-        skinMcButton.setBackground(bg(Color.rgb(18, 39, 65), 10, Color.rgb(55, 125, 235), 1));
-        skinMcButton.setTextColor(Color.rgb(170, 202, 255));
-        page.addView(skinMcButton, lp(-1, 42));
-        TextView skinMcHint = text("Download a cape PNG from SkinMC, then tap + Import Cape to add it to this gallery.", 10, MUTED);
-        page.addView(skinMcHint, lp(-1, 28));
-        skinMcButton.setOnClickListener(v -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://skinmc.net/capes/custom")));
-            } catch (Exception e) {
-                Toast.makeText(this, "Could not open SkinMC", Toast.LENGTH_SHORT).show();
-            }
-        });
+        LinearLayout categoryRow = new LinearLayout(this);
+        categoryRow.setOrientation(LinearLayout.HORIZONTAL);
+        Button orynCategory = button("ORYN CAPES");
+        Button personalCategory = button("MY CAPES");
+        primary(orynCategory);
+        LinearLayout.LayoutParams categoryLp = new LinearLayout.LayoutParams(0, d(38), 1);
+        categoryRow.addView(orynCategory, categoryLp);
+        LinearLayout.LayoutParams personalLp = new LinearLayout.LayoutParams(0, d(38), 1);
+        personalLp.leftMargin = d(8);
+        categoryRow.addView(personalCategory, personalLp);
+        page.addView(categoryRow, lp(-1, 42));
+        TextView categoryHint = text("Original Oryn cape designs • import your own PNGs in My Capes.", 10, MUTED);
+        page.addView(categoryHint, lp(-1, 26));
 
         TextView animatedNote = text("ANIMATED CAPES  •  In-game animation needs a compatible Minecraft cape renderer/mod.", 11, MUTED);
         animatedNote.setPadding(d(10), d(6), d(10), d(6));
@@ -511,7 +511,12 @@ public class OrynCosmeticsActivity extends Activity {
         grid.setPadding(0, d(10), 0, d(8));
 
         List<File> files = store.listCapes();
-        for (File file : files) {
+        final boolean[] showOrynCapes = {true};
+        Runnable renderCapeCards = () -> {
+            grid.removeAllViews();
+            List<File> visibleFiles = store.listCapes();
+            for (File file : visibleFiles) {
+                if (file.getName().startsWith("oryn_") != showOrynCapes[0]) continue;
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.VERTICAL);
             card.setGravity(Gravity.CENTER_HORIZONTAL);
@@ -556,7 +561,39 @@ public class OrynCosmeticsActivity extends Activity {
             grid.addView(card, params);
         }
 
-        if (files.isEmpty()) {
+            }
+            if (grid.getChildCount() == 0) {
+                LinearLayout empty = new LinearLayout(this);
+                empty.setOrientation(LinearLayout.VERTICAL);
+                empty.setGravity(Gravity.CENTER);
+                empty.setPadding(d(16), d(18), d(16), d(18));
+                TextView emptyTitle = text(showOrynCapes[0] ? "Oryn cape collection" : "Your personal capes", 15, WHITE);
+                emptyTitle.setGravity(Gravity.CENTER);
+                empty.addView(emptyTitle, lp(-1, 34));
+                TextView emptyText = text(showOrynCapes[0] ? "Oryn cape designs will appear here." : "Import a compatible cape PNG to add it here.", 12, MUTED);
+                emptyText.setGravity(Gravity.CENTER);
+                empty.addView(emptyText, lp(-1, 30));
+                grid.addView(empty, new GridLayout.LayoutParams());
+            }
+        };
+        orynCategory.setOnClickListener(v -> {
+            showOrynCapes[0] = true;
+            primary(orynCategory);
+            personalCategory.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
+            categoryHint.setText("Original Oryn cape designs • curated for your launcher.");
+            renderCapeCards.run();
+        });
+        personalCategory.setOnClickListener(v -> {
+            showOrynCapes[0] = false;
+            primary(personalCategory);
+            orynCategory.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
+            categoryHint.setText("Your imported cape PNGs • stored on this device.");
+            renderCapeCards.run();
+        });
+        renderCapeCards.run();
+        /* old gallery rendering replaced */
+
+        if (false) {
             LinearLayout empty = new LinearLayout(this);
             empty.setOrientation(LinearLayout.VERTICAL);
             empty.setGravity(Gravity.CENTER);
