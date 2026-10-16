@@ -11,11 +11,13 @@ import static net.kdt.pojavlaunch.Tools.shareLog;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +43,9 @@ import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
 import net.kdt.pojavlaunch.utils.FileUtils;
+import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
+import net.kdt.pojavlaunch.PojavApplication;
 
 import java.io.File;
 
@@ -72,6 +77,7 @@ public class MainMenuFragment extends Fragment {
         ImageButton mCrashNavButton = view.findViewById(R.id.oryn_crash_nav);
         View resourceLibraryCard = view.findViewById(R.id.oryn_news_card);
         View installationManagerCard = view.findViewById(R.id.oryn_about_card);
+        loadCurrentAccountSkin(view);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -171,6 +177,37 @@ public class MainMenuFragment extends Fragment {
 
     }
 
+
+
+    /**
+     * Display the selected Minecraft account's actual skin head in the home profile card.
+     * Any skin refresh runs in the background so opening the home screen stays responsive.
+     */
+    private void loadCurrentAccountSkin(View root) {
+        ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
+        TextView accountName = root.findViewById(R.id.oryn_home_account_name);
+        if (avatar == null) return;
+        PojavApplication.sExecutorService.execute(() -> {
+            Account account = Accounts.getCurrent();
+            if (account == null) return;
+            Bitmap face = account.getSkinFace();
+            if (face == null && !account.isLocal()) {
+                account.updateSkinFace();
+                face = account.getSkinFace();
+                if (face != null) {
+                    ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+                }
+            }
+            final Bitmap skinFace = face;
+            final String username = account.username;
+            android.app.Activity activity = getActivity();
+            if (activity == null) return;
+            activity.runOnUiThread(() -> {
+                if (skinFace != null) avatar.setImageBitmap(skinFace);
+                if (accountName != null && Tools.isValidString(username)) accountName.setText(username);
+            });
+        });
+    }
 
     private void updateSelectedProfile(DisplayInstance profile, TextView heroName,
                                        TextView profileVersion, TextView selectedVersion,
