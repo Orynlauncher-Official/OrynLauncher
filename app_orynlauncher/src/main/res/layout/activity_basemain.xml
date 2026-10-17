@@ -81,6 +81,7 @@
 				android:padding="24dp">
 
 				<ImageView
+                    android:id="@+id/oryn_loading_logo"
 					android:layout_width="112dp"
 					android:layout_height="112dp"
 					android:layout_marginBottom="18dp"
