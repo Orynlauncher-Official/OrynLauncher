@@ -1,29 +1,76 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:background="@drawable/orynlauncher_add_account_background">
-    <LinearLayout android:layout_width="560dp" android:layout_height="wrap_content"
-        android:layout_gravity="center" android:orientation="vertical"
-        android:padding="24dp" android:background="@drawable/oryn_auth_panel">
-        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
-            android:text="Add account" android:textColor="#83B9F8"
-            android:textSize="23sp" android:textStyle="bold" android:paddingBottom="14dp"/>
-        <View android:layout_width="match_parent" android:layout_height="2dp"
-            android:background="#111111" android:layout_marginBottom="18dp"/>
-        <Button android:id="@+id/button_microsoft_authentication"
-            android:layout_width="match_parent" android:layout_height="64dp"
-            android:layout_marginBottom="12dp" android:background="@drawable/oryn_auth_button"
-            android:text="@string/auth_select_microsoft" android:textColor="#FFFFFF"
-            android:textAllCaps="false" android:textSize="16sp"/>
-        <Button android:id="@+id/button_elyby_authentication"
-            android:layout_width="match_parent" android:layout_height="64dp"
-            android:layout_marginBottom="12dp" android:background="@drawable/oryn_auth_button"
-            android:text="@string/auth_select_elyby" android:textColor="#FFFFFF"
-            android:textAllCaps="false" android:textSize="16sp"/>
-        <Button android:id="@+id/button_local_authentication"
-            android:layout_width="match_parent" android:layout_height="64dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#080817">
+
+    <ImageView
+        android:id="@+id/oryn_add_account_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/orynlauncher_add_account_background"
+        android:scaleType="centerCrop"
+        android:contentDescription="@null" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#33060818" />
+
+    <LinearLayout
+        android:layout_width="560dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:background="@drawable/oryn_auth_panel"
+        android:elevation="8dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Add account"
+            android:textColor="#B9A2FF"
+            android:textSize="23sp"
+            android:textStyle="bold"
+            android:paddingBottom="14dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#8C70F5"
+            android:layout_marginBottom="18dp" />
+
+        <Button
+            android:id="@+id/button_microsoft_authentication"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginBottom="12dp"
             android:background="@drawable/oryn_auth_button"
-            android:text="@string/auth_select_local" android:textColor="#FFFFFF"
-            android:textAllCaps="false" android:textSize="16sp"/>
+            android:text="@string/auth_select_microsoft"
+            android:textColor="#E8E2FF"
+            android:textAllCaps="false"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/button_elyby_authentication"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginBottom="12dp"
+            android:background="@drawable/oryn_auth_button"
+            android:text="@string/auth_select_elyby"
+            android:textColor="#E8E2FF"
+            android:textAllCaps="false"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/button_local_authentication"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:background="@drawable/oryn_auth_button"
+            android:text="@string/auth_select_local"
+            android:textColor="#E8E2FF"
+            android:textAllCaps="false"
+            android:textSize="16sp" />
     </LinearLayout>
 </FrameLayout>
