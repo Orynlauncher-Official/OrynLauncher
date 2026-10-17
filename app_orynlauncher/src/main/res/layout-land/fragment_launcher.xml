@@ -658,7 +658,7 @@
                 android:textSize="10sp" />
         </LinearLayout>
         <Button
-            android:id="@+id/crash_viewer_button"
+            android:id="@+id/oryn_open_store_button"
             android:layout_width="140dp"
             android:layout_height="42dp"
             android:text="OPEN STORE  →"
@@ -685,7 +685,7 @@
         android:text="No version installed"
         android:visibility="gone" />
     <ImageButton
-        android:id="@+id/crash_viewer_button_compat"
+        android:id="@+id/crash_viewer_button"
         android:layout_width="1dp"
         android:layout_height="1dp"
         android:visibility="gone"
