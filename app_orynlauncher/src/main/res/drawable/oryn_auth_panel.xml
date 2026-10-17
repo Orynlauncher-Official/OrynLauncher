@@ -1,5 +1,6 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#E6101028" />
+    <!-- Opaque deep-violet surface masks the old text baked into the background image. -->
+    <solid android:color="#FF0B0B18" />
     <corners android:radius="30dp" />
     <stroke android:width="2dp" android:color="#FF8C70F5" />
 </shape>
