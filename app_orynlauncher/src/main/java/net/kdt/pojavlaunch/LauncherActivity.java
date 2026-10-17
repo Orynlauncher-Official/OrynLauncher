@@ -262,57 +262,69 @@ public class LauncherActivity extends BaseActivity {
     }
 
     /**
-     * Brief animated jellyfish welcome overlay shown when OrynLauncher opens.
-     * It is purely decorative and removes itself automatically.
+     * Animated OrynLauncher Plus startup splash using the official Oryn wordmark.
+     * The overlay is decorative and removes itself automatically.
      */
-    /** Show the official Oryn wordmark briefly when the launcher opens. */
     private void showJellyfishStartup() {
         final android.widget.FrameLayout overlay = new android.widget.FrameLayout(this);
         overlay.setBackgroundColor(android.graphics.Color.rgb(0, 0, 0));
         overlay.setClickable(true);
+        overlay.setFocusable(true);
 
         android.widget.LinearLayout lockup = new android.widget.LinearLayout(this);
         lockup.setOrientation(android.widget.LinearLayout.VERTICAL);
         lockup.setGravity(android.view.Gravity.CENTER);
-        android.widget.TextView mark = new android.widget.TextView(this);
-        mark.setText("◉");
-        mark.setTextSize(96);
-        mark.setGravity(android.view.Gravity.CENTER);
-        mark.setTextColor(android.graphics.Color.WHITE);
-        mark.setShadowLayer(18f, 0f, 0f, android.graphics.Color.rgb(150, 130, 255));
-        android.widget.TextView word = new android.widget.TextView(this);
-        word.setText("ORYN");
-        word.setTextColor(android.graphics.Color.WHITE);
-        word.setTextSize(38);
-        word.setLetterSpacing(0.20f);
-        word.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        word.setGravity(android.view.Gravity.CENTER);
-        android.widget.TextView sub = new android.widget.TextView(this);
-        sub.setText("L A U N C H E R");
-        sub.setTextColor(android.graphics.Color.WHITE);
-        sub.setTextSize(14);
-        sub.setLetterSpacing(0.12f);
-        sub.setGravity(android.view.Gravity.CENTER);
-        lockup.addView(mark);
-        lockup.addView(word);
-        lockup.addView(sub);
-        overlay.addView(lockup, new android.widget.FrameLayout.LayoutParams(
+
+        android.widget.ImageView logo = new android.widget.ImageView(this);
+        logo.setImageResource(R.drawable.oryn_official_logo_v4);
+        logo.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        logo.setAdjustViewBounds(true);
+        logo.setElevation(dp(8));
+        android.widget.LinearLayout.LayoutParams logoParams = new android.widget.LinearLayout.LayoutParams(
+                dp(280), dp(210));
+        logoParams.bottomMargin = dp(8);
+        lockup.addView(logo, logoParams);
+
+        android.widget.TextView plus = new android.widget.TextView(this);
+        plus.setText("PLUS");
+        plus.setTextColor(android.graphics.Color.WHITE);
+        plus.setTextSize(16);
+        plus.setLetterSpacing(0.42f);
+        plus.setGravity(android.view.Gravity.CENTER);
+        plus.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        plus.setShadowLayer(14f, 0f, 0f, android.graphics.Color.rgb(150, 105, 255));
+        lockup.addView(plus, new android.widget.LinearLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.Gravity.CENTER));
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT));
 
         android.view.ViewGroup decor = (android.view.ViewGroup) getWindow().getDecorView();
         decor.addView(overlay, new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        android.widget.FrameLayout.LayoutParams lockupParams = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.Gravity.CENTER);
+        overlay.addView(lockup, lockupParams);
+
         lockup.setAlpha(0f);
-        lockup.setScaleX(0.88f);
-        lockup.setScaleY(0.88f);
-        lockup.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(600L).start();
-        overlay.postDelayed(() -> overlay.animate().alpha(0f).setDuration(350L).withEndAction(() -> {
+        lockup.setScaleX(0.90f);
+        lockup.setScaleY(0.90f);
+        lockup.setTranslationY(dp(12));
+        lockup.animate().alpha(1f).scaleX(1f).scaleY(1f).translationY(0f)
+                .setDuration(650L)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
+        overlay.postDelayed(() -> overlay.animate().alpha(0f).setDuration(400L).withEndAction(() -> {
             android.view.ViewParent parent = overlay.getParent();
-            if (parent instanceof android.view.ViewGroup) ((android.view.ViewGroup) parent).removeView(overlay);
-        }).start(), 1700L);
+            if (parent instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) parent).removeView(overlay);
+            }
+        }).start(), 1850L);
+    }
+
+    private int dp(float value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     @Override
