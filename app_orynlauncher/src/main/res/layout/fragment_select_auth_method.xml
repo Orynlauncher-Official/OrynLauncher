@@ -42,6 +42,7 @@
             android:layout_marginBottom="18dp" />
 
         <Button
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:id="@+id/button_microsoft_authentication"
             android:layout_width="match_parent"
             android:layout_height="64dp"
@@ -53,12 +54,17 @@
             android:drawableEnd="@null"
             android:drawableTop="@null"
             android:drawableBottom="@null"
+            android:drawablePadding="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:shadowColor="#00000000"
             android:text="@string/auth_select_microsoft"
             android:textColor="#E8E2FF"
             android:textAllCaps="false"
             android:textSize="16sp" />
 
         <Button
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:id="@+id/button_elyby_authentication"
             android:layout_width="match_parent"
             android:layout_height="64dp"
@@ -70,12 +76,17 @@
             android:drawableEnd="@null"
             android:drawableTop="@null"
             android:drawableBottom="@null"
+            android:drawablePadding="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:shadowColor="#00000000"
             android:text="@string/auth_select_elyby"
             android:textColor="#E8E2FF"
             android:textAllCaps="false"
             android:textSize="16sp" />
 
         <Button
+            style="@style/Widget.AppCompat.Button.Borderless"
             android:id="@+id/button_local_authentication"
             android:layout_width="match_parent"
             android:layout_height="64dp"
@@ -86,6 +97,10 @@
             android:drawableEnd="@null"
             android:drawableTop="@null"
             android:drawableBottom="@null"
+            android:drawablePadding="0dp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:shadowColor="#00000000"
             android:text="@string/auth_select_local"
             android:textColor="#E8E2FF"
             android:textAllCaps="false"
