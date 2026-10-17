@@ -75,31 +75,62 @@
 			<LinearLayout
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:layout_marginBottom="16dp"
 				android:layout_gravity="center"
 				android:gravity="center"
-				android:orientation="vertical">
+				android:orientation="vertical"
+				android:padding="24dp">
+
+				<ImageView
+					android:layout_width="112dp"
+					android:layout_height="112dp"
+					android:layout_marginBottom="18dp"
+					android:src="@drawable/oryn_official_logo_v4"
+					android:scaleType="fitCenter"
+					android:contentDescription="OrynLauncher logo" />
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="6dp"
+					android:text="ORYN LAUNCHER"
+					android:textColor="#FFFFFF"
+					android:textStyle="bold"
+					android:letterSpacing="0.12"
+					android:textSize="21sp" />
+
+				<TextView
+					android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:layout_marginBottom="22dp"
+					android:text="PLUS"
+					android:textColor="#FFFFFF"
+					android:textStyle="bold"
+					android:letterSpacing="0.35"
+					android:textSize="12sp" />
 
 				<ProgressBar
 					android:id="@+id/main_loading_screen_progress"
-					android:layout_width="24dp"
-					android:layout_height="24dp"
-					android:indeterminate="true" />
+					android:layout_width="42dp"
+					android:layout_height="4dp"
+					android:indeterminate="true"
+					android:indeterminateTint="#8BE8FF"
+					android:layout_marginBottom="12dp" />
 
 				<TextView
 					android:id="@+id/main_loading_screen_text"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
 					android:text="@string/loading_screen_title"
-					android:textColor="@android:color/white"
+					android:textColor="#FFFFFF"
 					android:textSize="16sp" />
 
 				<TextView
 					android:id="@+id/main_loading_screen_warning"
 					android:layout_width="wrap_content"
 					android:layout_height="wrap_content"
+					android:layout_marginTop="6dp"
 					android:text="@string/loading_screen_warning"
-					android:textColor="@android:color/darker_gray"
+					android:textColor="#B8C8D8"
 					android:textSize="12sp" />
 			</LinearLayout>
 		</FrameLayout>
