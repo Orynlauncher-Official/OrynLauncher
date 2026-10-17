@@ -315,12 +315,31 @@ public class LauncherActivity extends BaseActivity {
                 .setDuration(650L)
                 .setInterpolator(new DecelerateInterpolator())
                 .start();
+
+        // Jellyfish-like hover: a gentle floating pulse while the glowing Oryn mark is visible.
+        logo.postDelayed(() -> {
+            if (logo.getParent() == null || overlay.getParent() == null) return;
+            logo.animate().translationY(-dp(7)).scaleX(1.035f).scaleY(1.035f)
+                    .setDuration(850L)
+                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+                    .withEndAction(() -> {
+                        if (logo.getParent() != null && overlay.getParent() != null) {
+                            logo.animate().translationY(dp(2)).scaleX(0.99f).scaleY(0.99f)
+                                    .setDuration(850L)
+                                    .setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator())
+                                    .start();
+                        }
+                    }).start();
+        }, 650L);
+
         overlay.postDelayed(() -> overlay.animate().alpha(0f).setDuration(400L).withEndAction(() -> {
+            logo.animate().cancel();
+            lockup.animate().cancel();
             android.view.ViewParent parent = overlay.getParent();
             if (parent instanceof android.view.ViewGroup) {
                 ((android.view.ViewGroup) parent).removeView(overlay);
             }
-        }).start(), 1850L);
+        }).start(), 2300L);
     }
 
     private int dp(float value) {
