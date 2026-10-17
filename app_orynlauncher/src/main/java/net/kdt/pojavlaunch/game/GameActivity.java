@@ -28,6 +28,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -377,6 +379,19 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         mDrawerPullButton = findViewById(R.id.drawer_button);
         mHotbarView = findViewById(R.id.hotbar_view);
         mLoadingScreen = findViewById(R.id.main_loading_screen);
+        View orynLoadingLogo = findViewById(R.id.oryn_loading_logo);
+        if (orynLoadingLogo != null) {
+            ObjectAnimator floatLogo = ObjectAnimator.ofFloat(orynLoadingLogo, View.TRANSLATION_Y, -10f, 10f);
+            floatLogo.setDuration(1100);
+            floatLogo.setRepeatCount(ValueAnimator.INFINITE);
+            floatLogo.setRepeatMode(ValueAnimator.REVERSE);
+            floatLogo.start();
+            ObjectAnimator tiltLogo = ObjectAnimator.ofFloat(orynLoadingLogo, View.ROTATION, -2f, 2f);
+            tiltLogo.setDuration(1800);
+            tiltLogo.setRepeatCount(ValueAnimator.INFINITE);
+            tiltLogo.setRepeatMode(ValueAnimator.REVERSE);
+            tiltLogo.start();
+        }
     }
 
     @Override
