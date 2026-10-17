@@ -21,12 +21,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent">
         <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/oryn_home" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_home" android:contentDescription="Home" android:background="@drawable/oryn_nav_selected" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/download_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_cube" android:contentDescription="@string/oryn_download" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/custom_control_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_gamepad" android:contentDescription="@string/mcl_option_customcontrol" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/cosmetics_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_cosmetics" android:contentDescription="Cosmetics" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/oryn_files_nav" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/ic_px_file" android:contentDescription="Files" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/oryn_crash_nav" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_crash" android:contentDescription="Crash viewer" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
-        <ImageButton android:id="@+id/install_jar_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Settings" android:background="@android:color/transparent" android:padding="8dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/download_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_cube" android:contentDescription="@string/oryn_download" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/custom_control_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_gamepad" android:contentDescription="@string/mcl_option_customcontrol" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/cosmetics_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_cosmetics" android:contentDescription="Cosmetics" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/oryn_files_nav" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/ic_px_file" android:contentDescription="Files" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/oryn_crash_nav" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_crash" android:contentDescription="Crash viewer" android:background="@android:color/transparent" android:padding="8dp" android:layout_marginBottom="5dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/install_jar_button" android:layout_width="34dp" android:layout_height="34dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Settings" android:background="@android:color/transparent" android:padding="8dp"/>
     </LinearLayout>
 
     <!-- Compact top navigation, replacing the old title-only strip. -->
@@ -60,10 +60,10 @@
             android:textStyle="bold"
             android:textSize="13sp"/>
         <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1"/>
-        <ImageButton android:id="@+id/social_media_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_discord" android:contentDescription="Discord" android:background="@android:color/transparent" android:padding="6dp"/>
-        <ImageButton android:id="@+id/share_logs_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/oryn_external" android:contentDescription="Share logs" android:background="@android:color/transparent" android:padding="6dp"/>
-        <ImageButton android:id="@+id/oryn_youtube_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_youtube" android:contentDescription="YouTube" android:background="@android:color/transparent" android:padding="6dp"/>
-        <ImageButton android:id="@+id/oryn_website_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_globe" android:contentDescription="Website" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/social_media_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_discord" android:contentDescription="Discord" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/share_logs_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/oryn_external" android:contentDescription="Share logs" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/oryn_youtube_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_youtube" android:contentDescription="YouTube" android:background="@android:color/transparent" android:padding="6dp"/>
+        <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/oryn_website_button" android:layout_width="30dp" android:layout_height="32dp" android:src="@drawable/ic_globe" android:contentDescription="Website" android:background="@android:color/transparent" android:padding="6dp"/>
     </LinearLayout>
 
     <!-- Cinematic hero occupies the main canvas instead of the old boxed preview. -->
@@ -136,7 +136,7 @@
         android:layout_marginBottom="6dp">
         <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
             <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Your worlds" android:textColor="#F0F0F2" android:textSize="13sp" android:textStyle="bold"/>
-            <ImageButton android:id="@+id/open_files_button" android:layout_width="30dp" android:layout_height="30dp" android:src="@drawable/ic_add" android:contentDescription="Add or manage instances" android:background="@drawable/oryn_pill" android:padding="6dp"/>
+            <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/open_files_button" android:layout_width="30dp" android:layout_height="30dp" android:src="@drawable/ic_add" android:contentDescription="Add or manage instances" android:background="@drawable/oryn_pill" android:padding="6dp"/>
         </LinearLayout>
         <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:layout_marginTop="7dp" android:fillViewport="false" android:overScrollMode="never">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
@@ -169,7 +169,7 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Profile" android:textColor="#F0F0F2" android:textSize="9sp"/>
                 <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Manage your profile" android:textColor="#F0F0F2" android:textSize="10sp" android:maxLines="1" android:ellipsize="end"/>
             </LinearLayout>
-            <ImageButton android:id="@+id/edit_profile_button" android:layout_width="34dp" android:layout_height="34dp" android:layout_marginStart="4dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Edit profile" android:background="@drawable/oryn_account_pill" android:padding="8dp"/>
+            <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/edit_profile_button" android:layout_width="34dp" android:layout_height="34dp" android:layout_marginStart="4dp" android:src="@drawable/oryn_nav_settings" android:contentDescription="Edit profile" android:background="@drawable/oryn_account_pill" android:padding="8dp"/>
         </LinearLayout>
         <Button android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/play_button" android:layout_width="0dp" android:layout_height="58dp" android:layout_weight="1.25" android:layout_marginStart="7dp" android:layout_marginEnd="8dp" android:text="▶  PLAY" android:textAllCaps="false" android:letterSpacing="0.03" android:textSize="18sp" android:lineSpacingExtra="1dp" android:gravity="center" android:textStyle="bold" android:textColor="#F0F0F2" android:shadowColor="#000000" android:shadowDx="0" android:shadowDy="1" android:shadowRadius="3" android:background="@drawable/oryn_launch_button" android:backgroundTint="@null" android:stateListAnimator="@null" android:elevation="4dp"/>
         <Space android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="0.65"/>
@@ -194,7 +194,7 @@
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="Mods, Resource Packs, Shaders" android:textColor="#F0F0F2" android:textSize="10sp"/>
             </LinearLayout>
             <TextView android:layout_width="30dp" android:layout_height="30dp" android:gravity="center" android:text="›" android:textColor="#F0F0F2" android:textSize="28sp" android:background="@drawable/oryn_account_pill"/>
-            <ImageButton android:id="@+id/crash_viewer_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:contentDescription="Crash viewer"/>
+            <ImageButton android:stateListAnimator="@animator/oryn_motion_bounce" android:id="@+id/crash_viewer_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:contentDescription="Crash viewer"/>
         </LinearLayout>
         <LinearLayout android:id="@+id/oryn_about_card" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="7dp" android:orientation="horizontal" android:gravity="center_vertical" android:padding="8dp" android:background="@drawable/oryn_home_bg">
             <ImageView android:layout_width="48dp" android:layout_height="48dp" android:layout_marginEnd="10dp" android:padding="10dp" android:src="@drawable/oryn_nav_cube" android:background="@drawable/oryn_account_pill" android:contentDescription="Installation manager"/>
