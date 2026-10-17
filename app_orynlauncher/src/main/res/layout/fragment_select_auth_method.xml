@@ -8,14 +8,14 @@
         android:id="@+id/oryn_add_account_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:src="@drawable/orynlauncher_add_account_background"
+        android:visibility="gone"
         android:scaleType="centerCrop"
         android:contentDescription="@null" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#33060818" />
+        android:background="#00000000" />
 
     <LinearLayout
         android:layout_width="560dp"
