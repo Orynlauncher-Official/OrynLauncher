@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#09090B"
-    android:padding="6dp">
+    android:padding="6dp"
+    android:layoutAnimation="@anim/oryn_motion_enter">
 
     <LinearLayout
         android:id="@+id/oryn_sidebar"
