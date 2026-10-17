@@ -81,6 +81,7 @@ public class MainMenuFragment extends Fragment {
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
+        Button mOpenStoreButton = view.findViewById(R.id.oryn_open_store_button);
         mVersionSpinner = view.findViewById(R.id.mc_version_spinner);
         TextView mSelectedVersion = view.findViewById(R.id.oryn_selected_version);
         TextView mSelectedInstanceName = view.findViewById(R.id.oryn_selected_instance_name);
@@ -145,6 +146,8 @@ public class MainMenuFragment extends Fragment {
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
         if (mPlayButton != null) mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
+        if (mOpenStoreButton != null) mOpenStoreButton.setOnClickListener(v ->
+                startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
 
         if (mShareLogsButton != null) mShareLogsButton.setOnClickListener((v) -> shareLog(requireContext()));
 
