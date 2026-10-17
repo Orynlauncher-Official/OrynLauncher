@@ -29,7 +29,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Add account"
+            android:text="Add OrynLauncher Plus account"
             android:textColor="#B9A2FF"
             android:textSize="23sp"
             android:textStyle="bold"
