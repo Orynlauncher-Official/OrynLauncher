@@ -195,7 +195,7 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
 
     // Center the camera around the player's body instead of the old origin.
     // This prevents the legs from falling below the bottom edge of the preview.
-    target.set(0, -5.6, 0);
+    target.set(0, -15.0, 0);
 
     const azimuth = azimuthDeg * Math.PI / 180;
     const pitch = pitchDeg * Math.PI / 180;
