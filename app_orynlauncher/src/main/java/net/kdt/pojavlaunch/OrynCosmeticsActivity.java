@@ -167,12 +167,23 @@ public class OrynCosmeticsActivity extends Activity {
                 result=fetchSkinDex(term);
                 if(!result.isEmpty()) { provider="SkinDex"; return result; }
                 result=fetchLabySkins(term);
-                if(!result.isEmpty()) { provider="Laby skin catalog"; return result; }
+                if(!result.isEmpty()) {
+                    boolean matches=false;
+                    String needle=term==null?"":term.trim().toLowerCase(Locale.ROOT);
+                    for(OnlineSkin skin:result) if(skin.name.toLowerCase(Locale.ROOT).contains(needle)) { matches=true; break; }
+                    provider=(!needle.isEmpty()&&!matches)?"Laby popular catalog":"Laby skin catalog";
+                    return result;
+                }
                 error="All online skin sources failed. Check your connection and try again.";
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
-                onlineLoading=false; onlineSkins.addAll(results); renderGrid();
+                onlineLoading=false; onlineSkins.addAll(results);
+                if("Laby popular catalog".equals(provider)) {
+                    query="";
+                    search.setText("");
+                }
+                renderGrid();
                 status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):
                         "Found "+results.size()+" skins • "+provider+" • Tap Apply");
             }
