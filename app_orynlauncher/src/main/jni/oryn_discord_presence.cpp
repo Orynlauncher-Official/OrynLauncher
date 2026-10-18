@@ -81,8 +81,20 @@ extern "C" JNIEXPORT void JNICALL
 Java_net_kdt_pojavlaunch_utils_OrynDiscordPresence_nativeStop(JNIEnv*, jclass) {
     std::shared_ptr<discordpp::Client> client;
     { std::lock_guard<std::mutex> lock(gMutex); client = gClient; }
-    if (client) client->ClearRichPresence();
+
+    // Stop the background callback loop first, then explicitly flush the clear
+    // operation while the SDK client is still alive. Otherwise the process can
+    // exit before Discord receives the clear and the old activity may linger.
     gRunning.store(false);
-    if (gCallbacks.joinable() && gCallbacks.get_id() != std::this_thread::get_id()) gCallbacks.join();
+    if (gCallbacks.joinable() && gCallbacks.get_id() != std::this_thread::get_id()) {
+        gCallbacks.join();
+    }
+    if (client) {
+        client->ClearRichPresence();
+        for (int i = 0; i < 4; ++i) {
+            discordpp::RunCallbacks();
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+    }
     { std::lock_guard<std::mutex> lock(gMutex); gClient.reset(); }
 }
