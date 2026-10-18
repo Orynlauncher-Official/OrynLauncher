@@ -136,7 +136,9 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
-    private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }\n\n    private void updateTabs(){
+    private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }
+
+    private void updateTabs(){
         skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(0,91,210):BLUE,1));
         capesTab.setBackground(shape(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(31,53,83),1));
         search.setHint(showingCapes?"Search capes...":"Search skins...");
@@ -191,7 +193,8 @@ public class OrynCosmeticsActivity extends Activity {
         preview.setSkin(active.skinEnabled?s:null,"slim".equals(active.model));preview.setCape(active.capeEnabled?c:null);preview.setCapePreview(active.capeEnabled);
         selectedName.setText(active.skin.isEmpty()?"Oryn User Skin":displayName(new File(active.skin)));
         boolean slim="slim".equals(active.model);modelInfo.setText((slim?"Slim Model (3px Arms)":"Classic Model (4px Arms)")+"  •  Drag to Rotate");
-        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));modelButton.setTextColor(slim?WHITE:Color.WHITE);\n        if(slimButton!=null){slimButton.setText(slim?"✓  Slim":"Slim");slimButton.setBackground(shape(slim?BLUE:CARD,10,BLUE,1));slimButton.setTextColor(Color.WHITE);}
+        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));modelButton.setTextColor(slim?WHITE:Color.WHITE);
+        if(slimButton!=null){slimButton.setText(slim?"✓  Slim":"Slim");slimButton.setBackground(shape(slim?BLUE:CARD,10,BLUE,1));slimButton.setTextColor(Color.WHITE);}
         renderGrid();
     }
     private String displayName(File f){String n=f.getName();if(n.toLowerCase(Locale.ROOT).endsWith(".png"))n=n.substring(0,n.length()-4);return n.replace('_',' ');}
