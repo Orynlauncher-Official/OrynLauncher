@@ -167,7 +167,15 @@ public class OrynCosmeticsActivity extends Activity {
                     Bitmap cropped=null;
                     if(showingCapes&&bitmap.getWidth()>=12&&bitmap.getHeight()>=17)cropped=Bitmap.createBitmap(bitmap,1,1,10,16);
                     else if(!showingCapes&&bitmap.getWidth()>=8&&bitmap.getHeight()>=8)cropped=Bitmap.createBitmap(bitmap,8,8,Math.max(1,Math.min(8,bitmap.getWidth()-8)),Math.max(1,Math.min(8,bitmap.getHeight()-8)));
-                    if(cropped!=null){if(cropped!=bitmap)bitmap.recycle();thumb.setImageBitmap(cropped);}else thumb.setImageBitmap(bitmap);
+                    if(cropped!=null){
+                        // Upscale Minecraft's tiny 8x8 face using nearest-neighbour
+                        // so the skin stays crisp instead of becoming a blurry photo.
+                        Bitmap crisp=Bitmap.createScaledBitmap(cropped,128,128,false);
+                        if(cropped!=bitmap)cropped.recycle();
+                        if(bitmap!=crisp)bitmap.recycle();
+                        thumb.setImageBitmap(crisp);
+                        if(android.os.Build.VERSION.SDK_INT>=16)thumb.setLayerType(View.LAYER_TYPE_SOFTWARE,null);
+                    }else thumb.setImageBitmap(bitmap);
                 }
                 LinearLayout.LayoutParams thumbLp=lp(-1,70);card.addView(thumb,thumbLp);
                 TextView name=label(displayName(file),10,WHITE);name.setGravity(Gravity.CENTER);name.setMaxLines(1);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name,lp(-1,24));
