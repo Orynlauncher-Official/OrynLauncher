@@ -49,6 +49,7 @@ public class OrynCosmeticsActivity extends Activity {
     private String query="";
     private boolean onlineMode=false, onlineLoading=false;
     private final List<OnlineSkin> onlineSkins=new ArrayList<>();
+    private final java.util.Map<String,Bitmap> onlineThumbCache=new java.util.concurrent.ConcurrentHashMap<>();
     private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"https://novask.in/"+i+".png":imageUrl;} }
 
     @Override public void onCreate(@Nullable Bundle b) {
@@ -378,7 +379,7 @@ public class OrynCosmeticsActivity extends Activity {
                 card.setPadding(d(5),d(5),d(5),d(5)); card.setBackground(shape(CARD,12,Color.rgb(20,48,83),1));
                 ImageView thumb=new ImageView(this); thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 // Native image download: the texture URL is cached in app memory only for this screen.
-                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35))); thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                Bitmap cached=onlineThumbCache.get(item.url); if(cached!=null&&!cached.isRecycled()) thumb.setImageBitmap(cached); else thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
                 card.addView(thumb,lp(-1,70));
                 TextView name=label(item.name,10,WHITE); name.setGravity(Gravity.CENTER); name.setMaxLines(1);
                 name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,24));
@@ -401,12 +402,17 @@ public class OrynCosmeticsActivity extends Activity {
                         if(b!=null && thumb.getParent()!=null) {
                             int w=b.getWidth(),h=b.getHeight();
                             Bitmap face=null;
-                            if(w>=16&&h>=16) face=Bitmap.createBitmap(b,Math.min(8,w-8),Math.min(8,h-8),Math.min(8,w-Math.min(8,w-8)),Math.min(8,h-Math.min(8,h-8)));
-                            if(face!=null) { Bitmap crisp=Bitmap.createScaledBitmap(face,128,128,false); if(face!=b)face.recycle(); if(b!=crisp)b.recycle(); thumb.setImageBitmap(crisp); }
-                            else thumb.setImageBitmap(b);
+                            int unit=Math.max(1,Math.min(w,h)/64);
+                            int left=8*unit, top=8*unit, size=8*unit;
+                            if(w>=left+size && h>=top+size) face=Bitmap.createBitmap(b,left,top,size,size);
+                            if(face!=null) {
+                                Bitmap crisp=Bitmap.createScaledBitmap(face,128,128,false);
+                                if(face!=b)face.recycle(); b.recycle();
+                                onlineThumbCache.put(item.url,crisp); thumb.setImageBitmap(crisp);
+                            } else { onlineThumbCache.put(item.url,b); thumb.setImageBitmap(b); }
                         } else if(b!=null)b.recycle();
                     }
-                }.execute();
+                }.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
             }
             while(row.getChildCount()<columns) row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
             grid.addView(row,lp(-1,151));
