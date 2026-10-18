@@ -145,12 +145,21 @@ public class OrynCosmeticsActivity extends Activity {
         brand.setGravity(Gravity.CENTER_VERTICAL);
         brand.setPadding(d(2), 0, d(2), 0);
 
-        // Use the supplied Oryn Launcher wordmark instead of the temporary blue O.
+        // Use the official Oryn logo with the Plus product branding.
         ImageView brandLogo = new ImageView(this);
-        brandLogo.setImageResource(getResources().getIdentifier("oryn_cosmetics_logo", "drawable", getPackageName()));
-        brandLogo.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-        brandLogo.setAdjustViewBounds(true);
-        brand.addView(brandLogo, lp(-1, 44));
+        int orynLogoId = getResources().getIdentifier("oryn_official_logo_v4", "drawable", getPackageName());
+        if (orynLogoId == 0) {
+            orynLogoId = getResources().getIdentifier("oryn_cosmetics_logo", "drawable", getPackageName());
+        }
+        if (orynLogoId != 0) brandLogo.setImageResource(orynLogoId);
+        brandLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        brand.addView(brandLogo, lp(42, 42));
+
+        TextView brandName = text("OrynLauncherPlus", 15, WHITE);
+        brandName.setTypeface(null, android.graphics.Typeface.BOLD);
+        brandName.setMaxLines(1);
+        brandName.setEllipsize(android.text.TextUtils.TruncateAt.END);
+        brand.addView(brandName, new LinearLayout.LayoutParams(0, d(44), 1));
         left.addView(brand, lp(-1, 44));
         left.addView(new Space(this), lp(-1, 14));
 
