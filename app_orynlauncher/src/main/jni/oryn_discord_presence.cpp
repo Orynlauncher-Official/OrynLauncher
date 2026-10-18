@@ -11,7 +11,7 @@
 #include <ctime>
 
 namespace {
-constexpr uint64_t kApplicationId = 1561214038786969620ULL;
+constexpr uint64_t kApplicationId = 1556187212620763238ULL;
 constexpr const char* kTag = "OrynDiscordPresence";
 std::mutex gMutex;
 std::shared_ptr<discordpp::Client> gClient;
