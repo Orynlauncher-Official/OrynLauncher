@@ -275,17 +275,14 @@ public class OrynCosmeticsActivity extends Activity {
                 card.setBackground(shape(selected?Color.rgb(8,43,91):CARD,12,selected?WHITE:Color.rgb(20,48,83),selected?2:1));
                 ImageView thumb=new ImageView(this);thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);Bitmap bitmap=store.load(file);
                 if(bitmap!=null){
-                    Bitmap cropped=null;
-                    if(showingCapes&&bitmap.getWidth()>=12&&bitmap.getHeight()>=17)cropped=Bitmap.createBitmap(bitmap,1,1,10,16);
-                    else if(!showingCapes&&bitmap.getWidth()>=8&&bitmap.getHeight()>=8)cropped=Bitmap.createBitmap(bitmap,8,8,Math.max(1,Math.min(8,bitmap.getWidth()-8)),Math.max(1,Math.min(8,bitmap.getHeight()-8)));
-                    if(cropped!=null){
-                        // Upscale Minecraft's tiny 8x8 face using nearest-neighbour
-                        // so the skin stays crisp instead of becoming a blurry photo.
+                    if(showingCapes&&bitmap.getWidth()>=12&&bitmap.getHeight()>=17){
+                        Bitmap cropped=Bitmap.createBitmap(bitmap,1,1,10,16);
                         Bitmap crisp=Bitmap.createScaledBitmap(cropped,128,128,false);
-                        if(cropped!=bitmap)cropped.recycle();
-                        if(bitmap!=crisp)bitmap.recycle();
-                        thumb.setImageBitmap(crisp);
-                        if(android.os.Build.VERSION.SDK_INT>=16)thumb.setLayerType(View.LAYER_TYPE_SOFTWARE,null);
+                        cropped.recycle(); bitmap.recycle(); thumb.setImageBitmap(crisp);
+                    }else if(!showingCapes){
+                        Bitmap head=makeHeadThumbnail(bitmap);
+                        if(head!=null){bitmap.recycle();thumb.setImageBitmap(head);}
+                        else thumb.setImageBitmap(bitmap);
                     }else thumb.setImageBitmap(bitmap);
                 }
                 LinearLayout.LayoutParams thumbLp=lp(-1,70);card.addView(thumb,thumbLp);
@@ -346,14 +343,10 @@ public class OrynCosmeticsActivity extends Activity {
                     protected void onPostExecute(Bitmap b) {
                         if(b!=null && thumb.getParent()!=null) {
                             int w=b.getWidth(),h=b.getHeight();
-                            Bitmap face=null;
-                            int unit=Math.max(1,Math.min(w,h)/64);
-                            int left=8*unit, top=8*unit, size=8*unit;
-                            if(w>=left+size && h>=top+size) face=Bitmap.createBitmap(b,left,top,size,size);
-                            if(face!=null) {
-                                Bitmap crisp=Bitmap.createScaledBitmap(face,128,128,false);
-                                if(face!=b)face.recycle(); b.recycle();
-                                onlineThumbCache.put(item.url,crisp); thumb.setImageBitmap(crisp);
+                            Bitmap head=makeHeadThumbnail(b);
+                            if(head!=null) {
+                                b.recycle();
+                                onlineThumbCache.put(item.url,head); thumb.setImageBitmap(head);
                             } else { onlineThumbCache.put(item.url,b); thumb.setImageBitmap(b); }
                         } else if(b!=null)b.recycle();
                     }
@@ -361,6 +354,31 @@ public class OrynCosmeticsActivity extends Activity {
             }
             while(row.getChildCount()<columns) row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
             grid.addView(row,lp(-1,151));
+        }
+    }
+
+    /** Builds a crisp 128px Minecraft head icon, including the hat/outer face layer. */
+    private Bitmap makeHeadThumbnail(Bitmap skin) {
+        if(skin==null || skin.isRecycled()) return null;
+        int unit=Math.min(skin.getWidth(),skin.getHeight())/64;
+        if(unit<1 || skin.getWidth()<16*unit || skin.getHeight()<16*unit) return null;
+        Bitmap face=null, hat=null, result=null;
+        try {
+            face=Bitmap.createBitmap(skin,8*unit,8*unit,8*unit,8*unit);
+            result=Bitmap.createScaledBitmap(face,128,128,false);
+            if(skin.getHeight()>=64*unit && skin.getWidth()>=48*unit) {
+                hat=Bitmap.createBitmap(skin,40*unit,8*unit,8*unit,8*unit);
+                Bitmap hatScaled=Bitmap.createScaledBitmap(hat,128,128,false);
+                new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG));
+                if(hatScaled!=hat) hatScaled.recycle();
+            }
+            return result;
+        } catch(Exception ignored) {
+            if(result!=null && result!=skin && !result.isRecycled()) result.recycle();
+            return null;
+        } finally {
+            if(face!=null && face!=skin && face!=result && !face.isRecycled()) face.recycle();
+            if(hat!=null && hat!=skin && !hat.isRecycled()) hat.recycle();
         }
     }
 
