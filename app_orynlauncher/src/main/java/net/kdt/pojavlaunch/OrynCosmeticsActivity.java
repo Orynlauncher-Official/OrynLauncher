@@ -422,8 +422,10 @@ public class OrynCosmeticsActivity extends Activity {
             TextView loading=label("Loading online skin results…",14,MUTED); loading.setGravity(Gravity.CENTER);
             grid.addView(loading,lp(-1,90)); return;
         }
-        List<OnlineSkin> visible=new ArrayList<>();
-        for(OnlineSkin item:onlineSkins) if(item.name.toLowerCase(Locale.ROOT).contains(query)) visible.add(item);
+        // The online providers already apply the search term on the server. Do not filter
+        // their results a second time by display name: names often differ from search terms,
+        // which made valid online results appear as an empty grid.
+        List<OnlineSkin> visible=new ArrayList<>(onlineSkins);
         if(visible.isEmpty()) {
             TextView empty=label("No online skins loaded. Search a name, then tap Online Skins.",13,MUTED);
             empty.setGravity(Gravity.CENTER); grid.addView(empty,lp(-1,90)); return;
