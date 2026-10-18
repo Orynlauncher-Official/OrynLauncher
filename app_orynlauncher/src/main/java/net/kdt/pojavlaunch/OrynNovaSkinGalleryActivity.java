@@ -78,14 +78,14 @@ public final class OrynNovaSkinGalleryActivity extends Activity {
         searchInput.setSingleLine(true);
         searchInput.setTextColor(WHITE);
         searchInput.setHintTextColor(Color.rgb(150, 165, 188));
-        searchInput.setHint("Search skin or cape...");
+        searchInput.setHint(searchCapes ? "Search capes..." : "Search skins...");
         searchInput.setTextSize(14);
         searchInput.setPadding(dp(12), 0, dp(12), 0);
         searchInput.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(60, 125, 230)));
         searchRow.addView(searchInput, new LinearLayout.LayoutParams(0, dp(42), 1));
 
         Button typeButton = new Button(this);
-        typeButton.setText("Skins");
+        typeButton.setText(searchCapes ? "Capes" : "Skins");
         typeButton.setAllCaps(false);
         typeButton.setTextColor(WHITE);
         typeButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 83, 155)));
@@ -139,7 +139,9 @@ public final class OrynNovaSkinGalleryActivity extends Activity {
         });
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
-        webView.loadUrl("https://minecraft.novaskin.me/tag/gallery?lang=en");
+        webView.loadUrl(searchCapes
+                ? "https://minecraft.novaskin.me/tag/cape?lang=en"
+                : "https://minecraft.novaskin.me/tag/gallery?lang=en");
     }
 
     private void performSearch() {
