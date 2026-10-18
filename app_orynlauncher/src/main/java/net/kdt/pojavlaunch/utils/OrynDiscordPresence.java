@@ -26,20 +26,21 @@ public final class OrynDiscordPresence {
         }
     }
 
+    /** Shows browsing only when Minecraft has not been selected for launch. */
     public static void setBrowsing() {
-        if (!nativeAvailable) return;
-        playing = false;
+        if (!nativeAvailable || playing) return;
         try { nativeUpdate("Browsing OrynLauncher Plus", ""); }
         catch (Throwable error) { Log.w(TAG, "Could not update browsing presence.", error); }
     }
 
+    /** Called when the user taps Play; the selected Minecraft version is shown in Discord. */
     public static void setPlaying(String version) {
         if (!nativeAvailable) return;
         String safeVersion = version == null || version.trim().isEmpty()
                 ? "Minecraft" : "Version " + version.trim();
         try {
             playing = true;
-            nativeUpdate("Playing OrynLauncherPlus", safeVersion);
+            nativeUpdate("Playing OrynLauncher Plus", safeVersion);
         }
         catch (Throwable error) { Log.w(TAG, "Could not update playing presence.", error); }
     }
