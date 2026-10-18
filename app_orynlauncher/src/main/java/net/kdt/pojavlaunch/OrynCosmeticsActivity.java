@@ -167,6 +167,11 @@ public class OrynCosmeticsActivity extends Activity {
         capeGallery.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         left.addView(capeGallery, lp(-1, 42));
 
+        left.addView(new Space(this), lp(-1, 6));
+        Button novaSkinGallery = button("  NovaSkin Online");
+        novaSkinGallery.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        left.addView(novaSkinGallery, lp(-1, 42));
+
         left.addView(new Space(this), lp(-1, 10));
         left.addView(sectionLabel("Import"), lp(-1, 24));
 
@@ -352,6 +357,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         combinedNav.setOnClickListener(v -> status.setText("Skin & Cape • combined cosmetics profile"));
         capeGallery.setOnClickListener(v -> showCapeGallery());
+        novaSkinGallery.setOnClickListener(v -> startActivity(new Intent(this, OrynNovaSkinGalleryActivity.class)));
         importSkin.setOnClickListener(v -> pick(PICK_SKIN));
         importCape.setOnClickListener(v -> pick(PICK_CAPE));
         back.setOnClickListener(v -> finish());
