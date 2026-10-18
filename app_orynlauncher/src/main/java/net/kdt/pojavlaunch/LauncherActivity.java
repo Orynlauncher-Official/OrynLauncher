@@ -352,6 +352,7 @@ public class LauncherActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        OrynDiscordPresence.setBrowsing();
         ContextExecutor.setActivity(this);
         InstanceInstaller.postInstallCheck(this);
     }
@@ -372,6 +373,7 @@ public class LauncherActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        if (isFinishing()) OrynDiscordPresence.stop();
         super.onDestroy();
         mProgressLayout.cleanUpObservers();
         ProgressKeeper.removeTaskCountListener(mProgressLayout);
