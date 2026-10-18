@@ -72,14 +72,3 @@ add_library(awt_xawt SHARED
         awt_xawt/xawt_fake.c
 )
 target_link_libraries(awt_xawt PRIVATE awt_headless)
-
-# Discord Rich Presence is enabled only when the licensed Partner SDK AAR is
-# supplied in app_orynlauncher/libs/discord_partner_sdk.aar.
-if(ORYN_DISCORD_SDK)
-    find_package(discord_partner_sdk REQUIRED CONFIG)
-    add_library(oryn_discord_presence SHARED oryn_discord_presence.cpp)
-    target_link_libraries(oryn_discord_presence PRIVATE
-            discord_partner_sdk::discord_partner_sdk
-            log
-            android)
-endif()
