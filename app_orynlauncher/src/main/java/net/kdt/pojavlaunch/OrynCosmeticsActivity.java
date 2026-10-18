@@ -67,7 +67,7 @@ public class OrynCosmeticsActivity extends Activity {
         TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.CENTER_VERTICAL);return t;
     }
     private Button button(String s,boolean primary){
-        Button b=new Button(this);b.setText(s);b.setTextColor(WHITE);b.setTextSize(12);b.setAllCaps(false);
+        Button b=new Button(this);b.setText(s);b.setTextColor(primary?Color.BLACK:WHITE);b.setTextSize(12);b.setAllCaps(false);
         b.setGravity(Gravity.CENTER);b.setMinHeight(0);b.setMinWidth(0);b.setPadding(d(5),0,d(5),0);
         b.setBackground(shape(primary?BLUE:CARD,11,primary?BLUE:Color.rgb(55,55,60),1));return b;
     }
@@ -191,7 +191,7 @@ public class OrynCosmeticsActivity extends Activity {
         preview.setSkin(active.skinEnabled?s:null,"slim".equals(active.model));preview.setCape(active.capeEnabled?c:null);preview.setCapePreview(active.capeEnabled);
         selectedName.setText(active.skin.isEmpty()?"Oryn User Skin":displayName(new File(active.skin)));
         boolean slim="slim".equals(active.model);modelInfo.setText((slim?"Slim Model (3px Arms)":"Classic Model (4px Arms)")+"  •  Drag to Rotate");
-        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));
+        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));modelButton.setTextColor(slim?WHITE:Color.BLACK);
         renderGrid();
     }
     private String displayName(File f){String n=f.getName();if(n.toLowerCase(Locale.ROOT).endsWith(".png"))n=n.substring(0,n.length()-4);return n.replace('_',' ');}
