@@ -26,6 +26,9 @@ void update(const std::string& details, const std::string& state) {
     { std::lock_guard<std::mutex> lock(gMutex); client = gClient; }
     if (!client) return;
     discordpp::Activity activity{};
+    // Discord otherwise uses the detected game/application name (often just Minecraft).
+    // Explicitly brand both launcher and in-game presence as OrynLauncher Plus.
+    activity.SetName("OrynLauncher Plus");
     activity.SetType(discordpp::ActivityTypes::Playing);
     activity.SetDetails(details);
     activity.SetState(state);
