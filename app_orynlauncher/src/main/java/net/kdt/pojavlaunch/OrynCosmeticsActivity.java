@@ -49,7 +49,7 @@ public class OrynCosmeticsActivity extends Activity {
     private String query="";
     private boolean onlineMode=false, onlineLoading=false;
     private final List<OnlineSkin> onlineSkins=new ArrayList<>();
-    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i){name=n;id=i;url="https://novask.in/"+i+".png";} }
+    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"https://novask.in/"+i+".png":imageUrl;} }
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -166,22 +166,42 @@ public class OrynCosmeticsActivity extends Activity {
                     String encoded=Uri.encode(term==null?"":term.trim());
                     URL url=new URL("https://minecraft.novaskin.me/search?lang=en&q="+encoded);
                     connection=(HttpURLConnection)url.openConnection();
-                    connection.setConnectTimeout(12000); connection.setReadTimeout(15000);
+                    connection.setConnectTimeout(6500); connection.setReadTimeout(8000);
                     connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0 (Android)");
                     StringBuilder html=new StringBuilder();
                     try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
                         String line; int total=0;
-                        while((line=reader.readLine())!=null && total<2*1024*1024) { html.append(line).append('\n'); total+=line.length(); }
+                        while((line=reader.readLine())!=null && total<1024*1024) { html.append(line).append('\n'); total+=line.length(); }
                     }
-                    Pattern p=Pattern.compile("href=[\"']/(?:skin|post)/([0-9]{5,})/([^\"'#?]+)",Pattern.CASE_INSENSITIVE);
-                    Matcher m=p.matcher(html.toString());
+                    String page=html.toString();
+                    Pattern imagePattern=Pattern.compile("(?:https?:)?//(?:www\\.)?novask\\.in/([A-Za-z0-9_-]+)\\.png",Pattern.CASE_INSENSITIVE);
+                    Matcher images=imagePattern.matcher(page);
                     java.util.HashSet<String> seen=new java.util.HashSet<>();
-                    while(m.find() && result.size()<60) {
-                        String id=m.group(1);
+                    while(images.find() && result.size()<24) {
+                        String id=images.group(1);
                         if(!seen.add(id)) continue;
-                        String slug=m.group(2).replaceAll("(?i)\\.(html|png)$","").replace('-','_').replace('_',' ');
-                        try { slug=java.net.URLDecoder.decode(slug,"UTF-8"); } catch(Exception ignored) {}
-                        result.add(new OnlineSkin(slug.trim().isEmpty()?"Minecraft Skin":slug,id));
+                        String imageUrl="https://novask.in/"+id+".png";
+                        String name="Minecraft Skin "+id;
+                        int from=Math.max(0,images.start()-300), to=Math.min(page.length(),images.end()+100);
+                        String around=page.substring(from,to).replaceAll("<[^>]+>"," ").replaceAll("\\s+"," ").trim();
+                        if(around.length()>2) {
+                            around=around.replaceAll("&amp;","&").trim();
+                            if(around.length()>32) around=around.substring(0,32).trim();
+                            if(!around.isEmpty()) name=around;
+                        }
+                        result.add(new OnlineSkin(name,id,imageUrl));
+                    }
+                    if(result.isEmpty()) {
+                        Pattern p=Pattern.compile("href=[\\"']/(?:skin|post)/([A-Za-z0-9_-]+)/([^\\"'#?]+)",Pattern.CASE_INSENSITIVE);
+                        Matcher m=p.matcher(page);
+                        while(m.find() && result.size()<24) {
+                            String routeId=m.group(1), slug=m.group(2);
+                            Matcher numeric=Pattern.compile("(\\d{5,})").matcher(slug);
+                            String id=numeric.find()?numeric.group(1):routeId;
+                            if(!seen.add(id)) continue;
+                            String name=slug.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ');
+                            result.add(new OnlineSkin(name.isEmpty()?"Minecraft Skin":name,id,"https://novask.in/"+id+".png"));
+                        }
                     }
                     if(result.isEmpty()) error="NovaSkin returned no readable results. Try another search.";
                 } catch(Exception e) { error=e.getMessage()==null?"Could not connect to NovaSkin":e.getMessage(); }
@@ -190,15 +210,15 @@ public class OrynCosmeticsActivity extends Activity {
             }
             protected void onPostExecute(List<OnlineSkin> results) {
                 onlineLoading=false; onlineSkins.addAll(results); renderGrid();
-                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" online skins • Tap Apply to equip");
+                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" skins • Tap once to apply");
             }
         }.execute();
     }
 
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
         if(skin==null)return;
-        apply.setEnabled(false); apply.setText("Downloading…");
-        status.setText("Downloading "+skin.name+"…");
+        apply.setEnabled(false); apply.setText("Applying…");
+        status.setText("Applying "+skin.name+"…");
         new android.os.AsyncTask<Void,Void,File>() {
             String error;
             protected File doInBackground(Void... unused) {
@@ -207,7 +227,7 @@ public class OrynCosmeticsActivity extends Activity {
             }
             protected void onPostExecute(File file) {
                 if(file==null) {
-                    apply.setEnabled(true); apply.setText("Retry");
+                    apply.setEnabled(true); apply.setText("Tap to retry");
                     status.setText("Download failed: "+(error==null?"Skin texture unavailable":error));
                     return;
                 }
@@ -223,6 +243,64 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }
+
+    private void updateTabs(){
+        skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(0,91,210):BLUE,1));
+        capesTab.setBackground(shape(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(31,53,83),1));
+        search.setHint(showingCapes?"Search capes...":"Search skins...");
+    }
+
+    private void renderGrid(){
+        if(grid==null)return;grid.removeAllViews();
+        if(onlineMode){renderOnlineGrid();return;}
+        List<File> all=showingCapes?store.listCapes():store.listSkins();List<File> visible=new ArrayList<>();
+        for(File f:all)if(displayName(f).toLowerCase(Locale.ROOT).contains(query))visible.add(f);
+        if(visible.isEmpty()){
+            LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(d(12),d(20),d(12),d(20));
+            TextView title=label(query.isEmpty()?(showingCapes?"No capes yet":"No saved skins yet"):"No "+(showingCapes?"capes":"skins")+" found",15,WHITE);title.setGravity(Gravity.CENTER);
+            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Search online with NovaSkin, download a skin, and it will appear here.",11,MUTED);desc.setGravity(Gravity.CENTER);
+            empty.addView(desc,lp(-1,45));grid.addView(empty,lp(-1,-2));
+            if(!showingCapes&&!query.isEmpty()){} return;
+        }
+        int columns=4;
+        for(int start=0;start<visible.size();start+=columns){
+            LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);
+            for(int col=0;col<columns&&start+col<visible.size();col++){
+                File file=visible.get(start+col);boolean selected=showingCapes?file.getName().equals(active.cape):file.getName().equals(active.skin);
+                LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setGravity(Gravity.CENTER_HORIZONTAL);card.setPadding(d(5),d(5),d(5),d(5));
+                card.setBackground(shape(selected?Color.rgb(8,43,91):CARD,12,selected?WHITE:Color.rgb(20,48,83),selected?2:1));
+                ImageView thumb=new ImageView(this);thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);Bitmap bitmap=store.load(file);
+                if(bitmap!=null){
+                    Bitmap cropped=null;
+                    if(showingCapes&&bitmap.getWidth()>=12&&bitmap.getHeight()>=17)cropped=Bitmap.createBitmap(bitmap,1,1,10,16);
+                    else if(!showingCapes&&bitmap.getWidth()>=8&&bitmap.getHeight()>=8)cropped=Bitmap.createBitmap(bitmap,8,8,Math.max(1,Math.min(8,bitmap.getWidth()-8)),Math.max(1,Math.min(8,bitmap.getHeight()-8)));
+                    if(cropped!=null){
+                        // Upscale Minecraft's tiny 8x8 face using nearest-neighbour
+                        // so the skin stays crisp instead of becoming a blurry photo.
+                        Bitmap crisp=Bitmap.createScaledBitmap(cropped,128,128,false);
+                        if(cropped!=bitmap)cropped.recycle();
+                        if(bitmap!=crisp)bitmap.recycle();
+                        thumb.setImageBitmap(crisp);
+                        if(android.os.Build.VERSION.SDK_INT>=16)thumb.setLayerType(View.LAYER_TYPE_SOFTWARE,null);
+                    }else thumb.setImageBitmap(bitmap);
+                }
+                LinearLayout.LayoutParams thumbLp=lp(-1,70);card.addView(thumb,thumbLp);
+                TextView name=label(displayName(file),10,WHITE);name.setGravity(Gravity.CENTER);name.setMaxLines(1);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name,lp(-1,24));
+                Button apply=button(selected?"✓  Equipped":"Apply",selected);apply.setTextSize(10);card.addView(apply,lp(-1,29));
+                View.OnClickListener choose=v->{if(showingCapes){active.cape=file.getName();active.capeEnabled=true;}else{active.skin=file.getName();active.skinEnabled=true;
+                    String skinName=displayName(file).toLowerCase(Locale.ROOT);
+                    if(skinName.contains("alex")||skinName.contains("slim"))active.model="slim";
+                    else if(skinName.contains("steve")||skinName.equals("oryn"))active.model="classic";
+                }saveCurrent((showingCapes?"Cape":"Skin")+" applied locally: "+displayName(file));};
+                apply.setOnClickListener(choose);thumb.setOnClickListener(choose);name.setOnClickListener(choose);
+                LinearLayout.LayoutParams cardLp=new LinearLayout.LayoutParams(0,d(145),1);cardLp.setMargins(d(3),d(3),d(3),d(3));row.addView(card,cardLp);
+            }
+            while(row.getChildCount()<columns){View blank=new View(this);row.addView(blank,new LinearLayout.LayoutParams(0,1,1));}
+            grid.addView(row,lp(-1,151));
+        }
+    }
+
+        private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }
 
     private void updateTabs(){
         skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(0,91,210):BLUE,1));
@@ -300,11 +378,11 @@ public class OrynCosmeticsActivity extends Activity {
                 card.setPadding(d(5),d(5),d(5),d(5)); card.setBackground(shape(CARD,12,Color.rgb(20,48,83),1));
                 ImageView thumb=new ImageView(this); thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
                 // Native image download: the texture URL is cached in app memory only for this screen.
-                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
+                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35))); thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 card.addView(thumb,lp(-1,70));
                 TextView name=label(item.name,10,WHITE); name.setGravity(Gravity.CENTER); name.setMaxLines(1);
                 name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,24));
-                Button apply=button("1-Click Apply",true); apply.setTextSize(10); card.addView(apply,lp(-1,29));
+                Button apply=button("Apply",true); apply.setTextSize(10); card.addView(apply,lp(-1,29));
                 apply.setOnClickListener(v->applyOnlineSkin(item,apply));
                 LinearLayout.LayoutParams cardLp=new LinearLayout.LayoutParams(0,d(145),1);
                 cardLp.setMargins(d(3),d(3),d(3),d(3)); row.addView(card,cardLp);
