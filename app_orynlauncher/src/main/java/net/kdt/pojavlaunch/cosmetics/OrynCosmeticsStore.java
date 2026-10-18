@@ -276,11 +276,31 @@ public final class OrynCosmeticsStore {
                 while ((count = in.read(buffer)) != -1) { total += count; if (total > 8 * 1024 * 1024) throw new IllegalArgumentException("Skin image is too large (8 MB limit)."); out.write(buffer, 0, count); }
             }
             Bitmap bitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
-            if (bitmap == null || bitmap.getWidth() != bitmap.getHeight() || bitmap.getWidth() < 64 || bitmap.getWidth() % 64 != 0) {
-                if (bitmap != null) bitmap.recycle(); throw new IllegalArgumentException("The downloaded file is not a compatible square Minecraft skin PNG.");
+            if (!isCompatibleSkin(bitmap)) {
+                if (bitmap != null) bitmap.recycle();
+                throw new IllegalArgumentException("Skin PNG must be a modern square texture (64×64 or larger) or a legacy 64×32 texture.");
             }
-            bitmap.recycle(); File target = unique(skins, safeName(name, "novaskin") + ".png");
-            if (!temp.renameTo(target)) { try (InputStream in = new FileInputStream(temp); FileOutputStream out = new FileOutputStream(target)) { byte[] b = new byte[8192]; int n; while ((n=in.read(b))!=-1) out.write(b,0,n); } temp.delete(); }
+            File target = unique(skins, safeName(name, "novaskin") + ".png");
+            try {
+                // skinview3d and Minecraft use the standard 64px UV layout.
+                // Downsample high-resolution square textures to prevent stretched/glitched UVs.
+                if (bitmap.getWidth() > 64 && bitmap.getWidth() == bitmap.getHeight()) {
+                    Bitmap normalized = Bitmap.createScaledBitmap(bitmap, 64, 64, false);
+                    try (FileOutputStream out = new FileOutputStream(target)) {
+                        normalized.compress(Bitmap.CompressFormat.PNG, 100, out);
+                    } finally { normalized.recycle(); }
+                    temp.delete();
+                } else {
+                    bitmap.recycle();
+                    bitmap = null;
+                    if (!temp.renameTo(target)) {
+                        try (InputStream in = new FileInputStream(temp); FileOutputStream out = new FileOutputStream(target)) {
+                            byte[] b = new byte[8192]; int n; while ((n=in.read(b))!=-1) out.write(b,0,n);
+                        }
+                        temp.delete();
+                    }
+                }
+            } finally { if (bitmap != null && !bitmap.isRecycled()) bitmap.recycle(); }
             return target;
         } finally { connection.disconnect(); if (temp.exists()) temp.delete(); }
     }
@@ -297,11 +317,35 @@ public final class OrynCosmeticsStore {
 
     public File importSkin(Uri uri, String name) throws Exception {
         Bitmap b = decode(uri);
-        if (b == null || b.getWidth() != b.getHeight() || b.getWidth() < 64 || b.getWidth() % 64 != 0)
-            throw new IllegalArgumentException("Skin must be a square 64×64 or compatible higher-resolution PNG.");
+        if (!isCompatibleSkin(b)) {
+            if (b != null) b.recycle();
+            throw new IllegalArgumentException("Skin PNG must be 64×64 (or a higher-resolution square) or legacy 64×32.");
+        }
         File out = unique(skins, safeName(name, "skin") + ".png");
-        copyUri(uri, out);
+        try {
+            if (b.getWidth() > 64 && b.getWidth() == b.getHeight()) {
+                // Normalize oversized skins to Minecraft's standard UV atlas.
+                Bitmap normalized = Bitmap.createScaledBitmap(b, 64, 64, false);
+                try (FileOutputStream stream = new FileOutputStream(out)) {
+                    normalized.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                } finally { normalized.recycle(); }
+            } else {
+                copyUri(uri, out);
+            }
+        } catch (Exception e) {
+            out.delete();
+            throw e;
+        } finally {
+            if (b != null && !b.isRecycled()) b.recycle();
+        }
         return out;
+    }
+
+    private boolean isCompatibleSkin(Bitmap bitmap) {
+        if (bitmap == null) return false;
+        int w = bitmap.getWidth(), h = bitmap.getHeight();
+        // Standard modern skins and legacy 64×32 skins are both supported.
+        return (w == h && w >= 64 && w % 64 == 0) || (w == 64 && h == 32);
     }
 
     public File importCape(Uri uri, String name) throws Exception {
