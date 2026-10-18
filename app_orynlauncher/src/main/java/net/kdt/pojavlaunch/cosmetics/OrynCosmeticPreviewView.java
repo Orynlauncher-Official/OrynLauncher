@@ -117,6 +117,10 @@ public class OrynCosmeticPreviewView extends WebView {
         }
     }
 
+    public void rotateBy(float radians) {
+        if (pageReady) evaluateJavascript("rotatePreview(" + radians + ")", null);
+    }
+
     /** Render a real front-facing Minecraft player thumbnail using the same skinview3d renderer. */
     public void renderThumbnail(Bitmap skin, boolean slim, ThumbnailCallback callback) {
         if (skin == null || skin.isRecycled() || callback == null) {
