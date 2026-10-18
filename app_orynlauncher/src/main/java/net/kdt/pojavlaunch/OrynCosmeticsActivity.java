@@ -211,9 +211,9 @@ public class OrynCosmeticsActivity extends Activity {
         header.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout headerText = new LinearLayout(this);
         headerText.setOrientation(LinearLayout.VERTICAL);
-        tabTitle = text("Skin & Cape Preview", 20, WHITE);
+        tabTitle = text("Skin & Cape", 20, WHITE);
         tabTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView subtitle = text("Configure your skin and cape together, with independent controls.", 10, MUTED);
+        TextView subtitle = text("Preview, select and apply your skins and capes", 10, MUTED);
         headerText.addView(tabTitle, lp(-1, 27));
         headerText.addView(subtitle, lp(-1, 20));
         header.addView(headerText, new LinearLayout.LayoutParams(0, d(48), 1));
@@ -230,7 +230,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout stageTop = new LinearLayout(this);
         stageTop.setGravity(Gravity.CENTER_VERTICAL);
-        TextView stageTitle = text("CHARACTER", 9, MUTED);
+        TextView stageTitle = text("3D PREVIEW", 9, MUTED);
         stageTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         stageTop.addView(stageTitle, new LinearLayout.LayoutParams(0, d(24), 1));
         TextView stageHint = text("Drag to rotate", 9, MUTED);
@@ -274,25 +274,25 @@ public class OrynCosmeticsActivity extends Activity {
         rightHeader.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout rightTitleBox = new LinearLayout(this);
         rightTitleBox.setOrientation(LinearLayout.VERTICAL);
-        TextView rt = text("Appearance", 17, WHITE);
+        TextView rt = text("Skins & Capes", 17, WHITE);
         rt.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView rs = text("Manage profile, model and cosmetics", 9, MUTED);
+        TextView rs = text("Choose a cosmetic to preview and apply", 9, MUTED);
         rightTitleBox.addView(rt, lp(-1, 23));
         rightTitleBox.addView(rs, lp(-1, 18));
         rightHeader.addView(rightTitleBox, new LinearLayout.LayoutParams(0, d(44), 1));
-        TextView v3 = badge("V3");
+        TextView v3 = badge("LIVE");
         rightHeader.addView(v3, lp(48, 28));
         right.addView(rightHeader, lp(-1, 46));
 
         right.addView(divider(), lp(-1, 1));
-        right.addView(sectionLabel("Profile"), lp(-1, 23));
+        right.addView(sectionLabel("YOUR COLLECTION"), lp(-1, 23));
         profiles = selectorButton("Default");
         right.addView(profiles, lp(-1, 40));
         Button newProfile = button("+   New Profile");
         newProfile.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
         right.addView(newProfile, lp(-1, 34));
 
-        right.addView(sectionLabel("Skin & Cape"), lp(-1, 24));
+        right.addView(sectionLabel("SELECT COSMETICS"), lp(-1, 24));
         skins = selectorButton("None");
         capes = selectorButton("None");
         right.addView(skins, lp(-1, 38));
@@ -335,7 +335,7 @@ public class OrynCosmeticsActivity extends Activity {
         actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(34), 1));
         right.addView(actions2, lp(-1, 38));
 
-        TextView note = text("PNG cosmetics are stored locally. Existing account, instances and game data are not changed.", 8, MUTED);
+        TextView note = text("Custom PNG skins and capes stay saved locally. Drag the preview to rotate your character.", 8, MUTED);
         note.setMaxLines(2);
         note.setGravity(Gravity.CENTER_VERTICAL);
         right.addView(note, lp(-1, 30));
