@@ -25,6 +25,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class OrynCosmeticsActivity extends Activity {
     private static final int PICK_SKIN = 501, PICK_CAPE = 502;
@@ -40,6 +46,9 @@ public class OrynCosmeticsActivity extends Activity {
     private ScrollView gridScroll;
     private boolean showingCapes=false;
     private String query="";
+    private boolean onlineMode=false, onlineLoading=false;
+    private final List<OnlineSkin> onlineSkins=new ArrayList<>();
+    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i){name=n;id=i;url="https://novask.in/"+i+".png";} }
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -115,8 +124,8 @@ public class OrynCosmeticsActivity extends Activity {
         search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);search.setHintTextColor(MUTED);search.setTextSize(12);search.setPadding(d(12),0,d(10),0);
         search.setHint("Search skins or capes...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(31,66,115),1));
         searchRow.addView(search,new LinearLayout.LayoutParams(0,d(42),1));
-        Button onlineButton=button("NovaSkin ↗",false); LinearLayout.LayoutParams onlineLp=lp(94,42); onlineLp.leftMargin=d(6); searchRow.addView(onlineButton,onlineLp);
-        onlineButton.setOnClickListener(v->openNovaSkinBrowser());
+        Button onlineButton=button("Online Skins",false); LinearLayout.LayoutParams onlineLp=lp(100,42); onlineLp.leftMargin=d(6); searchRow.addView(onlineButton,onlineLp);
+        onlineButton.setOnClickListener(v->{onlineMode=true; showingCapes=false; updateTabs(); updateImportButton(); loadOnlineSkins(search.getText().toString().trim());});
         LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(4,14,32),12,Color.rgb(25,44,72),1));
         LinearLayout.LayoutParams tabsLp=lp(230,42);tabsLp.leftMargin=d(8);searchRow.addView(tabs,tabsLp);
         skinsTab=button("♧  Skins",true);capesTab=button("♧  Capes",false);
@@ -130,30 +139,85 @@ public class OrynCosmeticsActivity extends Activity {
         status=label("Ready",10,MUTED);root.addView(status,lp(-1,20));
         setContentView(root);
 
-        skinsTab.setOnClickListener(v->{showingCapes=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
-        capesTab.setOnClickListener(v->{showingCapes=true;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
+        skinsTab.setOnClickListener(v->{showingCapes=false;onlineMode=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
+        capesTab.setOnClickListener(v->{showingCapes=true;onlineMode=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
         search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}
-            public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);renderGrid();}
+            public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);if(!onlineMode)renderGrid();}
             public void afterTextChanged(Editable e){}});
         updateTabs();
     }
 
-    private void openNovaSkinBrowser(){
-        final EditText onlineSearch=new EditText(this); onlineSearch.setSingleLine(true); onlineSearch.setTextColor(WHITE); onlineSearch.setHintTextColor(MUTED); onlineSearch.setHint("Search NovaSkin (anime, hoodie, etc.)"); onlineSearch.setText(query);
-        LinearLayout wrap=new LinearLayout(this); wrap.setPadding(d(14),d(4),d(14),d(4)); wrap.addView(onlineSearch,lp(-1,44));
-        WebView web=new WebView(this); web.getSettings().setJavaScriptEnabled(true); web.getSettings().setDomStorageEnabled(true); web.setBackgroundColor(BG);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Browse NovaSkin").setView(web).setNegativeButton("Close",null).setNeutralButton("Search",null).create();
-        dialog.setOnShowListener(x->{ dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{String q=Uri.encode(onlineSearch.getText().toString().trim()); web.loadUrl("https://minecraft.novaskin.me/search?q="+q);}); });
-        web.setDownloadListener((url,userAgent,contentDisposition,mimeType,contentLength)->{
-            if(url==null||!(url.startsWith("https://")||url.startsWith("http://"))) { status.setText("NovaSkin download URL was not valid"); return; }
-            status.setText("Downloading skin from NovaSkin…");
-            new android.os.AsyncTask<Void,Void,File>(){String error; protected File doInBackground(Void... v){try{return store.importRemoteSkin(url,"NovaSkin_"+System.currentTimeMillis());}catch(Exception e){error=e.getMessage();return null;}}
-                protected void onPostExecute(File f){if(f!=null){if(!showingCapes){active.skin=f.getName();active.skinEnabled=true;saveCurrent("Downloaded and applied "+displayName(f));}else{status.setText("Skin saved. Switch to Skins to apply it.");renderGrid();}}else status.setText("Download failed: "+(error==null?"unsupported NovaSkin image":error));}
-            }.execute();
-        });
-        web.loadUrl("https://minecraft.novaskin.me/skins?lang=en-US");
-        LinearLayout browser=new LinearLayout(this);browser.setOrientation(LinearLayout.VERTICAL);browser.addView(wrap,lp(-1,50));browser.addView(web,new LinearLayout.LayoutParams(-1,d(420)));dialog.setView(browser);dialog.show();
-        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setText("Search");
+    /** Fetch NovaSkin search results and show them in our own native grid (no WebView/browser). */
+    private void loadOnlineSkins(String term) {
+        if (showingCapes) { showingCapes=false; updateTabs(); }
+        onlineMode=true;
+        onlineLoading=true;
+        onlineSkins.clear();
+        status.setText("Loading online skins…");
+        renderGrid();
+        new android.os.AsyncTask<Void,Void,List<OnlineSkin>>() {
+            String error;
+            protected List<OnlineSkin> doInBackground(Void... unused) {
+                List<OnlineSkin> result=new ArrayList<>();
+                HttpURLConnection connection=null;
+                try {
+                    String encoded=Uri.encode(term==null?"":term.trim());
+                    URL url=new URL("https://minecraft.novaskin.me/search?lang=en&q="+encoded);
+                    connection=(HttpURLConnection)url.openConnection();
+                    connection.setConnectTimeout(12000); connection.setReadTimeout(15000);
+                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0 (Android)");
+                    StringBuilder html=new StringBuilder();
+                    try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
+                        String line; int total=0;
+                        while((line=reader.readLine())!=null && total<2*1024*1024) { html.append(line).append('\n'); total+=line.length(); }
+                    }
+                    Pattern p=Pattern.compile("href=[\"']/(?:skin|post)/([0-9]{5,})/([^\"'#?]+)",Pattern.CASE_INSENSITIVE);
+                    Matcher m=p.matcher(html.toString());
+                    java.util.HashSet<String> seen=new java.util.HashSet<>();
+                    while(m.find() && result.size()<60) {
+                        String id=m.group(1);
+                        if(!seen.add(id)) continue;
+                        String slug=m.group(2).replaceAll("(?i)\\.(html|png)$","").replace('-','_').replace('_',' ');
+                        try { slug=java.net.URLDecoder.decode(slug,"UTF-8"); } catch(Exception ignored) {}
+                        result.add(new OnlineSkin(slug.trim().isEmpty()?"Minecraft Skin":slug,id));
+                    }
+                    if(result.isEmpty()) error="NovaSkin returned no readable results. Try another search.";
+                } catch(Exception e) { error=e.getMessage()==null?"Could not connect to NovaSkin":e.getMessage(); }
+                finally { if(connection!=null) connection.disconnect(); }
+                return result;
+            }
+            protected void onPostExecute(List<OnlineSkin> results) {
+                onlineLoading=false; onlineSkins.addAll(results); renderGrid();
+                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" online skins • Tap Apply to equip");
+            }
+        }.execute();
+    }
+
+    private void applyOnlineSkin(OnlineSkin skin, Button apply) {
+        if(skin==null)return;
+        apply.setEnabled(false); apply.setText("Downloading…");
+        status.setText("Downloading "+skin.name+"…");
+        new android.os.AsyncTask<Void,Void,File>() {
+            String error;
+            protected File doInBackground(Void... unused) {
+                try { return store.importRemoteSkin(skin.url,"NovaSkin_"+skin.id); }
+                catch(Exception e) { error=e.getMessage(); return null; }
+            }
+            protected void onPostExecute(File file) {
+                if(file==null) {
+                    apply.setEnabled(true); apply.setText("Retry");
+                    status.setText("Download failed: "+(error==null?"Skin texture unavailable":error));
+                    return;
+                }
+                active.skin=file.getName(); active.skinEnabled=true;
+                String n=skin.name.toLowerCase(Locale.ROOT);
+                if(n.contains("alex")||n.contains("slim")||n.contains("girl"))active.model="slim";
+                else active.model="classic";
+                onlineMode=false;
+                search.setText("");
+                saveCurrent("Applied "+skin.name);
+            }
+        }.execute();
     }
 
     private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }
@@ -166,6 +230,7 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void renderGrid(){
         if(grid==null)return;grid.removeAllViews();
+        if(onlineMode){renderOnlineGrid();return;}
         List<File> all=showingCapes?store.listCapes():store.listSkins();List<File> visible=new ArrayList<>();
         for(File f:all)if(displayName(f).toLowerCase(Locale.ROOT).contains(query))visible.add(f);
         if(visible.isEmpty()){
@@ -209,6 +274,61 @@ public class OrynCosmeticsActivity extends Activity {
                 LinearLayout.LayoutParams cardLp=new LinearLayout.LayoutParams(0,d(145),1);cardLp.setMargins(d(3),d(3),d(3),d(3));row.addView(card,cardLp);
             }
             while(row.getChildCount()<columns){View blank=new View(this);row.addView(blank,new LinearLayout.LayoutParams(0,1,1));}
+            grid.addView(row,lp(-1,151));
+        }
+    }
+
+    private void renderOnlineGrid() {
+        if(onlineLoading) {
+            TextView loading=label("Loading NovaSkin results…",14,MUTED); loading.setGravity(Gravity.CENTER);
+            grid.addView(loading,lp(-1,90)); return;
+        }
+        List<OnlineSkin> visible=new ArrayList<>();
+        for(OnlineSkin item:onlineSkins) if(item.name.toLowerCase(Locale.ROOT).contains(query)) visible.add(item);
+        if(visible.isEmpty()) {
+            TextView empty=label("No online skins loaded. Search a name, then tap Online Skins.",13,MUTED);
+            empty.setGravity(Gravity.CENTER); grid.addView(empty,lp(-1,90)); return;
+        }
+        int columns=4;
+        for(int start=0;start<visible.size();start+=columns) {
+            LinearLayout row=new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
+            for(int col=0;col<columns && start+col<visible.size();col++) {
+                OnlineSkin item=visible.get(start+col);
+                LinearLayout card=new LinearLayout(this); card.setOrientation(LinearLayout.VERTICAL); card.setGravity(Gravity.CENTER_HORIZONTAL);
+                card.setPadding(d(5),d(5),d(5),d(5)); card.setBackground(shape(CARD,12,Color.rgb(20,48,83),1));
+                ImageView thumb=new ImageView(this); thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                // Native image download: the texture URL is cached in app memory only for this screen.
+                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
+                card.addView(thumb,lp(-1,70));
+                TextView name=label(item.name,10,WHITE); name.setGravity(Gravity.CENTER); name.setMaxLines(1);
+                name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,24));
+                Button apply=button("1-Click Apply",true); apply.setTextSize(10); card.addView(apply,lp(-1,29));
+                apply.setOnClickListener(v->applyOnlineSkin(item,apply));
+                LinearLayout.LayoutParams cardLp=new LinearLayout.LayoutParams(0,d(145),1);
+                cardLp.setMargins(d(3),d(3),d(3),d(3)); row.addView(card,cardLp);
+                new android.os.AsyncTask<Void,Void,Bitmap>() {
+                    protected Bitmap doInBackground(Void... unused) {
+                        HttpURLConnection con=null;
+                        try {
+                            con=(HttpURLConnection)new URL(item.url).openConnection();
+                            con.setConnectTimeout(7000); con.setReadTimeout(9000);
+                            con.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
+                            try(java.io.InputStream in=con.getInputStream()) { return BitmapFactory.decodeStream(in); }
+                        } catch(Exception ignored) { return null; }
+                        finally { if(con!=null)con.disconnect(); }
+                    }
+                    protected void onPostExecute(Bitmap b) {
+                        if(b!=null && thumb.getParent()!=null) {
+                            int w=b.getWidth(),h=b.getHeight();
+                            Bitmap face=null;
+                            if(w>=16&&h>=16) face=Bitmap.createBitmap(b,Math.min(8,w-8),Math.min(8,h-8),Math.min(8,w-Math.min(8,w-8)),Math.min(8,h-Math.min(8,h-8)));
+                            if(face!=null) { Bitmap crisp=Bitmap.createScaledBitmap(face,128,128,false); if(face!=b)face.recycle(); if(b!=crisp)b.recycle(); thumb.setImageBitmap(crisp); }
+                            else thumb.setImageBitmap(b);
+                        } else if(b!=null)b.recycle();
+                    }
+                }.execute();
+            }
+            while(row.getChildCount()<columns) row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
             grid.addView(row,lp(-1,151));
         }
     }
