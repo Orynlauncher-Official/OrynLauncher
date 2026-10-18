@@ -49,7 +49,7 @@ public class OrynCosmeticsActivity extends Activity {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         store=new OrynCosmeticsStore(this);
-        store.ensureDefaultSkins();
+        store.removeBundledDemoSkins();
         store.ensureOrynCapes();
         store.normalizeExistingCapes();
         active=store.getActiveProfile();
@@ -115,6 +115,8 @@ public class OrynCosmeticsActivity extends Activity {
         search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);search.setHintTextColor(MUTED);search.setTextSize(12);search.setPadding(d(12),0,d(10),0);
         search.setHint("Search skins or capes...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(31,66,115),1));
         searchRow.addView(search,new LinearLayout.LayoutParams(0,d(42),1));
+        Button onlineButton=button("NovaSkin ↗",false); LinearLayout.LayoutParams onlineLp=lp(94,42); onlineLp.leftMargin=d(6); searchRow.addView(onlineButton,onlineLp);
+        onlineButton.setOnClickListener(v->openNovaSkinBrowser());
         LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(4,14,32),12,Color.rgb(25,44,72),1));
         LinearLayout.LayoutParams tabsLp=lp(230,42);tabsLp.leftMargin=d(8);searchRow.addView(tabs,tabsLp);
         skinsTab=button("♧  Skins",true);capesTab=button("♧  Capes",false);
@@ -136,6 +138,24 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
+    private void openNovaSkinBrowser(){
+        final EditText onlineSearch=new EditText(this); onlineSearch.setSingleLine(true); onlineSearch.setTextColor(WHITE); onlineSearch.setHintTextColor(MUTED); onlineSearch.setHint("Search NovaSkin (anime, hoodie, etc.)"); onlineSearch.setText(query);
+        LinearLayout wrap=new LinearLayout(this); wrap.setPadding(d(14),d(4),d(14),d(4)); wrap.addView(onlineSearch,lp(-1,44));
+        WebView web=new WebView(this); web.getSettings().setJavaScriptEnabled(true); web.getSettings().setDomStorageEnabled(true); web.setBackgroundColor(BG);
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Browse NovaSkin").setView(web).setNegativeButton("Close",null).setNeutralButton("Search",null).create();
+        dialog.setOnShowListener(x->{ dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener(v->{String q=Uri.encode(onlineSearch.getText().toString().trim()); web.loadUrl("https://minecraft.novaskin.me/search?q="+q);}); });
+        web.setDownloadListener((url,userAgent,contentDisposition,mimeType,contentLength)->{
+            if(url==null||!(url.startsWith("https://")||url.startsWith("http://"))) { status.setText("NovaSkin download URL was not valid"); return; }
+            status.setText("Downloading skin from NovaSkin…");
+            new android.os.AsyncTask<Void,Void,File>(){String error; protected File doInBackground(Void... v){try{return store.importRemoteSkin(url,"NovaSkin_"+System.currentTimeMillis());}catch(Exception e){error=e.getMessage();return null;}}
+                protected void onPostExecute(File f){if(f!=null){if(!showingCapes){active.skin=f.getName();active.skinEnabled=true;saveCurrent("Downloaded and applied "+displayName(f));}else{status.setText("Skin saved. Switch to Skins to apply it.");renderGrid();}}else status.setText("Download failed: "+(error==null?"unsupported NovaSkin image":error));}
+            }.execute();
+        });
+        web.loadUrl("https://minecraft.novaskin.me/skins?lang=en-US");
+        LinearLayout browser=new LinearLayout(this);browser.setOrientation(LinearLayout.VERTICAL);browser.addView(wrap,lp(-1,50));browser.addView(web,new LinearLayout.LayoutParams(-1,d(420)));dialog.setView(browser);dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setText("Search");
+    }
+
     private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }
 
     private void updateTabs(){
@@ -151,7 +171,7 @@ public class OrynCosmeticsActivity extends Activity {
         if(visible.isEmpty()){
             LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(d(12),d(20),d(12),d(20));
             TextView title=label(query.isEmpty()?(showingCapes?"No capes yet":"No saved skins yet"):"No "+(showingCapes?"capes":"skins")+" found",15,WHITE);title.setGravity(Gravity.CENTER);
-            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Your offline skin collection could not be loaded.",11,MUTED);desc.setGravity(Gravity.CENTER);
+            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Search online with NovaSkin, download a skin, and it will appear here.",11,MUTED);desc.setGravity(Gravity.CENTER);
             empty.addView(desc,lp(-1,45));grid.addView(empty,lp(-1,-2));
             if(!showingCapes&&!query.isEmpty()){} return;
         }
