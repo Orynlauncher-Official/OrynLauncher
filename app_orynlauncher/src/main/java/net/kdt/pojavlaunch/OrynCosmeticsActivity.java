@@ -50,7 +50,7 @@ public class OrynCosmeticsActivity extends Activity {
     private boolean onlineMode=false, onlineLoading=false;
     private final List<OnlineSkin> onlineSkins=new ArrayList<>();
     private final java.util.Map<String,Bitmap> onlineThumbCache=new java.util.concurrent.ConcurrentHashMap<>();
-    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"https://novask.in/"+i+".png":imageUrl;} }
+    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"https://p.novaskin.me/"+i+".png":imageUrl;} }
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -165,7 +165,7 @@ public class OrynCosmeticsActivity extends Activity {
                 HttpURLConnection connection=null;
                 try {
                     String encoded=Uri.encode(term==null?"":term.trim());
-                    URL url=new URL("https://minecraft.novaskin.me/search?lang=en&q="+encoded);
+                    URL url=new URL("https://minecraft.novaskin.me/search?q="+encoded);
                     connection=(HttpURLConnection)url.openConnection();
                     connection.setConnectTimeout(6500); connection.setReadTimeout(8000);
                     connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0 (Android)");
@@ -175,13 +175,13 @@ public class OrynCosmeticsActivity extends Activity {
                         while((line=reader.readLine())!=null && total<1024*1024) { html.append(line).append('\n'); total+=line.length(); }
                     }
                     String page=html.toString();
-                    Pattern imagePattern=Pattern.compile("(?:https?:)?//(?:www\\.)?novask\\.in/([A-Za-z0-9_-]+)\\.png",Pattern.CASE_INSENSITIVE);
+                    Pattern imagePattern=Pattern.compile("(?:https?:)?//(?:(?:p\\.)?novaskin\\.me|(?:www\\.)?novask\\.in)/([A-Za-z0-9_-]+)\\.png",Pattern.CASE_INSENSITIVE);
                     Matcher images=imagePattern.matcher(page);
                     java.util.HashSet<String> seen=new java.util.HashSet<>();
                     while(images.find() && result.size()<24) {
                         String id=images.group(1);
                         if(!seen.add(id)) continue;
-                        String imageUrl="https://novask.in/"+id+".png";
+                        String imageUrl="https://p.novaskin.me/"+id+".png";
                         String name="Minecraft Skin "+id;
                         int from=Math.max(0,images.start()-300), to=Math.min(page.length(),images.end()+100);
                         String around=page.substring(from,to).replaceAll("<[^>]+>"," ").replaceAll("\\s+"," ").trim();
@@ -201,7 +201,7 @@ public class OrynCosmeticsActivity extends Activity {
                             String id=numeric.find()?numeric.group(1):routeId;
                             if(!seen.add(id)) continue;
                             String name=slug.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ');
-                            result.add(new OnlineSkin(name.isEmpty()?"Minecraft Skin":name,id,"https://novask.in/"+id+".png"));
+                            result.add(new OnlineSkin(name.isEmpty()?"Minecraft Skin":name,id,"https://p.novaskin.me/"+id+".png"));
                         }
                     }
                     if(result.isEmpty()) error="NovaSkin returned no readable results. Try another search.";
@@ -223,8 +223,11 @@ public class OrynCosmeticsActivity extends Activity {
         new android.os.AsyncTask<Void,Void,File>() {
             String error;
             protected File doInBackground(Void... unused) {
-                try { return store.importRemoteSkin(skin.url,"NovaSkin_"+skin.id); }
-                catch(Exception e) { error=e.getMessage(); return null; }
+                try { return store.importRemoteSkin("https://p.novaskin.me/"+skin.id+".png","NovaSkin_"+skin.id); }
+                catch(Exception first) {
+                    try { return store.importRemoteSkin("https://novask.in/"+skin.id+".png","NovaSkin_"+skin.id); }
+                    catch(Exception second) { error=second.getMessage()==null?first.getMessage():second.getMessage(); return null; }
+                }
             }
             protected void onPostExecute(File file) {
                 if(file==null) {
