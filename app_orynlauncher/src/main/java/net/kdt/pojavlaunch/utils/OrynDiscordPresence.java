@@ -28,7 +28,7 @@ public final class OrynDiscordPresence {
 
     public static void setBrowsing() {
         if (!nativeAvailable) return;
-        if (playing) return;
+        playing = false;
         try { nativeUpdate("Browsing OrynLauncher Plus", ""); }
         catch (Throwable error) { Log.w(TAG, "Could not update browsing presence.", error); }
     }
