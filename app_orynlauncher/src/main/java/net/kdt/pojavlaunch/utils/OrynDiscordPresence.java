@@ -8,6 +8,7 @@ import git.artdeell.mojo.BuildConfig;
 public final class OrynDiscordPresence {
     private static final String TAG = "OrynDiscordPresence";
     private static volatile boolean nativeAvailable;
+    private static volatile boolean playing;
     private OrynDiscordPresence() {}
 
     public static void start(Activity activity) {
@@ -27,6 +28,7 @@ public final class OrynDiscordPresence {
 
     public static void setBrowsing() {
         if (!nativeAvailable) return;
+        if (playing) return;
         try { nativeUpdate("Browsing OrynLauncher Plus", ""); }
         catch (Throwable error) { Log.w(TAG, "Could not update browsing presence.", error); }
     }
@@ -35,7 +37,10 @@ public final class OrynDiscordPresence {
         if (!nativeAvailable) return;
         String safeVersion = version == null || version.trim().isEmpty()
                 ? "Minecraft" : "Version " + version.trim();
-        try { nativeUpdate("Playing OrynLauncherPlus", safeVersion); }
+        try {
+            playing = true;
+            nativeUpdate("Playing OrynLauncherPlus", safeVersion);
+        }
         catch (Throwable error) { Log.w(TAG, "Could not update playing presence.", error); }
     }
 
@@ -43,7 +48,7 @@ public final class OrynDiscordPresence {
         if (!nativeAvailable) return;
         try { nativeStop(); }
         catch (Throwable error) { Log.w(TAG, "Could not stop Discord Rich Presence.", error); }
-        finally { nativeAvailable = false; }
+        finally { nativeAvailable = false; playing = false; }
     }
 
     private static native void nativeStart();
