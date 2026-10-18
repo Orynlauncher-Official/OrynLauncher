@@ -369,7 +369,7 @@ public class OrynCosmeticsActivity extends Activity {
             if(skin.getHeight()>=64*unit && skin.getWidth()>=48*unit) {
                 hat=Bitmap.createBitmap(skin,40*unit,8*unit,8*unit,8*unit);
                 Bitmap hatScaled=Bitmap.createScaledBitmap(hat,128,128,false);
-                new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,new android.graphics.Paint(android.graphics.Paint.FILTER_BITMAP_FLAG));
+                new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,new android.graphics.Paint());
                 if(hatScaled!=hat) hatScaled.recycle();
             }
             return result;
