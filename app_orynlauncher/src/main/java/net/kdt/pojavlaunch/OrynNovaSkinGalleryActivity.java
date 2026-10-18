@@ -10,6 +10,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -25,6 +26,8 @@ public final class OrynNovaSkinGalleryActivity extends Activity {
     private static final int WHITE = Color.rgb(240, 245, 255);
     private WebView webView;
     private ProgressBar progress;
+    private EditText searchInput;
+    private boolean searchCapes = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,15 +51,68 @@ public final class OrynNovaSkinGalleryActivity extends Activity {
         back.setOnClickListener(v -> finish());
         header.addView(back, new LinearLayout.LayoutParams(dp(82), dp(44)));
 
+        ImageView logo = new ImageView(this);
+        int logoId = getResources().getIdentifier("oryn_official_logo_v4", "drawable", getPackageName());
+        if (logoId != 0) logo.setImageResource(logoId);
+        logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        header.addView(logo, new LinearLayout.LayoutParams(dp(38), dp(38)));
+
         TextView title = new TextView(this);
-        title.setText("NovaSkin Community Gallery");
+        title.setText("OrynLauncherPlus");
         title.setTextColor(WHITE);
         title.setTextSize(17);
         title.setGravity(Gravity.CENTER_VERTICAL);
-        title.setPadding(dp(12), 0, 0, 0);
+        title.setPadding(dp(10), 0, 0, 0);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         header.addView(title, new LinearLayout.LayoutParams(0, dp(44), 1));
         root.addView(header, new LinearLayout.LayoutParams(-1, dp(58)));
+
+        LinearLayout searchRow = new LinearLayout(this);
+        searchRow.setGravity(Gravity.CENTER_VERTICAL);
+        searchRow.setPadding(dp(12), dp(7), dp(12), dp(7));
+        searchRow.setBackgroundColor(BG);
+
+        searchInput = new EditText(this);
+        searchInput.setSingleLine(true);
+        searchInput.setTextColor(WHITE);
+        searchInput.setHintTextColor(Color.rgb(150, 165, 188));
+        searchInput.setHint("Search skin or cape...");
+        searchInput.setTextSize(14);
+        searchInput.setPadding(dp(12), 0, dp(12), 0);
+        searchInput.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(60, 125, 230)));
+        searchRow.addView(searchInput, new LinearLayout.LayoutParams(0, dp(42), 1));
+
+        Button typeButton = new Button(this);
+        typeButton.setText("Skins");
+        typeButton.setAllCaps(false);
+        typeButton.setTextColor(WHITE);
+        typeButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 83, 155)));
+        searchRow.addView(typeButton, new LinearLayout.LayoutParams(dp(76), dp(42)));
+
+        Button searchButton = new Button(this);
+        searchButton.setText("Search");
+        searchButton.setAllCaps(false);
+        searchButton.setTextColor(WHITE);
+        searchButton.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.rgb(35, 110, 225)));
+        LinearLayout.LayoutParams searchButtonLp = new LinearLayout.LayoutParams(dp(90), dp(42));
+        searchButtonLp.leftMargin = dp(6);
+        searchRow.addView(searchButton, searchButtonLp);
+        root.addView(searchRow, new LinearLayout.LayoutParams(-1, dp(56)));
+
+        typeButton.setOnClickListener(v -> {
+            searchCapes = !searchCapes;
+            typeButton.setText(searchCapes ? "Capes" : "Skins");
+            searchInput.setHint(searchCapes ? "Search capes..." : "Search skins...");
+            if (searchInput.getText().toString().trim().length() > 0) performSearch();
+            else if (webView != null) webView.loadUrl(searchCapes
+                    ? "https://minecraft.novaskin.me/tag/cape?lang=en"
+                    : "https://minecraft.novaskin.me/tag/gallery?lang=en");
+        });
+        searchButton.setOnClickListener(v -> performSearch());
+        searchInput.setOnEditorActionListener((v, actionId, event) -> {
+            performSearch();
+            return true;
+        });
 
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setIndeterminate(true);
@@ -82,6 +138,22 @@ public final class OrynNovaSkinGalleryActivity extends Activity {
         root.addView(webView, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
         webView.loadUrl("https://minecraft.novaskin.me/tag/gallery?lang=en");
+    }
+
+    private void performSearch() {
+        if (webView == null || searchInput == null) return;
+        String query = searchInput.getText().toString().trim();
+        if (query.isEmpty()) {
+            webView.loadUrl(searchCapes
+                    ? "https://minecraft.novaskin.me/tag/cape?lang=en"
+                    : "https://minecraft.novaskin.me/tag/gallery?lang=en");
+            return;
+        }
+        String searchTerms = searchCapes ? query + " cape" : query;
+        webView.loadUrl("https://minecraft.novaskin.me/search?q=" + Uri.encode(searchTerms));
+        searchInput.clearFocus();
+        ((android.view.inputmethod.InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
+                .hideSoftInputFromWindow(searchInput.getWindowToken(), 0);
     }
 
     @Override public void onBackPressed() {
