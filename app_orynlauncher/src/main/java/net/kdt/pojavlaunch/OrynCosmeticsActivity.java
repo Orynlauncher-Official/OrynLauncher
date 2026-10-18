@@ -28,14 +28,14 @@ import java.util.Locale;
 
 public class OrynCosmeticsActivity extends Activity {
     private static final int PICK_SKIN = 501, PICK_CAPE = 502;
-    private static final int BG=Color.rgb(5,5,7), PANEL=Color.rgb(15,15,18), CARD=Color.rgb(24,24,28);
-    private static final int BLUE=Color.rgb(245,245,245), WHITE=Color.rgb(245,245,245), MUTED=Color.rgb(160,160,166);
+    private static final int BG=Color.rgb(2,8,20), PANEL=Color.rgb(4,15,35), CARD=Color.rgb(7,24,51);
+    private static final int BLUE=Color.rgb(0,112,255), WHITE=Color.rgb(239,246,255), MUTED=Color.rgb(133,165,211);
     private OrynCosmeticsStore store;
     private OrynCosmeticPreviewView preview;
     private OrynCosmeticsStore.CosmeticProfile active;
     private TextView selectedName, modelInfo, status;
     private EditText search;
-    private Button skinsTab, capesTab, modelButton;
+    private Button skinsTab, capesTab, modelButton, slimButton, importButton;
     private LinearLayout grid;
     private ScrollView gridScroll;
     private boolean showingCapes=false;
@@ -82,7 +82,7 @@ public class OrynCosmeticsActivity extends Activity {
         if(logoId!=0)logo.setImageResource(logoId);logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
         LinearLayout.LayoutParams logoLp=lp(38,38);logoLp.leftMargin=d(10);top.addView(logo,logoLp);
         TextView brand=label("OrynLauncher",18,WHITE);brand.setTypeface(null,android.graphics.Typeface.BOLD);
-        TextView plus=label("Plus",18,WHITE);plus.setTypeface(null,android.graphics.Typeface.BOLD);
+        TextView plus=label("Plus",18,BLUE);plus.setTypeface(null,android.graphics.Typeface.BOLD);
         LinearLayout brandRow=new LinearLayout(this);brandRow.setGravity(Gravity.CENTER_VERTICAL);brandRow.addView(brand);brandRow.addView(plus);
         LinearLayout.LayoutParams brandLp=lp(-2,42);brandLp.leftMargin=d(5);top.addView(brandRow,brandLp);
         View spacer=new View(this);top.addView(spacer,new LinearLayout.LayoutParams(0,1,1));
@@ -95,7 +95,7 @@ public class OrynCosmeticsActivity extends Activity {
         TextView title=label("Skin & Cape",23,WHITE);title.setTypeface(null,android.graphics.Typeface.BOLD);left.addView(title,lp(-1,34));
         left.addView(label("Preview, select and apply your skins and capes",11,MUTED),lp(-1,23));
         LinearLayout previewFrame=new LinearLayout(this);previewFrame.setOrientation(LinearLayout.VERTICAL);previewFrame.setPadding(d(5),d(5),d(5),d(5));
-        previewFrame.setBackground(shape(Color.rgb(10,10,12),15,Color.rgb(25,42,68),1));
+        previewFrame.setBackground(shape(Color.rgb(5,17,39),15,Color.rgb(20,57,105),1));
         LinearLayout.LayoutParams pf=new LinearLayout.LayoutParams(-1,0,1);pf.topMargin=d(5);left.addView(previewFrame,pf);
         TextView previewBadge=label("◉  3D PREVIEW  •  DRAG TO ROTATE",10,MUTED);previewFrame.addView(previewBadge,lp(-1,25));
         preview=new OrynCosmeticPreviewView(this);preview.setBackground(shape(Color.rgb(5,12,25),12,Color.TRANSPARENT,0));
@@ -103,19 +103,19 @@ public class OrynCosmeticsActivity extends Activity {
         selectedName=label("Oryn User Skin",17,WHITE);selectedName.setGravity(Gravity.CENTER);selectedName.setTypeface(null,android.graphics.Typeface.BOLD);left.addView(selectedName,lp(-1,27));
         modelInfo=label("Classic Model (4px Arms)  •  Drag to Rotate",11,MUTED);modelInfo.setGravity(Gravity.CENTER);left.addView(modelInfo,lp(-1,23));
         LinearLayout modelRow=new LinearLayout(this);modelRow.setPadding(d(2),d(4),d(2),0);
-        modelButton=button("Classic",true);Button slim=button("Slim",false);
-        modelRow.addView(modelButton,new LinearLayout.LayoutParams(0,d(38),1));Space mg=new Space(this);modelRow.addView(mg,lp(6,1));modelRow.addView(slim,new LinearLayout.LayoutParams(0,d(38),1));
+        modelButton=button("Classic",true);slimButton=button("Slim",false);
+        modelRow.addView(modelButton,new LinearLayout.LayoutParams(0,d(38),1));Space mg=new Space(this);modelRow.addView(mg,lp(6,1));modelRow.addView(slimButton,new LinearLayout.LayoutParams(0,d(38),1));
         left.addView(modelRow,lp(-1,44));
         modelButton.setOnClickListener(v->{active.model="classic";saveCurrent("Classic model selected");});
-        slim.setOnClickListener(v->{active.model="slim";saveCurrent("Slim model selected");});
+        slimButton.setOnClickListener(v->{active.model="slim";saveCurrent("Slim model selected");});
 
-        LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setPadding(d(10),d(8),d(8),d(8));right.setBackground(shape(PANEL,18,Color.rgb(25,44,72),1));
+        LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setPadding(d(10),d(8),d(8),d(8));right.setBackground(shape(PANEL,18,Color.rgb(20,57,105),1));
         body.addView(right,new LinearLayout.LayoutParams(0,-1,0.57f));
         LinearLayout searchRow=new LinearLayout(this);searchRow.setGravity(Gravity.CENTER_VERTICAL);
         search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);search.setHintTextColor(MUTED);search.setTextSize(12);search.setPadding(d(12),0,d(10),0);
-        search.setHint("Search skins...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(65,65,70),1));
+        search.setHint("Search skins or capes...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(31,66,115),1));
         searchRow.addView(search,new LinearLayout.LayoutParams(0,d(42),1));
-        LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(12,12,15),12,Color.rgb(25,44,72),1));
+        LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(4,14,32),12,Color.rgb(25,44,72),1));
         LinearLayout.LayoutParams tabsLp=lp(230,42);tabsLp.leftMargin=d(8);searchRow.addView(tabs,tabsLp);
         skinsTab=button("♧  Skins",true);capesTab=button("♧  Capes",false);
         tabs.addView(skinsTab,new LinearLayout.LayoutParams(0,-1,1));tabs.addView(capesTab,new LinearLayout.LayoutParams(0,-1,1));
@@ -123,21 +123,21 @@ public class OrynCosmeticsActivity extends Activity {
         gridScroll=new ScrollView(this);gridScroll.setFillViewport(false);gridScroll.setVerticalScrollBarEnabled(false);gridScroll.setClipToPadding(false);
         grid=new LinearLayout(this);grid.setOrientation(LinearLayout.VERTICAL);grid.setPadding(0,d(5),0,d(5));gridScroll.addView(grid);
         right.addView(gridScroll,new LinearLayout.LayoutParams(-1,0,1));
-        Button importButton=button("＋  Import / Replace Skin",true);LinearLayout.LayoutParams importLp=lp(-1,42);importLp.topMargin=d(5);right.addView(importButton,importLp);
+        importButton=button("＋  Import / Replace Skin",true);LinearLayout.LayoutParams importLp=lp(-1,42);importLp.topMargin=d(5);right.addView(importButton,importLp);
         importButton.setOnClickListener(v->pick(PICK_SKIN));
         status=label("Ready",10,MUTED);root.addView(status,lp(-1,20));
         setContentView(root);
 
-        skinsTab.setOnClickListener(v->{showingCapes=false;query="";search.setText("");updateTabs();renderGrid();});
-        capesTab.setOnClickListener(v->{showingCapes=true;query="";search.setText("");updateTabs();renderGrid();});
+        skinsTab.setOnClickListener(v->{showingCapes=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
+        capesTab.setOnClickListener(v->{showingCapes=true;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
         search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}
             public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);renderGrid();}
             public void afterTextChanged(Editable e){}});
         updateTabs();
     }
 
-    private void updateTabs(){
-        skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(31,53,83):BLUE,1));
+    private void updateImportButton(){ if(importButton!=null) importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin"); }\n\n    private void updateTabs(){
+        skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(0,91,210):BLUE,1));
         capesTab.setBackground(shape(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(31,53,83),1));
         search.setHint(showingCapes?"Search capes...":"Search skins...");
     }
@@ -159,7 +159,7 @@ public class OrynCosmeticsActivity extends Activity {
             for(int col=0;col<columns&&start+col<visible.size();col++){
                 File file=visible.get(start+col);boolean selected=showingCapes?file.getName().equals(active.cape):file.getName().equals(active.skin);
                 LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setGravity(Gravity.CENTER_HORIZONTAL);card.setPadding(d(5),d(5),d(5),d(5));
-                card.setBackground(shape(selected?Color.rgb(42,42,46):CARD,12,selected?WHITE:Color.rgb(48,48,53),selected?2:1));
+                card.setBackground(shape(selected?Color.rgb(8,43,91):CARD,12,selected?WHITE:Color.rgb(20,48,83),selected?2:1));
                 ImageView thumb=new ImageView(this);thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);Bitmap bitmap=store.load(file);
                 if(bitmap!=null){
                     Bitmap cropped=null;
@@ -191,7 +191,7 @@ public class OrynCosmeticsActivity extends Activity {
         preview.setSkin(active.skinEnabled?s:null,"slim".equals(active.model));preview.setCape(active.capeEnabled?c:null);preview.setCapePreview(active.capeEnabled);
         selectedName.setText(active.skin.isEmpty()?"Oryn User Skin":displayName(new File(active.skin)));
         boolean slim="slim".equals(active.model);modelInfo.setText((slim?"Slim Model (3px Arms)":"Classic Model (4px Arms)")+"  •  Drag to Rotate");
-        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));modelButton.setTextColor(slim?WHITE:Color.BLACK);
+        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));modelButton.setTextColor(slim?WHITE:Color.WHITE);\n        if(slimButton!=null){slimButton.setText(slim?"✓  Slim":"Slim");slimButton.setBackground(shape(slim?BLUE:CARD,10,BLUE,1));slimButton.setTextColor(Color.WHITE);}
         renderGrid();
     }
     private String displayName(File f){String n=f.getName();if(n.toLowerCase(Locale.ROOT).endsWith(".png"))n=n.substring(0,n.length()-4);return n.replace('_',' ');}
