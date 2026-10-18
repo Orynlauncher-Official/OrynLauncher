@@ -26,6 +26,12 @@ void update(const std::string& details, const std::string& state) {
     std::shared_ptr<discordpp::Client> client;
     { std::lock_guard<std::mutex> lock(gMutex); client = gClient; }
     if (!client) return;
+    // Clear the previous Minecraft activity before publishing a fresh browsing
+    // activity, so its elapsed-time timestamp cannot linger into this session.
+    if (details == "Browsing OrynLauncher Plus") {
+        client->ClearRichPresence();
+        discordpp::RunCallbacks();
+    }
     discordpp::Activity activity{};
     // Discord otherwise uses the detected game/application name (often just Minecraft).
     // Explicitly brand both launcher and in-game presence as OrynLauncher Plus.
