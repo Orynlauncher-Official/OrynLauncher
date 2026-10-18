@@ -182,11 +182,13 @@ android {
 
     buildFeatures {
         buildConfig true
+        prefab true
     }
 
     buildTypes.configureEach {
-        // The external Discord Partner SDK is not bundled in public source checkouts.
-        buildConfigField "boolean", "ORYN_DISCORD_SDK_AVAILABLE", "false"
+        // Enable Rich Presence only when the user-provided Discord Social SDK AAR is present.
+        def discordSdkAar = file("libs/discord_partner_sdk_android_arm_only.aar")
+        buildConfigField "boolean", "ORYN_DISCORD_SDK_AVAILABLE", discordSdkAar.isFile().toString()
     }
 }
 
