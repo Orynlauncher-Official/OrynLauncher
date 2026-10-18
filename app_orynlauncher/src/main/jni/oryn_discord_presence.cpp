@@ -31,8 +31,11 @@ void update(const std::string& details, const std::string& state) {
     // Explicitly brand both launcher and in-game presence as OrynLauncher Plus.
     activity.SetName("OrynLauncher Plus");
     activity.SetType(discordpp::ActivityTypes::Playing);
+    // Show the dynamic details text ("Browsing..." / "Playing...") as the
+    // activity status instead of only showing the registered game name.
+    activity.SetStatusDisplayType(discordpp::StatusDisplayTypes::Details);
     activity.SetDetails(details);
-    activity.SetState(state);
+    if (!state.empty()) activity.SetState(state);
     // Show elapsed time while the user is playing OrynLauncherPlus.
     if (details == "Playing OrynLauncherPlus") {
         discordpp::ActivityTimestamps timestamps;
