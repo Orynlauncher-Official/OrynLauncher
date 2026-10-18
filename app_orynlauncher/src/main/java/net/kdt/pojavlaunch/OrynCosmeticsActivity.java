@@ -242,7 +242,7 @@ public class OrynCosmeticsActivity extends Activity {
                     if(!candidate.isEmpty() && !candidate.equalsIgnoreCase("lorem")) name=candidate;
                 }
                 if(name==null || name.isEmpty()) {
-                    String file=imageUrl.substring(imageUrl.lastIndexOf('/')+1).replaceAll("\\\\.png(?:\\\\?.*)?$","");
+                    String file=imageUrl.substring(imageUrl.lastIndexOf('/')+1).replaceAll("\\.png(?:\\?.*)?$","");
                     name=file.replaceAll("-[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}$","").replaceAll("-[A-Za-z0-9]{12,}$","").replace('-',' ').replace('_',' ').trim();
                 }
                 if(name.isEmpty()) name="SkinDex Skin "+(result.size()+1);
