@@ -177,15 +177,10 @@ public class OrynCosmeticsActivity extends Activity {
                 if(!result.isEmpty()) { provider="MinecraftSkins"; return result; }
                 result=fetchSkinDex(term);
                 if(!result.isEmpty()) { provider="SkinDex"; return result; }
-                result=fetchLabySkins(term);
-                if(!result.isEmpty()) {
-                    boolean matches=false;
-                    String needle=term==null?"":term.trim().toLowerCase(Locale.ROOT);
-                    for(OnlineSkin skin:result) if(skin.name.toLowerCase(Locale.ROOT).contains(needle)) { matches=true; break; }
-                    provider=(!needle.isEmpty()&&!matches)?"Laby popular catalog":"Laby skin catalog";
-                    return result;
-                }
-                error="All online skin sources failed. Check your connection and try again.";
+                // Do not use Laby's /render/skin endpoint as an import source.
+                // It returns a rendered image, not the raw Minecraft UV skin atlas.
+                // Feeding that image into skinview3d makes online skins appear glitched.
+                error="MinecraftSkins and SkinDex did not return raw skin textures. Please retry when connected.";
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
