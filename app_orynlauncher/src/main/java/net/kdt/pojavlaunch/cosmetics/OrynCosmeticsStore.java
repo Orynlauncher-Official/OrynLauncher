@@ -264,6 +264,12 @@ public final class OrynCosmeticsStore {
     }
 
     public File importRemoteSkin(String url, String name) throws Exception {
+        // Laby's render endpoint returns a rendered character image, not a UV atlas.
+        // Never save it as a Minecraft skin texture.
+        if (url == null || url.contains("laby.net/api/v3/render/skin/") ||
+                url.contains("skin.laby.net/api/render/skin/")) {
+            throw new IllegalArgumentException("This source returns a rendered preview, not a raw Minecraft skin texture.");
+        }
         java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
         connection.setConnectTimeout(12000); connection.setReadTimeout(15000); connection.setInstanceFollowRedirects(true);
         connection.setRequestProperty("User-Agent", "OrynLauncherPlus/5.0");
