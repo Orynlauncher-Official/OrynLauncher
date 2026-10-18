@@ -1,0 +1,77 @@
+#include <jni.h>
+#include <android/log.h>
+#include <discordpp.h>
+#include <atomic>
+#include <chrono>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <thread>
+
+namespace {
+constexpr uint64_t kApplicationId = 1561214038786969620ULL;
+constexpr const char* kTag = "OrynDiscordPresence";
+std::mutex gMutex;
+std::shared_ptr<discordpp::Client> gClient;
+std::atomic<bool> gRunning{false};
+std::thread gCallbacks;
+
+void logWarning(const char* message) {
+    __android_log_print(ANDROID_LOG_WARN, kTag, "%s", message);
+}
+
+void update(const std::string& details, const std::string& state) {
+    std::shared_ptr<discordpp::Client> client;
+    { std::lock_guard<std::mutex> lock(gMutex); client = gClient; }
+    if (!client) return;
+    discordpp::Activity activity{};
+    activity.SetType(discordpp::ActivityTypes::Playing);
+    activity.SetDetails(details);
+    activity.SetState(state);
+    client->UpdateRichPresence(std::move(activity), [](discordpp::ClientResult result) {
+        if (!result.Successful()) logWarning("Rich Presence update failed.");
+    });
+}
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_net_kdt_pojavlaunch_utils_OrynDiscordPresence_nativeStart(JNIEnv*, jclass) {
+    std::lock_guard<std::mutex> lock(gMutex);
+    if (gClient) return;
+    try {
+        gClient = std::make_shared<discordpp::Client>();
+        gClient->SetApplicationId(kApplicationId);
+        gRunning.store(true);
+        gCallbacks = std::thread([] {
+            while (gRunning.load()) {
+                discordpp::RunCallbacks();
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+        });
+    } catch (...) {
+        gRunning.store(false);
+        gClient.reset();
+        logWarning("SDK initialization failed.");
+    }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_net_kdt_pojavlaunch_utils_OrynDiscordPresence_nativeUpdate(
+        JNIEnv* env, jclass, jstring details, jstring state) {
+    if (!details || !state) return;
+    const char* d = env->GetStringUTFChars(details, nullptr);
+    const char* s = env->GetStringUTFChars(state, nullptr);
+    if (d && s) update(d, s);
+    if (d) env->ReleaseStringUTFChars(details, d);
+    if (s) env->ReleaseStringUTFChars(state, s);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_net_kdt_pojavlaunch_utils_OrynDiscordPresence_nativeStop(JNIEnv*, jclass) {
+    std::shared_ptr<discordpp::Client> client;
+    { std::lock_guard<std::mutex> lock(gMutex); client = gClient; }
+    if (client) client->ClearRichPresence();
+    gRunning.store(false);
+    if (gCallbacks.joinable() && gCallbacks.get_id() != std::this_thread::get_id()) gCallbacks.join();
+    { std::lock_guard<std::mutex> lock(gMutex); gClient.reset(); }
+}
