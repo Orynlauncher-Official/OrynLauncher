@@ -452,15 +452,23 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     /** Builds a crisp 128px Minecraft head icon, including the hat/outer face layer. */
-    private Bitmap makeHeadThumbnail(Bitmap skin) {
-        if(skin==null || skin.isRecycled()) return null;
-        int unit=Math.min(skin.getWidth(),skin.getHeight())/64;
-        if(unit<1 || skin.getWidth()<16*unit || skin.getHeight()<16*unit) return null;
-        Bitmap face=null, hat=null, result=null;
+    private Bitmap makeHeadThumbnail(Bitmap source) {
+        if(source==null || source.isRecycled()) return null;
+        Bitmap skin=source, normalized=null, face=null, hat=null, result=null;
         try {
+            // Support modern 64x64 and legacy 64x32 Minecraft skin textures.
+            // Scale small 16px-wide textures first, using width for the UV unit.
+            if(source.getWidth()<64) {
+                int scaledHeight=Math.max(32,Math.round(source.getHeight()*64f/source.getWidth()));
+                normalized=Bitmap.createScaledBitmap(source,64,scaledHeight,false);
+                skin=normalized;
+            }
+            int unit=skin.getWidth()/64;
+            if(unit<1 || skin.getWidth()<48*unit || skin.getHeight()<16*unit) return null;
             face=Bitmap.createBitmap(skin,8*unit,8*unit,8*unit,8*unit);
             result=Bitmap.createScaledBitmap(face,128,128,false);
-            if(skin.getHeight()>=64*unit && skin.getWidth()>=48*unit) {
+            // The outer hat layer is present only on modern 64x64 textures.
+            if(skin.getHeight()>=64*unit) {
                 hat=Bitmap.createBitmap(skin,40*unit,8*unit,8*unit,8*unit);
                 Bitmap hatScaled=Bitmap.createScaledBitmap(hat,128,128,false);
                 new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,new android.graphics.Paint());
@@ -468,11 +476,12 @@ public class OrynCosmeticsActivity extends Activity {
             }
             return result;
         } catch(Exception ignored) {
-            if(result!=null && result!=skin && !result.isRecycled()) result.recycle();
+            if(result!=null && result!=source && !result.isRecycled()) result.recycle();
             return null;
         } finally {
             if(face!=null && face!=skin && face!=result && !face.isRecycled()) face.recycle();
             if(hat!=null && hat!=skin && !hat.isRecycled()) hat.recycle();
+            if(normalized!=null && normalized!=source && !normalized.isRecycled()) normalized.recycle();
         }
     }
 
