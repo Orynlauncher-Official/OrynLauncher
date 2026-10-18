@@ -50,6 +50,7 @@ public class OrynCosmeticsActivity extends Activity {
     private boolean onlineMode=false, onlineLoading=false;
     private final List<OnlineSkin> onlineSkins=new ArrayList<>();
     private final java.util.Map<String,Bitmap> onlineThumbCache=new java.util.concurrent.ConcurrentHashMap<>();
+    private final java.util.Map<String,Bitmap> localThumbCache=new java.util.concurrent.ConcurrentHashMap<>();
     private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"":imageUrl;} }
 
     @Override public void onCreate(@Nullable Bundle b) {
@@ -374,9 +375,25 @@ public class OrynCosmeticsActivity extends Activity {
                         Bitmap crisp=Bitmap.createScaledBitmap(cropped,128,128,false);
                         cropped.recycle(); bitmap.recycle(); thumb.setImageBitmap(crisp);
                     }else if(!showingCapes){
-                        Bitmap head=makeHeadThumbnail(bitmap);
-                        if(head!=null){bitmap.recycle();thumb.setImageBitmap(head);}
-                        else thumb.setImageBitmap(bitmap);
+                        String thumbKey=file.getAbsolutePath()+"#"+("slim".equals(active.model)?"slim":"classic");
+                        Bitmap cachedLocal=localThumbCache.get(thumbKey);
+                        if(cachedLocal!=null&&!cachedLocal.isRecycled()) {
+                            bitmap.recycle();
+                            thumb.setImageBitmap(cachedLocal);
+                        } else {
+                            Bitmap head=makeHeadThumbnail(bitmap);
+                            if(head!=null) thumb.setImageBitmap(head);
+                            boolean slimModel=displayName(file).toLowerCase(Locale.ROOT).contains("alex") ||
+                                    displayName(file).toLowerCase(Locale.ROOT).contains("slim");
+                            preview.renderThumbnail(bitmap,slimModel,rendered->{
+                                if(rendered!=null&&!rendered.isRecycled()) {
+                                    localThumbCache.put(thumbKey,rendered);
+                                    if(thumb.getParent()!=null) thumb.setImageBitmap(rendered);
+                                    if(head!=null&&!head.isRecycled()) head.recycle();
+                                }
+                            });
+                            bitmap.recycle();
+                        }
                     }else thumb.setImageBitmap(bitmap);
                 }
                 LinearLayout.LayoutParams thumbLp=lp(-1,82);card.addView(thumb,thumbLp);
@@ -436,16 +453,20 @@ public class OrynCosmeticsActivity extends Activity {
                     }
                     protected void onPostExecute(Bitmap b) {
                         if(b!=null && thumb.getParent()!=null) {
-                            int w=b.getWidth(),h=b.getHeight();
-                            Bitmap head=makeHeadThumbnail(b);
-                            if(head!=null) {
-                                b.recycle();
-                                onlineThumbCache.put(item.url,head); thumb.setImageBitmap(head);
-                            } else {
-                                // Never show the unfolded UV atlas as a narrow strip.
-                                b.recycle();
-                                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
-                            }
+                            Bitmap fallbackHead=makeHeadThumbnail(b);
+                            if(fallbackHead!=null) thumb.setImageBitmap(fallbackHead);
+                            String lowerName=item.name.toLowerCase(Locale.ROOT);
+                            boolean slimModel=lowerName.contains("slim")||lowerName.contains("alex")||lowerName.contains("girl");
+                            preview.renderThumbnail(b,slimModel,rendered->{
+                                if(rendered!=null&&!rendered.isRecycled()) {
+                                    onlineThumbCache.put(item.url,rendered);
+                                    if(thumb.getParent()!=null) thumb.setImageBitmap(rendered);
+                                    if(fallbackHead!=null&&!fallbackHead.isRecycled()) fallbackHead.recycle();
+                                } else if(fallbackHead==null && thumb.getParent()!=null) {
+                                    thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
+                                }
+                            });
+                            b.recycle();
                         } else if(b!=null)b.recycle();
                     }
                 }.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
