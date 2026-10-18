@@ -11,6 +11,12 @@ const skinViewer = new skinview3d.SkinViewer({
 });
 
 container.appendChild(skinViewer.canvas);
+// Larger character framing for the launcher preview panel.
+skinViewer.zoom = 1.35;
+window.addEventListener("resize", () => {
+    const w = getWidth(), h = getHeight();
+    if (w > 0 && h > 0) skinViewer.setSize(w, h);
+});
 
 //参考 Modrinth 启动器默认的 idle 动画
 //https://github.com/modrinth/code/blob/e71a8c10fac3eda05ff9bc34381178f3d11c41de/packages/assets/models/slim-player.gltf#L1653-L1755
