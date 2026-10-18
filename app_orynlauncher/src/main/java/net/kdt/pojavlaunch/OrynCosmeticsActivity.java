@@ -150,62 +150,122 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
-    /** Search the public MinecraftSkins gallery and use the actual uploaded PNG texture URLs. */
+    /** Search MinecraftSkins first, then fall back to SkinDex (skindex.pro) if blocked or empty. */
     private void loadOnlineSkins(String term) {
         if (showingCapes) { showingCapes=false; updateTabs(); }
         onlineMode=true;
         onlineLoading=true;
         onlineSkins.clear();
-        status.setText("Loading online skins…");
+        status.setText("Searching MinecraftSkins and SkinDex…");
         renderGrid();
         new android.os.AsyncTask<Void,Void,List<OnlineSkin>>() {
             String error;
+            String provider="SkinDex";
             protected List<OnlineSkin> doInBackground(Void... unused) {
-                List<OnlineSkin> result=new ArrayList<>();
-                HttpURLConnection connection=null;
-                try {
-                    String encoded=Uri.encode(term==null?"":term.trim());
-                    URL url=new URL("https://www.minecraftskins.com/search/skin/"+(encoded.isEmpty()?"":encoded.replace("%20","-"))+"/1/");
-                    connection=(HttpURLConnection)url.openConnection();
-                    connection.setConnectTimeout(9000); connection.setReadTimeout(10000);
-                    connection.setInstanceFollowRedirects(true);
-                    connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
-                    connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
-                    StringBuilder html=new StringBuilder();
-                    try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
-                        String line; int total=0;
-                        while((line=reader.readLine())!=null && total<2*1024*1024) { html.append(line).append('\n'); total+=line.length(); }
-                    }
-                    String page=html.toString();
-                    Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?minecraftskins\\.com/uploads/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
-                    Matcher images=imagePattern.matcher(page);
-                    java.util.HashSet<String> seen=new java.util.HashSet<>();
-                    while(images.find() && result.size()<24) {
-                        String imageUrl=images.group();
-                        if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
-                        imageUrl=imageUrl.replace("&amp;","&");
-                        if(!seen.add(imageUrl)) continue;
-                        int from=Math.max(0,images.start()-5000), to=Math.min(page.length(),images.end()+1500);
-                        String context=page.substring(from,to);
-                        Matcher title=Pattern.compile("(?i)/skin/(\\d+)/([^/\\\"'?#<> ]+)").matcher(context);
-                        String name=null,id=null;
-                        while(title.find()) { id=title.group(1); name=title.group(2); }
-                        if(id==null) id="result"+result.size();
-                        if(name==null || name.isEmpty()) name="Minecraft Skin "+(result.size()+1);
-                        name=name.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ').replaceAll("\\s+"," ").trim();
-                        if(name.length()>55) name=name.substring(0,55).trim();
-                        result.add(new OnlineSkin(name,id,imageUrl));
-                    }
-                    if(result.isEmpty()) error="MinecraftSkins returned no skin PNGs. Try another search.";
-                } catch(Exception e) { error=e.getMessage()==null?"Could not connect to MinecraftSkins":e.getMessage(); }
-                finally { if(connection!=null) connection.disconnect(); }
+                List<OnlineSkin> result=fetchMinecraftSkins(term);
+                if(!result.isEmpty()) { provider="MinecraftSkins"; return result; }
+                result=fetchSkinDex(term);
+                if(!result.isEmpty()) { provider="SkinDex"; return result; }
+                error="Both skin galleries were unavailable or returned no results.";
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
                 onlineLoading=false; onlineSkins.addAll(results); renderGrid();
-                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" skins • Tap Apply");
+                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):
+                        "Found "+results.size()+" skins • "+provider+" • Tap Apply");
             }
         }.execute();
+    }
+
+    private List<OnlineSkin> fetchMinecraftSkins(String term) {
+        List<OnlineSkin> result=new ArrayList<>();
+        HttpURLConnection connection=null;
+        try {
+            String encoded=Uri.encode(term==null?"":term.trim());
+            URL url=new URL("https://www.minecraftskins.com/search/skin/"+(encoded.isEmpty()?"":encoded.replace("%20","-"))+"/1/");
+            connection=(HttpURLConnection)url.openConnection();
+            connection.setConnectTimeout(8000); connection.setReadTimeout(9000);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
+            connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
+            String page=readHtml(connection);
+            Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?minecraftskins\\.com/uploads/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
+            Matcher images=imagePattern.matcher(page);
+            java.util.HashSet<String> seen=new java.util.HashSet<>();
+            while(images.find() && result.size()<24) {
+                String imageUrl=images.group();
+                if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
+                imageUrl=imageUrl.replace("&amp;","&");
+                if(!seen.add(imageUrl)) continue;
+                int from=Math.max(0,images.start()-5000), to=Math.min(page.length(),images.end()+1500);
+                Matcher title=Pattern.compile("(?i)/skin/(\\d+)/([^/\\\"'?#<> ]+)").matcher(page.substring(from,to));
+                String name=null,id=null;
+                while(title.find()) { id=title.group(1); name=title.group(2); }
+                if(id==null) id="result"+result.size();
+                if(name==null || name.isEmpty()) name="Minecraft Skin "+(result.size()+1);
+                name=name.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ').replaceAll("\\s+"," ").trim();
+                if(name.length()>55) name=name.substring(0,55).trim();
+                result.add(new OnlineSkin(name,id,imageUrl));
+            }
+        } catch(Exception ignored) {
+            // Try SkinDex below; many gallery sites restrict direct Android requests.
+        } finally { if(connection!=null) connection.disconnect(); }
+        return result;
+    }
+
+    private List<OnlineSkin> fetchSkinDex(String term) {
+        List<OnlineSkin> result=new ArrayList<>();
+        HttpURLConnection connection=null;
+        try {
+            String encoded=Uri.encode(term==null?"":term.trim());
+            URL url=new URL("https://www.skindex.pro/search?q="+encoded);
+            connection=(HttpURLConnection)url.openConnection();
+            connection.setConnectTimeout(8000); connection.setReadTimeout(10000);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
+            connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
+            String page=readHtml(connection);
+            Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?skindex\\.pro/static/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
+            Matcher images=imagePattern.matcher(page);
+            java.util.HashSet<String> seen=new java.util.HashSet<>();
+            while(images.find() && result.size()<32) {
+                String imageUrl=images.group();
+                if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
+                imageUrl=imageUrl.replace("&amp;","&");
+                if(!seen.add(imageUrl)) continue;
+                int from=Math.max(0,images.start()-1800), to=Math.min(page.length(),images.end()+800);
+                String context=page.substring(from,to);
+                String name=null;
+                Matcher alt=Pattern.compile("(?is)<img[^>]*(?:alt|title)=[\\\"']([^\\\"']+)[\\\"'][^>]*>").matcher(context);
+                while(alt.find()) {
+                    String candidate=android.text.Html.fromHtml(alt.group(1),android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                    if(!candidate.isEmpty() && !candidate.equalsIgnoreCase("lorem")) name=candidate;
+                }
+                if(name==null || name.isEmpty()) {
+                    String file=imageUrl.substring(imageUrl.lastIndexOf('/')+1).replaceAll("\\\\.png(?:\\\\?.*)?$","");
+                    name=file.replaceAll("-[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}$","").replaceAll("-[A-Za-z0-9]{12,}$","").replace('-',' ').replace('_',' ').trim();
+                }
+                if(name.isEmpty()) name="SkinDex Skin "+(result.size()+1);
+                if(name.length()>55) name=name.substring(0,55).trim();
+                result.add(new OnlineSkin(name,"skindex"+result.size(),imageUrl));
+            }
+        } catch(Exception ignored) {
+            // Surface one clear message after both sources have been tried.
+        } finally { if(connection!=null) connection.disconnect(); }
+        return result;
+    }
+
+    private String readHtml(HttpURLConnection connection) throws Exception {
+        int code=connection.getResponseCode();
+        if(code<200 || code>=300) throw new java.io.IOException("HTTP "+code);
+        StringBuilder html=new StringBuilder();
+        try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
+            String line; int total=0;
+            while((line=reader.readLine())!=null && total<3*1024*1024) {
+                html.append(line).append('\n'); total+=line.length();
+            }
+        }
+        return html.toString();
     }
 
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
@@ -251,7 +311,7 @@ public class OrynCosmeticsActivity extends Activity {
         if(visible.isEmpty()){
             LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(d(12),d(20),d(12),d(20));
             TextView title=label(query.isEmpty()?(showingCapes?"No capes yet":"No saved skins yet"):"No "+(showingCapes?"capes":"skins")+" found",15,WHITE);title.setGravity(Gravity.CENTER);
-            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Search online with NovaSkin, download a skin, and it will appear here.",11,MUTED);desc.setGravity(Gravity.CENTER);
+            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Tap Online Skins to search MinecraftSkins and SkinDex.",11,MUTED);desc.setGravity(Gravity.CENTER);
             empty.addView(desc,lp(-1,45));grid.addView(empty,lp(-1,-2));
             if(!showingCapes&&!query.isEmpty()){} return;
         }
@@ -292,7 +352,7 @@ public class OrynCosmeticsActivity extends Activity {
 
     private void renderOnlineGrid() {
         if(onlineLoading) {
-            TextView loading=label("Loading NovaSkin results…",14,MUTED); loading.setGravity(Gravity.CENTER);
+            TextView loading=label("Loading online skin results…",14,MUTED); loading.setGravity(Gravity.CENTER);
             grid.addView(loading,lp(-1,90)); return;
         }
         List<OnlineSkin> visible=new ArrayList<>();
