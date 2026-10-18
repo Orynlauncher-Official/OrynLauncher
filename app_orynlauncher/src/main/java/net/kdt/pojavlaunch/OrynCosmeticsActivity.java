@@ -166,7 +166,9 @@ public class OrynCosmeticsActivity extends Activity {
                 if(!result.isEmpty()) { provider="MinecraftSkins"; return result; }
                 result=fetchSkinDex(term);
                 if(!result.isEmpty()) { provider="SkinDex"; return result; }
-                error="Both skin galleries were unavailable or returned no results.";
+                result=fetchLabySkins(term);
+                if(!result.isEmpty()) { provider="Laby skin catalog"; return result; }
+                error="All online skin sources failed. Check your connection and try again.";
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
@@ -251,6 +253,38 @@ public class OrynCosmeticsActivity extends Activity {
             }
         } catch(Exception ignored) {
             // Surface one clear message after both sources have been tried.
+        } finally { if(connection!=null) connection.disconnect(); }
+        return result;
+    }
+
+    /** API fallback: Laby's public texture catalog avoids parsing HTML gallery pages. */
+    private List<OnlineSkin> fetchLabySkins(String term) {
+        List<OnlineSkin> result=new ArrayList<>();
+        HttpURLConnection connection=null;
+        try {
+            URL url=new URL("https://laby.net/api/v3/search/textures/skin?size=40&offset=0&order=trending_24h");
+            connection=(HttpURLConnection)url.openConnection();
+            connection.setConnectTimeout(8000); connection.setReadTimeout(10000);
+            connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
+            connection.setRequestProperty("Accept","application/json");
+            String json=readHtml(connection);
+            org.json.JSONObject root=new org.json.JSONObject(json);
+            org.json.JSONArray entries=root.optJSONArray("results");
+            if(entries==null) return result;
+            String needle=term==null?"":term.trim().toLowerCase(Locale.ROOT);
+            for(int i=0;i<entries.length() && result.size()<24;i++) {
+                org.json.JSONObject entry=entries.optJSONObject(i);
+                if(entry==null) continue;
+                String hash=entry.optString("image_hash","");
+                if(!hash.matches("(?i)[0-9a-f]{32}")) continue;
+                String tags=entry.optString("tags","");
+                if("null".equalsIgnoreCase(tags)) tags="";
+                String name=tags.trim().isEmpty()?"Popular Skin "+(i+1):tags.trim();
+                if(!needle.isEmpty() && !name.toLowerCase(Locale.ROOT).contains(needle)) continue;
+                result.add(new OnlineSkin(name,"laby_"+hash,"https://laby.net/api/v3/render/skin/"+hash+".png"));
+            }
+        } catch(Exception ignored) {
+            // Report a clear error after all providers have been attempted.
         } finally { if(connection!=null) connection.disconnect(); }
         return result;
     }
