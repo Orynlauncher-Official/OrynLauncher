@@ -147,6 +147,8 @@ android {
     externalNativeBuild {
         cmake {
             path file('src/main/jni/CMakeLists.txt')
+            // Discord's licensed Partner SDK is optional in public checkouts.
+            arguments "-DORYN_DISCORD_SDK=" + (file('libs/discord_partner_sdk.aar').exists() ? 'ON' : 'OFF')
         }
     }
 
@@ -182,6 +184,11 @@ android {
 
     buildFeatures {
         buildConfig true
+    }
+
+    buildTypes.configureEach {
+        buildConfigField "boolean", "ORYN_DISCORD_SDK_AVAILABLE",
+                "" + file('libs/discord_partner_sdk.aar').exists()
     }
 }
 
