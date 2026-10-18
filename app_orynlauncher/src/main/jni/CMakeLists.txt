@@ -36,6 +36,12 @@ target_link_libraries(SDL3-shared PRIVATE mojoexec)
 
 project("MojoLauncher")
 
+# Discord Social SDK native Rich Presence bridge.
+find_package(discord_partner_sdk REQUIRED CONFIG)
+add_library(oryn_discord_presence SHARED oryn_discord_presence.cpp)
+target_compile_features(oryn_discord_presence PRIVATE cxx_std_17)
+target_link_libraries(oryn_discord_presence PRIVATE discord_partner_sdk::discord_partner_sdk log android)
+
 add_library(pojavexec SHARED
         affinity.c
         jvm_hooks/emui_iterator_fix_hook.c
