@@ -26,11 +26,15 @@ public final class OrynDiscordPresence {
         }
     }
 
-    /** Shows browsing only when Minecraft has not been selected for launch. */
+    /** Shows browsing when the launcher is opened or when the user returns after Minecraft closes. */
     public static void setBrowsing() {
-        if (!nativeAvailable || playing) return;
-        try { nativeUpdate("Browsing OrynLauncher Plus", ""); }
-        catch (Throwable error) { Log.w(TAG, "Could not update browsing presence.", error); }
+        if (!nativeAvailable) return;
+        try {
+            nativeUpdate("Browsing OrynLauncher Plus", "");
+            playing = false;
+        } catch (Throwable error) {
+            Log.w(TAG, "Could not update browsing presence.", error);
+        }
     }
 
     /** Called when the user taps Play; the selected Minecraft version is shown in Discord. */
