@@ -12,7 +12,7 @@ const skinViewer = new skinview3d.SkinViewer({
 
 container.appendChild(skinViewer.canvas);
 // Larger character framing for the launcher preview panel.
-skinViewer.zoom = 1.82;
+skinViewer.zoom = 2.05;
 // Match the dark Oryn cosmetics panel instead of showing a white WebGL canvas.
 skinViewer.background = 0x051225;
 window.addEventListener("resize", () => {
@@ -229,8 +229,8 @@ function getPreviewDistance() {
 
     // The previous framing left the player tiny in the short landscape preview.
     // Use a closer camera and increased zoom while keeping the full model visible.
-    const distance = 50 * (180 / shortSide);
-    return Math.max(46, Math.min(58, distance));
+    const distance = 42 * (180 / shortSide);
+    return Math.max(38, Math.min(48, distance));
 }
 
 let pendingCapeView = false;
