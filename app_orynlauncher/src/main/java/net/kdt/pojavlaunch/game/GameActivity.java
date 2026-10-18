@@ -124,6 +124,8 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
         super.onCreate(savedInstanceState);
         instance = Instances.loadSelectedInstance();
         account = Accounts.getCurrent();
+        // Reassert Playing from the actual game activity; LauncherActivity may be destroyed during the black loading transition.
+        if (instance != null) net.kdt.pojavlaunch.utils.OrynDiscordPresence.setPlaying(instance.versionId);
         if(instance == null) {
             Toast.makeText(this, R.string.instance_dir_missing, Toast.LENGTH_LONG).show();
             finish();
