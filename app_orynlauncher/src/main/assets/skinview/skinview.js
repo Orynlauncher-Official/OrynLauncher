@@ -420,7 +420,13 @@ function setInteractionEnabled(enabled) {
 }
 
 // Render catalog thumbnails with the real Minecraft player geometry and UV mapping.
-async function renderSkinThumbnail(id, skinDataUrl, model = "default") {
+let thumbnailRenderQueue = Promise.resolve();
+function renderSkinThumbnail(id, skinDataUrl, model = "default") {
+    thumbnailRenderQueue = thumbnailRenderQueue.then(() => renderSkinThumbnailInternal(id, skinDataUrl, model));
+    return thumbnailRenderQueue;
+}
+
+async function renderSkinThumbnailInternal(id, skinDataUrl, model = "default") {
     let thumbViewer = null;
     try {
         const canvas = document.createElement("canvas");
