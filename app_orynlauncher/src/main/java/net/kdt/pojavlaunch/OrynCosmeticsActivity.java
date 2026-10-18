@@ -292,7 +292,7 @@ public class OrynCosmeticsActivity extends Activity {
                 if("null".equalsIgnoreCase(tags)) tags="";
                 String name=tags.trim().isEmpty()?"Popular Skin "+(i+1):tags.trim();
                 if(!needle.isEmpty() && !name.toLowerCase(Locale.ROOT).contains(needle)) continue;
-                result.add(new OnlineSkin(name,"laby_"+hash,"https://laby.net/api/v3/render/skin/"+hash+".png"));
+                result.add(new OnlineSkin(name,"laby_"+hash,"https://laby.net/api/v3/render/skin/"+hash+".png?width=64&height=64"));
             }
         } catch(Exception ignored) {
             // Report a clear error after all providers have been attempted.
@@ -441,7 +441,11 @@ public class OrynCosmeticsActivity extends Activity {
                             if(head!=null) {
                                 b.recycle();
                                 onlineThumbCache.put(item.url,head); thumb.setImageBitmap(head);
-                            } else { onlineThumbCache.put(item.url,b); thumb.setImageBitmap(b); }
+                            } else {
+                                // Never show the unfolded UV atlas as a narrow strip.
+                                b.recycle();
+                                thumb.setImageDrawable(new android.graphics.drawable.ColorDrawable(Color.rgb(10,20,35)));
+                            }
                         } else if(b!=null)b.recycle();
                     }
                 }.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
@@ -454,25 +458,27 @@ public class OrynCosmeticsActivity extends Activity {
     /** Builds a crisp 128px Minecraft head icon, including the hat/outer face layer. */
     private Bitmap makeHeadThumbnail(Bitmap source) {
         if(source==null || source.isRecycled()) return null;
-        Bitmap skin=source, normalized=null, face=null, hat=null, result=null;
+        Bitmap skin=source, normalized=null, face=null, hat=null, result=null, hatScaled=null;
         try {
-            // Support modern 64x64 and legacy 64x32 Minecraft skin textures.
-            // Scale small 16px-wide textures first, using width for the UV unit.
-            if(source.getWidth()<64) {
-                int scaledHeight=Math.max(32,Math.round(source.getHeight()*64f/source.getWidth()));
-                normalized=Bitmap.createScaledBitmap(source,64,scaledHeight,false);
+            int w=source.getWidth(), h=source.getHeight();
+            if(w<16 || h<16) return null;
+            // Skin PNGs are UV atlases, not portrait images. Normalize atlas dimensions
+            // and crop the actual front-head UV region for both modern and legacy skins.
+            boolean modern=h>=w;
+            int targetW=64, targetH=modern?64:32;
+            if(w!=targetW || h!=targetH) {
+                normalized=Bitmap.createScaledBitmap(source,targetW,targetH,false);
                 skin=normalized;
             }
-            int unit=skin.getWidth()/64;
-            if(unit<1 || skin.getWidth()<48*unit || skin.getHeight()<16*unit) return null;
-            face=Bitmap.createBitmap(skin,8*unit,8*unit,8*unit,8*unit);
+            face=Bitmap.createBitmap(skin,8,8,8,8);
             result=Bitmap.createScaledBitmap(face,128,128,false);
-            // The outer hat layer is present only on modern 64x64 textures.
-            if(skin.getHeight()>=64*unit) {
-                hat=Bitmap.createBitmap(skin,40*unit,8*unit,8*unit,8*unit);
-                Bitmap hatScaled=Bitmap.createScaledBitmap(hat,128,128,false);
-                new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,new android.graphics.Paint());
-                if(hatScaled!=hat) hatScaled.recycle();
+            // Overlay the outer hat/helmet face only for modern 64x64 textures.
+            if(modern) {
+                hat=Bitmap.createBitmap(skin,40,8,8,8);
+                hatScaled=Bitmap.createScaledBitmap(hat,128,128,false);
+                android.graphics.Paint paint=new android.graphics.Paint();
+                paint.setFilterBitmap(false);
+                new android.graphics.Canvas(result).drawBitmap(hatScaled,0,0,paint);
             }
             return result;
         } catch(Exception ignored) {
@@ -481,6 +487,7 @@ public class OrynCosmeticsActivity extends Activity {
         } finally {
             if(face!=null && face!=skin && face!=result && !face.isRecycled()) face.recycle();
             if(hat!=null && hat!=skin && !hat.isRecycled()) hat.recycle();
+            if(hatScaled!=null && hatScaled!=hat && !hatScaled.isRecycled()) hatScaled.recycle();
             if(normalized!=null && normalized!=source && !normalized.isRecycled()) normalized.recycle();
         }
     }
