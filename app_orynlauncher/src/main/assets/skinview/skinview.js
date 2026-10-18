@@ -420,6 +420,12 @@ function setInteractionEnabled(enabled) {
 }
 
 // Render catalog thumbnails with the real Minecraft player geometry and UV mapping.
+function rotatePreview(radians) {
+    if (skinViewer && skinViewer.playerObject) {
+        skinViewer.playerObject.rotation.y += Number(radians) || 0;
+    }
+}
+
 let thumbnailRenderQueue = Promise.resolve();
 function renderSkinThumbnail(id, skinDataUrl, model = "default") {
     thumbnailRenderQueue = thumbnailRenderQueue.then(() => renderSkinThumbnailInternal(id, skinDataUrl, model));
