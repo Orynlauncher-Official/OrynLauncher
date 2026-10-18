@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Color;
 import android.net.Uri;
 
 import net.kdt.pojavlaunch.authenticator.AuthType;
@@ -205,6 +206,56 @@ public final class OrynCosmeticsStore {
                 normalized.recycle();
             }
         }
+    }
+
+
+    /**
+     * Seed a complete offline skin collection from the bundled, valid 64x64 Oryn
+     * Minecraft texture. Variants are real PNG skin textures (palette variants),
+     * so the grid is populated without a browser or network dependency.
+     */
+    public void ensureDefaultSkins() {
+        String[] names = {"Oryn", "Steve Classic", "Alex Slim", "Black Hoodie", "White Hoodie",
+                "Glow", "Demon", "Anime Boy", "Pink Girl", "Purple Tech", "Golden", "Custom Skin"};
+        int[] palettes = {0xFF808080, 0xFFB58A62, 0xFF4C9A78, 0xFF242424, 0xFFE8E8E8,
+                0xFF00D8E8, 0xFFB32020, 0xFF6C9BD2, 0xFFE99AB7, 0xFF9A55E8, 0xFFE1B52B, 0xFF6F8A9B};
+        File[] existing = skins.listFiles();
+        java.util.HashSet<String> present = new java.util.HashSet<>();
+        if (existing != null) for (File f : existing) present.add(f.getName().toLowerCase(java.util.Locale.ROOT));
+        Bitmap base = null;
+        try (InputStream in = context.getAssets().open("skinview/oryn_steve_skin.png")) {
+            base = BitmapFactory.decodeStream(in);
+        } catch (Exception ignored) {}
+        if (base == null || base.getWidth() != 64 || base.getHeight() != 64) {
+            if (base != null) base.recycle();
+            return;
+        }
+        try {
+            for (int i = 0; i < names.length; i++) {
+                String filename = names[i].replace(' ', '_') + ".png";
+                if (present.contains(filename.toLowerCase(java.util.Locale.ROOT))) continue;
+                Bitmap output = Bitmap.createBitmap(base.getWidth(), base.getHeight(), Bitmap.Config.ARGB_8888);
+                int tint = palettes[i];
+                for (int y = 0; y < base.getHeight(); y++) for (int x = 0; x < base.getWidth(); x++) {
+                    int pixel = base.getPixel(x, y);
+                    if (Color.alpha(pixel) == 0 || i == 0) { output.setPixel(x, y, pixel); continue; }
+                    int lum = (Color.red(pixel) * 30 + Color.green(pixel) * 59 + Color.blue(pixel) * 11) / 100;
+                    float shade = 0.48f + (lum / 255f) * 0.52f;
+                    int r = Math.min(255, Math.round(Color.red(tint) * shade));
+                    int g = Math.min(255, Math.round(Color.green(tint) * shade));
+                    int b = Math.min(255, Math.round(Color.blue(tint) * shade));
+                    // Keep skin/face pixels closer to the original texture while recolouring clothing.
+                    boolean face = x >= 8 && x < 16 && y >= 8 && y < 16;
+                    if (face) { r = Color.red(pixel); g = Color.green(pixel); b = Color.blue(pixel); }
+                    output.setPixel(x, y, Color.argb(Color.alpha(pixel), r, g, b));
+                }
+                File out = new File(skins, filename);
+                try (FileOutputStream stream = new FileOutputStream(out)) {
+                    output.compress(Bitmap.CompressFormat.PNG, 100, stream);
+                } catch (Exception ignored) { out.delete(); }
+                finally { output.recycle(); }
+            }
+        } finally { base.recycle(); }
     }
 
     public List<File> listSkins() { return listPng(skins); }
