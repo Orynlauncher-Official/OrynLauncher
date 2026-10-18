@@ -182,14 +182,7 @@ public class OrynCosmeticsActivity extends Activity {
                         String id=images.group(1);
                         if(!seen.add(id)) continue;
                         String imageUrl="https://novask.in/"+id+".png";
-                        String name="Minecraft Skin "+id;
-                        int from=Math.max(0,images.start()-300), to=Math.min(page.length(),images.end()+100);
-                        String around=page.substring(from,to).replaceAll("<[^>]+>"," ").replaceAll("\\s+"," ").trim();
-                        if(around.length()>2) {
-                            around=around.replaceAll("&amp;","&").trim();
-                            if(around.length()>32) around=around.substring(0,32).trim();
-                            if(!around.isEmpty()) name=around;
-                        }
+                        String name=readSkinName(page,images.start(),id);
                         result.add(new OnlineSkin(name,id,imageUrl));
                     }
                     if(result.isEmpty()) {
@@ -214,6 +207,21 @@ public class OrynCosmeticsActivity extends Activity {
                 status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" skins • Tap once to apply");
             }
         }.execute();
+    }
+
+    /** Extract a human-readable title from the nearest NovaSkin post link, never raw HTML. */
+    private String readSkinName(String html,int imageOffset,String id) {
+        int from=Math.max(0,imageOffset-2500);
+        String before=html.substring(from,imageOffset);
+        Matcher links=Pattern.compile("(?i)href\\s*=\\s*[\"'](?:https?://)?(?:www\\.)?minecraft\\.novaskin\\.me/post/[^/\"'?#]+/([^\"'/?#]+)").matcher(before);
+        String slug=null;
+        while(links.find()) slug=links.group(1);
+        if(slug!=null) {
+            String name=slug.replaceAll("(?i)\\.(html|png)$","").replace('-', ' ').replace('_',' ').replaceAll("\\s+"," ").trim();
+            name=name.replaceAll("(?i)(noindex|nofollow|https? www).*","").trim();
+            if(!name.isEmpty() && name.length()<=55) return name;
+        }
+        return "Skin #"+id;
     }
 
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
