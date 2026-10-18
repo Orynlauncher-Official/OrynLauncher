@@ -8,6 +8,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <ctime>
 
 namespace {
 constexpr uint64_t kApplicationId = 1561214038786969620ULL;
@@ -32,6 +33,12 @@ void update(const std::string& details, const std::string& state) {
     activity.SetType(discordpp::ActivityTypes::Playing);
     activity.SetDetails(details);
     activity.SetState(state);
+    // Show elapsed time while the user is playing OrynLauncherPlus.
+    if (details == "Playing OrynLauncherPlus") {
+        discordpp::ActivityTimestamps timestamps;
+        timestamps.SetStart(static_cast<uint64_t>(std::time(nullptr)));
+        activity.SetTimestamps(timestamps);
+    }
     client->UpdateRichPresence(std::move(activity), [](discordpp::ClientResult result) {
         if (!result.Successful()) logWarning("Rich Presence update failed.");
     });
