@@ -193,7 +193,7 @@ public class OrynCosmeticsActivity extends Activity {
                         result.add(new OnlineSkin(name,id,imageUrl));
                     }
                     if(result.isEmpty()) {
-                        Pattern p=Pattern.compile("href=[\\"']/(?:skin|post)/([A-Za-z0-9_-]+)/([^\\"'#?]+)",Pattern.CASE_INSENSITIVE);
+                        Pattern p=Pattern.compile("href=.*?/(?:skin|post)/([A-Za-z0-9_-]+)/([^#? >]+)",Pattern.CASE_INSENSITIVE);
                         Matcher m=p.matcher(page);
                         while(m.find() && result.size()<24) {
                             String routeId=m.group(1), slug=m.group(2);
