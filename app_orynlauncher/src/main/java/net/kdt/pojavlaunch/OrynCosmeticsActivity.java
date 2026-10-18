@@ -50,7 +50,7 @@ public class OrynCosmeticsActivity extends Activity {
     private boolean onlineMode=false, onlineLoading=false;
     private final List<OnlineSkin> onlineSkins=new ArrayList<>();
     private final java.util.Map<String,Bitmap> onlineThumbCache=new java.util.concurrent.ConcurrentHashMap<>();
-    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"https://novask.in/"+i+".png":imageUrl;} }
+    private static class OnlineSkin { String name, id, url; OnlineSkin(String n,String i,String imageUrl){name=n;id=i;url=imageUrl==null||imageUrl.isEmpty()?"":imageUrl;} }
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
@@ -150,7 +150,7 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
-    /** Fetch NovaSkin search results and show them in our own native grid (no WebView/browser). */
+    /** Search the public MinecraftSkins gallery and use the actual uploaded PNG texture URLs. */
     private void loadOnlineSkins(String term) {
         if (showingCapes) { showingCapes=false; updateTabs(); }
         onlineMode=true;
@@ -165,63 +165,47 @@ public class OrynCosmeticsActivity extends Activity {
                 HttpURLConnection connection=null;
                 try {
                     String encoded=Uri.encode(term==null?"":term.trim());
-                    URL url=new URL("https://minecraft.novaskin.me/search?q="+encoded);
+                    URL url=new URL("https://www.minecraftskins.com/search/skin/?search="+encoded);
                     connection=(HttpURLConnection)url.openConnection();
-                    connection.setConnectTimeout(6500); connection.setReadTimeout(8000);
-                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0 (Android)");
+                    connection.setConnectTimeout(9000); connection.setReadTimeout(10000);
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
+                    connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
                     StringBuilder html=new StringBuilder();
                     try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
                         String line; int total=0;
-                        while((line=reader.readLine())!=null && total<1024*1024) { html.append(line).append('\n'); total+=line.length(); }
+                        while((line=reader.readLine())!=null && total<2*1024*1024) { html.append(line).append('\n'); total+=line.length(); }
                     }
                     String page=html.toString();
-                    Pattern imagePattern=Pattern.compile("(?:https?:)?//(?:www\\.)?novask\\.in/(\\d{5,20})\\.png",Pattern.CASE_INSENSITIVE);
+                    Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?minecraftskins\\.com/uploads/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
                     Matcher images=imagePattern.matcher(page);
                     java.util.HashSet<String> seen=new java.util.HashSet<>();
                     while(images.find() && result.size()<24) {
-                        String id=images.group(1);
-                        if(!seen.add(id)) continue;
-                        String imageUrl="https://novask.in/"+id+".png";
-                        String name=readSkinName(page,images.start(),id);
+                        String imageUrl=images.group();
+                        if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
+                        imageUrl=imageUrl.replace("&amp;","&");
+                        if(!seen.add(imageUrl)) continue;
+                        int from=Math.max(0,images.start()-5000), to=Math.min(page.length(),images.end()+1500);
+                        String context=page.substring(from,to);
+                        Matcher title=Pattern.compile("(?i)/skin/(\\d+)/([^/\\\"'?#<> ]+)").matcher(context);
+                        String name=null,id=null;
+                        while(title.find()) { id=title.group(1); name=title.group(2); }
+                        if(id==null) id="result"+result.size();
+                        if(name==null || name.isEmpty()) name="Minecraft Skin "+(result.size()+1);
+                        name=name.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ').replaceAll("\\s+"," ").trim();
+                        if(name.length()>55) name=name.substring(0,55).trim();
                         result.add(new OnlineSkin(name,id,imageUrl));
                     }
-                    if(result.isEmpty()) {
-                        Pattern p=Pattern.compile("(?!)"); // Do not invent skin IDs from arbitrary page links.
-                        Matcher m=p.matcher(page);
-                        while(m.find() && result.size()<24) {
-                            String routeId=m.group(1), slug=m.group(2);
-                            Matcher numeric=Pattern.compile("(\\d{5,})").matcher(slug);
-                            String id=numeric.find()?numeric.group(1):routeId;
-                            if(!seen.add(id)) continue;
-                            String name=slug.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ');
-                            result.add(new OnlineSkin(name.isEmpty()?"Minecraft Skin":name,id,"https://novask.in/"+id+".png"));
-                        }
-                    }
-                    if(result.isEmpty()) error="NovaSkin did not return valid skin image links. Try another search.";
-                } catch(Exception e) { error=e.getMessage()==null?"Could not connect to NovaSkin":e.getMessage(); }
+                    if(result.isEmpty()) error="MinecraftSkins returned no skin PNGs. Try another search.";
+                } catch(Exception e) { error=e.getMessage()==null?"Could not connect to MinecraftSkins":e.getMessage(); }
                 finally { if(connection!=null) connection.disconnect(); }
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
                 onlineLoading=false; onlineSkins.addAll(results); renderGrid();
-                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" skins • Tap once to apply");
+                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):"Found "+results.size()+" skins • Tap Apply");
             }
         }.execute();
-    }
-
-    /** Extract a human-readable title from the nearest NovaSkin post link, never raw HTML. */
-    private String readSkinName(String html,int imageOffset,String id) {
-        int from=Math.max(0,imageOffset-2500);
-        String before=html.substring(from,imageOffset);
-        Matcher links=Pattern.compile("(?i)href\\s*=\\s*[\"'](?:https?://)?(?:www\\.)?minecraft\\.novaskin\\.me/post/[^/\"'?#]+/([^\"'/?#]+)").matcher(before);
-        String slug=null;
-        while(links.find()) slug=links.group(1);
-        if(slug!=null) {
-            String name=slug.replaceAll("(?i)\\.(html|png)$","").replace('-', ' ').replace('_',' ').replaceAll("\\s+"," ").trim();
-            name=name.replaceAll("(?i)(noindex|nofollow|https? www).*","").trim();
-            if(!name.isEmpty() && name.length()<=55) return name;
-        }
-        return "Skin #"+id;
     }
 
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
@@ -231,16 +215,13 @@ public class OrynCosmeticsActivity extends Activity {
         new android.os.AsyncTask<Void,Void,File>() {
             String error;
             protected File doInBackground(Void... unused) {
-                try { return store.importRemoteSkin("https://novask.in/"+skin.id+".png","NovaSkin_"+skin.id); }
-                catch(Exception first) {
-                    try { return store.importRemoteSkin("https://p.novaskin.me/"+skin.id+".png","NovaSkin_"+skin.id); }
-                    catch(Exception second) { error=second.getMessage()==null?first.getMessage():second.getMessage(); return null; }
-                }
+                try { return store.importRemoteSkin(skin.url,"Online_"+skin.id); }
+                catch(Exception e) { error=e.getMessage()==null?"Skin texture download failed":e.getMessage(); return null; }
             }
             protected void onPostExecute(File file) {
                 if(file==null) {
-                    apply.setEnabled(true); apply.setText("Tap to retry");
-                    status.setText("Download failed: "+(error==null?"Skin texture unavailable":error));
+                    apply.setEnabled(true); apply.setText("Retry");
+                    status.setText("Download failed: "+(error==null?"Invalid skin PNG":error));
                     return;
                 }
                 active.skin=file.getName(); active.skinEnabled=true;
