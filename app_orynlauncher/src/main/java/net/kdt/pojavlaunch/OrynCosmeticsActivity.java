@@ -165,7 +165,7 @@ public class OrynCosmeticsActivity extends Activity {
                 HttpURLConnection connection=null;
                 try {
                     String encoded=Uri.encode(term==null?"":term.trim());
-                    URL url=new URL("https://www.minecraftskins.com/search/skin/?search="+encoded);
+                    URL url=new URL("https://www.minecraftskins.com/search/skin/"+(encoded.isEmpty()?"":encoded.replace("%20","-"))+"/1/");
                     connection=(HttpURLConnection)url.openConnection();
                     connection.setConnectTimeout(9000); connection.setReadTimeout(10000);
                     connection.setInstanceFollowRedirects(true);
