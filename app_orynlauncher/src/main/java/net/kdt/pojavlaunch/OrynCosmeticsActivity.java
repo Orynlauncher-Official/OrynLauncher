@@ -177,10 +177,6 @@ public class OrynCosmeticsActivity extends Activity {
         left.addView(capeGallery, lp(-1, 42));
 
         left.addView(new Space(this), lp(-1, 6));
-        Button novaSkinGallery = button("  NovaSkin Online");
-        novaSkinGallery.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        left.addView(novaSkinGallery, lp(-1, 42));
-
         left.addView(new Space(this), lp(-1, 10));
         left.addView(sectionLabel("Import"), lp(-1, 24));
 
@@ -310,7 +306,13 @@ public class OrynCosmeticsActivity extends Activity {
         skins = selectorButton("None");
         capes = selectorButton("None");
         right.addView(skins, lp(-1, 38));
+        Button searchOnlineSkins = button("⌕   Search Online Skins");
+        searchOnlineSkins.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        right.addView(searchOnlineSkins, lp(-1, 34));
         right.addView(capes, lp(-1, 38));
+        Button searchOnlineCapes = button("⌕   Search Online Capes");
+        searchOnlineCapes.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
+        right.addView(searchOnlineCapes, lp(-1, 34));
         LinearLayout toggles = new LinearLayout(this);
         toggles.setOrientation(LinearLayout.HORIZONTAL);
         skinToggle = button("Skin: OFF");
@@ -366,7 +368,16 @@ public class OrynCosmeticsActivity extends Activity {
 
         combinedNav.setOnClickListener(v -> status.setText("Skin & Cape • combined cosmetics profile"));
         capeGallery.setOnClickListener(v -> showCapeGallery());
-        novaSkinGallery.setOnClickListener(v -> startActivity(new Intent(this, OrynNovaSkinGalleryActivity.class)));
+        searchOnlineSkins.setOnClickListener(v -> {
+            Intent online = new Intent(this, OrynNovaSkinGalleryActivity.class);
+            online.putExtra("gallery_type", "skins");
+            startActivity(online);
+        });
+        searchOnlineCapes.setOnClickListener(v -> {
+            Intent online = new Intent(this, OrynNovaSkinGalleryActivity.class);
+            online.putExtra("gallery_type", "capes");
+            startActivity(online);
+        });
         importSkin.setOnClickListener(v -> pick(PICK_SKIN));
         importCape.setOnClickListener(v -> pick(PICK_CAPE));
         back.setOnClickListener(v -> finish());
