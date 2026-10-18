@@ -195,7 +195,7 @@ function setAzimuthAndPitch(azimuthDeg, pitchDeg, distance = 60) {
 
     // Center the camera around the player's body instead of the old origin.
     // This prevents the legs from falling below the bottom edge of the preview.
-    target.set(0, -15.0, 0);
+    target.set(0, 16.0, 0);
 
     const azimuth = azimuthDeg * Math.PI / 180;
     const pitch = pitchDeg * Math.PI / 180;
@@ -217,13 +217,13 @@ function getPreviewDistance() {
     const w = getWidth();
     const h = getHeight();
     const shortSide = Math.min(w, h);
-    if (shortSide <= 0) return 92;
+    if (shortSide <= 0) return 76;
 
     // The previous 92-unit framing made the player tiny on wide
     // landscape cosmetics screens. Use a much closer camera while still
     // keeping the full head-to-feet model inside the preview.
-    const distance = 48 * (420 / shortSide);
-    return Math.max(44, Math.min(58, distance));
+    const distance = 68 * (420 / shortSide);
+    return Math.max(64, Math.min(88, distance));
 }
 
 let pendingCapeView = false;
