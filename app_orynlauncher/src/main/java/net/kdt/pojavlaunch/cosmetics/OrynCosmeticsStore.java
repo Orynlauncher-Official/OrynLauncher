@@ -258,6 +258,33 @@ public final class OrynCosmeticsStore {
         } finally { base.recycle(); }
     }
 
+    public void removeBundledDemoSkins() {
+        String[] demo = {"Oryn.png","Steve_Classic.png","Alex_Slim.png","Black_Hoodie.png","White_Hoodie.png","Glow.png","Demon.png","Anime_Boy.png","Pink_Girl.png","Purple_Tech.png","Golden.png","Custom_Skin.png"};
+        for (String name : demo) { File f = new File(skins, name); if (f.isFile()) f.delete(); }
+    }
+
+    public File importRemoteSkin(String url, String name) throws Exception {
+        java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(url).openConnection();
+        connection.setConnectTimeout(12000); connection.setReadTimeout(15000); connection.setInstanceFollowRedirects(true);
+        connection.setRequestProperty("User-Agent", "OrynLauncherPlus/5.0");
+        File temp = new File(skins, "remote_download.tmp");
+        try {
+            connection.connect();
+            if (connection.getResponseCode() < 200 || connection.getResponseCode() >= 300) throw new IllegalArgumentException("NovaSkin returned HTTP " + connection.getResponseCode());
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[8192]; int count; long total = 0;
+                while ((count = in.read(buffer)) != -1) { total += count; if (total > 8 * 1024 * 1024) throw new IllegalArgumentException("Skin image is too large (8 MB limit)."); out.write(buffer, 0, count); }
+            }
+            Bitmap bitmap = BitmapFactory.decodeFile(temp.getAbsolutePath());
+            if (bitmap == null || bitmap.getWidth() != bitmap.getHeight() || bitmap.getWidth() < 64 || bitmap.getWidth() % 64 != 0) {
+                if (bitmap != null) bitmap.recycle(); throw new IllegalArgumentException("The downloaded file is not a compatible square Minecraft skin PNG.");
+            }
+            bitmap.recycle(); File target = unique(skins, safeName(name, "novaskin") + ".png");
+            if (!temp.renameTo(target)) { try (InputStream in = new FileInputStream(temp); FileOutputStream out = new FileOutputStream(target)) { byte[] b = new byte[8192]; int n; while ((n=in.read(b))!=-1) out.write(b,0,n); } temp.delete(); }
+            return target;
+        } finally { connection.disconnect(); if (temp.exists()) temp.delete(); }
+    }
+
     public List<File> listSkins() { return listPng(skins); }
     public List<File> listCapes() { return listPng(capes); }
 
