@@ -2,13 +2,14 @@ package net.kdt.pojavlaunch;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
@@ -21,775 +22,191 @@ import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore;
 import net.kdt.pojavlaunch.instances.Instances;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class OrynCosmeticsActivity extends Activity {
     private static final int PICK_SKIN = 501, PICK_CAPE = 502;
-    private static final int BG = Color.rgb(8, 10, 14);
-    private static final int PANEL = Color.rgb(16, 20, 27);
-    private static final int CARD = Color.rgb(22, 27, 36);
-    private static final int BLUE = Color.rgb(55, 125, 235);
-    private static final int WHITE = Color.rgb(242, 245, 249);
-    private static final int MUTED = Color.rgb(155, 165, 180);
-
+    private static final int BG=Color.rgb(4,9,20), PANEL=Color.rgb(7,16,32), CARD=Color.rgb(9,20,39);
+    private static final int BLUE=Color.rgb(18,104,239), WHITE=Color.rgb(241,246,255), MUTED=Color.rgb(139,161,197);
     private OrynCosmeticsStore store;
     private OrynCosmeticPreviewView preview;
-    private Button profiles, models, skins, capes;
-    private TextView status, selectedSkin, selectedCape, tabTitle;
-    private Button skinToggle, capeToggle, applyButton, saveButton, removeButton, unequipButton;
     private OrynCosmeticsStore.CosmeticProfile active;
-    private boolean refreshing;
+    private TextView selectedName, modelInfo, status;
+    private EditText search;
+    private Button skinsTab, capesTab, modelButton;
+    private LinearLayout grid;
+    private ScrollView gridScroll;
+    private boolean showingCapes=false;
+    private String query="";
 
     @Override public void onCreate(@Nullable Bundle b) {
         super.onCreate(b);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        getWindow().getDecorView().setSystemUiVisibility(
-                View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
-                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
-                View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN|View.SYSTEM_UI_FLAG_HIDE_NAVIGATION|
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY|View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION|
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        store = new OrynCosmeticsStore(this);
-        active = store.getActiveProfile();
-        buildUi();
-        refresh();
-    }
-
-    private int d(int v) { return Math.round(v * getResources().getDisplayMetrics().density); }
-
-    private TextView text(String value, float size, int color) {
-        TextView t = new TextView(this);
-        t.setText(value);
-        t.setTextColor(color);
-        t.setTextSize(size);
-        t.setGravity(Gravity.CENTER_VERTICAL);
-        t.setPadding(d(12), d(4), d(12), d(4));
-        return t;
-    }
-
-    private GradientDrawable bg(int color, int radius, int strokeColor, int stroke) {
-        GradientDrawable g = new GradientDrawable();
-        g.setColor(color);
-        g.setCornerRadius(d(radius));
-        if (stroke > 0) g.setStroke(d(stroke), strokeColor);
-        return g;
-    }
-
-    private Button button(String value) {
-        Button b = new Button(this);
-        b.setText(value);
-        b.setTextColor(WHITE);
-        b.setTextSize(13);
-        b.setAllCaps(false);
-        b.setGravity(Gravity.CENTER);
-        b.setPadding(d(8), 0, d(8), 0);
-        b.setMinHeight(0);
-        b.setMinWidth(0);
-        b.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
-        if (android.os.Build.VERSION.SDK_INT >= 21) b.setElevation(d(1));
-        return b;
-    }
-
-    private void primary(Button b) {
-        b.setBackground(bg(BLUE, 10, BLUE, 1));
-        b.setTextColor(Color.WHITE);
-    }
-
-    private Button selectorButton(String value) {
-        Button b = button(value);
-        b.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        b.setPadding(d(10), 0, d(10), 0);
-        b.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(55, 64, 80), 1));
-        return b;
-    }
-
-    private LinearLayout.LayoutParams lp(int w, int h) {
-        return new LinearLayout.LayoutParams(w == -1 ? -1 : d(w), h == -1 ? -1 : d(h));
-    }
-
-    private TextView sectionLabel(String value) {
-        TextView t = text(value.toUpperCase(), 10, MUTED);
-        t.setTypeface(null, android.graphics.Typeface.BOLD);
-        t.setLetterSpacing(0.08f);
-        t.setPadding(d(4), d(6), d(4), d(4));
-        return t;
-    }
-
-    private View divider() {
-        View v = new View(this);
-        v.setBackgroundColor(Color.rgb(39, 46, 58));
-        return v;
-    }
-
-    private TextView badge(String value) {
-        TextView t = text(value, 10, Color.rgb(170, 202, 255));
-        t.setGravity(Gravity.CENTER);
-        t.setTypeface(null, android.graphics.Typeface.BOLD);
-        t.setBackground(bg(Color.rgb(22, 48, 84), 20, Color.rgb(48, 91, 145), 1));
-        return t;
-    }
-
-    private void buildUi() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setPadding(d(16), d(14), d(16), d(14));
-        root.setBackgroundColor(BG);
-
-        // ── Left navigation rail ─────────────────────────────────────────
-        LinearLayout left = new LinearLayout(this);
-        left.setOrientation(LinearLayout.VERTICAL);
-        left.setPadding(d(12), d(12), d(12), d(12));
-        left.setBackground(bg(PANEL, 18, Color.rgb(35, 42, 54), 1));
-        if (android.os.Build.VERSION.SDK_INT >= 21) left.setElevation(d(3));
-
-        LinearLayout brand = new LinearLayout(this);
-        brand.setGravity(Gravity.CENTER_VERTICAL);
-        brand.setPadding(d(2), 0, d(2), 0);
-
-        // Use the official Oryn logo with the Plus product branding.
-        ImageView brandLogo = new ImageView(this);
-        int orynLogoId = getResources().getIdentifier("oryn_official_logo_v4", "drawable", getPackageName());
-        if (orynLogoId == 0) {
-            orynLogoId = getResources().getIdentifier("oryn_cosmetics_logo", "drawable", getPackageName());
-        }
-        if (orynLogoId != 0) brandLogo.setImageResource(orynLogoId);
-        brandLogo.setScaleType(ImageView.ScaleType.FIT_CENTER);
-        brand.addView(brandLogo, lp(42, 42));
-
-        TextView brandName = text("OrynLauncherPlus", 15, WHITE);
-        brandName.setTypeface(null, android.graphics.Typeface.BOLD);
-        brandName.setMaxLines(1);
-        brandName.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        brand.addView(brandName, new LinearLayout.LayoutParams(0, d(44), 1));
-        left.addView(brand, lp(-1, 44));
-        left.addView(new Space(this), lp(-1, 14));
-
-        left.addView(sectionLabel("Collection"), lp(-1, 24));
-
-        Button combinedNav = button("  Skin & Cape");
-        combinedNav.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        primary(combinedNav);
-        left.addView(combinedNav, lp(-1, 46));
-
-        // Dedicated cape gallery entry in the actual launcher UI.
-        left.addView(new Space(this), lp(-1, 6));
-        Button capeGallery = button("  Cape Gallery");
-        capeGallery.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        left.addView(capeGallery, lp(-1, 42));
-
-        left.addView(new Space(this), lp(-1, 6));
-        left.addView(new Space(this), lp(-1, 10));
-        left.addView(sectionLabel("Import"), lp(-1, 24));
-
-        Button importSkin = button("+   Import Skin");
-        Button importCape = button("+   Import Cape");
-        importSkin.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        importCape.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        left.addView(importSkin, lp(-1, 42));
-        left.addView(importCape, lp(-1, 42));
-
-        LinearLayout info = new LinearLayout(this);
-        info.setOrientation(LinearLayout.VERTICAL);
-        info.setPadding(d(10), d(9), d(10), d(9));
-        info.setBackground(bg(Color.rgb(12, 16, 22), 11, Color.rgb(35, 42, 53), 1));
-        TextView infoTitle = text("Personal cosmetics", 11, WHITE);
-        infoTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView infoText = text("Your imported cosmetics stay local and work offline.", 9, MUTED);
-        infoText.setMaxLines(3);
-        info.addView(infoTitle, lp(-1, 20));
-        info.addView(infoText, lp(-1, 38));
-        left.addView(new Space(this), lp(-1, 10));
-        left.addView(info, lp(-1, 68));
-
-        Button back = button("<   Back to Settings");
-        back.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        left.addView(back, lp(-1, 42));
-
-        ScrollView leftScroll = new ScrollView(this);
-        leftScroll.setFillViewport(true);
-        leftScroll.setClipToPadding(false);
-        leftScroll.setVerticalScrollBarEnabled(false);
-        leftScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
-        leftScroll.addView(left, new ScrollView.LayoutParams(-1, -2));
-        root.addView(leftScroll, new LinearLayout.LayoutParams(d(220), -1));
-
-        // ── Main preview stage ───────────────────────────────────────────
-        LinearLayout center = new LinearLayout(this);
-        center.setOrientation(LinearLayout.VERTICAL);
-        center.setPadding(d(14), 0, d(14), 0);
-
-        LinearLayout header = new LinearLayout(this);
-        header.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout headerText = new LinearLayout(this);
-        headerText.setOrientation(LinearLayout.VERTICAL);
-        tabTitle = text("Skin & Cape", 20, WHITE);
-        tabTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView subtitle = text("Preview, select and apply your skins and capes", 10, MUTED);
-        headerText.addView(tabTitle, lp(-1, 27));
-        headerText.addView(subtitle, lp(-1, 20));
-        header.addView(headerText, new LinearLayout.LayoutParams(0, d(48), 1));
-
-        TextView live = badge("LIVE PREVIEW");
-        header.addView(live, lp(92, 30));
-        center.addView(header, lp(-1, 52));
-
-        LinearLayout stage = new LinearLayout(this);
-        stage.setOrientation(LinearLayout.VERTICAL);
-        stage.setPadding(d(10), d(10), d(10), d(10));
-        stage.setBackground(bg(Color.rgb(11, 14, 19), 18, Color.rgb(34, 41, 53), 1));
-        if (android.os.Build.VERSION.SDK_INT >= 21) stage.setElevation(d(2));
-
-        LinearLayout stageTop = new LinearLayout(this);
-        stageTop.setGravity(Gravity.CENTER_VERTICAL);
-        TextView stageTitle = text("3D PREVIEW", 9, MUTED);
-        stageTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        stageTop.addView(stageTitle, new LinearLayout.LayoutParams(0, d(24), 1));
-        TextView stageHint = text("Drag to rotate", 9, MUTED);
-        stageHint.setGravity(Gravity.CENTER);
-        stageTop.addView(stageHint, lp(90, 24));
-        stage.addView(stageTop, lp(-1, 26));
-
-        preview = new OrynCosmeticPreviewView(this);
-        preview.setBackground(bg(Color.rgb(14, 18, 25), 14, Color.rgb(27, 34, 45), 1));
-        stage.addView(preview, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        LinearLayout equipped = new LinearLayout(this);
-        equipped.setGravity(Gravity.CENTER_VERTICAL);
-        equipped.setPadding(d(10), 0, d(10), 0);
-        equipped.setBackground(bg(Color.rgb(15, 19, 26), 10, Color.rgb(31, 38, 49), 1));
-        TextView equippedTitle = text("EQUIPPED", 9, MUTED);
-        equippedTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        equipped.addView(equippedTitle, lp(62, 34));
-        selectedSkin = text("Skin  •  None", 10, WHITE);
-        equipped.addView(selectedSkin, new LinearLayout.LayoutParams(0, d(34), 1));
-        selectedCape = text("Cape  •  None", 10, MUTED);
-        equipped.addView(selectedCape, new LinearLayout.LayoutParams(0, d(34), 1));
-        stage.addView(equipped, lp(-1, 36));
-
-        center.addView(stage, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        status = text("Ready", 11, MUTED);
-        status.setGravity(Gravity.CENTER_VERTICAL);
-        status.setPadding(d(4), 0, d(4), 0);
-        center.addView(status, lp(-1, 30));
-        root.addView(center, new LinearLayout.LayoutParams(0, -1, 1));
-
-        // ── Right configuration panel ────────────────────────────────────
-        LinearLayout right = new LinearLayout(this);
-        right.setOrientation(LinearLayout.VERTICAL);
-        right.setPadding(d(14), d(12), d(12), d(12));
-        right.setBackground(bg(PANEL, 18, Color.rgb(35, 42, 54), 1));
-        if (android.os.Build.VERSION.SDK_INT >= 21) right.setElevation(d(3));
-
-        LinearLayout rightHeader = new LinearLayout(this);
-        rightHeader.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout rightTitleBox = new LinearLayout(this);
-        rightTitleBox.setOrientation(LinearLayout.VERTICAL);
-        TextView rt = text("Skins & Capes", 17, WHITE);
-        rt.setTypeface(null, android.graphics.Typeface.BOLD);
-        TextView rs = text("Choose a cosmetic to preview and apply", 9, MUTED);
-        rightTitleBox.addView(rt, lp(-1, 23));
-        rightTitleBox.addView(rs, lp(-1, 18));
-        rightHeader.addView(rightTitleBox, new LinearLayout.LayoutParams(0, d(44), 1));
-        TextView v3 = badge("LIVE");
-        rightHeader.addView(v3, lp(48, 28));
-        right.addView(rightHeader, lp(-1, 46));
-
-        right.addView(divider(), lp(-1, 1));
-        right.addView(sectionLabel("YOUR COLLECTION"), lp(-1, 23));
-        profiles = selectorButton("Default");
-        right.addView(profiles, lp(-1, 40));
-        Button newProfile = button("+   New Profile");
-        newProfile.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        right.addView(newProfile, lp(-1, 34));
-
-        right.addView(sectionLabel("SELECT COSMETICS"), lp(-1, 24));
-        skins = selectorButton("None");
-        capes = selectorButton("None");
-        right.addView(skins, lp(-1, 38));
-        Button searchOnlineSkins = button("⌕   Search Online Skins");
-        searchOnlineSkins.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        right.addView(searchOnlineSkins, lp(-1, 34));
-        right.addView(capes, lp(-1, 38));
-        Button searchOnlineCapes = button("⌕   Search Online Capes");
-        searchOnlineCapes.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        right.addView(searchOnlineCapes, lp(-1, 34));
-        LinearLayout toggles = new LinearLayout(this);
-        toggles.setOrientation(LinearLayout.HORIZONTAL);
-        skinToggle = button("Skin: OFF");
-        capeToggle = button("Cape: OFF");
-        toggles.addView(skinToggle, new LinearLayout.LayoutParams(0, d(36), 1));
-        Space toggleGap = new Space(this);
-        toggles.addView(toggleGap, lp(8, 1));
-        toggles.addView(capeToggle, new LinearLayout.LayoutParams(0, d(36), 1));
-        right.addView(toggles, lp(-1, 40));
-
-        right.addView(sectionLabel("Player Model"), lp(-1, 24));
-        models = selectorButton("Classic (Steve)");
-        right.addView(models, lp(-1, 38));
-
-        right.addView(new Space(this), new LinearLayout.LayoutParams(1, 0, 1));
-
-        LinearLayout actions = new LinearLayout(this);
-        actions.setOrientation(LinearLayout.HORIZONTAL);
-        actions.setPadding(0, d(2), 0, d(2));
-        applyButton = button("Apply Cosmetics");
-        saveButton = button("Save Cosmetics");
-        primary(applyButton);
-        actions.addView(applyButton, new LinearLayout.LayoutParams(0, d(42), 1));
-        Space actionGap = new Space(this);
-        actions.addView(actionGap, lp(8, 1));
-        actions.addView(saveButton, new LinearLayout.LayoutParams(0, d(42), 1));
-        right.addView(actions, lp(-1, 46));
-
-        LinearLayout actions2 = new LinearLayout(this);
-        actions2.setOrientation(LinearLayout.HORIZONTAL);
-        removeButton = button("Remove Skin");
-        unequipButton = button("Remove Cape");
-        actions2.addView(removeButton, new LinearLayout.LayoutParams(0, d(34), 1));
-        Space actionGap2 = new Space(this);
-        actions2.addView(actionGap2, lp(8, 1));
-        actions2.addView(unequipButton, new LinearLayout.LayoutParams(0, d(34), 1));
-        right.addView(actions2, lp(-1, 38));
-
-        TextView note = text("Custom PNG skins and capes stay saved locally. Drag the preview to rotate your character.", 8, MUTED);
-        note.setMaxLines(2);
-        note.setGravity(Gravity.CENTER_VERTICAL);
-        right.addView(note, lp(-1, 30));
-
-        ScrollView rightScroll = new ScrollView(this);
-        rightScroll.setFillViewport(true);
-        rightScroll.setClipToPadding(false);
-        rightScroll.setVerticalScrollBarEnabled(false);
-        rightScroll.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
-        rightScroll.addView(right, new ScrollView.LayoutParams(-1, -2));
-        root.addView(rightScroll, new LinearLayout.LayoutParams(d(320), -1));
-
-        setContentView(root);
-
-        combinedNav.setOnClickListener(v -> status.setText("Skin & Cape • combined cosmetics profile"));
-        capeGallery.setOnClickListener(v -> showCapeGallery());
-        searchOnlineSkins.setOnClickListener(v -> {
-            Intent online = new Intent(this, OrynNovaSkinGalleryActivity.class);
-            online.putExtra("gallery_type", "skins");
-            startActivity(online);
-        });
-        searchOnlineCapes.setOnClickListener(v -> {
-            Intent online = new Intent(this, OrynNovaSkinGalleryActivity.class);
-            online.putExtra("gallery_type", "capes");
-            startActivity(online);
-        });
-        importSkin.setOnClickListener(v -> pick(PICK_SKIN));
-        importCape.setOnClickListener(v -> pick(PICK_CAPE));
-        back.setOnClickListener(v -> finish());
-
-        newProfile.setOnClickListener(v -> {
-            final EditText input = new EditText(this);
-            input.setSingleLine(true);
-            input.setHint("Profile name");
-            input.setTextColor(WHITE);
-            input.setHintTextColor(MUTED);
-            input.setPadding(d(10), 0, d(10), 0);
-            input.setBackground(bg(Color.rgb(12, 15, 20), 9, Color.rgb(48, 56, 70), 1));
-            new AlertDialog.Builder(this)
-                    .setTitle("New Cosmetic Profile")
-                    .setView(input)
-                    .setNegativeButton("Cancel", null)
-                    .setPositiveButton("Create", (dialog, which) -> {
-                        String n = input.getText().toString().trim();
-                        if (n.isEmpty()) n = "Custom";
-                        OrynCosmeticsStore.CosmeticProfile p = new OrynCosmeticsStore.CosmeticProfile();
-                        p.name = n;
-                        try {
-                            store.saveProfile(p);
-                            active = p;
-                            refresh();
-                            status.setText("Profile created");
-                        } catch (Exception e) {
-                            status.setText("Could not create profile");
-                        }
-                    }).show();
-        });
-
-        profiles.setOnClickListener(v -> {
-            List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
-            String[] values = new String[ps.size()];
-            int selected = 0;
-            for (int i = 0; i < ps.size(); i++) {
-                values[i] = ps.get(i).name;
-                if (active != null && values[i].equals(active.name)) selected = i;
-            }
-            showChoice("Cosmetic Profile", values, selected, pos -> {
-                if (pos < ps.size()) {
-                    active = ps.get(pos);
-                    try {
-                        store.setActiveProfile(active);
-                        refresh();
-                        status.setText("Profile: " + active.name);
-                    } catch (Exception e) {
-                        status.setText("Could not save profile");
-                    }
-                }
-            });
-        });
-
-        models.setOnClickListener(v -> {
-            final String[] values = {"Classic (Steve)", "Slim (Alex)"};
-            int selected = "slim".equals(active.model) ? 1 : 0;
-            showChoice("Player Model", values, selected, pos -> {
-                active.model = pos == 1 ? "slim" : "classic";
-                refresh();
-                status.setText(pos == 1 ? "Slim (Alex) selected" : "Classic (Steve) selected");
-            });
-        });
-
-        skins.setOnClickListener(v -> {
-            List<File> fs = store.listSkins();
-            String[] values = new String[fs.size() + 1];
-            values[0] = "None";
-            int selected = 0;
-            for (int i = 0; i < fs.size(); i++) {
-                values[i + 1] = displayName(fs.get(i));
-                if (fs.get(i).getName().equals(active.skin)) selected = i + 1;
-            }
-            showChoice("Skin", values, selected, pos -> {
-                active.skin = pos == 0 ? "" : fs.get(pos - 1).getName();
-                active.skinEnabled = pos != 0;
-                refresh();
-                status.setText(pos == 0 ? "Skin unequipped" : "Skin selected");
-            });
-        });
-
-        capes.setOnClickListener(v -> {
-            List<File> fs = store.listCapes();
-            String[] values = new String[fs.size() + 1];
-            values[0] = "None";
-            int selected = 0;
-            for (int i = 0; i < fs.size(); i++) {
-                values[i + 1] = displayName(fs.get(i));
-                if (fs.get(i).getName().equals(active.cape)) selected = i + 1;
-            }
-            showChoice("Cape", values, selected, pos -> {
-                active.cape = pos == 0 ? "" : fs.get(pos - 1).getName();
-                active.capeEnabled = pos != 0;
-                refresh();
-                status.setText(pos == 0 ? "Cape unequipped" : "Cape selected");
-            });
-        });
-
-        skinToggle.setOnClickListener(v -> {
-            active.skinEnabled = !active.skinEnabled;
-            saveCurrent(active.skinEnabled ? "Skin enabled" : "Skin disabled");
-        });
-        capeToggle.setOnClickListener(v -> {
-            active.capeEnabled = !active.capeEnabled;
-            saveCurrent(active.capeEnabled ? "Cape enabled" : "Cape disabled");
-        });
-        applyButton.setOnClickListener(v -> saveCurrent("Cosmetics applied"));
-        saveButton.setOnClickListener(v -> saveCurrent("Cosmetics saved"));
-        removeButton.setOnClickListener(v -> removeSkin());
-        unequipButton.setOnClickListener(v -> removeCape());
-    }
-
-    private void showCapeGallery() {
-        final Dialog dialog = new Dialog(this);
-        LinearLayout page = new LinearLayout(this);
-        page.setOrientation(LinearLayout.VERTICAL);
-        page.setPadding(d(18), d(14), d(18), d(14));
-        page.setBackground(bg(BG, 18, Color.rgb(43, 54, 70), 1));
-
-        LinearLayout titleRow = new LinearLayout(this);
-        titleRow.setGravity(Gravity.CENTER_VERTICAL);
-        TextView title = text("CAPE GALLERY", 19, WHITE);
-        title.setTypeface(null, android.graphics.Typeface.BOLD);
-        titleRow.addView(title, new LinearLayout.LayoutParams(0, d(38), 1));
-        Button importButton = button("+ Import Cape");
-        importButton.setBackground(bg(BLUE, 10, BLUE, 1));
-        titleRow.addView(importButton, lp(132, 38));
-        page.addView(titleRow);
-
-        TextView subtitle = text("Choose a cape for your character • Your collection stays on this device", 12, MUTED);
-        page.addView(subtitle, lp(-1, 32));
-
-        LinearLayout categoryRow = new LinearLayout(this);
-        categoryRow.setOrientation(LinearLayout.HORIZONTAL);
-        Button orynCategory = button("ORYN CAPES");
-        Button personalCategory = button("MY CAPES");
-        primary(orynCategory);
-        LinearLayout.LayoutParams categoryLp = new LinearLayout.LayoutParams(0, d(38), 1);
-        categoryRow.addView(orynCategory, categoryLp);
-        LinearLayout.LayoutParams personalLp = new LinearLayout.LayoutParams(0, d(38), 1);
-        personalLp.leftMargin = d(8);
-        categoryRow.addView(personalCategory, personalLp);
-        page.addView(categoryRow, lp(-1, 42));
-        TextView categoryHint = text("Original Oryn cape designs • import your own PNGs in My Capes.", 10, MUTED);
-        page.addView(categoryHint, lp(-1, 26));
-
-        TextView animatedNote = text("ANIMATED CAPES  •  In-game animation needs a compatible Minecraft cape renderer/mod.", 11, MUTED);
-        animatedNote.setPadding(d(10), d(6), d(10), d(6));
-        animatedNote.setBackground(bg(PANEL, 8, Color.rgb(43, 54, 70), 1));
-        page.addView(animatedNote, lp(-1, 40));
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setFillViewport(false);
-        GridLayout grid = new GridLayout(this);
-        grid.setColumnCount(4);
-        grid.setUseDefaultMargins(false);
-        grid.setPadding(0, d(10), 0, d(8));
-
+        store=new OrynCosmeticsStore(this);
         store.ensureOrynCapes();
         store.normalizeExistingCapes();
-        final boolean[] showOrynCapes = {true};
-        Runnable renderCapeCards = () -> {
-            grid.removeAllViews();
-            List<File> visibleFiles = store.listCapes();
-            for (File file : visibleFiles) {
-                if (file.getName().startsWith("oryn_") != showOrynCapes[0]) continue;
-            LinearLayout card = new LinearLayout(this);
-            card.setOrientation(LinearLayout.VERTICAL);
-            card.setGravity(Gravity.CENTER_HORIZONTAL);
-            card.setPadding(d(7), d(7), d(7), d(7));
-            card.setBackground(bg(CARD, 12,
-                    file.getName().equals(active.cape) ? BLUE : Color.rgb(43, 54, 70),
-                    file.getName().equals(active.cape) ? 2 : 1));
-
-            ImageView image = new ImageView(this);
-            image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            Bitmap bitmap = store.load(file);
-            if (bitmap != null) {
-                // Show the actual cape front UV panel instead of shrinking the
-                // entire 64x32 texture (which includes unused transparent UV space).
-                Bitmap thumbnail = null;
-                if (bitmap.getWidth() >= 12 && bitmap.getHeight() >= 17) {
-                    thumbnail = Bitmap.createBitmap(bitmap, 1, 1, 10, 16);
-                    bitmap.recycle();
-                } else {
-                    thumbnail = bitmap;
-                }
-                image.setImageBitmap(thumbnail);
-                image.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            }
-            image.setBackground(bg(Color.rgb(10, 14, 21), 8, Color.TRANSPARENT, 0));
-            card.addView(image, lp(-1, 86));
-
-            TextView name = text(displayName(file), 11, WHITE);
-            name.setGravity(Gravity.CENTER);
-            name.setMaxLines(2);
-            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
-            card.addView(name, lp(-1, 34));
-
-            Button select = button(file.getName().equals(active.cape) ? "Equipped" : "Use Cape");
-            select.setTextSize(11);
-            select.setBackground(bg(file.getName().equals(active.cape) ? BLUE : PANEL, 9,
-                    file.getName().equals(active.cape) ? BLUE : Color.rgb(43, 54, 70), 1));
-            card.addView(select, lp(-1, 34));
-            View.OnClickListener choose = v -> {
-                active.cape = file.getName();
-                active.capeEnabled = true;
-                saveCurrent("Cape selected • " + displayName(file));
-                dialog.dismiss();
-            };
-            select.setOnClickListener(choose);
-            image.setOnClickListener(choose);
-            name.setOnClickListener(choose);
-
-            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-            params.width = 0;
-            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
-            params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            params.setMargins(d(4), d(4), d(4), d(4));
-            grid.addView(card, params);
-            }
-            if (grid.getChildCount() == 0) {
-                LinearLayout empty = new LinearLayout(this);
-                empty.setOrientation(LinearLayout.VERTICAL);
-                empty.setGravity(Gravity.CENTER);
-                empty.setPadding(d(16), d(18), d(16), d(18));
-                TextView emptyTitle = text(showOrynCapes[0] ? "Oryn cape collection" : "Your personal capes", 15, WHITE);
-                emptyTitle.setGravity(Gravity.CENTER);
-                empty.addView(emptyTitle, lp(-1, 34));
-                TextView emptyText = text(showOrynCapes[0] ? "Oryn cape designs will appear here." : "Import a compatible cape PNG to add it here.", 12, MUTED);
-                emptyText.setGravity(Gravity.CENTER);
-                empty.addView(emptyText, lp(-1, 30));
-                grid.addView(empty, new GridLayout.LayoutParams());
-            }
-        };
-        orynCategory.setOnClickListener(v -> {
-            showOrynCapes[0] = true;
-            primary(orynCategory);
-            personalCategory.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
-            categoryHint.setText("Original Oryn cape designs • curated for your launcher.");
-            renderCapeCards.run();
-        });
-        personalCategory.setOnClickListener(v -> {
-            showOrynCapes[0] = false;
-            primary(personalCategory);
-            orynCategory.setBackground(bg(CARD, 10, Color.rgb(48, 57, 72), 1));
-            categoryHint.setText("Your imported cape PNGs • stored on this device.");
-            renderCapeCards.run();
-        });
-        renderCapeCards.run();
-        scroll.addView(grid);
-        page.addView(scroll, new LinearLayout.LayoutParams(-1, 0, 1));
-
-        LinearLayout bottom = new LinearLayout(this);
-        bottom.setGravity(Gravity.END | Gravity.CENTER_VERTICAL);
-        Button unequip = button("Unequip");
-        bottom.addView(unequip, lp(100, 38));
-        Button close = button("Close");
-        close.setBackground(bg(BLUE, 10, BLUE, 1));
-        LinearLayout.LayoutParams closeLp = lp(100, 38);
-        closeLp.leftMargin = d(8);
-        bottom.addView(close, closeLp);
-        page.addView(bottom, lp(-1, 46));
-
-        importButton.setOnClickListener(v -> {
-            dialog.dismiss();
-            pick(PICK_CAPE);
-        });
-        unequip.setOnClickListener(v -> {
-            active.cape = "";
-            active.capeEnabled = false;
-            saveCurrent("Cape unequipped");
-            dialog.dismiss();
-        });
-        close.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.setContentView(page);
-        WindowManager.LayoutParams window = new WindowManager.LayoutParams();
-        window.copyFrom(dialog.getWindow().getAttributes());
-        window.width = (int) (getResources().getDisplayMetrics().widthPixels * 0.88f);
-        window.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.86f);
-        dialog.show();
-        dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        dialog.getWindow().setLayout(window.width, window.height);
-    }
-
-    private interface ChoiceAction { void run(int position); }
-
-    private void showChoice(String title, String[] values, int selected, ChoiceAction action) {
-        if (values == null || values.length == 0) return;
-        int safe = Math.max(0, Math.min(selected, values.length - 1));
-        new AlertDialog.Builder(this)
-                .setTitle(title)
-                .setSingleChoiceItems(values, safe, (dialog, which) -> {
-                    action.run(which);
-                    dialog.dismiss();
-                })
-                .setNegativeButton("Cancel", null)
-                .show();
-    }
-
-    private void pick(int requestCode) {
-        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-        i.setType("image/png");
-        i.addCategory(Intent.CATEGORY_OPENABLE);
-        startActivityForResult(i, requestCode);
-    }
-
-    private void refresh() {
-        refreshing = true;
-        List<OrynCosmeticsStore.CosmeticProfile> ps = store.listProfiles();
-
-        profiles.setText(active == null ? "Default" : active.name);
-
-        models.setText("slim".equals(active.model) ? "Slim (Alex)" : "Classic (Steve)");
-
-        List<File> sf = store.listSkins();
-        String skinLabel = "None";
-        for (File f : sf) {
-            if (f.getName().equals(active.skin)) {
-                skinLabel = displayName(f);
-                break;
-            }
-        }
-        skins.setText(skinLabel);
-
-        List<File> cf = store.listCapes();
-        String capeLabel = "None";
-        for (File f : cf) {
-            if (f.getName().equals(active.cape)) {
-                capeLabel = displayName(f);
-                break;
-            }
-        }
-        capes.setText(capeLabel);
-
-        skinToggle.setText(active.skinEnabled ? "Skin: ON" : "Skin: OFF");
-        capeToggle.setText(active.capeEnabled ? "Cape: ON" : "Cape: OFF");
-        skinToggle.setEnabled(!active.skin.isEmpty());
-        capeToggle.setEnabled(!active.cape.isEmpty());
-        refreshing = false;
+        active=store.getActiveProfile();
+        buildUi();
+        renderGrid();
         refreshPreview();
     }
 
-    private String displayName(File f) {
-        String n = f.getName();
-        if (n.toLowerCase().endsWith(".png")) n = n.substring(0, n.length() - 4);
-        return n.replace('_', ' ');
+    private int d(float v){return Math.round(v*getResources().getDisplayMetrics().density);}
+    private GradientDrawable shape(int color,int radius,int stroke,int width){
+        GradientDrawable g=new GradientDrawable(); g.setColor(color); g.setCornerRadius(d(radius));
+        if(width>0)g.setStroke(d(width),stroke); return g;
+    }
+    private TextView label(String s,float size,int color){
+        TextView t=new TextView(this);t.setText(s);t.setTextSize(size);t.setTextColor(color);t.setGravity(Gravity.CENTER_VERTICAL);return t;
+    }
+    private Button button(String s,boolean primary){
+        Button b=new Button(this);b.setText(s);b.setTextColor(WHITE);b.setTextSize(12);b.setAllCaps(false);
+        b.setGravity(Gravity.CENTER);b.setMinHeight(0);b.setMinWidth(0);b.setPadding(d(5),0,d(5),0);
+        b.setBackground(shape(primary?BLUE:CARD,11,primary?BLUE:Color.rgb(31,53,83),1));return b;
+    }
+    private LinearLayout.LayoutParams lp(int w,int h){return new LinearLayout.LayoutParams(w<0?w:d(w),h<0?h:d(h));}
+
+    private void buildUi(){
+        LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(d(16),d(8),d(16),d(10));root.setBackgroundColor(BG);
+        LinearLayout top=new LinearLayout(this);top.setGravity(Gravity.CENTER_VERTICAL);top.setPadding(d(4),0,d(4),0);
+        Button back=button("‹",false);top.addView(back,lp(42,40));back.setOnClickListener(v->finish());
+        ImageView logo=new ImageView(this);int logoId=getResources().getIdentifier("oryn_official_logo_v4","drawable",getPackageName());
+        if(logoId==0)logoId=getResources().getIdentifier("oryn_cosmetics_logo","drawable",getPackageName());
+        if(logoId!=0)logo.setImageResource(logoId);logo.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        LinearLayout.LayoutParams logoLp=lp(38,38);logoLp.leftMargin=d(10);top.addView(logo,logoLp);
+        TextView brand=label("OrynLauncher",18,WHITE);brand.setTypeface(null,android.graphics.Typeface.BOLD);
+        TextView plus=label("Plus",18,BLUE);plus.setTypeface(null,android.graphics.Typeface.BOLD);
+        LinearLayout brandRow=new LinearLayout(this);brandRow.setGravity(Gravity.CENTER_VERTICAL);brandRow.addView(brand);brandRow.addView(plus);
+        LinearLayout.LayoutParams brandLp=lp(-2,42);brandLp.leftMargin=d(5);top.addView(brandRow,brandLp);
+        View spacer=new View(this);top.addView(spacer,new LinearLayout.LayoutParams(0,1,1));
+        TextView topStatus=label("●  SKIN STUDIO",10,MUTED);top.addView(topStatus,lp(-2,36));
+        root.addView(top,lp(-1,46));
+
+        LinearLayout body=new LinearLayout(this);body.setOrientation(LinearLayout.HORIZONTAL);LinearLayout.LayoutParams bodyLp=new LinearLayout.LayoutParams(-1,0,1);bodyLp.topMargin=d(8);root.addView(body,bodyLp);
+        LinearLayout left=new LinearLayout(this);left.setOrientation(LinearLayout.VERTICAL);left.setPadding(d(12),d(8),d(12),d(10));left.setBackground(shape(PANEL,18,Color.rgb(25,44,72),1));
+        LinearLayout.LayoutParams leftLp=new LinearLayout.LayoutParams(0,-1,0.43f);leftLp.rightMargin=d(12);body.addView(left,leftLp);
+        TextView title=label("Skin & Cape",23,WHITE);title.setTypeface(null,android.graphics.Typeface.BOLD);left.addView(title,lp(-1,34));
+        left.addView(label("Preview, select and apply your skins and capes",11,MUTED),lp(-1,23));
+        LinearLayout previewFrame=new LinearLayout(this);previewFrame.setOrientation(LinearLayout.VERTICAL);previewFrame.setPadding(d(5),d(5),d(5),d(5));
+        previewFrame.setBackground(shape(Color.rgb(5,12,25),15,Color.rgb(25,42,68),1));
+        LinearLayout.LayoutParams pf=new LinearLayout.LayoutParams(-1,0,1);pf.topMargin=d(5);left.addView(previewFrame,pf);
+        TextView previewBadge=label("◉  3D PREVIEW  •  DRAG TO ROTATE",10,MUTED);previewFrame.addView(previewBadge,lp(-1,25));
+        preview=new OrynCosmeticPreviewView(this);preview.setBackground(shape(Color.rgb(5,12,25),12,Color.TRANSPARENT,0));
+        previewFrame.addView(preview,new LinearLayout.LayoutParams(-1,0,1));
+        selectedName=label("Oryn User Skin",17,WHITE);selectedName.setGravity(Gravity.CENTER);selectedName.setTypeface(null,android.graphics.Typeface.BOLD);left.addView(selectedName,lp(-1,27));
+        modelInfo=label("Classic Model (4px Arms)  •  Drag to Rotate",11,MUTED);modelInfo.setGravity(Gravity.CENTER);left.addView(modelInfo,lp(-1,23));
+        LinearLayout modelRow=new LinearLayout(this);modelRow.setPadding(d(2),d(4),d(2),0);
+        modelButton=button("Classic",true);Button slim=button("Slim",false);
+        modelRow.addView(modelButton,new LinearLayout.LayoutParams(0,d(38),1));Space mg=new Space(this);modelRow.addView(mg,lp(6,1));modelRow.addView(slim,new LinearLayout.LayoutParams(0,d(38),1));
+        left.addView(modelRow,lp(-1,44));
+        modelButton.setOnClickListener(v->{active.model="classic";saveCurrent("Classic model selected");});
+        slim.setOnClickListener(v->{active.model="slim";saveCurrent("Slim model selected");});
+
+        LinearLayout right=new LinearLayout(this);right.setOrientation(LinearLayout.VERTICAL);right.setPadding(d(10),d(8),d(8),d(8));right.setBackground(shape(PANEL,18,Color.rgb(25,44,72),1));
+        body.addView(right,new LinearLayout.LayoutParams(0,-1,0.57f));
+        LinearLayout searchRow=new LinearLayout(this);searchRow.setGravity(Gravity.CENTER_VERTICAL);
+        search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);search.setHintTextColor(MUTED);search.setTextSize(12);search.setPadding(d(12),0,d(10),0);
+        search.setHint("Search skins...");search.setBackground(shape(Color.rgb(6,15,31),12,Color.rgb(35,65,103),1));
+        searchRow.addView(search,new LinearLayout.LayoutParams(0,d(42),1));
+        LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(5,13,27),12,Color.rgb(25,44,72),1));
+        LinearLayout.LayoutParams tabsLp=lp(230,42);tabsLp.leftMargin=d(8);searchRow.addView(tabs,tabsLp);
+        skinsTab=button("♧  Skins",true);capesTab=button("♧  Capes",false);
+        tabs.addView(skinsTab,new LinearLayout.LayoutParams(0,-1,1));tabs.addView(capesTab,new LinearLayout.LayoutParams(0,-1,1));
+        right.addView(searchRow,lp(-1,46));
+        gridScroll=new ScrollView(this);gridScroll.setFillViewport(false);gridScroll.setVerticalScrollBarEnabled(false);gridScroll.setClipToPadding(false);
+        grid=new LinearLayout(this);grid.setOrientation(LinearLayout.VERTICAL);grid.setPadding(0,d(5),0,d(5));gridScroll.addView(grid);
+        right.addView(gridScroll,new LinearLayout.LayoutParams(-1,0,1));
+        Button importButton=button("＋  Import / Replace Skin",true);LinearLayout.LayoutParams importLp=lp(-1,42);importLp.topMargin=d(5);right.addView(importButton,importLp);
+        importButton.setOnClickListener(v->pick(PICK_SKIN));
+        status=label("Ready",10,MUTED);root.addView(status,lp(-1,20));
+        setContentView(root);
+
+        skinsTab.setOnClickListener(v->{showingCapes=false;query="";search.setText("");updateTabs();renderGrid();});
+        capesTab.setOnClickListener(v->{showingCapes=true;query="";search.setText("");updateTabs();renderGrid();});
+        search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}
+            public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);renderGrid();}
+            public void afterTextChanged(Editable e){}});
+        updateTabs();
     }
 
-    private void refreshPreview() {
-        if (active == null) return;
-        Bitmap s = active.skin.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/skins/" + active.skin));
-        Bitmap c = active.cape.isEmpty() ? null : store.load(new File(getFilesDir(), "cosmetics/capes/" + active.cape));
-        preview.setSkin(active.skinEnabled ? s : null, "slim".equals(active.model));
-        preview.setCape(active.capeEnabled ? c : null);
-        preview.setCapePreview(active.capeEnabled);
-        selectedSkin.setText("Skin  •  " + (active.skin.isEmpty() ? "None" : displayName(new File(active.skin))));
-        selectedCape.setText("Cape  •  " + (active.cape.isEmpty() ? "None" : displayName(new File(active.cape))));
+    private void updateTabs(){
+        skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(31,53,83):BLUE,1));
+        capesTab.setBackground(shape(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(31,53,83),1));
+        search.setHint(showingCapes?"Search capes...":"Search skins...");
     }
 
-    private void removeSkin() {
-        if (active.skin.isEmpty()) { status.setText("No skin selected"); return; }
-        try {
-            store.removeCosmetic(active.skin, true);
-            active.skin = "";
-            active.skinEnabled = false;
-            saveCurrent("Skin removed");
-        } catch (Exception e) { status.setText("Could not remove skin"); }
-    }
-
-    private void removeCape() {
-        if (active.cape.isEmpty()) { status.setText("No cape selected"); return; }
-        try {
-            store.removeCosmetic(active.cape, false);
-            active.cape = "";
-            active.capeEnabled = false;
-            saveCurrent("Cape removed");
-        } catch (Exception e) { status.setText("Could not remove cape"); }
-    }
-
-    private void saveCurrent(String message) {
-        active.model = "Slim (Alex)".equals(models.getText().toString()) ? "slim" : "classic";
-        try {
-            store.setActiveProfile(active);
-            syncInstance();
-            refresh();
-            status.setText("✓  " + message);
-        } catch (Exception e) {
-            status.setText("Save failed: " + e.getMessage());
+    private void renderGrid(){
+        if(grid==null)return;grid.removeAllViews();
+        List<File> all=showingCapes?store.listCapes():store.listSkins();List<File> visible=new ArrayList<>();
+        for(File f:all)if(displayName(f).toLowerCase(Locale.ROOT).contains(query))visible.add(f);
+        if(visible.isEmpty()){
+            LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(d(12),d(20),d(12),d(20));
+            TextView title=label(query.isEmpty()?(showingCapes?"No capes yet":"No saved skins yet"):"No "+(showingCapes?"capes":"skins")+" found",15,WHITE);title.setGravity(Gravity.CENTER);
+            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"Choose an Oryn cape below or import a cape PNG.":"Import a 64×64 Minecraft skin PNG to add it to this collection.",11,MUTED);desc.setGravity(Gravity.CENTER);
+            empty.addView(desc,lp(-1,45));grid.addView(empty,lp(-1,-2));
+            if(!showingCapes&&!query.isEmpty()){} return;
+        }
+        int columns=4;
+        for(int start=0;start<visible.size();start+=columns){
+            LinearLayout row=new LinearLayout(this);row.setOrientation(LinearLayout.HORIZONTAL);
+            for(int col=0;col<columns&&start+col<visible.size();col++){
+                File file=visible.get(start+col);boolean selected=showingCapes?file.getName().equals(active.cape):file.getName().equals(active.skin);
+                LinearLayout card=new LinearLayout(this);card.setOrientation(LinearLayout.VERTICAL);card.setGravity(Gravity.CENTER_HORIZONTAL);card.setPadding(d(5),d(5),d(5),d(5));
+                card.setBackground(shape(selected?Color.rgb(9,32,67):CARD,12,selected?BLUE:Color.rgb(24,43,69),selected?2:1));
+                ImageView thumb=new ImageView(this);thumb.setScaleType(ImageView.ScaleType.FIT_CENTER);Bitmap bitmap=store.load(file);
+                if(bitmap!=null){
+                    Bitmap cropped=null;
+                    if(showingCapes&&bitmap.getWidth()>=12&&bitmap.getHeight()>=17)cropped=Bitmap.createBitmap(bitmap,1,1,10,16);
+                    else if(!showingCapes&&bitmap.getWidth()>=8&&bitmap.getHeight()>=8)cropped=Bitmap.createBitmap(bitmap,8,8,Math.max(1,Math.min(8,bitmap.getWidth()-8)),Math.max(1,Math.min(8,bitmap.getHeight()-8)));
+                    if(cropped!=null){if(cropped!=bitmap)bitmap.recycle();thumb.setImageBitmap(cropped);}else thumb.setImageBitmap(bitmap);
+                }
+                LinearLayout.LayoutParams thumbLp=lp(-1,70);card.addView(thumb,thumbLp);
+                TextView name=label(displayName(file),10,WHITE);name.setGravity(Gravity.CENTER);name.setMaxLines(1);name.setEllipsize(android.text.TextUtils.TruncateAt.END);card.addView(name,lp(-1,24));
+                Button apply=button(selected?"✓  Equipped":"Apply",selected);apply.setTextSize(10);card.addView(apply,lp(-1,29));
+                View.OnClickListener choose=v->{if(showingCapes){active.cape=file.getName();active.capeEnabled=true;}else{active.skin=file.getName();active.skinEnabled=true;}saveCurrent((showingCapes?"Cape":"Skin")+" selected: "+displayName(file));};
+                apply.setOnClickListener(choose);thumb.setOnClickListener(choose);name.setOnClickListener(choose);
+                LinearLayout.LayoutParams cardLp=new LinearLayout.LayoutParams(0,d(145),1);cardLp.setMargins(d(3),d(3),d(3),d(3));row.addView(card,cardLp);
+            }
+            while(row.getChildCount()<columns){View blank=new View(this);row.addView(blank,new LinearLayout.LayoutParams(0,1,1));}
+            grid.addView(row,lp(-1,151));
         }
     }
 
-    private void syncInstance() {
-        try {
-            net.kdt.pojavlaunch.instances.Instance i = Instances.loadSelectedInstance();
-            if (i != null) store.writeActiveForInstance(i.getGameDirectory());
-        } catch (Exception ignored) {}
+    private void refreshPreview(){
+        if(active==null||preview==null)return;
+        Bitmap s=null,c=null;
+        if(!active.skin.isEmpty()){File f=new File(getFilesDir(),"cosmetics/skins/"+active.skin);if(f.exists())s=store.load(f);}
+        if(!active.cape.isEmpty()){File f=new File(getFilesDir(),"cosmetics/capes/"+active.cape);if(f.exists())c=store.load(f);}
+        preview.setSkin(active.skinEnabled?s:null,"slim".equals(active.model));preview.setCape(active.capeEnabled?c:null);preview.setCapePreview(active.capeEnabled);
+        selectedName.setText(active.skin.isEmpty()?"Oryn User Skin":displayName(new File(active.skin)));
+        boolean slim="slim".equals(active.model);modelInfo.setText((slim?"Slim Model (3px Arms)":"Classic Model (4px Arms)")+"  •  Drag to Rotate");
+        modelButton.setText(slim?"Classic":"✓  Classic");modelButton.setBackground(shape(slim?CARD:BLUE,10,BLUE,1));
+        renderGrid();
     }
-
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode != RESULT_OK || data == null || data.getData() == null) return;
-        Uri uri = data.getData();
-        try {
-            File f = requestCode == PICK_SKIN ? store.importSkin(uri, "skin") : store.importCape(uri, "cape");
-            if (requestCode == PICK_SKIN) { active.skin = f.getName(); active.skinEnabled = true; }
-            else { active.cape = f.getName(); active.capeEnabled = true; }
-            saveCurrent("Imported " + displayName(f));
-        } catch (Exception e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            status.setText("Import failed");
-        }
+    private String displayName(File f){String n=f.getName();if(n.toLowerCase(Locale.ROOT).endsWith(".png"))n=n.substring(0,n.length()-4);return n.replace('_',' ');}
+    private void saveCurrent(String message){
+        try{store.setActiveProfile(active);Instances.Instance i=Instances.loadSelectedInstance();if(i!=null)store.writeActiveForInstance(i.getGameDirectory());
+            refreshPreview();status.setText("✓  "+message);
+        }catch(Exception e){status.setText("Could not save: "+e.getMessage());}
     }
+    private void pick(int code){
+        Intent i=new Intent(Intent.ACTION_OPEN_DOCUMENT);i.setType("image/png");i.addCategory(Intent.CATEGORY_OPENABLE);
+        startActivityForResult(i,code);
+    }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data){
+        super.onActivityResult(requestCode,resultCode,data);if(resultCode!=RESULT_OK||data==null||data.getData()==null)return;
+        Uri uri=data.getData();
+        try{
+            File f=requestCode==PICK_SKIN?store.importSkin(uri,"skin"):store.importCape(uri,"cape");
+            if(requestCode==PICK_SKIN){active.skin=f.getName();active.skinEnabled=true;}else{active.cape=f.getName();active.capeEnabled=true;}
+            saveCurrent("Imported "+displayName(f));
+        }catch(Exception e){new AlertDialog.Builder(this).setTitle("Import failed").setMessage(e.getMessage()==null?"Invalid PNG file":e.getMessage()).setPositiveButton("OK",null).show();}
+    }
+    @Override protected void onDestroy(){if(preview!=null){preview.stopLoading();preview.destroy();preview=null;}super.onDestroy();}
 }
