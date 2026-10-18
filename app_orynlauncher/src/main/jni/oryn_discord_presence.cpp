@@ -37,7 +37,7 @@ void update(const std::string& details, const std::string& state) {
     activity.SetDetails(details);
     if (!state.empty()) activity.SetState(state);
     // Show elapsed time while the user is playing OrynLauncherPlus.
-    if (details == "Playing OrynLauncherPlus") {
+    if (details == "Playing OrynLauncher Plus") {
         discordpp::ActivityTimestamps timestamps;
         timestamps.SetStart(static_cast<uint64_t>(std::time(nullptr)));
         activity.SetTimestamps(timestamps);
