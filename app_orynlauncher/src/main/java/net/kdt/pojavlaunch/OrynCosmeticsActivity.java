@@ -142,8 +142,9 @@ public class OrynCosmeticsActivity extends Activity {
         skinsTab.setOnClickListener(v->{showingCapes=false;onlineMode=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
         capesTab.setOnClickListener(v->{showingCapes=true;onlineMode=false;query="";search.setText("");updateTabs();updateImportButton();renderGrid();});
         search.addTextChangedListener(new TextWatcher(){public void beforeTextChanged(CharSequence s,int st,int count,int after){}
-            public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);if(!onlineMode)renderGrid();}
+            public void onTextChanged(CharSequence s,int start,int before,int count){query=s.toString().trim().toLowerCase(Locale.ROOT);renderGrid();}
             public void afterTextChanged(Editable e){}});
+        search.setOnEditorActionListener((v, actionId, event)->{ if(onlineMode){loadOnlineSkins(search.getText().toString().trim());return true;} return false; });
         updateTabs();
     }
 
