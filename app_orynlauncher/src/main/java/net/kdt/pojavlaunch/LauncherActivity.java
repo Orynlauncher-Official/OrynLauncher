@@ -373,6 +373,11 @@ public class LauncherActivity extends BaseActivity {
 
     @Override
     protected void onDestroy() {
+        // Clear Rich Presence when the launcher is actually being closed.
+        // Keep it alive for temporary activity destruction/configuration changes.
+        if (isFinishing()) {
+            OrynDiscordPresence.stop();
+        }
         super.onDestroy();
         mProgressLayout.cleanUpObservers();
         ProgressKeeper.removeTaskCountListener(mProgressLayout);
