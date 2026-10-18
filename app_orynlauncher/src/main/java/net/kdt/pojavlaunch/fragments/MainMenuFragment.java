@@ -145,7 +145,21 @@ public class MainMenuFragment extends Fragment {
         if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynSettingsActivity.class)));
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
-        if (mPlayButton != null) mPlayButton.setOnClickListener(v -> ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true));
+        if (mPlayButton != null) mPlayButton.setOnClickListener(v -> {
+            // Update Discord as soon as the actual PLAY button is pressed, before the launcher
+            // hands off to the game-loading flow (which can show a black screen for a while).
+            try {
+                Instance selectedInstance = Instances.loadSelectedInstance();
+                if (selectedInstance != null) {
+                    net.kdt.pojavlaunch.utils.OrynDiscordPresence.setPlaying(selectedInstance.versionId);
+                } else {
+                    net.kdt.pojavlaunch.utils.OrynDiscordPresence.setPlaying(null);
+                }
+            } catch (RuntimeException error) {
+                net.kdt.pojavlaunch.utils.OrynDiscordPresence.setPlaying(null);
+            }
+            ExtraCore.setValue(ExtraConstants.LAUNCH_GAME, true);
+        });
         if (mOpenStoreButton != null) mOpenStoreButton.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), OrynDownloadActivity.class)));
 
