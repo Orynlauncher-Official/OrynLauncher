@@ -375,7 +375,9 @@ public class OrynCosmeticsActivity extends Activity {
                         Bitmap crisp=Bitmap.createScaledBitmap(cropped,128,128,false);
                         cropped.recycle(); bitmap.recycle(); thumb.setImageBitmap(crisp);
                     }else if(!showingCapes){
-                        String thumbKey=file.getAbsolutePath()+"#"+("slim".equals(active.model)?"slim":"classic");
+                        String skinFileName=displayName(file).toLowerCase(Locale.ROOT);
+                        boolean slimModel=skinFileName.contains("alex") || skinFileName.contains("slim");
+                        String thumbKey=file.getAbsolutePath()+"#"+(slimModel?"slim":"classic");
                         Bitmap cachedLocal=localThumbCache.get(thumbKey);
                         if(cachedLocal!=null&&!cachedLocal.isRecycled()) {
                             bitmap.recycle();
@@ -383,8 +385,6 @@ public class OrynCosmeticsActivity extends Activity {
                         } else {
                             Bitmap head=makeHeadThumbnail(bitmap);
                             if(head!=null) thumb.setImageBitmap(head);
-                            boolean slimModel=displayName(file).toLowerCase(Locale.ROOT).contains("alex") ||
-                                    displayName(file).toLowerCase(Locale.ROOT).contains("slim");
                             preview.renderThumbnail(bitmap,slimModel,rendered->{
                                 if(rendered!=null&&!rendered.isRecycled()) {
                                     localThumbCache.put(thumbKey,rendered);
