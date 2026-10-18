@@ -191,7 +191,7 @@ public class OrynCosmeticsActivity extends Activity {
     }
     private String displayName(File f){String n=f.getName();if(n.toLowerCase(Locale.ROOT).endsWith(".png"))n=n.substring(0,n.length()-4);return n.replace('_',' ');}
     private void saveCurrent(String message){
-        try{store.setActiveProfile(active);Instances.Instance i=Instances.loadSelectedInstance();if(i!=null)store.writeActiveForInstance(i.getGameDirectory());
+        try{store.setActiveProfile(active);net.kdt.pojavlaunch.instances.Instance i=Instances.loadSelectedInstance();if(i!=null)store.writeActiveForInstance(i.getGameDirectory());
             refreshPreview();status.setText("✓  "+message);
         }catch(Exception e){status.setText("Could not save: "+e.getMessage());}
     }
