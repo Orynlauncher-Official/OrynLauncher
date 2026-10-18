@@ -10,9 +10,14 @@ import android.graphics.drawable.ColorDrawable;
 import android.view.MotionEvent;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebViewClient;
 
 import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import android.util.Base64;
 
 /**
@@ -28,6 +33,11 @@ public class OrynCosmeticPreviewView extends WebView {
     private boolean pageReady;
     private boolean pendingSlim;
     private boolean pendingCapeBack;
+    private int thumbnailSequence;
+    private final Map<String, ThumbnailCallback> thumbnailCallbacks = new HashMap<>();
+    private final List<String> pendingThumbnailScripts = new ArrayList<>();
+
+    public interface ThumbnailCallback { void onRendered(Bitmap bitmap); }
 
     public OrynCosmeticPreviewView(Context context) {
         super(context);
@@ -49,10 +59,31 @@ public class OrynCosmeticPreviewView extends WebView {
         setVerticalScrollBarEnabled(false);
         setHorizontalScrollBarEnabled(false);
 
+        addJavascriptInterface(new Object() {
+            @JavascriptInterface public void onThumbnailRendered(String id, String dataUrl) {
+                Bitmap bitmap = null;
+                try {
+                    int comma = dataUrl == null ? -1 : dataUrl.indexOf(',');
+                    if (comma >= 0) {
+                        byte[] bytes = Base64.decode(dataUrl.substring(comma + 1), Base64.DEFAULT);
+                        bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                    }
+                } catch (Throwable ignored) {}
+                final Bitmap rendered = bitmap;
+                post(() -> {
+                    ThumbnailCallback callback = thumbnailCallbacks.remove(id);
+                    if (callback != null) callback.onRendered(rendered);
+                    else if (rendered != null && !rendered.isRecycled()) rendered.recycle();
+                });
+            }
+        }, "OrynThumbnailBridge");
+
         setWebViewClient(new WebViewClient() {
             @Override public void onPageFinished(WebView view, String url) {
                 pageReady = true;
                 applyPending();
+                for (String script : new ArrayList<>(pendingThumbnailScripts)) evaluateJavascript(script, null);
+                pendingThumbnailScripts.clear();
             }
         });
 
@@ -84,6 +115,22 @@ public class OrynCosmeticPreviewView extends WebView {
         if (pageReady) {
             evaluateJavascript("setCapePreview(" + (showBack ? "true" : "false") + ")", null);
         }
+    }
+
+    /** Render a real front-facing Minecraft player thumbnail using the same skinview3d renderer. */
+    public void renderThumbnail(Bitmap skin, boolean slim, ThumbnailCallback callback) {
+        if (skin == null || skin.isRecycled() || callback == null) {
+            if (callback != null) callback.onRendered(null);
+            return;
+        }
+        String data = bitmapToDataUrl(skin);
+        if (data == null) { callback.onRendered(null); return; }
+        String id = "thumb" + (++thumbnailSequence);
+        thumbnailCallbacks.put(id, callback);
+        String script = "renderSkinThumbnail(" + toJsString(id) + "," + toJsString(data) + "," +
+                toJsString(slim ? "slim" : "default") + ")";
+        if (pageReady) evaluateJavascript(script, null);
+        else pendingThumbnailScripts.add(script);
     }
 
     private void applyPending() {
