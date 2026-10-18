@@ -35,8 +35,8 @@ public final class OrynDiscordPresence {
         if (!nativeAvailable) return;
         String safeVersion = version == null || version.trim().isEmpty()
                 ? "Minecraft" : "Version " + version.trim();
-        try { nativeUpdate("Playing Minecraft", safeVersion); }
-        catch (Throwable error) { Log.w(TAG, "Could not update Minecraft presence.", error); }
+        try { nativeUpdate("Playing OrynLauncherPlus", safeVersion); }
+        catch (Throwable error) { Log.w(TAG, "Could not update playing presence.", error); }
     }
 
     public static void stop() {
