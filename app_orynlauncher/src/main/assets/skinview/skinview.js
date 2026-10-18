@@ -419,5 +419,41 @@ function setInteractionEnabled(enabled) {
     container.style.pointerEvents = interactive ? 'auto' : 'none';
 }
 
+// Render catalog thumbnails with the real Minecraft player geometry and UV mapping.
+async function renderSkinThumbnail(id, skinDataUrl, model = "default") {
+    let thumbViewer = null;
+    try {
+        const canvas = document.createElement("canvas");
+        thumbViewer = new skinview3d.SkinViewer({
+            canvas,
+            width: 112,
+            height: 112,
+            skin: skinDataUrl
+        });
+        thumbViewer.background = 0x051225;
+        thumbViewer.zoom = 0.82;
+        thumbViewer.fov = 38;
+        thumbViewer.controls.enableRotate = false;
+        await thumbViewer.loadSkin(skinDataUrl, { model });
+        if (thumbViewer.playerObject) {
+            thumbViewer.playerObject.rotation.y = -0.18;
+        }
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        const image = canvas.toDataURL("image/png");
+        if (window.OrynThumbnailBridge) {
+            window.OrynThumbnailBridge.onThumbnailRendered(id, image);
+        }
+    } catch (error) {
+        console.warn("Oryn skin thumbnail render failed", error);
+        if (window.OrynThumbnailBridge) {
+            window.OrynThumbnailBridge.onThumbnailRendered(id, "");
+        }
+    } finally {
+        if (thumbViewer && typeof thumbViewer.dispose === "function") {
+            try { thumbViewer.dispose(); } catch (_) {}
+        }
+    }
+}
+
 startAnim("OrynShowcase", 1.0);
 setInteractionEnabled(true);
