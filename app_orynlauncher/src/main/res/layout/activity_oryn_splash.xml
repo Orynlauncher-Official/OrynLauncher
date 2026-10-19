@@ -1,13 +1,105 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
-    <!-- Intro video (res/raw/oryn_intro.mp4). VideoView keeps the video's aspect ratio and letterboxes on black. -->
-    <VideoView
-        android:id="@+id/oryn_splash_video"
+    <!-- Full-screen Minecraft landscape background; keep it behind all splash content. -->
+    <ImageView
+        android:id="@+id/oryn_splash_background"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_gravity="center" />
-</FrameLayout>
+        android:scaleType="centerCrop"
+        android:src="@drawable/orynlauncher_splash_background"
+        android:contentDescription="@null" />
+
+    <!-- Dark monochrome overlay to preserve the reference's cinematic contrast and legible text. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal">
+        <View android:layout_width="1dp" android:layout_height="28dp" android:background="#FFFFFF" />
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:letterSpacing="0.15" android:text="ORYN LAUNCHER PLUS" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:letterSpacing="0.2" android:text="PLAY  •  EXPLORE  •  CREATE" android:textColor="#B3FFFFFF" android:textSize="8sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/oryn_splash_version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="18dp"
+        android:layout_marginEnd="16dp"
+        android:text="v5.0   ✦   Better. Faster. Oryn."
+        android:textColor="#E6FFFFFF"
+        android:textSize="10sp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+        <ImageView android:layout_width="64dp" android:layout_height="64dp" android:contentDescription="Oryn Launcher" android:src="@mipmap/ic_launcher" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:letterSpacing="0.12" android:text="ORYN" android:textColor="#FFFFFF" android:textSize="28sp" android:textStyle="bold" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:letterSpacing="0.4" android:text="LAUNCHER" android:textColor="#E6FFFFFF" android:textSize="10sp" />
+        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <View android:layout_width="36dp" android:layout_height="1dp" android:background="#80FFFFFF" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:layout_marginEnd="10dp" android:letterSpacing="0.3" android:text="PLUS" android:textColor="#FFFFFF" android:textSize="12sp" />
+            <View android:layout_width="36dp" android:layout_height="1dp" android:background="#80FFFFFF" />
+        </LinearLayout>
+        <TextView android:id="@+id/oryn_splash_status" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="28dp" android:text="Loading your adventure..." android:textColor="#FFFFFF" android:textSize="13sp" />
+        <ProgressBar
+            android:id="@+id/oryn_splash_progress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="260dp"
+            android:layout_height="4dp"
+            android:layout_marginTop="8dp"
+            android:max="100"
+            android:progress="0"
+            android:progressBackgroundTint="#33FFFFFF"
+            android:progressTint="#FFFFFF" />
+        <TextView android:id="@+id/oryn_splash_percent" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="0%" android:textColor="#CCFFFFFF" android:textSize="10sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="44dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView style="@style/OrynSplashFeature" android:text="MINECRAFT&#10;LAUNCH" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="ACCOUNTS" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="DOWNLOADS" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="SETTINGS" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="ORYNFILES" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="MODS &amp;&#10;MODPACKS" />
+        <View style="@style/OrynSplashDivider" />
+        <TextView style="@style/OrynSplashFeature" android:text="CONTROLS" />
+    </LinearLayout>
+
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:layout_alignParentStart="true" android:layout_marginStart="16dp" android:layout_marginBottom="14dp" android:text="OrynLauncher Plus  •  © 2026" android:textColor="#99FFFFFF" android:textSize="9sp" />
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_alignParentBottom="true" android:layout_alignParentEnd="true" android:layout_marginEnd="16dp" android:layout_marginBottom="14dp" android:gravity="center_vertical" android:orientation="horizontal">
+        <View android:layout_width="40dp" android:layout_height="1dp" android:background="#80FFFFFF" />
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="10dp" android:letterSpacing="0.15" android:text="MORE THAN A LAUNCHER" android:textColor="#CCFFFFFF" android:textSize="9sp" />
+    </LinearLayout>
+</RelativeLayout>
