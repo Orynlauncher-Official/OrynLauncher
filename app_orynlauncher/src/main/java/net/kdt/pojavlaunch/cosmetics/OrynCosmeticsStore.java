@@ -325,6 +325,22 @@ public final class OrynCosmeticsStore {
         }, "Oryn-Curated-Skins").start();
     }
 
+    /** Deletes the previous generated/demo collection once, while preserving skins added afterward. */
+    public boolean clearOldSkinCollectionOnce() {
+        android.content.SharedPreferences prefs = context.getSharedPreferences("oryn_skin_catalog_migration", Context.MODE_PRIVATE);
+        if (prefs.getBoolean("old_presets_removed_v1", false)) return false;
+        File[] files = skins.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".png")) {
+                    file.delete();
+                }
+            }
+        }
+        prefs.edit().putBoolean("old_presets_removed_v1", true).apply();
+        return true;
+    }
+
     public void removeBundledDemoSkins() {
         String[] demo = {"Oryn.png","Steve_Classic.png","Alex_Slim.png","Black_Hoodie.png","White_Hoodie.png","Glow.png","Demon.png","Anime_Boy.png","Pink_Girl.png","Purple_Tech.png","Golden.png","Custom_Skin.png"};
         for (String name : demo) { File f = new File(skins, name); if (f.isFile()) f.delete(); }
