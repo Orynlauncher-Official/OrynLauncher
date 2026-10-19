@@ -33,6 +33,8 @@ public class OrynCosmeticPreviewView extends WebView {
     private boolean pageReady;
     private boolean pendingSlim;
     private boolean pendingCapeBack;
+    private float lastTouchX;
+    private boolean draggingPreview;
     private int thumbnailSequence;
     private final Map<String, ThumbnailCallback> thumbnailCallbacks = new HashMap<>();
     private final List<String> pendingThumbnailScripts = new ArrayList<>();
@@ -170,8 +172,36 @@ public class OrynCosmeticPreviewView extends WebView {
     }
 
     @Override public boolean onTouchEvent(MotionEvent event) {
-        // Let skinview3d's OrbitControls handle drag rotation and double-tap reset.
-        return super.onTouchEvent(event);
+        // Rotate the player model directly while dragging. This avoids WebView/OrbitControls
+        // gesture conflicts and keeps drag responsive on Android landscape screens.
+        switch (event.getActionMasked()) {
+            case MotionEvent.ACTION_DOWN:
+                lastTouchX = event.getX();
+                draggingPreview = true;
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                if (draggingPreview) {
+                    float x = event.getX();
+                    float delta = x - lastTouchX;
+                    lastTouchX = x;
+                    if (pageReady && Math.abs(delta) > 0.1f) {
+                        evaluateJavascript("rotatePreview(" + (-delta * 0.012f) + ")", null);
+                    }
+                    return true;
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                draggingPreview = false;
+                performClick();
+                return true;
+        }
+        return true;
+    }
+
+    @Override public boolean performClick() {
+        super.performClick();
+        return true;
     }
 
     @Override protected void onDetachedFromWindow() {
