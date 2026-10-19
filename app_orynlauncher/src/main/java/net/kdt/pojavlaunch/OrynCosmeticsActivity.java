@@ -161,7 +161,7 @@ public class OrynCosmeticsActivity extends Activity {
         importButton=button("＋  Import / Replace Skin",true); LinearLayout.LayoutParams imp=lp(-1,40);
         imp.topMargin=dp(4); right.addView(importButton,imp);
         importButton.setOnClickListener(v->pick(showingCapes?PICK_CAPE:PICK_SKIN));
-        skinDexButton=button("Browse live SkinDex",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
+        skinDexButton=button("SkinDex • 1-Click Apply",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
         dexLp.topMargin=dp(4); right.addView(skinDexButton,dexLp);
         skinDexButton.setOnClickListener(v->browseSkinDex());
         status=text("Ready • Choose a skin and tap Apply",10,MUTED); root.addView(status,lp(-1,20));
@@ -177,54 +177,129 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
+    private static final class RemoteSkin {
+        final String name, imageUrl;
+        RemoteSkin(String name, String imageUrl){this.name=name;this.imageUrl=imageUrl;}
+    }
+
+    /** Native SkinDex catalog: fetches listing HTML in the background and renders native cards. */
     private void browseSkinDex(){
-        final WebView web=new WebView(this);
-        web.setBackgroundColor(BG);
-        WebSettings settings=web.getSettings();
-        settings.setJavaScriptEnabled(true);
-        settings.setDomStorageEnabled(true);
-        settings.setLoadsImagesAutomatically(true);
-        web.setWebViewClient(new WebViewClient());
-        web.setWebChromeClient(new WebChromeClient());
-        final AlertDialog dialog=new AlertDialog.Builder(this)
-                .setTitle("SkinDex • Live Skin Gallery")
-                .setView(web)
-                .setNegativeButton("Close",(d,w)->d.dismiss())
-                .create();
-        web.setDownloadListener((url,userAgent,contentDisposition,mimeType,contentLength)->{
-            Uri uri=Uri.parse(url);
-            String host=uri.getHost();
-            if(host==null||!(host.equalsIgnoreCase("skindex.pro")||host.toLowerCase(Locale.ROOT).endsWith(".skindex.pro"))){
-                status.setText("Only direct SkinDex skin downloads are allowed");
-                return;
+        final LinearLayout content=new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setPadding(dp(12),dp(8),dp(12),dp(8));
+        content.setBackgroundColor(BG);
+        EditText query=new EditText(this);
+        query.setSingleLine(true); query.setTextColor(WHITE); query.setHintTextColor(MUTED);
+        query.setHint("Search skins loaded from SkinDex");
+        query.setBackground(bg(CARD,10,Color.rgb(38,67,105),1));
+        content.addView(query,lp(-1,42));
+        TextView info=text("Loading SkinDex skins…",11,MUTED);
+        content.addView(info,lp(-1,28));
+        ScrollView scroll=new ScrollView(this);
+        LinearLayout results=new LinearLayout(this); results.setOrientation(LinearLayout.VERTICAL);
+        scroll.addView(results); content.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
+        Button more=button("Load more skins",false); content.addView(more,lp(-1,38));
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("SkinDex • Native Gallery")
+                .setView(content).setNegativeButton("Close",null).create();
+        final ArrayList<RemoteSkin> all=new ArrayList<>();
+        final int[] page={1}; final boolean[] loading={false};
+        Runnable render=()->{
+            results.removeAllViews();
+            String q=query.getText().toString().trim().toLowerCase(Locale.ROOT);
+            int shown=0;
+            for(RemoteSkin skin:all){
+                if(!skin.name.toLowerCase(Locale.ROOT).contains(q))continue;
+                LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
+                row.setPadding(dp(8),dp(5),dp(8),dp(5)); row.setBackground(bg(CARD,10,Color.rgb(24,49,83),1));
+                TextView name=text(skin.name,13,WHITE);
+                row.addView(name,new LinearLayout.LayoutParams(0,dp(42),1));
+                Button apply=button("↓  1-Click Apply",true);
+                row.addView(apply,lp(140,38));
+                apply.setOnClickListener(v->{
+                    status.setText("Downloading and applying "+skin.name+"…");
+                    apply.setEnabled(false);
+                    new Thread(()->{
+                        try{
+                            File downloaded=store.importRemoteSkin(skin.imageUrl,skin.name);
+                            runOnUiThread(()->{
+                                active.skin=downloaded.getName(); active.skinEnabled=true;
+                                String n=skin.name.toLowerCase(Locale.ROOT);
+                                active.model=(n.contains("alex")||n.contains("slim")||n.contains("girl"))?"slim":"classic";
+                                save("Applied SkinDex skin: "+displayName(downloaded));
+                                if(dialog.isShowing())dialog.dismiss();
+                            });
+                        }catch(Exception e){runOnUiThread(()->{
+                            apply.setEnabled(true);
+                            status.setText("Could not apply skin • try another result");
+                        });}
+                    },"Oryn-SkinDex-Apply").start();
+                });
+                LinearLayout.LayoutParams rp=lp(-1,54); rp.bottomMargin=dp(5); results.addView(row,rp);
+                shown++;
             }
-            String fileName=URLUtil.guessFileName(url,contentDisposition,mimeType);
-            if(fileName==null||fileName.trim().isEmpty())fileName="skindex_skin.png";
-            if(fileName.toLowerCase(Locale.ROOT).endsWith(".png"))fileName=fileName.substring(0,fileName.length()-4);
-            final String skinName=fileName;
-            status.setText("Downloading SkinDex skin…");
-            new Thread(()->{
-                try{
-                    File downloaded=store.importRemoteSkin(url,skinName);
-                    runOnUiThread(()->{
-                        active.skin=downloaded.getName();
-                        active.skinEnabled=true;
-                        String n=downloaded.getName().toLowerCase(Locale.ROOT);
-                        active.model=(n.contains("slim")||n.contains("alex")||n.contains("girl"))?"slim":"classic";
-                        save("SkinDex skin applied: "+displayName(downloaded));
-                        if(dialog.isShowing())dialog.dismiss();
-                    });
-                }catch(Exception ex){
-                    runOnUiThread(()->status.setText("Skin download failed • choose another skin"));
-                }
-            },"Oryn-SkinDex-Download").start();
+            if(shown==0)results.addView(text(all.isEmpty()?"No skins loaded yet. Check connection and retry.":"No matching skins.",12,MUTED),lp(-1,48));
+        };
+        query.addTextChangedListener(new TextWatcher(){
+            public void beforeTextChanged(CharSequence s,int st,int c,int a){}
+            public void onTextChanged(CharSequence s,int st,int before,int count){render.run();}
+            public void afterTextChanged(Editable e){}
         });
-        web.loadUrl("https://www.skindex.pro/latest/");
-        dialog.setOnDismissListener(d->{web.stopLoading();web.destroy();});
+        Runnable[] loadPage=new Runnable[1];
+        loadPage[0]=()->{
+            if(loading[0])return;
+            loading[0]=true; info.setText("Loading SkinDex page "+page[0]+"…"); more.setEnabled(false);
+            final int requestedPage=page[0];
+            new Thread(()->{
+                ArrayList<RemoteSkin> found=new ArrayList<>();
+                java.net.HttpURLConnection connection=null;
+                try{
+                    java.net.URL url=new java.net.URL("https://www.skindex.pro/latest/"+(requestedPage>1?"?page="+requestedPage:""));
+                    connection=(java.net.HttpURLConnection)url.openConnection();
+                    connection.setConnectTimeout(10000); connection.setReadTimeout(15000);
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/1.0");
+                    StringBuilder html=new StringBuilder();
+                    try(java.io.InputStream in=connection.getInputStream();
+                        java.io.BufferedReader reader=new java.io.BufferedReader(new java.io.InputStreamReader(in,java.nio.charset.StandardCharsets.UTF_8))){
+                        String line; int total=0;
+                        while((line=reader.readLine())!=null && total<2*1024*1024){html.append(line).append('\n');total+=line.length();}
+                    }
+                    java.util.regex.Matcher links=java.util.regex.Pattern.compile("(?is)<a[^>]+href=[\\\"']([^\\\"']+)[\\\"'][^>]*>(.*?)</a>").matcher(html);
+                    while(links.find()){
+                        String href=links.group(1), body=links.group(2);
+                        if(!href.contains("skindex.pro")&&!href.matches("/[^/]+/?"))continue;
+                        java.util.regex.Matcher image=java.util.regex.Pattern.compile("(?is)(?:src|data-src)=[\\\"']([^\\\"']*/static/skins/[^\\\"']+\\.png[^\\\"']*)").matcher(body);
+                        if(!image.find())continue;
+                        String imageUrl=image.group(1).replace("&amp;","&");
+                        if(imageUrl.startsWith("//"))imageUrl="https:"+imageUrl;
+                        else if(imageUrl.startsWith("/"))imageUrl="https://www.skindex.pro"+imageUrl;
+                        if(!imageUrl.startsWith("https://www.skindex.pro/static/skins/"))continue;
+                        String name=body.replaceAll("(?is)<[^>]+>"," ").replaceAll("\\s+"," ").trim();
+                        if(name.isEmpty())name=href.replaceAll("/","").replace('-',' ');
+                        name=android.text.Html.fromHtml(name,android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                        if(name.length()>80)name=name.substring(0,80);
+                        found.add(new RemoteSkin(name,imageUrl));
+                    }
+                }catch(Exception ignored){}finally{if(connection!=null)connection.disconnect();}
+                final ArrayList<RemoteSkin> result=found;
+                runOnUiThread(()->{
+                    loading[0]=false; more.setEnabled(true);
+                    if(!result.isEmpty()){
+                        for(RemoteSkin item:result){
+                            boolean duplicate=false;
+                            for(RemoteSkin old:all)if(old.imageUrl.equals(item.imageUrl)){duplicate=true;break;}
+                            if(!duplicate)all.add(item);
+                        }
+                        page[0]++;
+                        info.setText(all.size()+" skins loaded • tap 1-Click Apply");
+                    }else info.setText("No more skins found. Try Load more or check connection.");
+                    render.run();
+                });
+            },"Oryn-SkinDex-Catalog").start();
+        };
+        more.setOnClickListener(v->loadPage[0].run());
+        dialog.setOnShowListener(v->{dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.92f),(int)(getResources().getDisplayMetrics().heightPixels*.88f));loadPage[0].run();});
         dialog.show();
-        if(dialog.getWindow()!=null)dialog.getWindow().setLayout(
-                (int)(getResources().getDisplayMetrics().widthPixels*0.94f),
-                (int)(getResources().getDisplayMetrics().heightPixels*0.88f));
     }
 
     private void updateTabs(){
