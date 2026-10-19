@@ -24,7 +24,7 @@ public final class OrynCosmeticsManager {
                                           File gameDir, String minecraftVersion) {
         try {
             OrynCosmeticsStore store = new OrynCosmeticsStore(context);
-            OrynCosmeticsStore.CosmeticProfile stored = store.getActiveProfile(account);
+            OrynCosmeticsStore.CosmeticProfile stored = store.getActiveProfile();
             OrynCosmeticsProfile profile = OrynCosmeticsProfile.from(account, stored);
             OrynCosmeticsVersionAdapter adapter =
                     OrynCosmeticsVersionAdapterFactory.forVersion(minecraftVersion);
