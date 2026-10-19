@@ -258,6 +258,73 @@ public final class OrynCosmeticsStore {
         } finally { base.recycle(); }
     }
 
+    /**
+     * Replaces the placeholder recolours with real community skin PNGs.
+     * Downloads run off the UI thread and each texture is validated before replacing a preset.
+     * Sources: SKiNDEX community skin pages; keep this optional so the gallery works offline.
+     */
+    public void downloadCuratedSkins(Runnable onComplete) {
+        final String[][] sources = {
+            {"Steve_Classic.png", "https://www.skindex.pro/static/skins/classic-steve-9fcd2533-c967-4dcd-989e-79b49e964de2.png"},
+            {"Alex_Slim.png", "https://www.minecraftskins.com/uploads/skins/2021/05/16/original-alex-skin-17819683.png?v971"},
+            {"Demon.png", "https://www.skindex.pro/static/skins/demon-boy-krpfima-3478d8fd-f6c5-4d52-a2cc-cda8e6ac66a6.png"},
+            {"Anime_Boy.png", "https://www.skindex.pro/static/skins/anime-boy-4P6jkYUB45LNgFQNk84qwC.png"},
+            {"Pink_Girl.png", "https://www.skindex.pro/static/skins/cute-pink-girl-3MEEXD84B5jGRn7dWtP2Ek.png"}
+        };
+        new Thread(() -> {
+            android.content.SharedPreferences prefs = context.getSharedPreferences("oryn_curated_skins", Context.MODE_PRIVATE);
+            boolean changed = false;
+            for (String[] source : sources) {
+                String fileName = source[0];
+                String key = "v1_" + fileName;
+                if (prefs.getBoolean(key, false)) continue;
+                java.net.HttpURLConnection connection = null;
+                File temp = new File(skins, fileName + ".download");
+                try {
+                    connection = (java.net.HttpURLConnection) new java.net.URL(source[1]).openConnection();
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(12000);
+                    connection.setInstanceFollowRedirects(true);
+                    connection.setRequestProperty("User-Agent", "OrynLauncherPlus/5.0");
+                    int code = connection.getResponseCode();
+                    if (code < 200 || code >= 300) continue;
+                    try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                        byte[] buffer = new byte[8192]; int count; long total = 0;
+                        while ((count = in.read(buffer)) != -1) {
+                            total += count;
+                            if (total > 2 * 1024 * 1024) throw new java.io.IOException("Skin PNG too large");
+                            out.write(buffer, 0, count);
+                        }
+                    }
+                    Bitmap check = BitmapFactory.decodeFile(temp.getAbsolutePath());
+                    boolean valid = check != null && check.getWidth() == 64 && check.getHeight() == 64;
+                    if (check != null) check.recycle();
+                    if (!valid) { temp.delete(); continue; }
+                    File target = new File(skins, fileName);
+                    File backup = new File(skins, fileName + ".old");
+                    if (target.exists() && !target.renameTo(backup)) { temp.delete(); continue; }
+                    if (!temp.renameTo(target)) {
+                        if (backup.exists()) backup.renameTo(target);
+                        temp.delete();
+                        continue;
+                    }
+                    if (backup.exists()) backup.delete();
+                    prefs.edit().putBoolean(key, true).apply();
+                    changed = true;
+                } catch (Exception ignored) {
+                    // Keep the offline fallback and retry this texture next time.
+                    temp.delete();
+                } finally {
+                    if (connection != null) connection.disconnect();
+                }
+            }
+            final boolean updated = changed;
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                if (onComplete != null) onComplete.run();
+            });
+        }, "Oryn-Curated-Skins").start();
+    }
+
     public void removeBundledDemoSkins() {
         String[] demo = {"Oryn.png","Steve_Classic.png","Alex_Slim.png","Black_Hoodie.png","White_Hoodie.png","Glow.png","Demon.png","Anime_Boy.png","Pink_Girl.png","Purple_Tech.png","Golden.png","Custom_Skin.png"};
         for (String name : demo) { File f = new File(skins, name); if (f.isFile()) f.delete(); }
