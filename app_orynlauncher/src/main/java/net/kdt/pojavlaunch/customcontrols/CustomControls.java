@@ -98,7 +98,7 @@ public class CustomControls {
 		);
 		floatingMenu.cornerRadius = 50;
 		this.mControlDataList.add(floatingMenu);
-		version = 10;
+		version = 11;
 	}
 	public void save(String path) throws IOException {
 		//Current version is the V3.2 so the version as to be marked as 8 !
