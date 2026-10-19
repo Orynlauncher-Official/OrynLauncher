@@ -65,6 +65,11 @@ public class OrynCosmeticsActivity extends Activity {
         if(active.model==null) active.model="classic";
         buildUi();
         refreshPreview();
+        status.setText("Checking original preset skin textures…");
+        store.downloadCuratedSkins(() -> {
+            refreshPreview();
+            status.setText("Skin presets checked • choose any skin and tap Apply");
+        });
     }
 
     private int dp(float v){return Math.round(v*getResources().getDisplayMetrics().density);}
