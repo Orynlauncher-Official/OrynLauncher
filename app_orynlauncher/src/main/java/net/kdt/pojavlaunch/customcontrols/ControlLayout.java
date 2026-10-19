@@ -80,11 +80,10 @@ public class ControlLayout extends FrameLayout {
             CustomControls layout = LayoutConverter.loadAndConvertIfNecessary(size, jsonPath);
             loadLayout(layout);
             updateLoadedFileName(jsonPath);
-        }catch (IOException | JsonSyntaxException e) {
-            // Load an empty layout on exception to avoid breakage when adding buttons in the editor
-            CustomControls customControls = new CustomControls();
-            customControls.mLayoutBitmaps = LayoutBitmaps.createEmpty();
-            loadLayout(customControls);
+        } catch (IOException | JsonSyntaxException e) {
+            // Keep the current valid layout when a selected JSON file is empty
+            // or corrupt. Replacing it with an empty layout makes the editor
+            // appear to lose all controls after a failed import.
             throw e;
         }
 	}
@@ -568,8 +567,11 @@ public class ControlLayout extends FrameLayout {
 			public void onFileSelected(File file, String path) {
 				try {
 					loadLayout(path);
-				}catch (IOException e) {
-					Tools.showError(getContext(), e);
+				} catch (IOException | JsonSyntaxException e) {
+					android.widget.Toast.makeText(getContext(),
+							"That control layout is empty or corrupted. Your current layout was kept.",
+							android.widget.Toast.LENGTH_LONG).show();
+					Log.e("OrynControls", "Failed to load selected control layout: " + path, e);
 				}
 				dialog.dismiss();
 			}
