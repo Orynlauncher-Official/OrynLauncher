@@ -13,6 +13,7 @@ import net.kdt.pojavlaunch.Architecture;
 import net.kdt.pojavlaunch.JVersionList;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsManager;
 import net.kdt.pojavlaunch.game.renderer.def.Renderers;
 import net.kdt.pojavlaunch.game.renderer.impl.GLESRenderSpec;
 import net.kdt.pojavlaunch.instances.Instance;
@@ -184,6 +185,13 @@ public class GameRunner {
                 }
             }
         File gamedir = instance.getGameDirectory();
+
+        // Prepare the selected Skin Studio profile and install the 1.21.11 runtime bridge.
+        try {
+            OrynCosmeticsManager.prepareForLaunch(activity, account, gamedir, versionId);
+        } catch (Throwable cosmeticError) {
+            Log.w("GameRunner", "Could not prepare Oryn cosmetics runtime", cosmeticError);
+        }
 
         // Oryn FPS Boost: apply real Minecraft-side performance settings before
         // the JVM starts. This reduces chunk/render/simulation workload instead

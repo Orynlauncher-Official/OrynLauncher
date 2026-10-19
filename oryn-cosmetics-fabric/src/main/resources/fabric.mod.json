@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "orynlauncher_cosmetics",
+  "version": "${version}",
+  "name": "OrynLauncher Cosmetics",
+  "description": "OrynLauncher client-side cosmetics bridge for Minecraft 1.21.11",
+  "environment": "client",
+  "mixins": [
+    "orynlauncher.client.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.18.2",
+    "minecraft": "~1.21.11",
+    "java": ">=21"
+  }
+}
