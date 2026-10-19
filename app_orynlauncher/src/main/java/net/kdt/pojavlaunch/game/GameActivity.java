@@ -340,7 +340,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
             mControlLayout.loadLayout(controlPath);
 
             if (mControlLayout.getLayout() == null
-                    || mControlLayout.getLayout().version < 11) {
+                    || mControlLayout.getLayout().version < 12) {
                 mControlLayout.loadLayout(new CustomControls(this));
                 try {
                     mControlLayout.saveLayout(controlPath);
@@ -355,7 +355,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
 
                 if (mControlLayout.getLayout() == null
-                        || mControlLayout.getLayout().version < 11) {
+                        || mControlLayout.getLayout().version < 12) {
                     mControlLayout.loadLayout(new CustomControls(this));
                     try {
                         mControlLayout.saveLayout(controlPath);
