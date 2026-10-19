@@ -111,7 +111,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout left=new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.setPadding(dp(12),dp(8),dp(12),dp(10)); left.setBackground(bg(PANEL,18,Color.rgb(30,57,93),1));
-        LinearLayout.LayoutParams leftLp=new LinearLayout.LayoutParams(0,-1,0.46f); leftLp.rightMargin=dp(10); body.addView(left,leftLp);
+        LinearLayout.LayoutParams leftLp=new LinearLayout.LayoutParams(0,-1,0.43f); leftLp.rightMargin=dp(10); body.addView(left,leftLp);
         TextView title=text("Skin & Cape",23,WHITE); title.setTypeface(null,android.graphics.Typeface.BOLD); left.addView(title,lp(-1,34));
         left.addView(text("Preview, select and apply locally",11,MUTED),lp(-1,23));
 
@@ -143,10 +143,10 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout right=new LinearLayout(this); right.setOrientation(LinearLayout.VERTICAL);
         right.setPadding(dp(10),dp(8),dp(8),dp(8)); right.setBackground(bg(PANEL,18,Color.rgb(20,57,105),1));
-        body.addView(right,new LinearLayout.LayoutParams(0,-1,0.54f));
+        body.addView(right,new LinearLayout.LayoutParams(0,-1,0.57f));
         LinearLayout controls=new LinearLayout(this); controls.setGravity(Gravity.CENTER_VERTICAL);
         search=new EditText(this); search.setSingleLine(true); search.setTextColor(WHITE); search.setHintTextColor(MUTED);
-        search.setTextSize(12); search.setPadding(dp(12),0,dp(8),0); search.setHint("Search saved skins...");
+        search.setTextSize(12); search.setPadding(dp(12),0,dp(8),0); search.setHint("Search skins or capes...");
         search.setBackground(bg(Color.rgb(6,15,29),12,Color.rgb(31,66,115),1));
         controls.addView(search,new LinearLayout.LayoutParams(0,dp(42),1));
         LinearLayout tabs=new LinearLayout(this); tabs.setPadding(dp(3),dp(3),dp(3),dp(3));
@@ -161,7 +161,7 @@ public class OrynCosmeticsActivity extends Activity {
         importButton=button("＋  Import / Replace Skin",true); LinearLayout.LayoutParams imp=lp(-1,40);
         imp.topMargin=dp(4); right.addView(importButton,imp);
         importButton.setOnClickListener(v->pick(showingCapes?PICK_CAPE:PICK_SKIN));
-        skinDexButton=button("SkinDex • 1-Click Apply",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
+        skinDexButton=button("♧  Browse SkinDex • 1-Click Apply",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
         dexLp.topMargin=dp(4); right.addView(skinDexButton,dexLp);
         skinDexButton.setOnClickListener(v->browseSkinDex());
         status=text("Ready • Choose a skin and tap Apply",10,MUTED); root.addView(status,lp(-1,20));
@@ -322,10 +322,10 @@ public class OrynCosmeticsActivity extends Activity {
         grid.removeAllViews();
         List<File> files=allFiles();
         if(files.isEmpty()){
-            TextView empty=text(showingCapes?"No capes yet. Import a cape PNG.":"No skins found. Import a skin PNG.",13,MUTED);
-            empty.setGravity(Gravity.CENTER); grid.addView(empty,lp(-1,100)); return;
+            TextView empty=text(showingCapes?"No capes saved yet. Import a cape PNG.":"No skins found. Tap SkinDex • 1-Click Apply to browse and apply skins.",13,MUTED);
+            empty.setGravity(Gravity.CENTER); empty.setPadding(dp(12),dp(12),dp(12),dp(12)); grid.addView(empty,lp(-1,140)); return;
         }
-        int columns=3;
+        int columns=4;
         for(int start=0;start<files.size();start+=columns){
             LinearLayout row=new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
             for(int col=0;col<columns&&start+col<files.size();col++){
@@ -343,18 +343,18 @@ public class OrynCosmeticsActivity extends Activity {
                         else {image.setImageBitmap(bitmap);}
                     } else image.setImageBitmap(bitmap);
                 }
-                card.addView(image,lp(-1,76));
-                TextView name=text(displayName(file),10,WHITE); name.setGravity(Gravity.CENTER);
-                name.setMaxLines(1); name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,24));
+                card.addView(image,lp(-1,82));
+                TextView name=text(displayName(file),11,WHITE); name.setGravity(Gravity.CENTER);
+                name.setMaxLines(1); name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,23));
                 Button apply=button(equipped?"✓ Applied":"Apply",equipped); apply.setTextSize(10);
-                card.addView(apply,lp(-1,29));
+                card.addView(apply,lp(-1,30));
                 View.OnClickListener click=v->applyFile(file);
                 apply.setOnClickListener(click); name.setOnClickListener(click); image.setOnClickListener(click);
-                LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(139),1);
+                LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(151),1);
                 cp.setMargins(dp(3),dp(3),dp(3),dp(3)); row.addView(card,cp);
             }
             while(row.getChildCount()<columns)row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-            grid.addView(row,lp(-1,145));
+            grid.addView(row,lp(-1,157));
         }
     }
 
