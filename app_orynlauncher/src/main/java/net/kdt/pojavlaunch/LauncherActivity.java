@@ -67,6 +67,8 @@ public class LauncherActivity extends BaseActivity {
     private View mAccountHeader;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
+    private View mOrynLaunchSplash;
+    private android.animation.ValueAnimator mOrynLaunchProgressAnimator;
     private NotificationManager mNotificationManager;
     private static ActivityResultLauncher<String> mRequestPermissionLauncher;
 
@@ -175,6 +177,7 @@ public class LauncherActivity extends BaseActivity {
         }
         String normalizedVersionId = MoJsonExtras.normalizeVersionId(selectedInstance.versionId);
         OrynDiscordPresence.setPlaying(normalizedVersionId);
+        showOrynLaunchSplash();
         JVersionList.Version mcVersion = MoJsonExtras.getListedVersion(normalizedVersionId);
         new MoJsonDownloader().start(
                 this.getAssets(),
@@ -345,6 +348,48 @@ public class LauncherActivity extends BaseActivity {
         }).start(), 2300L);
     }
 
+    /** Show the cinematic Oryn splash only after the user presses Play. */
+    private void showOrynLaunchSplash() {
+        dismissOrynLaunchSplash();
+        mOrynLaunchSplash = getLayoutInflater().inflate(R.layout.activity_oryn_splash, null, false);
+        android.view.ViewGroup decor = (android.view.ViewGroup) getWindow().getDecorView();
+        decor.addView(mOrynLaunchSplash, new android.view.ViewGroup.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
+        mOrynLaunchSplash.setClickable(true);
+        mOrynLaunchSplash.setFocusable(true);
+
+        ProgressBar bar = mOrynLaunchSplash.findViewById(R.id.oryn_splash_progress);
+        TextView percent = mOrynLaunchSplash.findViewById(R.id.oryn_splash_percent);
+        if (bar != null && percent != null) {
+            mOrynLaunchProgressAnimator = android.animation.ValueAnimator.ofInt(0, 95);
+            mOrynLaunchProgressAnimator.setDuration(12000L);
+            mOrynLaunchProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+            mOrynLaunchProgressAnimator.addUpdateListener(animator -> {
+                int value = (int) animator.getAnimatedValue();
+                bar.setProgress(value);
+                percent.setText(value + "%");
+            });
+            mOrynLaunchProgressAnimator.start();
+        }
+        mOrynLaunchSplash.setAlpha(0f);
+        mOrynLaunchSplash.animate().alpha(1f).setDuration(220L).start();
+    }
+
+    private void dismissOrynLaunchSplash() {
+        if (mOrynLaunchProgressAnimator != null) {
+            mOrynLaunchProgressAnimator.cancel();
+            mOrynLaunchProgressAnimator = null;
+        }
+        if (mOrynLaunchSplash != null) {
+            android.view.ViewParent parent = mOrynLaunchSplash.getParent();
+            if (parent instanceof android.view.ViewGroup) {
+                ((android.view.ViewGroup) parent).removeView(mOrynLaunchSplash);
+            }
+            mOrynLaunchSplash = null;
+        }
+    }
+
     private int dp(float value) {
         return Math.round(value * getResources().getDisplayMetrics().density);
     }
@@ -360,6 +405,7 @@ public class LauncherActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
+        dismissOrynLaunchSplash();
         ContextExecutor.clearActivity();
     }
 
