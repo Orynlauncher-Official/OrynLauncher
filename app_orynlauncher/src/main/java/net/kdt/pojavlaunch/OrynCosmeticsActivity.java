@@ -150,9 +150,9 @@ public class OrynCosmeticsActivity extends Activity {
         body.addView(right,new LinearLayout.LayoutParams(0,-1,0.54f));
         LinearLayout searchRow=new LinearLayout(this);searchRow.setGravity(Gravity.CENTER_VERTICAL);
         search=new EditText(this);search.setSingleLine(true);search.setTextColor(WHITE);search.setHintTextColor(MUTED);search.setTextSize(12);search.setPadding(d(12),0,d(10),0);
-        search.setHint("Search skins or capes...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(31,66,115),1));
+        search.setHint("Minecraft username...");search.setBackground(shape(Color.rgb(10,10,12),12,Color.rgb(31,66,115),1));
         searchRow.addView(search,new LinearLayout.LayoutParams(0,d(42),1));
-        Button onlineButton=button("Online Skins",false); LinearLayout.LayoutParams onlineLp=lp(100,42); onlineLp.leftMargin=d(6); searchRow.addView(onlineButton,onlineLp);
+        Button onlineButton=button("Find Skin",false); LinearLayout.LayoutParams onlineLp=lp(100,42); onlineLp.leftMargin=d(6); searchRow.addView(onlineButton,onlineLp);
         onlineButton.setOnClickListener(v->{onlineMode=true; showingCapes=false; updateTabs(); updateImportButton(); loadOnlineSkins(search.getText().toString().trim());});
         LinearLayout tabs=new LinearLayout(this);tabs.setPadding(d(4),d(3),d(4),d(3));tabs.setBackground(shape(Color.rgb(4,14,32),12,Color.rgb(25,44,72),1));
         LinearLayout.LayoutParams tabsLp=lp(230,42);tabsLp.leftMargin=d(8);searchRow.addView(tabs,tabsLp);
@@ -297,7 +297,7 @@ public class OrynCosmeticsActivity extends Activity {
     private void updateTabs(){
         skinsTab.setBackground(shape(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(0,91,210):BLUE,1));
         capesTab.setBackground(shape(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(31,53,83),1));
-        search.setHint(showingCapes?"Search capes...":"Search skins...");
+        search.setHint(showingCapes?"Search capes...":(onlineMode?"Minecraft username...":"Search saved skins..."));
     }
 
     private void renderGrid(){
@@ -370,7 +370,7 @@ public class OrynCosmeticsActivity extends Activity {
         // which made valid online results appear as an empty grid.
         List<OnlineSkin> visible=new ArrayList<>(onlineSkins);
         if(visible.isEmpty()) {
-            TextView empty=label("No online skins loaded. Search a name, then tap Online Skins.",13,MUTED);
+            TextView empty=label("Enter a Minecraft Java username, then tap Find Skin.",13,MUTED);
             empty.setGravity(Gravity.CENTER); grid.addView(empty,lp(-1,90)); return;
         }
         int columns=4;
