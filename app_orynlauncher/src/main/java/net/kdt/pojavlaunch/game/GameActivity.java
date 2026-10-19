@@ -332,27 +332,36 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     private void loadControls() {
         String controlPath = instance.getLaunchControls();
-        boolean usingBuiltInDefault = !Tools.isValidString(instance.controlLayout)
-                && Tools.CTRLDEF_FILE.equals(controlPath);
 
         try {
-            // Load the instance layout. Migrate built-in default layouts through v10
-            // to the Oryn preset. Bump the preset version to ensure existing
-            // installs receive the updated touch layout once.
+            // Replace old saved layouts as well as the built-in default. If we
+            // only migrate the built-in layout, an instance's saved layout keeps
+            // loading the old buttons on every launch.
             mControlLayout.loadLayout(controlPath);
 
-            if (usingBuiltInDefault && mControlLayout.getLayout() != null
-                    && mControlLayout.getLayout().version < 11) {
+            if (mControlLayout.getLayout() == null
+                    || mControlLayout.getLayout().version < 11) {
                 mControlLayout.loadLayout(new CustomControls(this));
+                try {
+                    mControlLayout.saveLayout(controlPath);
+                    Log.i("OrynControls", "Saved migrated Oryn touch layout to " + controlPath);
+                } catch (Exception saveError) {
+                    Log.e("OrynControls", "Could not persist migrated Oryn touch layout", saveError);
+                }
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             try {
                 Log.w("MainActivity", "Unable to load the control file, loading the default now", e);
                 mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
 
                 if (mControlLayout.getLayout() == null
-                        || mControlLayout.getLayout().version < 10) {
+                        || mControlLayout.getLayout().version < 11) {
                     mControlLayout.loadLayout(new CustomControls(this));
+                    try {
+                        mControlLayout.saveLayout(controlPath);
+                    } catch (Exception saveError) {
+                        Log.e("OrynControls", "Could not persist fallback Oryn touch layout", saveError);
+                    }
                 }
             } catch (IOException ioException) {
                 // If the built-in file is unavailable, still provide the Oryn
