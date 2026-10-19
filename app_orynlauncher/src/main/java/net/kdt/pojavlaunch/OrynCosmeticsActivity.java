@@ -214,7 +214,7 @@ public class OrynCosmeticsActivity extends Activity {
                 cp.setMargins(dp(3),dp(3),dp(3),dp(3)); row.addView(card,cp);
             }
             while(row.getChildCount()<columns)row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-            grid.addView(row,lp(-1,dp(145)));
+            grid.addView(row,lp(-1,145));
         }
     }
 
