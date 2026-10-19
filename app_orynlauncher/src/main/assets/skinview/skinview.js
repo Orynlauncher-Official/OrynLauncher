@@ -1,4 +1,4 @@
-const DEFAULT_STEVE_SKIN = "oryn_steve_skin.png";
+const DEFAULT_STEVE_SKIN = "file:///android_asset/skinview/oryn_steve_skin.png";
 const container = document.getElementById("skin-container");
 
 const getWidth = () => container.clientWidth || window.innerWidth || 300;
@@ -379,12 +379,20 @@ setTimeout(resize, 500);
 
 function loadSkin(skinUrl, model = "auto-detect") {
     if (!skinUrl) skinUrl = DEFAULT_STEVE_SKIN;
-    skinLoadPromise = Promise.resolve(skinViewer.loadSkin(skinUrl, { model: model }))
+    const requestedSkin = skinUrl;
+    skinLoadPromise = Promise.resolve(skinViewer.loadSkin(requestedSkin, { model: model }))
         .then(() => {
             startAnim("DefaultIdle", 1.0);
         })
         .catch((e) => {
-            console.warn("Oryn skin load failed", e);
+            console.warn("Oryn skin load failed; trying bundled default", e);
+            if (requestedSkin === DEFAULT_STEVE_SKIN) return null;
+            return Promise.resolve(skinViewer.loadSkin(DEFAULT_STEVE_SKIN, { model: model }))
+                .then(() => startAnim("DefaultIdle", 1.0))
+                .catch((fallbackError) => {
+                    console.error("Oryn bundled skin failed to load", fallbackError);
+                    return null;
+                });
         });
     return skinLoadPromise;
 }
@@ -467,5 +475,8 @@ async function renderSkinThumbnailInternal(id, skinDataUrl, model = "default") {
     }
 }
 
+// Render a bundled player immediately; the Android activity replaces this with
+// the selected profile skin once its WebView bridge is ready.
+loadSkin(DEFAULT_STEVE_SKIN, "default");
 startAnim("OrynShowcase", 1.0);
 setInteractionEnabled(true);
