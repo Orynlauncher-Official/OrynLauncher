@@ -220,7 +220,11 @@ public class OrynCosmeticsActivity extends Activity {
         LinearLayout results=new LinearLayout(this); results.setOrientation(LinearLayout.VERTICAL);
         scroll.addView(results); content.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         Button more=button("Load more skins",false); content.addView(more,lp(-1,38));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("SkinDex • Native Gallery")
+        TextView dialogTitle=text("  SkinDex  •  SKIN GALLERY",16,WHITE);
+        dialogTitle.setTypeface(null,android.graphics.Typeface.BOLD);
+        dialogTitle.setPadding(dp(16),dp(12),dp(16),dp(10));
+        dialogTitle.setBackgroundColor(BG);
+        AlertDialog dialog=new AlertDialog.Builder(this).setCustomTitle(dialogTitle)
                 .setView(content).setNegativeButton("Close",null).create();
         final ArrayList<RemoteSkin> all=new ArrayList<>();
         final int[] page={1}; final boolean[] loading={false}; final String[] loadError={""};
@@ -376,7 +380,15 @@ public class OrynCosmeticsActivity extends Activity {
             public void afterTextChanged(Editable e){}
         });
         more.setOnClickListener(v->loadPage[0].run());
-        dialog.setOnShowListener(v->{dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.92f),(int)(getResources().getDisplayMetrics().heightPixels*.88f));loadPage[0].run();});
+        dialog.setOnShowListener(v->{
+            if(dialog.getWindow()!=null){
+                dialog.getWindow().setBackgroundDrawable(bg(BG,16,Color.rgb(0,70,160),1));
+                dialog.getWindow().setLayout((int)(getResources().getDisplayMetrics().widthPixels*.92f),(int)(getResources().getDisplayMetrics().heightPixels*.88f));
+            }
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(WHITE);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setBackgroundColor(BG);
+            loadPage[0].run();
+        });
         dialog.show();
     }
 
