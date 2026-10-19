@@ -13,6 +13,7 @@ import net.kdt.pojavlaunch.Architecture;
 import net.kdt.pojavlaunch.JVersionList;
 import net.kdt.pojavlaunch.Tools;
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
+import net.kdt.pojavlaunch.cosmetics.OrynCosmeticsStore;
 import net.kdt.pojavlaunch.game.renderer.def.Renderers;
 import net.kdt.pojavlaunch.game.renderer.impl.GLESRenderSpec;
 import net.kdt.pojavlaunch.instances.Instance;
@@ -184,6 +185,18 @@ public class GameRunner {
                 }
             }
         File gamedir = instance.getGameDirectory();
+
+        // Keep the selected Oryn cosmetics profile synchronized with the exact instance
+        // being launched (users can switch instances after choosing a skin/cape).
+        // The game-side renderer/mod must consume this manifest to display custom textures.
+        try {
+            new OrynCosmeticsStore(activity).writeActiveForInstance(gamedir);
+            Log.i("OrynCosmetics", "Synchronized active cosmetics profile for instance: "
+                    + gamedir.getAbsolutePath());
+        } catch (Throwable e) {
+            // Cosmetics are optional; never prevent Minecraft from launching.
+            Log.w("OrynCosmetics", "Could not synchronize active cosmetics profile", e);
+        }
 
         // Oryn FPS Boost: apply real Minecraft-side performance settings before
         // the JVM starts. This reduces chunk/render/simulation workload instead
