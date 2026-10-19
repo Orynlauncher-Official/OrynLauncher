@@ -177,161 +177,92 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     /** Search MinecraftSkins first, then fall back to SkinDex (skindex.pro) if blocked or empty. */
+    /**
+     * Reliable online lookup using Mojang's official username/profile services.
+     * Unlike scraping skin catalog HTML, this returns a verified player's raw skin texture.
+     * Search accepts an exact Minecraft Java username.
+     */
     private void loadOnlineSkins(String term) {
         if (showingCapes) { showingCapes=false; updateTabs(); }
         onlineMode=true;
         onlineLoading=true;
         onlineSkins.clear();
-        status.setText("Searching MinecraftSkins and SkinDex…");
+        status.setText("Looking up Minecraft username…");
         renderGrid();
         new android.os.AsyncTask<Void,Void,List<OnlineSkin>>() {
             String error;
-            String provider="SkinDex";
             protected List<OnlineSkin> doInBackground(Void... unused) {
-                List<OnlineSkin> result=fetchMinecraftSkins(term);
-                if(!result.isEmpty()) { provider="MinecraftSkins"; return result; }
-                result=fetchSkinDex(term);
-                if(!result.isEmpty()) { provider="SkinDex"; return result; }
-                // Do not use Laby's /render/skin endpoint as an import source.
-                // It returns a rendered image, not the raw Minecraft UV skin atlas.
-                // Feeding that image into skinview3d makes online skins appear glitched.
-                error="MinecraftSkins and SkinDex did not return raw skin textures. Please retry when connected.";
+                List<OnlineSkin> result=new ArrayList<>();
+                String username=term==null?"":term.trim();
+                if(username.isEmpty()) {
+                    error="Enter an exact Minecraft Java username first.";
+                    return result;
+                }
+                if(!username.matches("[A-Za-z0-9_]{3,16}")) {
+                    error="Enter a valid Minecraft Java username (3–16 letters, numbers or underscores).";
+                    return result;
+                }
+                HttpURLConnection connection=null;
+                try {
+                    URL lookup=new URL("https://api.mojang.com/users/profiles/minecraft/"+Uri.encode(username));
+                    connection=(HttpURLConnection)lookup.openConnection();
+                    connection.setConnectTimeout(7000);
+                    connection.setReadTimeout(9000);
+                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
+                    int code=connection.getResponseCode();
+                    if(code==404) { error="No Minecraft profile found for that username."; return result; }
+                    if(code<200||code>=300) { error="Mojang username lookup returned HTTP "+code+"."; return result; }
+                    String profileText=readHtml(connection);
+                    org.json.JSONObject profile=new org.json.JSONObject(profileText);
+                    String uuid=profile.optString("id","");
+                    String name=profile.optString("name",username);
+                    if(uuid.isEmpty()) { error="Mojang did not return a profile ID."; return result; }
+                    connection.disconnect(); connection=null;
+
+                    URL session=new URL("https://sessionserver.mojang.com/session/minecraft/profile/"+uuid+"?unsigned=false");
+                    connection=(HttpURLConnection)session.openConnection();
+                    connection.setConnectTimeout(7000);
+                    connection.setReadTimeout(9000);
+                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
+                    code=connection.getResponseCode();
+                    if(code<200||code>=300) { error="Mojang texture lookup returned HTTP "+code+"."; return result; }
+                    org.json.JSONObject sessionProfile=new org.json.JSONObject(readHtml(connection));
+                    org.json.JSONArray properties=sessionProfile.optJSONArray("properties");
+                    if(properties==null) { error="This profile has no public skin texture."; return result; }
+                    String textureValue="";
+                    for(int i=0;i<properties.length();i++) {
+                        org.json.JSONObject property=properties.optJSONObject(i);
+                        if(property!=null && "textures".equals(property.optString("name"))) {
+                            textureValue=property.optString("value","");
+                            if(!textureValue.isEmpty()) break;
+                        }
+                    }
+                    if(textureValue.isEmpty()) { error="This profile has no public skin texture."; return result; }
+                    byte[] decoded=android.util.Base64.decode(textureValue,android.util.Base64.DEFAULT);
+                    org.json.JSONObject textureJson=new org.json.JSONObject(new String(decoded,java.nio.charset.StandardCharsets.UTF_8));
+                    org.json.JSONObject textures=textureJson.optJSONObject("textures");
+                    org.json.JSONObject skinObject=textures==null?null:textures.optJSONObject("SKIN");
+                    String skinUrl=skinObject==null?"":skinObject.optString("url","");
+                    if(skinUrl.isEmpty() || !skinUrl.startsWith("https://")) {
+                        error="This player has no public skin set.";
+                        return result;
+                    }
+                    result.add(new OnlineSkin(name,uuid,skinUrl));
+                } catch(Exception e) {
+                    error="Could not reach Mojang. Check internet and try again.";
+                } finally {
+                    if(connection!=null) connection.disconnect();
+                }
                 return result;
             }
             protected void onPostExecute(List<OnlineSkin> results) {
-                onlineLoading=false; onlineSkins.addAll(results);
-                if("Laby popular catalog".equals(provider)) {
-                    query="";
-                    search.setText("");
-                }
+                onlineLoading=false;
+                onlineSkins.addAll(results);
                 renderGrid();
-                status.setText(results.isEmpty()?"Online search failed: "+(error==null?"No skins found":error):
-                        "Found "+results.size()+" skins • "+provider+" • Tap Apply");
+                status.setText(results.isEmpty()?"Online lookup failed: "+(error==null?"No public skin found":error):
+                        "Found skin for "+results.get(0).name+" • Mojang official profile • Tap Apply");
             }
         }.execute();
-    }
-
-    private List<OnlineSkin> fetchMinecraftSkins(String term) {
-        List<OnlineSkin> result=new ArrayList<>();
-        HttpURLConnection connection=null;
-        try {
-            String encoded=Uri.encode(term==null?"":term.trim());
-            URL url=new URL("https://www.minecraftskins.com/search/skin/"+(encoded.isEmpty()?"":encoded.replace("%20","-"))+"/1/");
-            connection=(HttpURLConnection)url.openConnection();
-            connection.setConnectTimeout(8000); connection.setReadTimeout(9000);
-            connection.setInstanceFollowRedirects(true);
-            connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
-            connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
-            String page=readHtml(connection);
-            Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?minecraftskins\\.com/uploads/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
-            Matcher images=imagePattern.matcher(page);
-            java.util.HashSet<String> seen=new java.util.HashSet<>();
-            while(images.find() && result.size()<24) {
-                String imageUrl=images.group();
-                if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
-                imageUrl=imageUrl.replace("&amp;","&");
-                if(!seen.add(imageUrl)) continue;
-                int from=Math.max(0,images.start()-5000), to=Math.min(page.length(),images.end()+1500);
-                Matcher title=Pattern.compile("(?i)/skin/(\\d+)/([^/\\\"'?#<> ]+)").matcher(page.substring(from,to));
-                String name=null,id=null;
-                while(title.find()) { id=title.group(1); name=title.group(2); }
-                if(id==null) id="result"+result.size();
-                if(name==null || name.isEmpty()) name="Minecraft Skin "+(result.size()+1);
-                name=name.replaceAll("(?i)\\.(html|png)$","").replace('-',' ').replace('_',' ').replaceAll("\\s+"," ").trim();
-                if(name.length()>55) name=name.substring(0,55).trim();
-                result.add(new OnlineSkin(name,id,imageUrl));
-            }
-        } catch(Exception ignored) {
-            // Try SkinDex below; many gallery sites restrict direct Android requests.
-        } finally { if(connection!=null) connection.disconnect(); }
-        return result;
-    }
-
-    private List<OnlineSkin> fetchSkinDex(String term) {
-        List<OnlineSkin> result=new ArrayList<>();
-        HttpURLConnection connection=null;
-        try {
-            String encoded=Uri.encode(term==null?"":term.trim());
-            URL url=new URL("https://www.skindex.pro/search?q="+encoded);
-            connection=(HttpURLConnection)url.openConnection();
-            connection.setConnectTimeout(8000); connection.setReadTimeout(10000);
-            connection.setInstanceFollowRedirects(true);
-            connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/128.0 Mobile Safari/537.36");
-            connection.setRequestProperty("Accept","text/html,application/xhtml+xml");
-            String page=readHtml(connection);
-            Pattern imagePattern=Pattern.compile("(?i)(?:https?:)?//(?:www\\.)?skindex\\.pro/static/skins/[^\\\"'<>\\s]+?\\.png(?:\\?[^\\\"'<>\\s]*)?");
-            Matcher images=imagePattern.matcher(page);
-            java.util.HashSet<String> seen=new java.util.HashSet<>();
-            while(images.find() && result.size()<32) {
-                String imageUrl=images.group();
-                if(imageUrl.startsWith("//")) imageUrl="https:"+imageUrl;
-                imageUrl=imageUrl.replace("&amp;","&");
-                if(!seen.add(imageUrl)) continue;
-                int from=Math.max(0,images.start()-1800), to=Math.min(page.length(),images.end()+800);
-                String context=page.substring(from,to);
-                String name=null;
-                Matcher alt=Pattern.compile("(?is)<img[^>]*(?:alt|title)=[\\\"']([^\\\"']+)[\\\"'][^>]*>").matcher(context);
-                while(alt.find()) {
-                    String candidate=android.text.Html.fromHtml(alt.group(1),android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
-                    if(!candidate.isEmpty() && !candidate.equalsIgnoreCase("lorem")) name=candidate;
-                }
-                if(name==null || name.isEmpty()) {
-                    String file=imageUrl.substring(imageUrl.lastIndexOf('/')+1).replaceAll("\\.png(?:\\?.*)?$","");
-                    name=file.replaceAll("-[0-9a-fA-F]{8}-[0-9a-fA-F-]{27,}$","").replaceAll("-[A-Za-z0-9]{12,}$","").replace('-',' ').replace('_',' ').trim();
-                }
-                if(name.isEmpty()) name="SkinDex Skin "+(result.size()+1);
-                if(name.length()>55) name=name.substring(0,55).trim();
-                result.add(new OnlineSkin(name,"skindex"+result.size(),imageUrl));
-            }
-        } catch(Exception ignored) {
-            // Surface one clear message after both sources have been tried.
-        } finally { if(connection!=null) connection.disconnect(); }
-        return result;
-    }
-
-    /** API fallback: Laby's public texture catalog avoids parsing HTML gallery pages. */
-    private List<OnlineSkin> fetchLabySkins(String term) {
-        List<OnlineSkin> result=new ArrayList<>();
-        HttpURLConnection connection=null;
-        try {
-            URL url=new URL("https://laby.net/api/v3/search/textures/skin?size=40&offset=0&order=trending_24h");
-            connection=(HttpURLConnection)url.openConnection();
-            connection.setConnectTimeout(8000); connection.setReadTimeout(10000);
-            connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
-            connection.setRequestProperty("Accept","application/json");
-            String json=readHtml(connection);
-            org.json.JSONObject root=new org.json.JSONObject(json);
-            org.json.JSONArray entries=root.optJSONArray("results");
-            if(entries==null) return result;
-            String needle=term==null?"":term.trim().toLowerCase(Locale.ROOT);
-            for(int i=0;i<entries.length() && result.size()<24;i++) {
-                org.json.JSONObject entry=entries.optJSONObject(i);
-                if(entry==null) continue;
-                String hash=entry.optString("image_hash","");
-                if(!hash.matches("(?i)[0-9a-f]{32}")) continue;
-                String tags=entry.optString("tags","");
-                if("null".equalsIgnoreCase(tags)) tags="";
-                String name=tags.trim().isEmpty()?"Popular Skin "+(i+1):tags.trim();
-                if(!needle.isEmpty() && !name.toLowerCase(Locale.ROOT).contains(needle)) continue;
-                result.add(new OnlineSkin(name,"laby_"+hash,"https://laby.net/api/v3/render/skin/"+hash+".png?width=64&height=64"));
-            }
-        } catch(Exception ignored) {
-            // Report a clear error after all providers have been attempted.
-        } finally { if(connection!=null) connection.disconnect(); }
-        return result;
-    }
-
-    private String readHtml(HttpURLConnection connection) throws Exception {
-        int code=connection.getResponseCode();
-        if(code<200 || code>=300) throw new java.io.IOException("HTTP "+code);
-        StringBuilder html=new StringBuilder();
-        try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),"UTF-8"))) {
-            String line; int total=0;
-            while((line=reader.readLine())!=null && total<3*1024*1024) {
-                html.append(line).append('\n'); total+=line.length();
-            }
-        }
-        return html.toString();
     }
 
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
