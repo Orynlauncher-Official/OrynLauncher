@@ -336,12 +336,13 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                 && Tools.CTRLDEF_FILE.equals(controlPath);
 
         try {
-            // Load the instance layout. When the launcher is using its built-in
-            // default, migrate older default.json layouts to the Oryn preset.
+            // Load the instance layout. Migrate built-in default layouts through v10
+            // to the Oryn preset. Bump the preset version to ensure existing
+            // installs receive the updated touch layout once.
             mControlLayout.loadLayout(controlPath);
 
             if (usingBuiltInDefault && mControlLayout.getLayout() != null
-                    && mControlLayout.getLayout().version < 10) {
+                    && mControlLayout.getLayout().version < 11) {
                 mControlLayout.loadLayout(new CustomControls(this));
             }
         } catch(IOException e) {
