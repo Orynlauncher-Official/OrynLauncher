@@ -37,6 +37,8 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.JsonSyntaxException;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.ContextCompat;
@@ -349,7 +351,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                     Log.e("OrynControls", "Could not persist migrated Oryn touch layout", saveError);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | JsonSyntaxException e) {
             try {
                 Log.w("MainActivity", "Unable to load the control file, loading the default now", e);
                 mControlLayout.loadLayout(Tools.CTRLDEF_FILE);
@@ -363,7 +365,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                         Log.e("OrynControls", "Could not persist fallback Oryn touch layout", saveError);
                     }
                 }
-            } catch (IOException ioException) {
+            } catch (IOException | JsonSyntaxException ioException) {
                 // If the built-in file is unavailable, still provide the Oryn
                 // preset instead of leaving the game without usable controls.
                 mControlLayout.loadLayout(new CustomControls(this));
