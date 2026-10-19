@@ -68,71 +68,180 @@
 			android:id="@+id/main_loading_screen"
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
-			android:background="#BB000000"
-			android:visibility="visible"
-			>
+			android:background="#FF050505"
+			android:visibility="visible">
+
+			<ImageView
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:src="@drawable/oryn_settings_background"
+				android:scaleType="centerCrop"
+				android:alpha="0.48"
+				android:contentDescription="@null" />
+
+			<View
+				android:layout_width="match_parent"
+				android:layout_height="match_parent"
+				android:background="#99000000" />
 
 			<LinearLayout
 				android:layout_width="match_parent"
-				android:layout_height="wrap_content"
-				android:layout_gravity="center"
-				android:gravity="center"
+				android:layout_height="match_parent"
 				android:orientation="vertical"
-				android:padding="24dp">
+				android:paddingStart="28dp"
+				android:paddingEnd="28dp"
+				android:paddingTop="20dp"
+				android:paddingBottom="18dp">
 
-				<ImageView
-                    android:id="@+id/oryn_loading_logo"
-					android:layout_width="112dp"
-					android:layout_height="112dp"
-					android:layout_marginBottom="18dp"
-					android:src="@drawable/oryn_official_logo_v4"
-					android:scaleType="fitCenter"
-					android:contentDescription="OrynLauncher logo" />
-
-				<TextView
-					android:layout_width="wrap_content"
+				<LinearLayout
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:layout_marginBottom="6dp"
-					android:text="ORYN LAUNCHER"
-					android:textColor="#FFFFFF"
-					android:textStyle="bold"
-					android:letterSpacing="0.12"
-					android:textSize="21sp" />
+					android:gravity="center_vertical"
+					android:orientation="horizontal">
 
-				<TextView
-					android:layout_width="wrap_content"
+					<View
+						android:layout_width="2dp"
+						android:layout_height="36dp"
+						android:background="#FFFFFFFF"
+						android:layout_marginEnd="14dp" />
+
+					<LinearLayout
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:layout_weight="1"
+						android:orientation="vertical">
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:text="ORYN LAUNCHER PLUS"
+							android:textColor="#FFFFFFFF"
+							android:textSize="13sp"
+							android:letterSpacing="0.22"
+							android:textStyle="bold" />
+
+						<TextView
+							android:layout_width="wrap_content"
+							android:layout_height="wrap_content"
+							android:layout_marginTop="4dp"
+							android:text="PLAY  •  EXPLORE  •  CREATE"
+							android:textColor="#D8D8D8"
+							android:textSize="9sp"
+							android:letterSpacing="0.24" />
+					</LinearLayout>
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="v5.0   |   ✦  Better. Faster. Oryn."
+						android:textColor="#EAEAEA"
+						android:textSize="10sp" />
+				</LinearLayout>
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="0dp"
+					android:layout_weight="1"
+					android:gravity="center"
+					android:orientation="vertical"
+					android:padding="12dp">
+
+					<ImageView
+						android:id="@+id/oryn_loading_logo"
+						android:layout_width="104dp"
+						android:layout_height="104dp"
+						android:layout_marginBottom="12dp"
+						android:src="@drawable/oryn_official_logo_v4"
+						android:scaleType="fitCenter"
+						android:contentDescription="OrynLauncher logo" />
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="ORYN"
+						android:textColor="#FFFFFFFF"
+						android:textStyle="bold"
+						android:letterSpacing="0.32"
+						android:textSize="30sp" />
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="2dp"
+						android:text="L A U N C H E R   •   P L U S"
+						android:textColor="#F0F0F0"
+						android:textSize="10sp"
+						android:letterSpacing="0.16" />
+
+					<TextView
+						android:id="@+id/main_loading_screen_text"
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="36dp"
+						android:layout_marginBottom="14dp"
+						android:text="Loading your adventure..."
+						android:textColor="#FFFFFFFF"
+						android:textSize="15sp" />
+
+					<ProgressBar
+						android:id="@+id/main_loading_screen_progress"
+						style="?android:attr/progressBarStyleHorizontal"
+						android:layout_width="min(340dp, 72%)"
+						android:layout_height="5dp"
+						android:indeterminate="true"
+						android:indeterminateTint="#FFFFFFFF"
+						android:progressTint="#FFFFFFFF"
+						android:progressBackgroundTint="#55FFFFFF" />
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:layout_marginTop="10dp"
+						android:text="PREPARING YOUR WORLD"
+						android:textColor="#D6D6D6"
+						android:textSize="9sp"
+						android:letterSpacing="0.2" />
+				</LinearLayout>
+
+				<LinearLayout
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:layout_marginBottom="22dp"
-					android:text="PLUS"
-					android:textColor="#FFFFFF"
-					android:textStyle="bold"
-					android:letterSpacing="0.35"
-					android:textSize="12sp" />
+					android:gravity="center"
+					android:orientation="horizontal"
+					android:paddingTop="10dp">
 
-				<ProgressBar
-					android:id="@+id/main_loading_screen_progress"
-					android:layout_width="42dp"
-					android:layout_height="4dp"
-					android:indeterminate="true"
-					android:indeterminateTint="#8BE8FF"
-					android:layout_marginBottom="12dp" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="⬡\nMINECRAFT\nLAUNCH" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="♙\nACCOUNTS" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="↓\nDOWNLOADS" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="⚙\nSETTINGS" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="▱\nORYNFILES" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="♧\nMODS &amp;\nMODPACKS" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+					<TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="☷\nCONTROLS" android:textColor="#FFFFFFFF" android:textSize="9sp" android:letterSpacing="0.04" />
+				</LinearLayout>
 
-				<TextView
-					android:id="@+id/main_loading_screen_text"
-					android:layout_width="wrap_content"
+				<LinearLayout
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:text="@string/loading_screen_title"
-					android:textColor="#FFFFFF"
-					android:textSize="16sp" />
+					android:layout_marginTop="14dp"
+					android:gravity="center_vertical"
+					android:orientation="horizontal">
 
-				<TextView
-					android:id="@+id/main_loading_screen_warning"
-					android:layout_width="wrap_content"
-					android:layout_height="wrap_content"
-					android:layout_marginTop="6dp"
-					android:text="@string/loading_screen_warning"
-					android:textColor="#B8C8D8"
-					android:textSize="12sp" />
+					<TextView
+						android:layout_width="0dp"
+						android:layout_height="wrap_content"
+						android:layout_weight="1"
+						android:text="OrynLauncher Plus  •  © 2026"
+						android:textColor="#BEBEBE"
+						android:textSize="9sp" />
+
+					<TextView
+						android:layout_width="wrap_content"
+						android:layout_height="wrap_content"
+						android:text="MORE THAN A LAUNCHER"
+						android:textColor="#FFFFFFFF"
+						android:textSize="9sp"
+						android:letterSpacing="0.18" />
+				</LinearLayout>
 			</LinearLayout>
 		</FrameLayout>
 
