@@ -1,6 +1,5 @@
 package net.kdt.pojavlaunch.customcontrols;
 import android.content.*;
-import android.view.KeyEvent;
 
 import androidx.annotation.Keep;
 
@@ -46,16 +45,16 @@ public class CustomControls {
 		final String arrowGap = "22";
 
 		// Top-left keyboard/debug/chat/perspective controls.
-		this.mControlDataList.add(new ControlData("ESC", new int[]{KeyEvent.KEYCODE_ESCAPE}, m + " + 34", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F3", new int[]{KeyEvent.KEYCODE_F3}, m + " + 182", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F5", new int[]{KeyEvent.KEYCODE_F5}, m + " + 324", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("TAB", new int[]{KeyEvent.KEYCODE_TAB}, m + " + 34", m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("T", new int[]{KeyEvent.KEYCODE_T}, m + " + 184", m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("Pout", new int[]{KeyEvent.KEYCODE_P}, m + " + 312", m + " + 52", 70, 36, false));
+		this.mControlDataList.add(new ControlData("ESC", new int[]{256}, m + " + 34", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("F3", new int[]{292}, m + " + 182", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("F5", new int[]{294}, m + " + 324", m, 58, 36, false));
+		this.mControlDataList.add(new ControlData("TAB", new int[]{258}, m + " + 34", m + " + 52", 58, 36, false));
+		this.mControlDataList.add(new ControlData("T", new int[]{84}, m + " + 184", m + " + 52", 58, 36, false));
+		this.mControlDataList.add(new ControlData("Pout", new int[]{80}, m + " + 312", m + " + 52", 70, 36, false));
 
 		// Modifier controls.
-		this.mControlDataList.add(new ControlData("Ctrl", new int[]{KeyEvent.KEYCODE_CTRL_LEFT}, m + " + 56", "${screen_height} * 0.31", 74, 44, false));
-		this.mControlDataList.add(new ControlData("Alt", new int[]{KeyEvent.KEYCODE_ALT_LEFT}, m + " + 256", "${screen_height} * 0.31", 74, 44, false));
+		this.mControlDataList.add(new ControlData("Ctrl", new int[]{341}, m + " + 56", "${screen_height} * 0.31", 74, 44, false));
+		this.mControlDataList.add(new ControlData("Alt", new int[]{342}, m + " + 256", "${screen_height} * 0.31", 74, 44, false));
 
 		// Eight-direction movement pad, centered vertically on the left side.
 		String leftX = left;
@@ -64,14 +63,14 @@ public class CustomControls {
 		String top = "${screen_height} * 0.46";
 		String mid = "${screen_height} * 0.555";
 		String bottom = "${screen_height} * 0.65";
-		this.mControlDataList.add(new ControlData("↖", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_A}, leftX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↑", new int[]{KeyEvent.KEYCODE_W}, centerX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↗", new int[]{KeyEvent.KEYCODE_W, KeyEvent.KEYCODE_D}, rightX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("←", new int[]{KeyEvent.KEYCODE_A}, leftX, mid, 64, 64, false));
-		this.mControlDataList.add(new ControlData("→", new int[]{KeyEvent.KEYCODE_D}, rightX, mid, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↙", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_A}, leftX, bottom, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↓", new int[]{KeyEvent.KEYCODE_S}, centerX, bottom, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↘", new int[]{KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_D}, rightX, bottom, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↖", new int[]{87, 65}, leftX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↑", new int[]{87}, centerX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↗", new int[]{87, 68}, rightX, top, 64, 64, false));
+		this.mControlDataList.add(new ControlData("←", new int[]{65}, leftX, mid, 64, 64, false));
+		this.mControlDataList.add(new ControlData("→", new int[]{68}, rightX, mid, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↙", new int[]{83, 65}, leftX, bottom, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↓", new int[]{83}, centerX, bottom, 64, 64, false));
+		this.mControlDataList.add(new ControlData("↘", new int[]{83, 68}, rightX, bottom, 64, 64, false));
 
 		// Right-edge mouse controls. The right expression already accounts for button width.
 		this.mControlDataList.add(new ControlData("Mouse", new int[]{ControlData.SPECIALBTN_VIRTUALMOUSE}, "${right} - " + m, m, 58, 36, false));
@@ -84,7 +83,7 @@ public class CustomControls {
 		this.mControlDataList.add(new ControlData("SEC", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${screen_width} * 0.785", "${screen_height} * 0.49", 74, 48, false));
 
 		// Inventory key near the lower-right middle.
-		this.mControlDataList.add(new ControlData("E", new int[]{KeyEvent.KEYCODE_E}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
+		this.mControlDataList.add(new ControlData("E", new int[]{69}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
 
 		// Floating gear/menu button. It is intentionally circular and uses the
 		// free-positioning path in ControlInterface instead of snapping to other controls.
@@ -103,7 +102,7 @@ public class CustomControls {
 	}
 	public void save(String path) throws IOException {
 		//Current version is the V3.2 so the version as to be marked as 8 !
-		version = 9;
+		version = 10;
 		String jsonControls = Tools.GLOBAL_GSON.toJson(this);
 		try(FileOutputStream fileOutputStream = new FileOutputStream(path)) {
 			LayoutBitmaps.store(fileOutputStream, new LayoutBitmaps.ControlsContainer(
