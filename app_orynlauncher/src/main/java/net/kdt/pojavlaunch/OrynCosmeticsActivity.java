@@ -197,8 +197,10 @@ public class OrynCosmeticsActivity extends Activity {
     }
 
     private static final class RemoteSkin {
-        final String name, imageUrl;
-        RemoteSkin(String name, String imageUrl){this.name=name;this.imageUrl=imageUrl;}
+        final String name, imageUrl, previewUrl;
+        RemoteSkin(String name, String imageUrl, String previewUrl){
+            this.name=name; this.imageUrl=imageUrl; this.previewUrl=previewUrl;
+        }
     }
 
     /** Native SkinDex catalog: fetches listing HTML in the background and renders native cards. */
@@ -230,8 +232,29 @@ public class OrynCosmeticsActivity extends Activity {
                 if(!skin.name.toLowerCase(Locale.ROOT).contains(q))continue;
                 LinearLayout row=new LinearLayout(this); row.setGravity(Gravity.CENTER_VERTICAL);
                 row.setPadding(dp(8),dp(5),dp(8),dp(5)); row.setBackground(bg(CARD,10,Color.rgb(24,49,83),1));
+                ImageView preview=new ImageView(this);
+                preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                preview.setBackground(bg(Color.rgb(10,20,36),8,Color.rgb(38,67,105),1));
+                LinearLayout.LayoutParams previewLp=lp(48,48);
+                previewLp.rightMargin=dp(10);
+                row.addView(preview,previewLp);
+                // Load the SkinDex preview thumbnail asynchronously so users can
+                // identify the skin before applying it.
+                new Thread(()->{
+                    java.net.HttpURLConnection thumbConnection=null;
+                    try{
+                        thumbConnection=(java.net.HttpURLConnection)new java.net.URL(skin.previewUrl).openConnection();
+                        thumbConnection.setConnectTimeout(8000); thumbConnection.setReadTimeout(10000);
+                        thumbConnection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/126.0 Mobile Safari/537.36");
+                        try(java.io.InputStream thumbIn=thumbConnection.getInputStream()){
+                            android.graphics.Bitmap bitmap=android.graphics.BitmapFactory.decodeStream(thumbIn);
+                            if(bitmap!=null)runOnUiThread(()->preview.setImageBitmap(bitmap));
+                        }
+                    }catch(Exception ignored){}finally{if(thumbConnection!=null)thumbConnection.disconnect();}
+                },"Oryn-SkinDex-Thumbnail").start();
                 TextView name=text(skin.name,13,WHITE);
-                row.addView(name,new LinearLayout.LayoutParams(0,dp(42),1));
+                name.setMaxLines(2);
+                row.addView(name,new LinearLayout.LayoutParams(0,dp(48),1));
                 Button apply=button("↓  1-Click Apply",true);
                 row.addView(apply,lp(140,38));
                 apply.setOnClickListener(v->{
@@ -303,7 +326,7 @@ public class OrynCosmeticsActivity extends Activity {
                         String imageUrl="https://www.skindex.pro/static/skins/"+fileName;
                         boolean duplicate=false;
                         for(RemoteSkin old:found)if(old.imageUrl.equals(imageUrl)){duplicate=true;break;}
-                        if(!duplicate)found.add(new RemoteSkin(name,imageUrl));
+                        if(!duplicate)found.add(new RemoteSkin(name,imageUrl,"https://www.skindex.pro/static/preview/"+fileName));
                     }
                     if(found.isEmpty())throw new java.io.IOException("No preview PNGs found in listing");                }catch(Exception error){loadError[0]=error.getClass().getSimpleName()+": "+String.valueOf(error.getMessage());}finally{if(connection!=null)connection.disconnect();}
                 final ArrayList<RemoteSkin> result=found;
