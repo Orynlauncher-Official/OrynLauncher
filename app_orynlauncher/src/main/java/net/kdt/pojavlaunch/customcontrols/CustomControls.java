@@ -31,78 +31,59 @@ public class CustomControls {
 		this.scaledAt = 100f;
 	}
 	
-	// Generate default control
-	// Here for historical reasons
-	// Just admire it idk
+	// OrynLauncher Plus default controls, based on the supplied control-layout JSON.
+	// Positions are responsive expressions from the imported layout, so they scale
+	// across screen sizes instead of relying on a single device's pixel dimensions.
 	@SuppressWarnings("unused")
 	public CustomControls(Context ctx) {
 		this();
+		final int bg = 1711276032;
+		final int stroke = 1090519039;
+		final float opacity = 1f;
+		final float strokeWidth = 1f;
 
-		// OrynLauncher control preset — matched to the supplied reference.
-		final String m = "${margin}";
-		final String left = m + " + 56";
-		final String arrow = "64";
-		final String arrowGap = "22";
+		// Top-left shortcuts.
+		addOrynButton("F3", new int[]{292}, "px(10)", "px(5)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("T", new int[]{84}, "px(60)", "px(5)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("💬", new int[]{84}, "px(110)", "px(5)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("TAB", new int[]{258}, "px(160)", "px(5)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("F5", new int[]{294}, "px(10)", "px(33)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("⌨\nKEYBOARD", new int[]{ControlData.SPECIALBTN_KEYBOARD}, "px(60)", "px(33)", 45, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("🎒\nINVENTORY", new int[]{69}, "px(10)", "px(80)", 45, 36, false, bg, stroke, opacity, strokeWidth, 25);
 
-		// Top-left keyboard/debug/chat/perspective controls.
-		this.mControlDataList.add(new ControlData("ESC", new int[]{256}, m + " + 34", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F3", new int[]{292}, m + " + 182", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("F5", new int[]{294}, m + " + 324", m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("TAB", new int[]{258}, m + " + 34", m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("T", new int[]{84}, m + " + 184", m + " + 52", 58, 36, false));
-		this.mControlDataList.add(new ControlData("Pout", new int[]{80}, m + " + 312", m + " + 52", 70, 36, false));
+		// Four-way movement pad and sprint modifier.
+		addOrynButton("▲", new int[]{87}, "px(66)", "${bottom} - px(121)", 48, 42, false, bg, stroke, opacity, strokeWidth, 30);
+		addOrynButton("◀", new int[]{65}, "px(24)", "${bottom} - px(78)", 46, 46, false, bg, stroke, opacity, strokeWidth, 30);
+		addOrynButton("▼", new int[]{83}, "px(66)", "${bottom} - px(40)", 48, 42, false, bg, stroke, opacity, strokeWidth, 30);
+		addOrynButton("▶", new int[]{68}, "px(111)", "${bottom} - px(78)", 46, 46, false, bg, stroke, opacity, strokeWidth, 30);
+		addOrynButton("○", new int[]{341}, "px(76)", "${bottom} - px(87)", 29, 29, true, bg, stroke, opacity, strokeWidth, 50);
 
-		// Modifier controls.
-		this.mControlDataList.add(new ControlData("Ctrl", new int[]{341}, m + " + 56", "${screen_height} * 0.31", 74, 44, false));
-		this.mControlDataList.add(new ControlData("Alt", new int[]{342}, m + " + 256", "${screen_height} * 0.31", 74, 44, false));
+		// Right-side mouse, interaction, jump, sneak and inventory controls.
+		addOrynButton("⚙", new int[]{ControlData.SPECIALBTN_TOGGLECTRL}, "${right} - px(121)", "px(5)", 32, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("🖱 MOUSE", new int[]{ControlData.SPECIALBTN_VIRTUALMOUSE}, "${right} - px(10)", "px(5)", 69, 25, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("🖱\nCURSOR", new int[]{ControlData.SPECIALBTN_MOUSEMID}, "${right} - px(106)", "px(51)", 45, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("⇅\nSCROLL", new int[]{ControlData.SPECIALBTN_SCROLLUP}, "${right} - px(55)", "px(51)", 45, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("☰\nMENU", new int[]{ControlData.SPECIALBTN_MENU}, "${right} - px(5)", "px(51)", 45, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("PRI\n(ATTACK)", new int[]{ControlData.SPECIALBTN_MOUSEPRI}, "${right} - px(67)", "px(116)", 49, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("SEC\n(USE)", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${right} - px(10)", "px(116)", 50, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("SPACE\n(JUMP)", new int[]{32}, "${right} - px(12)", "px(181)", 83, 36, false, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("SHIFT\n(SNEAK)", new int[]{340}, "${right} - px(71)", "px(225)", 53, 35, true, bg, stroke, opacity, strokeWidth, 25);
+		addOrynButton("E\n(INVENTORY)", new int[]{69}, "${right} - px(12)", "px(225)", 53, 35, false, bg, stroke, opacity, strokeWidth, 25);
 
-		// Eight-direction movement pad, centered vertically on the left side.
-		String leftX = left;
-		String centerX = left + " + " + arrow + " + " + arrowGap;
-		String rightX = left + " + 2 * (" + arrow + " + " + arrowGap + ")";
-		String top = "${screen_height} * 0.46";
-		String mid = "${screen_height} * 0.555";
-		String bottom = "${screen_height} * 0.65";
-		this.mControlDataList.add(new ControlData("↖", new int[]{87, 65}, leftX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↑", new int[]{87}, centerX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↗", new int[]{87, 68}, rightX, top, 64, 64, false));
-		this.mControlDataList.add(new ControlData("←", new int[]{65}, leftX, mid, 64, 64, false));
-		this.mControlDataList.add(new ControlData("→", new int[]{68}, rightX, mid, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↙", new int[]{83, 65}, leftX, bottom, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↓", new int[]{83}, centerX, bottom, 64, 64, false));
-		this.mControlDataList.add(new ControlData("↘", new int[]{83, 68}, rightX, bottom, 64, 64, false));
-
-		// Right-edge mouse controls. The right expression already accounts for button width.
-		this.mControlDataList.add(new ControlData("Mouse", new int[]{ControlData.SPECIALBTN_VIRTUALMOUSE}, "${right} - " + m, m, 58, 36, false));
-		this.mControlDataList.add(new ControlData("SCROLL UP", new int[]{ControlData.SPECIALBTN_SCROLLUP}, "${right} - " + m, m + " + 52", 58, 58, false));
-		this.mControlDataList.add(new ControlData("SCROLL DOWN", new int[]{ControlData.SPECIALBTN_SCROLLDOWN}, "${right} - " + m, m + " + 116", 58, 58, false));
-		this.mControlDataList.add(new ControlData("MOUSE MID", new int[]{ControlData.SPECIALBTN_MOUSEMID}, "${right} - " + m, m + " + 184", 58, 58, false));
-
-		// Primary/secondary mouse buttons.
-		this.mControlDataList.add(new ControlData("PRI", new int[]{ControlData.SPECIALBTN_MOUSEPRI}, "${screen_width} * 0.66", "${screen_height} * 0.49", 74, 48, false));
-		this.mControlDataList.add(new ControlData("SEC", new int[]{ControlData.SPECIALBTN_MOUSESEC}, "${screen_width} * 0.785", "${screen_height} * 0.49", 74, 48, false));
-
-		// Inventory key near the lower-right middle.
-		this.mControlDataList.add(new ControlData("E", new int[]{69}, "${screen_width} * 0.66", "${screen_height} * 0.815", 58, 44, false));
-
-		// Floating gear/menu button. It is intentionally circular and uses the
-		// free-positioning path in ControlInterface instead of snapping to other controls.
-		ControlData floatingMenu = new ControlData(
-				"⚙",
-				new int[]{ControlData.SPECIALBTN_MENU},
-				"${screen_width} * 0.5 - 28",
-				"${screen_height} * 0.49",
-				56,
-				56,
-				false
-		);
-		floatingMenu.cornerRadius = 50;
-		this.mControlDataList.add(floatingMenu);
-		version = 11;
+		version = 12;
 	}
+
+	private void addOrynButton(String name, int[] keycodes, String x, String y,
+			float width, float height, boolean toggle, int bg, int stroke,
+			float opacity, float strokeWidth, float radius) {
+		mControlDataList.add(new ControlData(name, keycodes, x, y, width, height,
+				toggle, opacity, bg, stroke, strokeWidth, radius,
+				true, true, false, false, null));
+	}
+	
 	public void save(String path) throws IOException {
-		//Current version is the V3.2 so the version as to be marked as 8 !
-		version = 10;
+		// Preserve the current preset version when saving so the migration does not repeat.
+		if (version < 12) version = 12;
 		String jsonControls = Tools.GLOBAL_GSON.toJson(this);
 		try(FileOutputStream fileOutputStream = new FileOutputStream(path)) {
 			LayoutBitmaps.store(fileOutputStream, new LayoutBitmaps.ControlsContainer(
