@@ -184,7 +184,7 @@ function startAnim(name, speed) {
     }
 }
 
-skinViewer.controls.enableRotate = true;
+skinViewer.controls.enableRotate = false; // Android preview handles drag by rotating the player model.
 skinViewer.controls.enableZoom = false;
 skinViewer.controls.enablePan = false;
 
