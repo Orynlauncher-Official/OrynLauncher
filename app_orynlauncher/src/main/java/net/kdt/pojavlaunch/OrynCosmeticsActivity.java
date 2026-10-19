@@ -11,6 +11,12 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.DownloadListener;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient;
+import android.webkit.URLUtil;
 import android.widget.*;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -41,7 +47,7 @@ public class OrynCosmeticsActivity extends Activity {
     private OrynCosmeticsStore.CosmeticProfile active;
     private TextView selectedName, modelInfo, status;
     private EditText search;
-    private Button skinsTab, capesTab, classicButton, slimButton, importButton;
+    private Button skinsTab, capesTab, classicButton, slimButton, importButton, skinDexButton;
     private LinearLayout grid;
     private boolean showingCapes;
     private String filter="";
@@ -56,20 +62,18 @@ public class OrynCosmeticsActivity extends Activity {
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         store=new OrynCosmeticsStore(this);
-        store.ensureDefaultSkins();
+        store.clearOldSkinCollectionOnce();
         store.ensureOrynCapes();
         store.normalizeExistingCapes();
         active=store.getActiveProfile();
-        if(active.skin==null) active.skin="";
+        active.skin="";
+        active.skinEnabled=false;
         if(active.cape==null) active.cape="";
         if(active.model==null) active.model="classic";
+        try { store.setActiveProfile(active); } catch (Exception ignored) {}
         buildUi();
         refreshPreview();
-        status.setText("Checking original preset skin textures…");
-        store.downloadCuratedSkins(() -> {
-            refreshPreview();
-            status.setText("Skin presets checked • choose any skin and tap Apply");
-        });
+        status.setText("Old presets removed • browse SkinDex to add real skins");
     }
 
     private int dp(float v){return Math.round(v*getResources().getDisplayMetrics().density);}
@@ -152,9 +156,12 @@ public class OrynCosmeticsActivity extends Activity {
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setVerticalScrollBarEnabled(false);
         grid=new LinearLayout(this); grid.setOrientation(LinearLayout.VERTICAL); grid.setPadding(0,dp(5),0,dp(5));
         scroll.addView(grid); right.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        importButton=button("＋  Import / Replace Skin",true); LinearLayout.LayoutParams imp=lp(-1,42);
-        imp.topMargin=dp(5); right.addView(importButton,imp);
+        importButton=button("＋  Import / Replace Skin",true); LinearLayout.LayoutParams imp=lp(-1,40);
+        imp.topMargin=dp(4); right.addView(importButton,imp);
         importButton.setOnClickListener(v->pick(showingCapes?PICK_CAPE:PICK_SKIN));
+        skinDexButton=button("Browse live SkinDex",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
+        dexLp.topMargin=dp(4); right.addView(skinDexButton,dexLp);
+        skinDexButton.setOnClickListener(v->browseSkinDex());
         status=text("Ready • Choose a skin and tap Apply",10,MUTED); root.addView(status,lp(-1,20));
         setContentView(root);
 
@@ -168,11 +175,62 @@ public class OrynCosmeticsActivity extends Activity {
         updateTabs();
     }
 
+    private void browseSkinDex(){
+        final WebView web=new WebView(this);
+        web.setBackgroundColor(BG);
+        WebSettings settings=web.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setLoadsImagesAutomatically(true);
+        web.setWebViewClient(new WebViewClient());
+        web.setWebChromeClient(new WebChromeClient());
+        final AlertDialog dialog=new AlertDialog.Builder(this)
+                .setTitle("SkinDex • Live Skin Gallery")
+                .setView(web)
+                .setNegativeButton("Close",(d,w)->d.dismiss())
+                .create();
+        web.setDownloadListener((url,userAgent,contentDisposition,mimeType,contentLength)->{
+            Uri uri=Uri.parse(url);
+            String host=uri.getHost();
+            if(host==null||!(host.equalsIgnoreCase("skindex.pro")||host.toLowerCase(Locale.ROOT).endsWith(".skindex.pro"))){
+                status.setText("Only direct SkinDex skin downloads are allowed");
+                return;
+            }
+            String fileName=URLUtil.guessFileName(url,contentDisposition,mimeType);
+            if(fileName==null||fileName.trim().isEmpty())fileName="skindex_skin.png";
+            if(fileName.toLowerCase(Locale.ROOT).endsWith(".png"))fileName=fileName.substring(0,fileName.length()-4);
+            final String skinName=fileName;
+            status.setText("Downloading SkinDex skin…");
+            new Thread(()->{
+                try{
+                    File downloaded=store.importRemoteSkin(url,skinName);
+                    runOnUiThread(()->{
+                        active.skin=downloaded.getName();
+                        active.skinEnabled=true;
+                        String n=downloaded.getName().toLowerCase(Locale.ROOT);
+                        active.model=(n.contains("slim")||n.contains("alex")||n.contains("girl"))?"slim":"classic";
+                        save("SkinDex skin applied: "+displayName(downloaded));
+                        if(dialog.isShowing())dialog.dismiss();
+                    });
+                }catch(Exception ex){
+                    runOnUiThread(()->status.setText("Skin download failed • choose another skin"));
+                }
+            },"Oryn-SkinDex-Download").start();
+        });
+        web.loadUrl("https://www.skindex.pro/latest/");
+        dialog.setOnDismissListener(d->{web.stopLoading();web.destroy();});
+        dialog.show();
+        if(dialog.getWindow()!=null)dialog.getWindow().setLayout(
+                (int)(getResources().getDisplayMetrics().widthPixels*0.94f),
+                (int)(getResources().getDisplayMetrics().heightPixels*0.88f));
+    }
+
     private void updateTabs(){
         skinsTab.setBackground(bg(showingCapes?CARD:BLUE,10,showingCapes?Color.rgb(38,67,105):BLUE,1));
         capesTab.setBackground(bg(showingCapes?BLUE:CARD,10,showingCapes?BLUE:Color.rgb(38,67,105),1));
         search.setHint(showingCapes?"Search saved capes...":"Search saved skins...");
         importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin");
+        skinDexButton.setVisibility(showingCapes?View.GONE:View.VISIBLE);
     }
 
     private List<File> allFiles(){
