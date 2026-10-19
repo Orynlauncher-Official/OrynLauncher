@@ -405,13 +405,10 @@ public class OrynCosmeticsActivity extends Activity {
                         } else {
                             Bitmap head=makeHeadThumbnail(bitmap);
                             if(head!=null) thumb.setImageBitmap(head);
-                            preview.renderThumbnail(bitmap,slimModel,rendered->{
-                                if(rendered!=null&&!rendered.isRecycled()) {
-                                    localThumbCache.put(thumbKey,rendered);
-                                    if(thumb.getParent()!=null) thumb.setImageBitmap(rendered);
-                                    if(head!=null&&!head.isRecycled()) head.recycle();
-                                }
-                            });
+                            // Keep gallery rendering lightweight. Rendering every 3D thumbnail
+                            // through the same WebView queued ahead of the selected preview skin,
+                            // making the main character appear minutes late on slower phones.
+                            // Show the instant local head thumbnail; selected preview loads immediately.
                             bitmap.recycle();
                         }
                     }else thumb.setImageBitmap(bitmap);
