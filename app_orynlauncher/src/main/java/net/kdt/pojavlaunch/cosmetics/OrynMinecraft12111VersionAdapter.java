@@ -48,7 +48,7 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
     }
 
     @Override public void refreshPlayerTextures(Context context, Account account, File gameDir, String minecraftVersion) {
-        if (gameDir != null) new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
+        if (gameDir != null) new OrynCosmeticsStore(context).writeActiveForInstance(gameDir);
         Log.i(TAG, "[ORYN-COSMETICS] 1.21.11 skin refresh requested.");
     }
 
