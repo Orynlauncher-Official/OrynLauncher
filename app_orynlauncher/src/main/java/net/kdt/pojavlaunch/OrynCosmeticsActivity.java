@@ -272,7 +272,7 @@ public class OrynCosmeticsActivity extends Activity {
                 ArrayList<RemoteSkin> found=new ArrayList<>();
                 java.net.HttpURLConnection connection=null;
                 try{
-                    java.net.URL url=new java.net.URL("https://www.skindex.pro/latest/"+(requestedPage>1?"?page="+requestedPage:""));
+                    java.net.URL url=new java.net.URL("https://www.skindex.pro/latest/"+(requestedPage>1?"page/"+requestedPage+"/":""));
                     connection=(java.net.HttpURLConnection)url.openConnection();
                     connection.setConnectTimeout(10000); connection.setReadTimeout(15000);
                     connection.setInstanceFollowRedirects(true);
@@ -283,20 +283,28 @@ public class OrynCosmeticsActivity extends Activity {
                         String line; int total=0;
                         while((line=reader.readLine())!=null && total<2*1024*1024){html.append(line).append('\n');total+=line.length();}
                     }
-                    java.util.regex.Matcher links=java.util.regex.Pattern.compile("(?is)<a[^>]+href=[\\\"']([^\\\"']+)[\\\"'][^>]*>(.*?)</a>").matcher(html);
-                    while(links.find()){
-                        String href=links.group(1), body=links.group(2);
-                        if(!href.contains("skindex.pro")&&!href.matches("/[^/]+/?"))continue;
-                        java.util.regex.Matcher image=java.util.regex.Pattern.compile("(?is)(?:src|data-src)=[\\\"']([^\\\"']*/static/skins/[^\\\"']+\\.png[^\\\"']*)").matcher(body);
-                        if(!image.find())continue;
-                        String imageUrl=image.group(1).replace("&amp;","&");
-                        if(imageUrl.startsWith("//"))imageUrl="https:"+imageUrl;
-                        else if(imageUrl.startsWith("/"))imageUrl="https://www.skindex.pro"+imageUrl;
-                        if(!imageUrl.startsWith("https://www.skindex.pro/static/skins/"))continue;
-                        String name=body.replaceAll("(?is)<[^>]+>"," ").replaceAll("\\s+"," ").trim();
-                        if(name.isEmpty())name=href.replaceAll("/","").replace('-',' ');
+                    // SkinDex listing cards use /static/preview/ images; the downloadable
+                    // Minecraft skin PNG uses the same filename under /static/skins/.
+                    java.util.regex.Matcher images=java.util.regex.Pattern
+                        .compile("(?is)<img\\\\b[^>]*>").matcher(html);
+                    while(images.find()){
+                        String tag=images.group();
+                        java.util.regex.Matcher srcMatch=java.util.regex.Pattern
+                            .compile("(?is)(?:src|data-src)\\\\s*=\\\\s*['\\\"]([^'\\\"]+)['\\\"]").matcher(tag);
+                        if(!srcMatch.find())continue;
+                        String imagePath=srcMatch.group(1).replace("&amp;","&");
+                        if(imagePath.startsWith("//"))imagePath="https:"+imagePath;
+                        else if(imagePath.startsWith("/"))imagePath="https://www.skindex.pro"+imagePath;
+                        if(!imagePath.startsWith("https://www.skindex.pro/static/preview/"))continue;
+                        String fileName=imagePath.substring(imagePath.lastIndexOf('/')+1);
+                        if(!fileName.toLowerCase(Locale.ROOT).endsWith(".png"))continue;
+                        java.util.regex.Matcher altMatch=java.util.regex.Pattern
+                            .compile("(?is)alt\\\\s*=\\\\s*['\\\"]([^'\\\"]*)['\\\"]").matcher(tag);
+                        String name=altMatch.find()?altMatch.group(1).trim():"Minecraft Skin";
                         name=android.text.Html.fromHtml(name,android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                        if(name.isEmpty())name="Minecraft Skin";
                         if(name.length()>80)name=name.substring(0,80);
+                        String imageUrl="https://www.skindex.pro/static/skins/"+fileName;
                         found.add(new RemoteSkin(name,imageUrl));
                     }
                 }catch(Exception ignored){}finally{if(connection!=null)connection.disconnect();}
