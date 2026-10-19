@@ -61,10 +61,21 @@ public class OrynCosmeticsActivity extends Activity {
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         store=new OrynCosmeticsStore(this);
-        store.removeBundledDemoSkins();
+        // Seed the offline gallery on every first launch. The old code deleted these
+        // presets immediately, which left the Skins tab completely empty.
+        store.ensureDefaultSkins();
         store.ensureOrynCapes();
         store.normalizeExistingCapes();
         active=store.getActiveProfile();
+        if (active.skin == null || active.skin.isEmpty()
+                || !new File(getFilesDir(), "cosmetics/skins/" + active.skin).isFile()) {
+            File defaultSkin = new File(getFilesDir(), "cosmetics/skins/Oryn.png");
+            if (defaultSkin.isFile()) {
+                active.skin = defaultSkin.getName();
+                active.skinEnabled = true;
+                store.setActiveProfile(active);
+            }
+        }
         buildUi();
         renderGrid();
         refreshPreview();
