@@ -73,7 +73,11 @@ public class OrynCosmeticsActivity extends Activity {
             if (defaultSkin.isFile()) {
                 active.skin = defaultSkin.getName();
                 active.skinEnabled = true;
-                store.setActiveProfile(active);
+                try {
+                    store.setActiveProfile(active);
+                } catch (Exception e) {
+                    android.util.Log.w("OrynCosmetics", "Could not save default skin profile", e);
+                }
             }
         }
         buildUi();
