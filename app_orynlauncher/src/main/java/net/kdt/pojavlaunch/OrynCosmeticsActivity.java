@@ -62,15 +62,17 @@ public class OrynCosmeticsActivity extends Activity {
         setRequestedOrientation(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         store=new OrynCosmeticsStore(this);
-        store.clearOldSkinCollectionOnce();
+        boolean oldSkinsCleared=store.clearOldSkinCollectionOnce();
         store.ensureOrynCapes();
         store.normalizeExistingCapes();
         active=store.getActiveProfile();
-        active.skin="";
-        active.skinEnabled=false;
+        if(oldSkinsCleared){
+            active.skin="";
+            active.skinEnabled=false;
+        }
         if(active.cape==null) active.cape="";
         if(active.model==null) active.model="classic";
-        try { store.setActiveProfile(active); } catch (Exception ignored) {}
+        if(oldSkinsCleared) try { store.setActiveProfile(active); } catch (Exception ignored) {}
         buildUi();
         refreshPreview();
         status.setText("Old presets removed • browse SkinDex to add real skins");
