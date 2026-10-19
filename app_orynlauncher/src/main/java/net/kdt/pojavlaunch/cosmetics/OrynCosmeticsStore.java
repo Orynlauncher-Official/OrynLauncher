@@ -593,6 +593,11 @@ public final class OrynCosmeticsStore {
      * documented LocalSkin directory. A JSON manifest by itself is not consumed by Minecraft.
      * The universal loader is installed only for recognized mod-loader instances.
      */
+    /** Backwards-compatible manifest sync for callers that do not have launch metadata. */
+    public void writeActiveForInstance(File gameDir) {
+        writeActiveForInstance(gameDir, "", "", null);
+    }
+
     public void writeActiveForInstance(File gameDir, String username, String versionId, File[] classpath) {
         try {
             File dir = new File(gameDir, ".oryn/cosmetics");
