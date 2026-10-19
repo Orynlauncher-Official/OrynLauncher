@@ -70,7 +70,7 @@ jobs:
         run: |
           gradle -p oryn-cosmetics-fabric remapJar
           mkdir -p app_orynlauncher/src/main/assets/orynlauncher
-          cp oryn-cosmetics-fabric/build/libs/orynlauncher-cosmetics-1.0.0.jar app_orynlauncher/src/main/assets/orynlauncher/oryn_cosmetics_fabric.jar
+          cp oryn-cosmetics-fabric/build/libs/*-1.0.0.jar app_orynlauncher/src/main/assets/orynlauncher/oryn_cosmetics_fabric.jar
 
       - name: Restore Gradle 8.14.3 for Android launcher build
         uses: gradle/actions/setup-gradle@v4
