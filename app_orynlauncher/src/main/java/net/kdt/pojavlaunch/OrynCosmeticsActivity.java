@@ -182,12 +182,16 @@ public class OrynCosmeticsActivity extends Activity {
      * Unlike scraping skin catalog HTML, this returns a verified player's raw skin texture.
      * Search accepts an exact Minecraft Java username.
      */
+    /**
+     * Search a Java username through mc-heads' direct raw-skin endpoint.
+     * This avoids depending on two separate Mojang API calls and returns the actual UV texture.
+     */
     private void loadOnlineSkins(String term) {
         if (showingCapes) { showingCapes=false; updateTabs(); }
         onlineMode=true;
         onlineLoading=true;
         onlineSkins.clear();
-        status.setText("Looking up Minecraft username…");
+        status.setText("Looking up skin…");
         renderGrid();
         new android.os.AsyncTask<Void,Void,List<OnlineSkin>>() {
             String error;
@@ -195,7 +199,7 @@ public class OrynCosmeticsActivity extends Activity {
                 List<OnlineSkin> result=new ArrayList<>();
                 String username=term==null?"":term.trim();
                 if(username.isEmpty()) {
-                    error="Enter an exact Minecraft Java username first.";
+                    error="Enter a Minecraft Java username first.";
                     return result;
                 }
                 if(!username.matches("[A-Za-z0-9_]{3,16}")) {
@@ -203,54 +207,31 @@ public class OrynCosmeticsActivity extends Activity {
                     return result;
                 }
                 HttpURLConnection connection=null;
+                Bitmap bitmap=null;
                 try {
-                    URL lookup=new URL("https://api.mojang.com/users/profiles/minecraft/"+Uri.encode(username));
-                    connection=(HttpURLConnection)lookup.openConnection();
-                    connection.setConnectTimeout(7000);
-                    connection.setReadTimeout(9000);
+                    String skinUrl="https://mc-heads.net/skin/"+Uri.encode(username);
+                    connection=(HttpURLConnection)new URL(skinUrl).openConnection();
+                    connection.setConnectTimeout(8000);
+                    connection.setReadTimeout(12000);
+                    connection.setInstanceFollowRedirects(true);
                     connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
                     int code=connection.getResponseCode();
-                    if(code==404) { error="No Minecraft profile found for that username."; return result; }
-                    if(code<200||code>=300) { error="Mojang username lookup returned HTTP "+code+"."; return result; }
-                    String profileText=readHtml(connection);
-                    org.json.JSONObject profile=new org.json.JSONObject(profileText);
-                    String uuid=profile.optString("id","");
-                    String name=profile.optString("name",username);
-                    if(uuid.isEmpty()) { error="Mojang did not return a profile ID."; return result; }
-                    connection.disconnect(); connection=null;
-
-                    URL session=new URL("https://sessionserver.mojang.com/session/minecraft/profile/"+uuid+"?unsigned=false");
-                    connection=(HttpURLConnection)session.openConnection();
-                    connection.setConnectTimeout(7000);
-                    connection.setReadTimeout(9000);
-                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/5.0");
-                    code=connection.getResponseCode();
-                    if(code<200||code>=300) { error="Mojang texture lookup returned HTTP "+code+"."; return result; }
-                    org.json.JSONObject sessionProfile=new org.json.JSONObject(readHtml(connection));
-                    org.json.JSONArray properties=sessionProfile.optJSONArray("properties");
-                    if(properties==null) { error="This profile has no public skin texture."; return result; }
-                    String textureValue="";
-                    for(int i=0;i<properties.length();i++) {
-                        org.json.JSONObject property=properties.optJSONObject(i);
-                        if(property!=null && "textures".equals(property.optString("name"))) {
-                            textureValue=property.optString("value","");
-                            if(!textureValue.isEmpty()) break;
-                        }
+                    if(code==404) { error="No skin found for that username."; return result; }
+                    if(code<200||code>=300) { error="Skin provider returned HTTP "+code+"."; return result; }
+                    try(java.io.InputStream in=connection.getInputStream()) {
+                        bitmap=BitmapFactory.decodeStream(in);
                     }
-                    if(textureValue.isEmpty()) { error="This profile has no public skin texture."; return result; }
-                    byte[] decoded=android.util.Base64.decode(textureValue,android.util.Base64.DEFAULT);
-                    org.json.JSONObject textureJson=new org.json.JSONObject(new String(decoded,java.nio.charset.StandardCharsets.UTF_8));
-                    org.json.JSONObject textures=textureJson.optJSONObject("textures");
-                    org.json.JSONObject skinObject=textures==null?null:textures.optJSONObject("SKIN");
-                    String skinUrl=skinObject==null?"":skinObject.optString("url","");
-                    if(skinUrl.isEmpty() || !skinUrl.startsWith("https://")) {
-                        error="This player has no public skin set.";
+                    if(bitmap==null || !((bitmap.getWidth()==64 && bitmap.getHeight()==64) ||
+                            (bitmap.getWidth()==64 && bitmap.getHeight()==32) ||
+                            (bitmap.getWidth()==128 && bitmap.getHeight()==128))) {
+                        error="The username has no usable public skin texture.";
                         return result;
                     }
-                    result.add(new OnlineSkin(name,uuid,skinUrl));
+                    result.add(new OnlineSkin(username,username,skinUrl));
                 } catch(Exception e) {
-                    error="Could not reach Mojang. Check internet and try again.";
+                    error="Could not reach the skin provider. Check internet and retry.";
                 } finally {
+                    if(bitmap!=null&&!bitmap.isRecycled()) bitmap.recycle();
                     if(connection!=null) connection.disconnect();
                 }
                 return result;
@@ -258,11 +239,19 @@ public class OrynCosmeticsActivity extends Activity {
             protected void onPostExecute(List<OnlineSkin> results) {
                 onlineLoading=false;
                 onlineSkins.addAll(results);
-                renderGrid();
-                status.setText(results.isEmpty()?"Online lookup failed: "+(error==null?"No public skin found":error):
-                        "Found skin for "+results.get(0).name+" • Mojang official profile • Tap Apply");
+                if(results.isEmpty()) {
+                    // Never leave the whole gallery blank after a network lookup fails.
+                    onlineMode=false;
+                    query="";
+                    if(search!=null) search.setText("");
+                    renderGrid();
+                    status.setText("Online search unavailable. Preset skins are shown; you can still apply them offline.");
+                } else {
+                    renderGrid();
+                    status.setText("Found skin for "+results.get(0).name+" • Tap Apply to save it");
+                }
             }
-        }.execute();
+        }.executeOnExecutor(android.os.AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     /** Read a successful HTTP response body as UTF-8 text. */
@@ -319,7 +308,7 @@ public class OrynCosmeticsActivity extends Activity {
         if(visible.isEmpty()){
             LinearLayout empty=new LinearLayout(this);empty.setOrientation(LinearLayout.VERTICAL);empty.setGravity(Gravity.CENTER);empty.setPadding(d(12),d(20),d(12),d(20));
             TextView title=label(query.isEmpty()?(showingCapes?"No capes yet":"No saved skins yet"):"No "+(showingCapes?"capes":"skins")+" found",15,WHITE);title.setGravity(Gravity.CENTER);
-            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Tap Online Skins to search MinecraftSkins and SkinDex.",11,MUTED);desc.setGravity(Gravity.CENTER);
+            empty.addView(title,lp(-1,40));TextView desc=label(showingCapes?"No cape assets available yet.":"Choose a preset below or import your own PNG skin.",11,MUTED);desc.setGravity(Gravity.CENTER);
             empty.addView(desc,lp(-1,45));grid.addView(empty,lp(-1,-2));
             if(!showingCapes&&!query.isEmpty()){} return;
         }
@@ -381,7 +370,7 @@ public class OrynCosmeticsActivity extends Activity {
         // which made valid online results appear as an empty grid.
         List<OnlineSkin> visible=new ArrayList<>(onlineSkins);
         if(visible.isEmpty()) {
-            TextView empty=label("Enter a Minecraft Java username, then tap Find Skin.",13,MUTED);
+            TextView empty=label("Choose a preset skin below, or enter a username and tap Find Skin.",13,MUTED);
             empty.setGravity(Gravity.CENTER); grid.addView(empty,lp(-1,90)); return;
         }
         int columns=4;
