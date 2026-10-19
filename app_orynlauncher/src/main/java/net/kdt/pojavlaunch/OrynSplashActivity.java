@@ -17,7 +17,7 @@ public class OrynSplashActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_oryn_splash);
+        setContentView(R.layout.activity_oryn_splash_video);
         hideSystemBars();
 
         mVideo = findViewById(R.id.oryn_splash_video);
