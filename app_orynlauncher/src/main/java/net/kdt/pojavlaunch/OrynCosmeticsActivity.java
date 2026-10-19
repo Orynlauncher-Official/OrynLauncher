@@ -291,14 +291,14 @@ public class OrynCosmeticsActivity extends Activity {
             if(loading[0])return;
             loading[0]=true; info.setText("Loading SkinDex page "+page[0]+"…"); more.setEnabled(false);
             final int requestedPage=page[0];
+            final String requestedSearch=query.getText().toString().trim();
             new Thread(()->{
                 ArrayList<RemoteSkin> found=new ArrayList<>();
                 java.net.HttpURLConnection connection=null;
                 try{
-                    String searchTerm=query.getText().toString().trim();
                     String listingUrl;
-                    if(!searchTerm.isEmpty()){
-                        listingUrl="https://www.skindex.pro/search?q="+java.net.URLEncoder.encode(searchTerm,"UTF-8");
+                    if(!requestedSearch.isEmpty()){
+                        listingUrl="https://www.skindex.pro/search?q="+java.net.URLEncoder.encode(requestedSearch,"UTF-8");
                         if(requestedPage>1) listingUrl+="&page="+requestedPage;
                     }else{
                         listingUrl="https://www.skindex.pro/latest/"+(requestedPage>1?"page/"+requestedPage+"/":"");
@@ -350,6 +350,12 @@ public class OrynCosmeticsActivity extends Activity {
                         info.setText(all.size()+" skins loaded • tap Apply");
                     }else info.setText("SkinDex load failed: "+(loadError[0].isEmpty()?"no previews found":loadError[0]));
                     render.run();
+                    String currentSearch=query.getText().toString().trim();
+                    if(!currentSearch.equals(requestedSearch)){
+                        all.clear();
+                        page[0]=1;
+                        loadPage[0].run();
+                    }
                 });
             },"Oryn-SkinDex-Catalog").start();
         };
