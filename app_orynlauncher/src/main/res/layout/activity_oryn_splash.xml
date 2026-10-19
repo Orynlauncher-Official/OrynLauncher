@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:src="@drawable/orynlauncher_snow_hero"
+        android:src="@drawable/orynlauncher_splash_background"
         android:contentDescription="@null" />
 
     <!-- Dark monochrome overlay to preserve the reference's cinematic contrast and legible text. -->
