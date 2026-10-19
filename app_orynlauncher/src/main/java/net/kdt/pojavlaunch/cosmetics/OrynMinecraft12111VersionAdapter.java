@@ -33,7 +33,7 @@ public final class OrynMinecraft12111VersionAdapter implements OrynCosmeticsVers
         Log.i(TAG, "[ORYN-COSMETICS] Native PlayerRenderer = untouched");
 
         if (gameDir != null) {
-            new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
+            new OrynCosmeticsStore(context).writeActiveForInstance(gameDir);
             installBridge(context, gameDir);
         }
         return "{}";
