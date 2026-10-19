@@ -47,7 +47,7 @@ public class OrynCosmeticsActivity extends Activity {
     private OrynCosmeticsStore.CosmeticProfile active;
     private TextView selectedName, modelInfo, status;
     private EditText search;
-    private Button skinsTab, capesTab, classicButton, slimButton, importButton, skinDexButton;
+    private Button skinsTab, capesTab, classicButton, slimButton, importButton, skinDexButton, applySkinButton;
     private LinearLayout grid;
     private boolean showingCapes;
     private String filter="";
@@ -111,7 +111,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout left=new LinearLayout(this); left.setOrientation(LinearLayout.VERTICAL);
         left.setPadding(dp(12),dp(8),dp(12),dp(10)); left.setBackground(bg(PANEL,18,Color.rgb(30,57,93),1));
-        LinearLayout.LayoutParams leftLp=new LinearLayout.LayoutParams(0,-1,0.43f); leftLp.rightMargin=dp(10); body.addView(left,leftLp);
+        LinearLayout.LayoutParams leftLp=new LinearLayout.LayoutParams(0,-1,0.39f); leftLp.rightMargin=dp(10); body.addView(left,leftLp);
         TextView title=text("Skin & Cape",23,WHITE); title.setTypeface(null,android.graphics.Typeface.BOLD); left.addView(title,lp(-1,34));
         left.addView(text("Preview, select and apply locally",11,MUTED),lp(-1,23));
 
@@ -143,7 +143,7 @@ public class OrynCosmeticsActivity extends Activity {
 
         LinearLayout right=new LinearLayout(this); right.setOrientation(LinearLayout.VERTICAL);
         right.setPadding(dp(10),dp(8),dp(8),dp(8)); right.setBackground(bg(PANEL,18,Color.rgb(20,57,105),1));
-        body.addView(right,new LinearLayout.LayoutParams(0,-1,0.57f));
+        body.addView(right,new LinearLayout.LayoutParams(0,-1,0.61f));
         LinearLayout controls=new LinearLayout(this); controls.setGravity(Gravity.CENTER_VERTICAL);
         search=new EditText(this); search.setSingleLine(true); search.setTextColor(WHITE); search.setHintTextColor(MUTED);
         search.setTextSize(12); search.setPadding(dp(12),0,dp(8),0); search.setHint("Search skins or capes...");
@@ -151,19 +151,38 @@ public class OrynCosmeticsActivity extends Activity {
         controls.addView(search,new LinearLayout.LayoutParams(0,dp(42),1));
         LinearLayout tabs=new LinearLayout(this); tabs.setPadding(dp(3),dp(3),dp(3),dp(3));
         tabs.setBackground(bg(Color.rgb(4,14,32),12,Color.rgb(25,44,72),1));
-        LinearLayout.LayoutParams tabsLp=lp(220,42); tabsLp.leftMargin=dp(7); controls.addView(tabs,tabsLp);
+        LinearLayout.LayoutParams tabsLp=lp(190,42); tabsLp.leftMargin=dp(7); controls.addView(tabs,tabsLp);
         skinsTab=button("♧  Skins",true); capesTab=button("♧  Capes",false);
         tabs.addView(skinsTab,new LinearLayout.LayoutParams(0,-1,1)); tabs.addView(capesTab,new LinearLayout.LayoutParams(0,-1,1));
         right.addView(controls,lp(-1,46));
+        HorizontalScrollView categoriesScroll=new HorizontalScrollView(this);
+        categoriesScroll.setHorizontalScrollBarEnabled(false);
+        LinearLayout categories=new LinearLayout(this); categories.setGravity(Gravity.CENTER_VERTICAL);
+        String[] categoryNames={"All","Anime","Girl","Boy","Cool","Demon","Hoodie","More"};
+        for(String category:categoryNames){
+            Button chip=button(category,false); chip.setTextSize(11);
+            LinearLayout.LayoutParams chipLp=lp(category.equals("More")?70:category.equals("All")?54:66,30);
+            chipLp.rightMargin=dp(5); categories.addView(chip,chipLp);
+            chip.setOnClickListener(v->{
+                String term=category.equals("All")||category.equals("More")?"":category.toLowerCase(Locale.ROOT);
+                search.setText(term);
+            });
+        }
+        categoriesScroll.addView(categories); LinearLayout.LayoutParams catLp=lp(-1,36);
+        catLp.topMargin=dp(3); right.addView(categoriesScroll,catLp);
         ScrollView scroll=new ScrollView(this); scroll.setFillViewport(false); scroll.setVerticalScrollBarEnabled(false);
         grid=new LinearLayout(this); grid.setOrientation(LinearLayout.VERTICAL); grid.setPadding(0,dp(5),0,dp(5));
         scroll.addView(grid); right.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         importButton=button("＋  Import / Replace Skin",true); LinearLayout.LayoutParams imp=lp(-1,40);
         imp.topMargin=dp(4); right.addView(importButton,imp);
         importButton.setOnClickListener(v->pick(showingCapes?PICK_CAPE:PICK_SKIN));
-        skinDexButton=button("♧  Browse SkinDex • 1-Click Apply",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
+        skinDexButton=button("↻  Load More Skins  •  SkinDex",false); LinearLayout.LayoutParams dexLp=lp(-1,38);
         dexLp.topMargin=dp(4); right.addView(skinDexButton,dexLp);
         skinDexButton.setOnClickListener(v->browseSkinDex());
+        applySkinButton=button("✓  Apply Skin",true);
+        LinearLayout.LayoutParams applyLp=lp(-1,40); applyLp.topMargin=dp(5);
+        left.addView(applySkinButton,applyLp);
+        applySkinButton.setOnClickListener(v->{ if(active.skin!=null&&!active.skin.isEmpty()) { active.skinEnabled=true; save("Skin applied"); refreshPreview(); } else status.setText("Select a skin or use SkinDex first"); });
         status=text("Ready • Choose a skin and tap Apply",10,MUTED); root.addView(status,lp(-1,20));
         setContentView(root);
 
@@ -308,6 +327,7 @@ public class OrynCosmeticsActivity extends Activity {
         search.setHint(showingCapes?"Search saved capes...":"Search saved skins...");
         importButton.setText(showingCapes?"＋  Import / Replace Cape":"＋  Import / Replace Skin");
         skinDexButton.setVisibility(showingCapes?View.GONE:View.VISIBLE);
+        applySkinButton.setVisibility(showingCapes?View.GONE:View.VISIBLE);
     }
 
     private List<File> allFiles(){
@@ -325,7 +345,7 @@ public class OrynCosmeticsActivity extends Activity {
             TextView empty=text(showingCapes?"No capes saved yet. Import a cape PNG.":"No skins found. Tap SkinDex • 1-Click Apply to browse and apply skins.",13,MUTED);
             empty.setGravity(Gravity.CENTER); empty.setPadding(dp(12),dp(12),dp(12),dp(12)); grid.addView(empty,lp(-1,140)); return;
         }
-        int columns=4;
+        int columns=5;
         for(int start=0;start<files.size();start+=columns){
             LinearLayout row=new LinearLayout(this); row.setOrientation(LinearLayout.HORIZONTAL);
             for(int col=0;col<columns&&start+col<files.size();col++){
@@ -343,18 +363,18 @@ public class OrynCosmeticsActivity extends Activity {
                         else {image.setImageBitmap(bitmap);}
                     } else image.setImageBitmap(bitmap);
                 }
-                card.addView(image,lp(-1,82));
+                card.addView(image,lp(-1,90));
                 TextView name=text(displayName(file),11,WHITE); name.setGravity(Gravity.CENTER);
                 name.setMaxLines(1); name.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(name,lp(-1,23));
                 Button apply=button(equipped?"✓ Applied":"Apply",equipped); apply.setTextSize(10);
                 card.addView(apply,lp(-1,30));
                 View.OnClickListener click=v->applyFile(file);
                 apply.setOnClickListener(click); name.setOnClickListener(click); image.setOnClickListener(click);
-                LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(151),1);
+                LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(0,dp(160),1);
                 cp.setMargins(dp(3),dp(3),dp(3),dp(3)); row.addView(card,cp);
             }
             while(row.getChildCount()<columns)row.addView(new View(this),new LinearLayout.LayoutParams(0,1,1));
-            grid.addView(row,lp(-1,157));
+            grid.addView(row,lp(-1,166));
         }
     }
 
