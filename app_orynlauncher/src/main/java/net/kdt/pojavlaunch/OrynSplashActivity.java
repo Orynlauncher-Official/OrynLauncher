@@ -1,20 +1,17 @@
 package net.kdt.pojavlaunch;
 
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
-import android.view.animation.DecelerateInterpolator;
-import android.widget.ProgressBar;
-import android.widget.TextView;
+import android.widget.VideoView;
 
 import git.artdeell.mojo.R;
 
-/** Monochrome OrynLauncher Plus startup splash. Progress is a short visual animation, not actual unpacking progress. */
+/** OrynLauncher Plus startup splash: plays res/raw/oryn_intro.mp4, then opens the launcher. */
 public class OrynSplashActivity extends Activity {
-    private static final long DURATION_MS = 1600;
-    private ValueAnimator mAnimator;
+    private VideoView mVideo;
     private boolean mLaunched = false;
 
     @Override
@@ -23,18 +20,22 @@ public class OrynSplashActivity extends Activity {
         setContentView(R.layout.activity_oryn_splash);
         hideSystemBars();
 
-        final ProgressBar bar = findViewById(R.id.oryn_splash_progress);
-        final TextView percent = findViewById(R.id.oryn_splash_percent);
-        mAnimator = ValueAnimator.ofInt(0, 100);
-        mAnimator.setDuration(DURATION_MS);
-        mAnimator.setInterpolator(new DecelerateInterpolator());
-        mAnimator.addUpdateListener(a -> {
-            int value = (int) a.getAnimatedValue();
-            bar.setProgress(value);
-            percent.setText(value + "%");
-            if (value >= 100) launchMain();
+        mVideo = findViewById(R.id.oryn_splash_video);
+
+        // Looked up at runtime so the app still starts if the video file is missing.
+        int videoRes = getResources().getIdentifier("oryn_intro", "raw", getPackageName());
+        if (videoRes == 0) {
+            launchMain();
+            return;
+        }
+
+        mVideo.setVideoURI(Uri.parse("android.resource://" + getPackageName() + "/" + videoRes));
+        mVideo.setOnCompletionListener(mp -> launchMain());
+        mVideo.setOnErrorListener((mp, what, extra) -> {
+            launchMain();
+            return true;
         });
-        mAnimator.start();
+        mVideo.start();
     }
 
     private void launchMain() {
@@ -55,8 +56,20 @@ public class OrynSplashActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        if (mVideo != null && mVideo.isPlaying()) mVideo.pause();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mVideo != null && !mLaunched && !mVideo.isPlaying()) mVideo.start();
+    }
+
+    @Override
     protected void onDestroy() {
-        if (mAnimator != null) mAnimator.cancel();
+        if (mVideo != null) mVideo.stopPlayback();
         super.onDestroy();
     }
 }
