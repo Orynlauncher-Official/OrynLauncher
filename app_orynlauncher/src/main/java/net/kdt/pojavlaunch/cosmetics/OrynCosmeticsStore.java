@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.security.MessageDigest;
+import java.util.regex.Pattern;
 
 public final class OrynCosmeticsStore {
     public static final String DEFAULT_PROFILE = "Default";
@@ -586,7 +588,12 @@ public final class OrynCosmeticsStore {
         }
     }
 
-    public void writeActiveForInstance(File gameDir) {
+    /**
+     * Writes the launcher profile AND bridges selected textures to CustomSkinLoader's
+     * documented LocalSkin directory. A JSON manifest by itself is not consumed by Minecraft.
+     * The universal loader is installed only for recognized mod-loader instances.
+     */
+    public void writeActiveForInstance(File gameDir, String username, String versionId, File[] classpath) {
         try {
             File dir = new File(gameDir, ".oryn/cosmetics");
             dir.mkdirs();
@@ -601,7 +608,138 @@ public final class OrynCosmeticsStore {
             try (FileOutputStream out = new FileOutputStream(new File(dir, "active_profile.json"))) {
                 out.write(o.toString(2).getBytes(StandardCharsets.UTF_8));
             }
-        } catch (Exception ignored) {}
+
+            String playerName = safeName(username, "");
+            if (playerName.isEmpty()) {
+                android.util.Log.w("OrynCosmetics", "No usable Minecraft username; local skin sync skipped");
+                return;
+            }
+            File cslRoot = new File(gameDir, "CustomSkinLoader");
+            File localRoot = new File(cslRoot, "LocalSkin");
+            File localSkins = new File(localRoot, "skins");
+            File localCapes = new File(localRoot, "capes");
+            localSkins.mkdirs();
+            localCapes.mkdirs();
+
+            syncLocalTexture(p.skinEnabled ? new File(skins, p.skin) : null, new File(localSkins, playerName + ".png"));
+            syncLocalTexture(p.capeEnabled ? new File(capes, p.cape) : null, new File(localCapes, playerName + ".png"));
+            ensureLocalSkinFirst(new File(cslRoot, "CustomSkinLoader.json"));
+
+            if (hasSupportedModLoader(classpath) && isSupportedCslVersion(versionId)) {
+                installCustomSkinLoader(new File(gameDir, "mods"));
+            }
+        } catch (Exception e) {
+            android.util.Log.w("OrynCosmetics", "Could not sync selected textures", e);
+        }
+    }
+
+    private void syncLocalTexture(File source, File target) throws Exception {
+        if (source == null || !source.isFile()) {
+            if (target.exists() && !target.delete()) {
+                android.util.Log.w("OrynCosmetics", "Could not remove stale local texture: " + target);
+            }
+            return;
+        }
+        try (InputStream in = new FileInputStream(source); FileOutputStream out = new FileOutputStream(target)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+            out.getFD().sync();
+        }
+    }
+
+    private void ensureLocalSkinFirst(File configFile) throws Exception {
+        JSONObject config = new JSONObject();
+        if (configFile.isFile()) {
+            try { config = new JSONObject(read(configFile)); } catch (Exception ignored) {}
+        }
+        JSONArray old = config.optJSONArray("loadlist");
+        JSONArray reordered = new JSONArray();
+        reordered.put(new JSONObject().put("name", "LocalSkin").put("type", "Legacy").put("root", "LocalSkin/"));
+        if (old != null) {
+            for (int i = 0; i < old.length(); i++) {
+                JSONObject item = old.optJSONObject(i);
+                if (item == null || "LocalSkin".equalsIgnoreCase(item.optString("name", ""))) continue;
+                reordered.put(item);
+            }
+        } else {
+            reordered.put(new JSONObject().put("name", "Mojang").put("type", "MojangAPI"));
+        }
+        config.put("enable", true);
+        config.put("loadCape", true);
+        config.put("loadlist", reordered);
+        File parent = configFile.getParentFile();
+        if (parent != null) parent.mkdirs();
+        try (FileOutputStream out = new FileOutputStream(configFile)) {
+            out.write(config.toString(2).getBytes(StandardCharsets.UTF_8));
+            out.getFD().sync();
+        }
+    }
+
+    private boolean hasSupportedModLoader(File[] classpath) {
+        if (classpath == null) return false;
+        for (File entry : classpath) {
+            if (entry == null) continue;
+            String path = entry.getAbsolutePath().toLowerCase(java.util.Locale.ROOT);
+            if (path.contains("fabric-loader") || path.contains("net.minecraftforge")
+                    || path.contains("fmlloader") || path.contains("neoforge")
+                    || path.contains("quilt-loader") || path.contains("modlauncher")) return true;
+        }
+        return false;
+    }
+
+    private boolean isSupportedCslVersion(String versionId) {
+        if (versionId == null) return false;
+        // CustomSkinLoader Universal v15.1 supports Minecraft 1.8–1.21 and 26.1–26.3.
+        return Pattern.compile("(^|[^0-9])(1\\.(8|9|1[0-9]|2[0-1])(\\.[0-9]+)?|26\\.[1-3](\\.[0-9]+)?)([^0-9]|$)")
+                .matcher(versionId).find();
+    }
+
+    private void installCustomSkinLoader(File modsDir) {
+        File jar = new File(modsDir, "CustomSkinLoader_Universal-15.1.jar");
+        if (jar.isFile() && jar.length() > 100000) return;
+        modsDir.mkdirs();
+        File temp = new File(modsDir, jar.getName() + ".download");
+        java.net.HttpURLConnection connection = null;
+        try {
+            connection = (java.net.HttpURLConnection) new java.net.URL(
+                    "https://github.com/xfl03/MCCustomSkinLoader/releases/download/v15.1/CustomSkinLoader_Universal-15.1.jar").openConnection();
+            connection.setConnectTimeout(8000);
+            connection.setReadTimeout(12000);
+            connection.setInstanceFollowRedirects(true);
+            connection.setRequestProperty("User-Agent", "OrynLauncherPlus/5.0");
+            if (connection.getResponseCode() != 200) throw new java.io.IOException("HTTP " + connection.getResponseCode());
+            try (InputStream in = connection.getInputStream(); FileOutputStream out = new FileOutputStream(temp)) {
+                byte[] buffer = new byte[8192];
+                int count;
+                while ((count = in.read(buffer)) != -1) out.write(buffer, 0, count);
+                out.getFD().sync();
+            }
+            String digest = sha256(temp);
+            if (!"c8769a38b3cc1da2a7b2f5827d1a53a24cd1ef6d0784b1eb545569f5882a2ffb".equals(digest)) {
+                throw new java.io.IOException("CustomSkinLoader checksum mismatch");
+            }
+            if (jar.exists() && !jar.delete()) throw new java.io.IOException("Cannot replace old CustomSkinLoader jar");
+            if (!temp.renameTo(jar)) throw new java.io.IOException("Cannot install CustomSkinLoader jar");
+            android.util.Log.i("OrynCosmetics", "Installed verified CustomSkinLoader Universal v15.1");
+        } catch (Exception e) {
+            android.util.Log.w("OrynCosmetics", "Could not install CustomSkinLoader; check network and loader compatibility", e);
+            temp.delete();
+        } finally {
+            if (connection != null) connection.disconnect();
+        }
+    }
+
+    private String sha256(File file) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        try (InputStream in = new FileInputStream(file)) {
+            byte[] buffer = new byte[8192];
+            int count;
+            while ((count = in.read(buffer)) != -1) digest.update(buffer, 0, count);
+        }
+        StringBuilder result = new StringBuilder();
+        for (byte b : digest.digest()) result.append(String.format(java.util.Locale.ROOT, "%02x", b & 0xff));
+        return result.toString();
     }
 
     private String read(File f) throws Exception {
