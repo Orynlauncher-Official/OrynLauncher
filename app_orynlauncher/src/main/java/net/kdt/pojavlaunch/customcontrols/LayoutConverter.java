@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 public class LayoutConverter {
 
-    private static final int TARGET_VERSION = 9;
+    private static final int TARGET_VERSION = 12;
 
     public static CustomControls loadAndConvertIfNecessary(Point size, String jsonPath) throws IOException, JsonSyntaxException{
         File jsonFile = new File(jsonPath);
