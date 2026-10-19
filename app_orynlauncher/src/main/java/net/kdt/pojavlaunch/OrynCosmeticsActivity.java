@@ -221,7 +221,7 @@ public class OrynCosmeticsActivity extends Activity {
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("SkinDex • Native Gallery")
                 .setView(content).setNegativeButton("Close",null).create();
         final ArrayList<RemoteSkin> all=new ArrayList<>();
-        final int[] page={1}; final boolean[] loading={false};
+        final int[] page={1}; final boolean[] loading={false}; final String[] loadError={""};
         Runnable render=()->{
             results.removeAllViews();
             String q=query.getText().toString().trim().toLowerCase(Locale.ROOT);
@@ -274,40 +274,38 @@ public class OrynCosmeticsActivity extends Activity {
                 try{
                     java.net.URL url=new java.net.URL("https://www.skindex.pro/latest/"+(requestedPage>1?"page/"+requestedPage+"/":""));
                     connection=(java.net.HttpURLConnection)url.openConnection();
-                    connection.setConnectTimeout(10000); connection.setReadTimeout(15000);
+                    connection.setConnectTimeout(12000); connection.setReadTimeout(18000);
                     connection.setInstanceFollowRedirects(true);
-                    connection.setRequestProperty("User-Agent","OrynLauncherPlus/1.0");
+                    connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/126.0 Mobile Safari/537.36");
+                    connection.setRequestProperty("Accept","text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+                    connection.setRequestProperty("Accept-Language","en-US,en;q=0.9");
+                    connection.setRequestProperty("Referer","https://www.skindex.pro/");
+                    int responseCode=connection.getResponseCode();
+                    if(responseCode<200||responseCode>=300)throw new java.io.IOException("SkinDex HTTP "+responseCode);
                     StringBuilder html=new StringBuilder();
                     try(java.io.InputStream in=connection.getInputStream();
                         java.io.BufferedReader reader=new java.io.BufferedReader(new java.io.InputStreamReader(in,java.nio.charset.StandardCharsets.UTF_8))){
                         String line; int total=0;
-                        while((line=reader.readLine())!=null && total<2*1024*1024){html.append(line).append('\n');total+=line.length();}
+                        while((line=reader.readLine())!=null && total<3*1024*1024){html.append(line).append('\n');total+=line.length();}
                     }
-                    // SkinDex listing cards use /static/preview/ images; the downloadable
-                    // Minecraft skin PNG uses the same filename under /static/skins/.
-                    java.util.regex.Matcher images=java.util.regex.Pattern
-                        .compile("(?is)<img\\b[^>]*>").matcher(html);
-                    while(images.find()){
-                        String tag=images.group();
-                        java.util.regex.Matcher srcMatch=java.util.regex.Pattern
-                            .compile("(?is)(?:src|data-src)\\s*=\\s*['\\\"]([^'\\\"]+)['\\\"]").matcher(tag);
-                        if(!srcMatch.find())continue;
-                        String imagePath=srcMatch.group(1).replace("&amp;","&");
-                        if(imagePath.startsWith("//"))imagePath="https:"+imagePath;
-                        else if(imagePath.startsWith("/"))imagePath="https://www.skindex.pro"+imagePath;
-                        if(!imagePath.startsWith("https://www.skindex.pro/static/preview/"))continue;
-                        String fileName=imagePath.substring(imagePath.lastIndexOf('/')+1);
+                    // Scan the whole listing: preview URLs may be in lazy-load or responsive attributes.
+                    java.util.regex.Matcher previews=java.util.regex.Pattern
+                        .compile("(?i)/static/preview/([^\\\"'<>\\s?]+?\\.png)")
+                        .matcher(html);
+                    while(previews.find()){
+                        String fileName=previews.group(1);
+                        int slash=fileName.lastIndexOf('/');
+                        if(slash>=0)fileName=fileName.substring(slash+1);
                         if(!fileName.toLowerCase(Locale.ROOT).endsWith(".png"))continue;
-                        java.util.regex.Matcher altMatch=java.util.regex.Pattern
-                            .compile("(?is)alt\\s*=\\s*['\\\"]([^'\\\"]*)['\\\"]").matcher(tag);
-                        String name=altMatch.find()?altMatch.group(1).trim():"Minecraft Skin";
-                        name=android.text.Html.fromHtml(name,android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
+                        String name=fileName.substring(0,fileName.length()-4).replace('-',' ').replace('_',' ').trim();
                         if(name.isEmpty())name="Minecraft Skin";
                         if(name.length()>80)name=name.substring(0,80);
                         String imageUrl="https://www.skindex.pro/static/skins/"+fileName;
-                        found.add(new RemoteSkin(name,imageUrl));
+                        boolean duplicate=false;
+                        for(RemoteSkin old:found)if(old.imageUrl.equals(imageUrl)){duplicate=true;break;}
+                        if(!duplicate)found.add(new RemoteSkin(name,imageUrl));
                     }
-                }catch(Exception ignored){}finally{if(connection!=null)connection.disconnect();}
+                    if(found.isEmpty())throw new java.io.IOException("No preview PNGs found in listing");                }catch(Exception error){loadError[0]=error.getClass().getSimpleName()+": "+String.valueOf(error.getMessage());}finally{if(connection!=null)connection.disconnect();}
                 final ArrayList<RemoteSkin> result=found;
                 runOnUiThread(()->{
                     loading[0]=false; more.setEnabled(true);
@@ -319,7 +317,7 @@ public class OrynCosmeticsActivity extends Activity {
                         }
                         page[0]++;
                         info.setText(all.size()+" skins loaded • tap 1-Click Apply");
-                    }else info.setText("No more skins found. Try Load more or check connection.");
+                    }else info.setText("SkinDex load failed: "+(loadError[0].isEmpty()?"no previews found":loadError[0]));
                     render.run();
                 });
             },"Oryn-SkinDex-Catalog").start();
