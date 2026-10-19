@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="OrynSplashFeature">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:paddingStart">14dp</item>
+        <item name="android:paddingEnd">14dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textColor">#E6FFFFFF</item>
+        <item name="android:textSize">7sp</item>
+    </style>
+    <style name="OrynSplashDivider">
+        <item name="android:layout_width">1dp</item>
+        <item name="android:layout_height">26dp</item>
+        <item name="android:background">#40FFFFFF</item>
+    </style>
+</resources>
