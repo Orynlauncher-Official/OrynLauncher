@@ -190,7 +190,7 @@ public class GameRunner {
         // being launched (users can switch instances after choosing a skin/cape).
         // The game-side renderer/mod must consume this manifest to display custom textures.
         try {
-            new OrynCosmeticsStore(activity).writeActiveForInstance(gamedir);
+            new OrynCosmeticsStore(activity).writeActiveForInstance(gamedir, account.username, versionId, classpath);
             Log.i("OrynCosmetics", "Synchronized active cosmetics profile for instance: "
                     + gamedir.getAbsolutePath());
         } catch (Throwable e) {
