@@ -286,11 +286,11 @@ public class OrynCosmeticsActivity extends Activity {
                     // SkinDex listing cards use /static/preview/ images; the downloadable
                     // Minecraft skin PNG uses the same filename under /static/skins/.
                     java.util.regex.Matcher images=java.util.regex.Pattern
-                        .compile("(?is)<img\\\\b[^>]*>").matcher(html);
+                        .compile("(?is)<img\\b[^>]*>").matcher(html);
                     while(images.find()){
                         String tag=images.group();
                         java.util.regex.Matcher srcMatch=java.util.regex.Pattern
-                            .compile("(?is)(?:src|data-src)\\\\s*=\\\\s*['\\\"]([^'\\\"]+)['\\\"]").matcher(tag);
+                            .compile("(?is)(?:src|data-src)\\s*=\\s*['\\\"]([^'\\\"]+)['\\\"]").matcher(tag);
                         if(!srcMatch.find())continue;
                         String imagePath=srcMatch.group(1).replace("&amp;","&");
                         if(imagePath.startsWith("//"))imagePath="https:"+imagePath;
@@ -299,7 +299,7 @@ public class OrynCosmeticsActivity extends Activity {
                         String fileName=imagePath.substring(imagePath.lastIndexOf('/')+1);
                         if(!fileName.toLowerCase(Locale.ROOT).endsWith(".png"))continue;
                         java.util.regex.Matcher altMatch=java.util.regex.Pattern
-                            .compile("(?is)alt\\\\s*=\\\\s*['\\\"]([^'\\\"]*)['\\\"]").matcher(tag);
+                            .compile("(?is)alt\\s*=\\s*['\\\"]([^'\\\"]*)['\\\"]").matcher(tag);
                         String name=altMatch.find()?altMatch.group(1).trim():"Minecraft Skin";
                         name=android.text.Html.fromHtml(name,android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
                         if(name.isEmpty())name="Minecraft Skin";
