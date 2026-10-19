@@ -40,9 +40,9 @@ public final class OrynProfilePropertiesVersionAdapter implements OrynCosmeticsV
         Log.i(TAG, "[ORYN-COSMETICS] Custom skin supported: true");
         Log.i(TAG, "[ORYN-COSMETICS] Custom cape supported: true");
         if (gameDir != null) {
-            new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
+            new OrynCosmeticsStore(context).writeActiveForInstance(gameDir);
         }
-        return OrynLocalCosmeticsServer.prepare(context, account);
+        return "{}";
     }
 
     @Override
@@ -57,7 +57,7 @@ public final class OrynProfilePropertiesVersionAdapter implements OrynCosmeticsV
 
     @Override
     public void refreshPlayerTextures(Context context, Account account, File gameDir, String minecraftVersion) {
-        if (gameDir != null) new OrynCosmeticsStore(context).writeActiveForInstance(gameDir, account);
+        if (gameDir != null) new OrynCosmeticsStore(context).writeActiveForInstance(gameDir);
         Log.i(TAG, "[ORYN-COSMETICS] Texture refresh requested for " + safe(minecraftVersion));
     }
 
