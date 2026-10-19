@@ -4,6 +4,21 @@
     android:layout_height="match_parent"
     android:background="#000000">
 
+    <!-- Full-screen Minecraft landscape background; keep it behind all splash content. -->
+    <ImageView
+        android:id="@+id/oryn_splash_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/orynlauncher_snow_hero"
+        android:contentDescription="@null" />
+
+    <!-- Dark monochrome overlay to preserve the reference's cinematic contrast and legible text. -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
