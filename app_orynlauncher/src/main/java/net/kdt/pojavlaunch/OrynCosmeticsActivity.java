@@ -265,6 +265,17 @@ public class OrynCosmeticsActivity extends Activity {
         }.execute();
     }
 
+    /** Read a successful HTTP response body as UTF-8 text. */
+    private String readHtml(HttpURLConnection connection) throws Exception {
+        StringBuilder body = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(connection.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
+            String line;
+            while ((line = reader.readLine()) != null) body.append(line);
+        }
+        return body.toString();
+    }
+
     private void applyOnlineSkin(OnlineSkin skin, Button apply) {
         if(skin==null)return;
         apply.setEnabled(false); apply.setText("Applying…");
