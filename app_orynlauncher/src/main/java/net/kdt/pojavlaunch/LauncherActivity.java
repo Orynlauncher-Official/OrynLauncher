@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -397,6 +399,7 @@ public class LauncherActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        dismissOrynLaunchSplash();
         OrynDiscordPresence.setBrowsing();
         ContextExecutor.setActivity(this);
         InstanceInstaller.postInstallCheck(this);
@@ -405,7 +408,6 @@ public class LauncherActivity extends BaseActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        dismissOrynLaunchSplash();
         ContextExecutor.clearActivity();
     }
 
