@@ -86,7 +86,7 @@ public class MainMenuFragment extends Fragment {
                     .setTitle("ORYNLAUNCHER PLUS")
                     .setMessage("OrynLauncher Plus 1.1 Edition\\n\\n₹100 only\\n\\nUnlock the Plus edition and get access to the OrynLauncher Plus experience.\\n\\nContact the OrynLauncher team to purchase.")
                     .setPositiveButton("Contact to purchase", (dialog, which) ->
-                            Tools.openURL(requireActivity(), getString(R.string.social_media_invite)))
+                            Tools.openURL(requireActivity(), "https://discord.gg/cpcBKkESm3"))
                     .setNegativeButton("Not now", null)
                     .show());
         }
