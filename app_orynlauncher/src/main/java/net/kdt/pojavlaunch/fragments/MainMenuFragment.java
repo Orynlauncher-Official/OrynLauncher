@@ -293,7 +293,7 @@ public class MainMenuFragment extends Fragment {
         if (profileVersion != null) profileVersion.setText(versionLabel);
         if (selectedVersion != null) selectedVersion.setText(versionLabel);
         if (playButton != null) {
-            String shortVersion = getShortMinecraftVersion(versionId);
+            String shortVersion = shortVersion(versionId);
             playButton.setMaxLines(2);
             playButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
             playButton.setTextSize(13);
@@ -308,31 +308,28 @@ public class MainMenuFragment extends Fragment {
     }
 
     /**
-     * Extract the Minecraft version from common loader profile IDs.
-     * Examples: fabric-loader-0.19.5-1.21.11 -> 1.21.11,
-     * quilt-loader-0.26.1-1.20.4 -> 1.20.4, 1.21.11-forge-xx -> 1.21.11.
+     * Return the Minecraft version portion of a profile ID.
+     * Loader IDs put their own version before the final Minecraft version.
      */
-    private String getShortMinecraftVersion(String versionId) {
+    private String shortVersion(String versionId) {
         if (!Tools.isValidString(versionId)) return "No version selected";
         String id = versionId.trim();
-        java.util.regex.Pattern mcVersion = java.util.regex.Pattern.compile("\\d+\\.\\d+(?:\\.\\d+)?(?:[-+][A-Za-z0-9.]+)?");
-        java.util.regex.Matcher matcher = mcVersion.matcher(id);
-        if (matcher.find()) {
-            String found = matcher.group();
-            // Loader IDs can contain their own version before the Minecraft version.
-            if (id.startsWith("fabric-loader-") || id.startsWith("quilt-loader-")) {
-                java.util.regex.Matcher all = mcVersion.matcher(id);
-                String last = found;
-                while (all.find()) last = all.group();
-                return last;
-            }
-            return found;
+        java.util.regex.Pattern mcVersion =
+                java.util.regex.Pattern.compile("(\\d+\\.\\d+(?:\\.\\d+)?)");
+
+        if (id.startsWith("fabric-loader-") || id.startsWith("quilt-loader-")) {
+            int lastHyphen = id.lastIndexOf('-');
+            String suffix = lastHyphen >= 0 ? id.substring(lastHyphen + 1) : id;
+            java.util.regex.Matcher matcher = mcVersion.matcher(suffix);
+            String last = null;
+            while (matcher.find()) last = matcher.group(1);
+            return last != null ? last : id;
         }
-        String[] parts = id.split("-");
-        if (parts.length > 0) {
-            String last = parts[parts.length - 1];
-            if (last.matches("\\d+\\.\\d+(?:\\.\\d+)?")) return last;
-            if (parts[0].matches("\\d+\\.\\d+(?:\\.\\d+)?")) return parts[0];
+
+        java.util.regex.Matcher matcher = mcVersion.matcher(id);
+        while (matcher.find()) {
+            String found = matcher.group(1);
+            if (found.startsWith("1.")) return found;
         }
         return id;
     }
