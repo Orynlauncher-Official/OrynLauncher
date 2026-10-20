@@ -314,24 +314,15 @@ public class MainMenuFragment extends Fragment {
     private String shortVersion(String versionId) {
         if (!Tools.isValidString(versionId)) return "No version selected";
         String id = versionId.trim();
-        java.util.regex.Pattern mcVersion =
-                java.util.regex.Pattern.compile("(\\d+\\.\\d+(?:\\.\\d+)?)");
 
-        if (id.startsWith("fabric-loader-") || id.startsWith("quilt-loader-")) {
+        if (id.startsWith("fabric-loader") || id.startsWith("quilt-loader")) {
             int lastHyphen = id.lastIndexOf('-');
-            String suffix = lastHyphen >= 0 ? id.substring(lastHyphen + 1) : id;
-            java.util.regex.Matcher matcher = mcVersion.matcher(suffix);
-            String last = null;
-            while (matcher.find()) last = matcher.group(1);
-            return last != null ? last : id;
+            return lastHyphen >= 0 ? id.substring(lastHyphen + 1) : id;
         }
 
-        java.util.regex.Matcher matcher = mcVersion.matcher(id);
-        while (matcher.find()) {
-            String found = matcher.group(1);
-            if (found.startsWith("1.")) return found;
-        }
-        return id;
+        java.util.regex.Matcher matcher =
+                java.util.regex.Pattern.compile("1\\.\\d+(\\.\\d+)?").matcher(id);
+        return matcher.find() ? matcher.group() : id;
     }
 
     /** Only display a game version as installed when its metadata exists on disk. */
