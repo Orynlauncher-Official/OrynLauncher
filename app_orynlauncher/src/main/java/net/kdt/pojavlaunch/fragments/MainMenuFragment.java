@@ -202,13 +202,15 @@ public class MainMenuFragment extends Fragment {
      */
     private void loadCurrentAccountSkin(View root) {
         ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
+        ImageView manageAccountAvatar = root.findViewById(R.id.oryn_manage_account_skin_avatar);
         TextView accountName = root.findViewById(R.id.oryn_home_account_name);
-        if (avatar == null) return;
+        if (avatar == null && manageAccountAvatar == null) return;
 
         // Set Steve immediately so an empty/local account never leaves the paper/user icon.
         Bitmap defaultFace = loadOrynDefaultSteveFace();
         if (defaultFace != null) {
-            avatar.setImageBitmap(defaultFace);
+            if (avatar != null) avatar.setImageBitmap(defaultFace);
+            if (manageAccountAvatar != null) manageAccountAvatar.setImageBitmap(defaultFace);
         }
 
         PojavApplication.sExecutorService.execute(() -> {
@@ -255,7 +257,8 @@ public class MainMenuFragment extends Fragment {
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (finalFace != null) {
-                    avatar.setImageBitmap(finalFace);
+                    if (avatar != null) avatar.setImageBitmap(finalFace);
+                    if (manageAccountAvatar != null) manageAccountAvatar.setImageBitmap(finalFace);
                 }
                 if (accountName != null && Tools.isValidString(finalUsername)) {
                     accountName.setText(finalUsername);
@@ -348,6 +351,9 @@ public class MainMenuFragment extends Fragment {
     public void onResume() {
         super.onResume();
         ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+        // Cosmetics Activity returns here after Apply; refresh both home avatars immediately.
+        View root = getView();
+        if (root != null) loadCurrentAccountSkin(root);
     }
 
     private void runInstallerWithConfirmation() {
