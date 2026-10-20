@@ -4,7 +4,7 @@
     android:id="@+id/fragment_menu_main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#030914"
+    android:background="#05070D"
     android:padding="10dp">
 
     <!-- Left navigation rail -->
@@ -92,7 +92,7 @@
         android:layout_width="wrap_content"
         android:layout_height="44dp"
         android:gravity="center_vertical"
-        android:text="ORYNLAUNCHER PLUS"
+        android:text="ORYNLAUNCHER\nPLUS"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
         android:textSize="18sp"
@@ -220,7 +220,7 @@
                 android:paddingTop="12dp"
                 android:paddingBottom="12dp"
                 android:background="#CC060B14"
-                android:text="PLAY YOUR\nOWN STORY"
+                android:text="WELCOME TO\nOrynLauncher Plus\nPlay. Customize. Explore."
                 android:letterSpacing="0.16"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
@@ -371,7 +371,12 @@
                     android:contentDescription="Edit instance"/>
             </FrameLayout>
         </LinearLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+        <View android:id="@+id/oryn_selected_instance_name" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_instance_version" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_open_store_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_play_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_community_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+</androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Right instances panel -->
     <LinearLayout
