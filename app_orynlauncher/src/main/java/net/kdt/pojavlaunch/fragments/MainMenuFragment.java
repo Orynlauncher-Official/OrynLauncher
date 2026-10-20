@@ -164,6 +164,11 @@ public class MainMenuFragment extends Fragment {
 
         if (mDiscordButton != null) mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/cpcBKkESm3"));
         if (mCustomControlButton != null) mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
+        ImageButton cursorHomeButton = view.findViewById(R.id.oryn_cursor_home_button);
+        ImageButton aiAssistantButton = view.findViewById(R.id.oryn_ai_assistant_button);
+        if (cursorHomeButton != null) cursorHomeButton.setOnClickListener(v -> showCursorStudio());
+        if (aiAssistantButton != null) aiAssistantButton.setOnClickListener(v -> showOrynAssistant());
+
         if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynSettingsActivity.class)));
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
 
@@ -217,6 +222,106 @@ public class MainMenuFragment extends Fragment {
     }
 
 
+
+
+    private void showCursorStudio() {
+        final android.content.SharedPreferences prefs =
+                android.preference.PreferenceManager.getDefaultSharedPreferences(requireContext());
+        final int[] colors = {0xFFFFFFFF,0xFF37DFFF,0xFF438BFF,0xFFAA66FF,0xFFFF66AA,
+                0xFFFF5252,0xFF54E38E,0xFFFFD54F,0xFF111827,0xFFFF8A3D};
+        final String[] names = {"White","Cyan","Blue","Purple","Pink","Red","Green","Yellow","Dark","Orange"};
+        android.widget.LinearLayout root = new android.widget.LinearLayout(requireContext());
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        root.setPadding(pad,pad,pad,pad);
+        root.setBackgroundColor(0xFF0B1423);
+        TextView subtitle = new TextView(requireContext());
+        subtitle.setText("Pick a style, then tap a colour swatch.");
+        subtitle.setTextColor(0xFFB8C9E5);
+        subtitle.setTextSize(13);
+        root.addView(subtitle);
+        android.widget.Spinner shape = new android.widget.Spinner(requireContext());
+        shape.setAdapter(new android.widget.ArrayAdapter<>(requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,new String[]{"Arrow","Crosshair","Circle"}));
+        String saved = prefs.getString("oryn_custom_cursor_shape","Arrow");
+        shape.setSelection("Crosshair".equals(saved)?1:"Circle".equals(saved)?2:0);
+        root.addView(shape,new android.widget.LinearLayout.LayoutParams(-1,(int)(48*getResources().getDisplayMetrics().density)));
+        shape.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
+            @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
+                prefs.edit().putString("oryn_custom_cursor_shape",new String[]{"Arrow","Crosshair","Circle"}[pos])
+                    .putString("oryn_custom_cursor_drawing","").apply();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
+        });
+        TextView label = new TextView(requireContext());
+        label.setText("CURSOR COLOUR");
+        label.setTextColor(0xFFFFFFFF);
+        label.setTypeface(null,android.graphics.Typeface.BOLD);
+        android.widget.LinearLayout.LayoutParams labelParams = new android.widget.LinearLayout.LayoutParams(-1,-2);
+        labelParams.topMargin=pad/2;
+        root.addView(label,labelParams);
+        android.widget.HorizontalScrollView scroll = new android.widget.HorizontalScrollView(requireContext());
+        scroll.setHorizontalScrollBarEnabled(false);
+        android.widget.LinearLayout swatches = new android.widget.LinearLayout(requireContext());
+        swatches.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        for(int i=0;i<colors.length;i++){
+            final int color=colors[i]; final String name=names[i];
+            android.widget.LinearLayout col=new android.widget.LinearLayout(requireContext());
+            col.setOrientation(android.widget.LinearLayout.VERTICAL); col.setGravity(android.view.Gravity.CENTER);
+            android.widget.ImageButton chip=new android.widget.ImageButton(requireContext());
+            android.graphics.drawable.GradientDrawable circle=new android.graphics.drawable.GradientDrawable();
+            circle.setShape(android.graphics.drawable.GradientDrawable.OVAL); circle.setColor(color);
+            circle.setStroke((int)(2*getResources().getDisplayMetrics().density),
+                prefs.getInt("oryn_custom_cursor_color",0xFFFFFFFF)==color?0xFFFFFFFF:0xFF52647C);
+            chip.setBackground(circle); chip.setContentDescription(name); chip.setPadding(0,0,0,0);
+            chip.setOnClickListener(v->{
+                prefs.edit().putInt("oryn_custom_cursor_color",color).putString("oryn_custom_cursor_drawing","").apply();
+                Toast.makeText(requireContext(),name+" cursor selected",Toast.LENGTH_SHORT).show();
+                showCursorStudio();
+            });
+            col.addView(chip,new android.widget.LinearLayout.LayoutParams((int)(34*getResources().getDisplayMetrics().density),(int)(34*getResources().getDisplayMetrics().density)));
+            TextView t=new TextView(requireContext()); t.setText(name); t.setTextColor(0xFFD8E5F8); t.setTextSize(9); t.setGravity(android.view.Gravity.CENTER);
+            col.addView(t,new android.widget.LinearLayout.LayoutParams((int)(48*getResources().getDisplayMetrics().density),-2));
+            android.widget.LinearLayout.LayoutParams cp=new android.widget.LinearLayout.LayoutParams(-2,-2); cp.setMargins(0,pad/3,pad/3,0); swatches.addView(col,cp);
+        }
+        scroll.addView(swatches); root.addView(scroll);
+        android.widget.LinearLayout actions=new android.widget.LinearLayout(requireContext());
+        actions.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        Button draw=new Button(requireContext()); draw.setText("Custom drawing"); draw.setAllCaps(false);
+        draw.setOnClickListener(v->{startActivity(new Intent(requireContext(),OrynSettingsActivity.class));
+            Toast.makeText(requireContext(),"Settings → Game → Custom Cursor Drawing",Toast.LENGTH_LONG).show();});
+        Button reset=new Button(requireContext()); reset.setText("Reset"); reset.setAllCaps(false);
+        reset.setOnClickListener(v->{prefs.edit().remove("oryn_custom_cursor_color").remove("oryn_custom_cursor_shape").remove("oryn_custom_cursor_drawing").apply();
+            Toast.makeText(requireContext(),"Cursor reset",Toast.LENGTH_SHORT).show(); showCursorStudio();});
+        actions.addView(draw,new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        actions.addView(reset,new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        android.widget.LinearLayout.LayoutParams ap=new android.widget.LinearLayout.LayoutParams(-1,-2); ap.topMargin=pad/2; root.addView(actions,ap);
+        new AlertDialog.Builder(requireContext()).setTitle("Cursor Studio").setView(root).setPositiveButton("Done",null).show();
+    }
+
+    /** Offline quick-help panel; it does not claim to be a cloud generative AI. */
+    private void showOrynAssistant() {
+        android.widget.LinearLayout panel=new android.widget.LinearLayout(requireContext());
+        panel.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad=(int)(16*getResources().getDisplayMetrics().density); panel.setPadding(pad,pad,pad,pad);
+        TextView intro=new TextView(requireContext());
+        intro.setText("Hey! I'm Oryn Assistant. Choose a topic for quick launcher help.");
+        intro.setTextColor(0xFFEAF3FF); intro.setTextSize(14); panel.addView(intro);
+        String[] topics={"Improve FPS","Fix launch crash","Cursor help","Skin not showing","Install mods"};
+        String[] answers={
+          "Open Settings → Game → Video & Render. Try a lower resolution scale and enable Oryn FPS Boost if available. Change one option at a time.",
+          "Open Settings → Advanced → Oryn Crash Viewer. Check the latest error and verify the Java runtime matches your Minecraft version.",
+          "Tap the mouse icon on the home top bar. Choose a cursor shape and one of the side-by-side colour swatches.",
+          "Check that the skin is enabled in Oryn Cosmetics, apply it, then restart the game. Some servers can override skins.",
+          "Open Downloads and use mods that match both your Minecraft version and mod loader."
+        };
+        for(int i=0;i<topics.length;i++){
+            final String answer=answers[i]; Button b=new Button(requireContext()); b.setText(topics[i]); b.setAllCaps(false);
+            b.setOnClickListener(v->new AlertDialog.Builder(requireContext()).setTitle("Oryn Assistant").setMessage(answer).setPositiveButton("Got it",null).show());
+            android.widget.LinearLayout.LayoutParams bp=new android.widget.LinearLayout.LayoutParams(-1,-2); bp.topMargin=pad/4; panel.addView(b,bp);
+        }
+        new AlertDialog.Builder(requireContext()).setTitle("✦ Oryn Assistant").setView(panel).setNegativeButton("Close",null).show();
+    }
 
     /**
      * Display the selected Minecraft account's actual skin head in the home profile card.
