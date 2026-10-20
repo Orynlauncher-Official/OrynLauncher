@@ -382,12 +382,20 @@ public class MainMenuFragment extends Fragment {
         });
         android.widget.LinearLayout.LayoutParams rp=new android.widget.LinearLayout.LayoutParams(-1,-2);
         rp.topMargin=pad/3; root.addView(reset,rp);
-        new AlertDialog.Builder(requireContext()).setTitle("✦ Cursor Studio").setView(root)
+        final AlertDialog cursorDialog = new AlertDialog.Builder(requireContext()).setTitle("✦ Cursor Studio").setView(root)
                 .setPositiveButton("Save & close",(dialog,which)->{
                     prefs.edit().putInt("oryn_custom_cursor_color",selectedColor[0])
                             .putString("oryn_custom_cursor_shape",selectedShape[0]).apply();
                     Toast.makeText(requireContext(),"Cursor settings saved",Toast.LENGTH_SHORT).show();
-                }).setNegativeButton("Cancel",null).show();
+                }).setNegativeButton("Cancel",null).create();
+        cursorDialog.setOnShowListener(d -> {
+            if (cursorDialog.getWindow() != null) {
+                cursorDialog.getWindow().setLayout(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+            }
+        });
+        cursorDialog.show();
     }
 
     /** Launcher-only conversational helper. This is an offline assistant, not a general-purpose AI. */
@@ -457,9 +465,9 @@ public class MainMenuFragment extends Fragment {
         android.widget.LinearLayout.LayoutParams quickParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
         quickParams.topMargin=pad/3; shell.addView(quick,quickParams);
         dialog.setOnShowListener(d->{
-            int maxHeight=(int)(getResources().getDisplayMetrics().heightPixels*0.72f);
             if(dialog.getWindow()!=null) dialog.getWindow().setLayout(
-                    (int)(getResources().getDisplayMetrics().widthPixels*0.88f),Math.min(maxHeight,(int)(520*getResources().getDisplayMetrics().density)));
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT);
             addAssistantBubble(history,"Hi! I'm here for OrynLauncher only. What's going on?",false,pad);
         });
         dialog.show();
