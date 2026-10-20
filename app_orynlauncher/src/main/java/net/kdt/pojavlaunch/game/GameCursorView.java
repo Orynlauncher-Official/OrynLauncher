@@ -3,6 +3,10 @@ package net.kdt.pojavlaunch.game;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Color;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
@@ -53,9 +57,43 @@ public class GameCursorView extends View implements PlatformCursorImplementor {
         canvas.translate(dx, dy);
         PlatformCursor cursor = Platform.getCursor();
         canvas.scale(mouseScale, mouseScale);
-        if (cursor == null) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
+        int color = prefs.getInt("oryn_custom_cursor_color", Color.WHITE);
+        String shape = prefs.getString("oryn_custom_cursor_shape", "Arrow");
+        String drawing = prefs.getString("oryn_custom_cursor_drawing", "");
+        customCursorPaint.setColor(color);
+        customCursorPaint.setStyle(Paint.Style.STROKE);
+        customCursorPaint.setStrokeWidth(3f);
+        customCursorPaint.setStrokeCap(Paint.Cap.ROUND);
+        customCursorPaint.setStrokeJoin(Paint.Join.ROUND);
+        customCursorPaint.setAntiAlias(true);
+        if (!drawing.isEmpty()) {
+            String[] points = drawing.split(";");
+            Path path = new Path();
+            boolean started = false;
+            for (String point : points) {
+                String[] xy = point.split(",");
+                if (xy.length != 2) continue;
+                try {
+                    float x = Float.parseFloat(xy[0]);
+                    float y = Float.parseFloat(xy[1]);
+                    if (!started) { path.moveTo(x, y); started = true; }
+                    else path.lineTo(x, y);
+                } catch (NumberFormatException ignored) { }
+            }
+            if (started) canvas.drawPath(path, customCursorPaint);
+        } else if ("Crosshair".equals(shape)) {
+            canvas.drawLine(-10, 0, 10, 0, customCursorPaint);
+            canvas.drawLine(0, -10, 0, 10, customCursorPaint);
+            canvas.drawCircle(0, 0, 4, customCursorPaint);
+        } else if ("Circle".equals(shape)) {
+            canvas.drawCircle(5, 5, 9, customCursorPaint);
+            canvas.drawLine(5, 5, 15, 15, customCursorPaint);
+        } else if (cursor == null) {
+            cursorDrawable.setTint(color);
             cursorDrawable.draw(canvas);
         } else {
+            customCursorPaint.setStyle(Paint.Style.FILL);
             canvas.drawBitmap(cursor.bitmap, -cursor.hotX, -cursor.hotY, customCursorPaint);
         }
     }
