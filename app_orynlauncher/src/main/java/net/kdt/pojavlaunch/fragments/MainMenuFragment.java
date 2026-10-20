@@ -9,6 +9,7 @@ import net.kdt.pojavlaunch.OrynSettingsActivity;
 import static net.kdt.pojavlaunch.Tools.openPath;
 import static net.kdt.pojavlaunch.Tools.shareLog;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -78,6 +79,18 @@ public class MainMenuFragment extends Fragment {
         View resourceLibraryCard = view.findViewById(R.id.oryn_news_card);
         View installationManagerCard = view.findViewById(R.id.oryn_about_card);
         loadCurrentAccountSkin(view);
+        // Premium Edition badge: show the OrynLauncher Plus 1.1 offer.
+        View premiumEditionButton = view.findViewById(R.id.oryn_premium_edition_button);
+        if (premiumEditionButton != null) {
+            premiumEditionButton.setOnClickListener(v -> new AlertDialog.Builder(requireContext())
+                    .setTitle("ORYNLAUNCHER PLUS")
+                    .setMessage("OrynLauncher Plus 1.1 Edition\\n\\n₹100 only\\n\\nUnlock the Plus edition and get access to the OrynLauncher Plus experience.\\n\\nContact the OrynLauncher team to purchase.")
+                    .setPositiveButton("Contact to purchase", (dialog, which) ->
+                            Tools.openURL(requireActivity(), getString(R.string.social_media_invite)))
+                    .setNegativeButton("Not now", null)
+                    .show());
+        }
+
         // The Manage Account row replaces the removed top-right account header.
         View manageAccountRow = view.findViewById(R.id.oryn_manage_account);
         if (manageAccountRow != null) {
