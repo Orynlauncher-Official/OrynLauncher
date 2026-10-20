@@ -210,15 +210,12 @@ public class MainMenuFragment extends Fragment {
      * Any skin refresh runs in the background so opening the home screen stays responsive.
      */
     private void loadCurrentAccountSkin(View root) {
-        ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
         ImageView manageAccountAvatar = root.findViewById(R.id.oryn_manage_account_skin_avatar);
-        TextView accountName = root.findViewById(R.id.oryn_home_account_name);
-        if (avatar == null && manageAccountAvatar == null) return;
+        if (manageAccountAvatar == null) return;
 
         // Set Steve immediately so an empty/local account never leaves the paper/user icon.
         Bitmap defaultFace = loadOrynDefaultSteveFace();
         if (defaultFace != null) {
-            if (avatar != null) avatar.setImageBitmap(defaultFace);
             if (manageAccountAvatar != null) manageAccountAvatar.setImageBitmap(defaultFace);
         }
 
@@ -266,11 +263,7 @@ public class MainMenuFragment extends Fragment {
             if (activity == null) return;
             activity.runOnUiThread(() -> {
                 if (finalFace != null) {
-                    if (avatar != null) avatar.setImageBitmap(finalFace);
                     if (manageAccountAvatar != null) manageAccountAvatar.setImageBitmap(finalFace);
-                }
-                if (accountName != null && Tools.isValidString(finalUsername)) {
-                    accountName.setText(finalUsername);
                 }
             });
         });
