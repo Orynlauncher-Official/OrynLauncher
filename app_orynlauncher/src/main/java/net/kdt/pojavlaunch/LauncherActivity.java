@@ -350,32 +350,27 @@ public class LauncherActivity extends BaseActivity {
         }).start(), 2300L);
     }
 
-    /** Show the cinematic Oryn splash only after the user presses Play. */
+    /** Show the cinematic Oryn loading screen only after the user presses Play. */
     private void showOrynLaunchSplash() {
         dismissOrynLaunchSplash();
-        mOrynLaunchSplash = getLayoutInflater().inflate(R.layout.activity_oryn_splash, null, false);
+        final OrynLoadingView loading = new OrynLoadingView(this);
+        mOrynLaunchSplash = loading;
         android.view.ViewGroup decor = (android.view.ViewGroup) getWindow().getDecorView();
-        decor.addView(mOrynLaunchSplash, new android.view.ViewGroup.LayoutParams(
+        decor.addView(loading, new android.view.ViewGroup.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT));
-        mOrynLaunchSplash.setClickable(true);
-        mOrynLaunchSplash.setFocusable(true);
+        loading.setClickable(true);
+        loading.setFocusable(true);
 
-        ProgressBar bar = mOrynLaunchSplash.findViewById(R.id.oryn_splash_progress);
-        TextView percent = mOrynLaunchSplash.findViewById(R.id.oryn_splash_percent);
-        if (bar != null && percent != null) {
-            mOrynLaunchProgressAnimator = android.animation.ValueAnimator.ofInt(0, 95);
-            mOrynLaunchProgressAnimator.setDuration(12000L);
-            mOrynLaunchProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
-            mOrynLaunchProgressAnimator.addUpdateListener(animator -> {
-                int value = (int) animator.getAnimatedValue();
-                bar.setProgress(value);
-                percent.setText(value + "%");
-            });
-            mOrynLaunchProgressAnimator.start();
-        }
-        mOrynLaunchSplash.setAlpha(0f);
-        mOrynLaunchSplash.animate().alpha(1f).setDuration(220L).start();
+        mOrynLaunchProgressAnimator = android.animation.ValueAnimator.ofInt(0, 95);
+        mOrynLaunchProgressAnimator.setDuration(12000L);
+        mOrynLaunchProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
+        mOrynLaunchProgressAnimator.addUpdateListener(animator ->
+                loading.setProgress((int) animator.getAnimatedValue()));
+        mOrynLaunchProgressAnimator.start();
+
+        loading.setAlpha(0f);
+        loading.animate().alpha(1f).setDuration(350L).start();
     }
 
     private void dismissOrynLaunchSplash() {
