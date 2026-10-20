@@ -293,8 +293,48 @@ public class MainMenuFragment extends Fragment {
         if (profileVersion != null) profileVersion.setText(versionLabel);
         if (selectedVersion != null) selectedVersion.setText(versionLabel);
         if (playButton != null) {
-            playButton.setText(!Tools.isValidString(versionId) ? "SELECT VERSION\nNo version selected" : (installed ? "▶  PLAY\n" + versionId : "INSTALL GAME\n" + versionId));
+            String shortVersion = getShortMinecraftVersion(versionId);
+            playButton.setMaxLines(2);
+            playButton.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            playButton.setTextSize(13);
+            if (!Tools.isValidString(versionId)) {
+                playButton.setText("SELECT VERSION\nNo version selected");
+            } else if (installed) {
+                playButton.setText("▶  LAUNCH\n" + shortVersion);
+            } else {
+                playButton.setText("INSTALL GAME\n" + shortVersion);
+            }
         }
+    }
+
+    /**
+     * Extract the Minecraft version from common loader profile IDs.
+     * Examples: fabric-loader-0.19.5-1.21.11 -> 1.21.11,
+     * quilt-loader-0.26.1-1.20.4 -> 1.20.4, 1.21.11-forge-xx -> 1.21.11.
+     */
+    private String getShortMinecraftVersion(String versionId) {
+        if (!Tools.isValidString(versionId)) return "No version selected";
+        String id = versionId.trim();
+        java.util.regex.Pattern mcVersion = java.util.regex.Pattern.compile("\\d+\\.\\d+(?:\\.\\d+)?(?:[-+][A-Za-z0-9.]+)?");
+        java.util.regex.Matcher matcher = mcVersion.matcher(id);
+        if (matcher.find()) {
+            String found = matcher.group();
+            // Loader IDs can contain their own version before the Minecraft version.
+            if (id.startsWith("fabric-loader-") || id.startsWith("quilt-loader-")) {
+                java.util.regex.Matcher all = mcVersion.matcher(id);
+                String last = found;
+                while (all.find()) last = all.group();
+                return last;
+            }
+            return found;
+        }
+        String[] parts = id.split("-");
+        if (parts.length > 0) {
+            String last = parts[parts.length - 1];
+            if (last.matches("\\d+\\.\\d+(?:\\.\\d+)?")) return last;
+            if (parts[0].matches("\\d+\\.\\d+(?:\\.\\d+)?")) return parts[0];
+        }
+        return id;
     }
 
     /** Only display a game version as installed when its metadata exists on disk. */
