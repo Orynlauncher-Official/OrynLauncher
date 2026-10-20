@@ -202,7 +202,6 @@ public class MainMenuFragment extends Fragment {
      */
     private void loadCurrentAccountSkin(View root) {
         ImageView avatar = root.findViewById(R.id.oryn_home_skin_avatar);
-        ImageView headerAvatar = requireActivity().findViewById(R.id.oryn_account_avatar_image);
         TextView accountName = root.findViewById(R.id.oryn_home_account_name);
         if (avatar == null) return;
 
@@ -210,7 +209,6 @@ public class MainMenuFragment extends Fragment {
         Bitmap defaultFace = loadOrynDefaultSteveFace();
         if (defaultFace != null) {
             avatar.setImageBitmap(defaultFace);
-            if (headerAvatar != null) headerAvatar.setImageBitmap(defaultFace);
         }
 
         PojavApplication.sExecutorService.execute(() -> {
@@ -258,7 +256,6 @@ public class MainMenuFragment extends Fragment {
             activity.runOnUiThread(() -> {
                 if (finalFace != null) {
                     avatar.setImageBitmap(finalFace);
-                    if (headerAvatar != null) headerAvatar.setImageBitmap(finalFace);
                 }
                 if (accountName != null && Tools.isValidString(finalUsername)) {
                     accountName.setText(finalUsername);
