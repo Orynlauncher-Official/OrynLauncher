@@ -78,6 +78,15 @@ public class MainMenuFragment extends Fragment {
         View resourceLibraryCard = view.findViewById(R.id.oryn_news_card);
         View installationManagerCard = view.findViewById(R.id.oryn_about_card);
         loadCurrentAccountSkin(view);
+        // The Manage Account row replaces the removed top-right account header.
+        View manageAccountRow = view.findViewById(R.id.oryn_manage_account);
+        if (manageAccountRow != null) {
+            manageAccountRow.setClickable(true);
+            manageAccountRow.setFocusable(true);
+            manageAccountRow.setOnClickListener(v ->
+                    Tools.swapFragment(requireActivity(), SelectAuthFragment.class,
+                            SelectAuthFragment.TAG, null));
+        }
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
