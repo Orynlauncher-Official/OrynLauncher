@@ -362,11 +362,34 @@ public class LauncherActivity extends BaseActivity {
         loading.setClickable(true);
         loading.setFocusable(true);
 
-        mOrynLaunchProgressAnimator = android.animation.ValueAnimator.ofInt(0, 95);
-        mOrynLaunchProgressAnimator.setDuration(12000L);
+        // Move quickly through preparation, then keep the Oryn screen alive while
+        // Minecraft files/runtime finish loading. Never imply 100% before handoff.
+        mOrynLaunchProgressAnimator = android.animation.ValueAnimator.ofInt(0, 88);
+        mOrynLaunchProgressAnimator.setDuration(9000L);
         mOrynLaunchProgressAnimator.setInterpolator(new android.view.animation.DecelerateInterpolator());
         mOrynLaunchProgressAnimator.addUpdateListener(animator ->
                 loading.setProgress((int) animator.getAnimatedValue()));
+        mOrynLaunchProgressAnimator.addListener(new android.animation.AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(android.animation.Animator animation) {
+                if (mOrynLaunchSplash != loading || isFinishing()) return;
+                android.animation.ValueAnimator waiting =
+                        android.animation.ValueAnimator.ofInt(88, 96);
+                waiting.setDuration(1800L);
+                waiting.setRepeatMode(android.animation.ValueAnimator.REVERSE);
+                waiting.setRepeatCount(android.animation.ValueAnimator.INFINITE);
+                waiting.setInterpolator(new android.view.animation.AccelerateDecelerateInterpolator());
+                waiting.addUpdateListener(a -> {
+                    if (mOrynLaunchSplash == loading) {
+                        loading.setProgress((int) a.getAnimatedValue());
+                    } else {
+                        a.cancel();
+                    }
+                });
+                mOrynLaunchProgressAnimator = waiting;
+                waiting.start();
+            }
+        });
         mOrynLaunchProgressAnimator.start();
 
         loading.setAlpha(0f);
