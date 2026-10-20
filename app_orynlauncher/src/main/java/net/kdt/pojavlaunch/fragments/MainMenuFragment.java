@@ -239,97 +239,272 @@ public class MainMenuFragment extends Fragment {
         final int[] colors = {0xFFFFFFFF,0xFF37DFFF,0xFF438BFF,0xFFAA66FF,0xFFFF66AA,
                 0xFFFF5252,0xFF54E38E,0xFFFFD54F,0xFF111827,0xFFFF8A3D};
         final String[] names = {"White","Cyan","Blue","Purple","Pink","Red","Green","Yellow","Dark","Orange"};
+        final String[] shapes = {"Arrow","Crosshair","Circle"};
+        final int pad = (int)(16 * getResources().getDisplayMetrics().density);
+        final int[] selectedColor = {prefs.getInt("oryn_custom_cursor_color",0xFFFFFFFF)};
+        final String[] selectedShape = {prefs.getString("oryn_custom_cursor_shape","Crosshair")};
+
         android.widget.LinearLayout root = new android.widget.LinearLayout(requireContext());
         root.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int pad = (int)(16 * getResources().getDisplayMetrics().density);
         root.setPadding(pad,pad,pad,pad);
         root.setBackgroundColor(0xFF0B1423);
+
         TextView subtitle = new TextView(requireContext());
-        subtitle.setText("Pick a style, then tap a colour swatch.");
+        subtitle.setText("Customize your in-game pointer. Preview updates instantly.");
         subtitle.setTextColor(0xFFB8C9E5);
         subtitle.setTextSize(13);
         root.addView(subtitle);
+
+        android.widget.LinearLayout previewRow = new android.widget.LinearLayout(requireContext());
+        previewRow.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        previewRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
         android.widget.Spinner shape = new android.widget.Spinner(requireContext());
         shape.setAdapter(new android.widget.ArrayAdapter<>(requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,new String[]{"Arrow","Crosshair","Circle"}));
-        String saved = prefs.getString("oryn_custom_cursor_shape","Arrow");
-        shape.setSelection("Crosshair".equals(saved)?1:"Circle".equals(saved)?2:0);
-        root.addView(shape,new android.widget.LinearLayout.LayoutParams(-1,(int)(48*getResources().getDisplayMetrics().density)));
+                android.R.layout.simple_spinner_dropdown_item,shapes));
+        shape.setSelection("Arrow".equals(selectedShape[0])?0:"Circle".equals(selectedShape[0])?2:1);
+        previewRow.addView(shape,new android.widget.LinearLayout.LayoutParams(0,
+                (int)(48*getResources().getDisplayMetrics().density),1));
+
+        TextView previewLabel = new TextView(requireContext());
+        previewLabel.setText("LIVE PREVIEW");
+        previewLabel.setTextColor(0xFFB8C9E5);
+        previewLabel.setTextSize(9);
+        previewLabel.setGravity(android.view.Gravity.CENTER);
+        android.widget.LinearLayout previewBox = new android.widget.LinearLayout(requireContext());
+        previewBox.setOrientation(android.widget.LinearLayout.VERTICAL);
+        previewBox.setGravity(android.view.Gravity.CENTER);
+        android.graphics.drawable.GradientDrawable previewBg = new android.graphics.drawable.GradientDrawable();
+        previewBg.setColor(0xFF111E31);
+        previewBg.setCornerRadius(12*getResources().getDisplayMetrics().density);
+        previewBox.setBackground(previewBg);
+        previewBox.addView(previewLabel);
+        View preview = new View(requireContext()) {
+            private final android.graphics.Paint paint = new android.graphics.Paint(3);
+            @Override protected void onDraw(android.graphics.Canvas canvas) {
+                super.onDraw(canvas);
+                float cx=getWidth()/2f, cy=getHeight()/2f;
+                paint.setColor(selectedColor[0]); paint.setStrokeWidth(2.5f*getResources().getDisplayMetrics().density);
+                paint.setStyle(android.graphics.Paint.Style.STROKE);
+                if ("Circle".equals(selectedShape[0])) {
+                    canvas.drawCircle(cx,cy,10*getResources().getDisplayMetrics().density,paint);
+                    canvas.drawLine(cx-16*getResources().getDisplayMetrics().density,cy,cx-5*getResources().getDisplayMetrics().density,cy,paint);
+                    canvas.drawLine(cx+5*getResources().getDisplayMetrics().density,cy,cx+16*getResources().getDisplayMetrics().density,cy,paint);
+                } else if ("Arrow".equals(selectedShape[0])) {
+                    paint.setStyle(android.graphics.Paint.Style.FILL);
+                    android.graphics.Path path=new android.graphics.Path();
+                    path.moveTo(cx-9,cy-14); path.lineTo(cx+8,cy+2); path.lineTo(cx,cy+2);
+                    path.lineTo(cx+4,cy+11); path.lineTo(cx,cy+13); path.lineTo(cx-4,cy+4);
+                    path.lineTo(cx-9,cy+10); path.close(); canvas.drawPath(path,paint);
+                } else {
+                    canvas.drawLine(cx-18*getResources().getDisplayMetrics().density,cy,cx-5*getResources().getDisplayMetrics().density,cy,paint);
+                    canvas.drawLine(cx+5*getResources().getDisplayMetrics().density,cy,cx+18*getResources().getDisplayMetrics().density,cy,paint);
+                    canvas.drawLine(cx,cy-18*getResources().getDisplayMetrics().density,cx,cy-5*getResources().getDisplayMetrics().density,paint);
+                    canvas.drawLine(cx,cy+5*getResources().getDisplayMetrics().density,cx,cy+18*getResources().getDisplayMetrics().density,paint);
+                    canvas.drawCircle(cx,cy,2*getResources().getDisplayMetrics().density,paint);
+                }
+            }
+        };
+        previewBox.addView(preview,new android.widget.LinearLayout.LayoutParams(
+                (int)(84*getResources().getDisplayMetrics().density),(int)(66*getResources().getDisplayMetrics().density)));
+        android.widget.LinearLayout.LayoutParams previewParams = new android.widget.LinearLayout.LayoutParams(
+                (int)(112*getResources().getDisplayMetrics().density),-2);
+        previewParams.leftMargin=pad/2;
+        previewRow.addView(previewBox,previewParams);
+        root.addView(previewRow);
+
         shape.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener(){
             @Override public void onItemSelected(android.widget.AdapterView<?> p,View v,int pos,long id){
-                prefs.edit().putString("oryn_custom_cursor_shape",new String[]{"Arrow","Crosshair","Circle"}[pos])
-                    .putString("oryn_custom_cursor_drawing","").apply();
+                selectedShape[0]=shapes[pos];
+                prefs.edit().putString("oryn_custom_cursor_shape",selectedShape[0])
+                        .putString("oryn_custom_cursor_drawing","").apply();
+                preview.invalidate();
             }
             @Override public void onNothingSelected(android.widget.AdapterView<?> p){}
         });
+
         TextView label = new TextView(requireContext());
-        label.setText("CURSOR COLOUR");
+        label.setText("COLOUR  ·  TAP A SWATCH");
         label.setTextColor(0xFFFFFFFF);
         label.setTypeface(null,android.graphics.Typeface.BOLD);
         android.widget.LinearLayout.LayoutParams labelParams = new android.widget.LinearLayout.LayoutParams(-1,-2);
         labelParams.topMargin=pad/2;
         root.addView(label,labelParams);
-        android.widget.HorizontalScrollView scroll = new android.widget.HorizontalScrollView(requireContext());
-        scroll.setHorizontalScrollBarEnabled(false);
+
         android.widget.LinearLayout swatches = new android.widget.LinearLayout(requireContext());
         swatches.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        swatches.setGravity(android.view.Gravity.CENTER_VERTICAL);
         for(int i=0;i<colors.length;i++){
             final int color=colors[i]; final String name=names[i];
-            android.widget.LinearLayout col=new android.widget.LinearLayout(requireContext());
-            col.setOrientation(android.widget.LinearLayout.VERTICAL); col.setGravity(android.view.Gravity.CENTER);
             android.widget.ImageButton chip=new android.widget.ImageButton(requireContext());
             android.graphics.drawable.GradientDrawable circle=new android.graphics.drawable.GradientDrawable();
             circle.setShape(android.graphics.drawable.GradientDrawable.OVAL); circle.setColor(color);
             circle.setStroke((int)(2*getResources().getDisplayMetrics().density),
-                prefs.getInt("oryn_custom_cursor_color",0xFFFFFFFF)==color?0xFFFFFFFF:0xFF52647C);
+                    selectedColor[0]==color?0xFFFFFFFF:0xFF52647C);
             chip.setBackground(circle); chip.setContentDescription(name); chip.setPadding(0,0,0,0);
             chip.setOnClickListener(v->{
+                selectedColor[0]=color;
                 prefs.edit().putInt("oryn_custom_cursor_color",color).putString("oryn_custom_cursor_drawing","").apply();
-                Toast.makeText(requireContext(),name+" cursor selected",Toast.LENGTH_SHORT).show();
-                showCursorStudio();
+                for(int j=0;j<swatches.getChildCount();j++){
+                    View item=swatches.getChildAt(j);
+                    if(item instanceof ImageButton){
+                        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+                        bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+                        bg.setColor(colors[j]);
+                        bg.setStroke((int)(2*getResources().getDisplayMetrics().density),
+                                colors[j]==selectedColor[0]?0xFFFFFFFF:0xFF52647C);
+                        item.setBackground(bg);
+                    }
+                }
+                preview.invalidate();
             });
-            col.addView(chip,new android.widget.LinearLayout.LayoutParams((int)(34*getResources().getDisplayMetrics().density),(int)(34*getResources().getDisplayMetrics().density)));
-            TextView t=new TextView(requireContext()); t.setText(name); t.setTextColor(0xFFD8E5F8); t.setTextSize(9); t.setGravity(android.view.Gravity.CENTER);
-            col.addView(t,new android.widget.LinearLayout.LayoutParams((int)(48*getResources().getDisplayMetrics().density),-2));
-            android.widget.LinearLayout.LayoutParams cp=new android.widget.LinearLayout.LayoutParams(-2,-2); cp.setMargins(0,pad/3,pad/3,0); swatches.addView(col,cp);
+            android.widget.LinearLayout.LayoutParams cp=new android.widget.LinearLayout.LayoutParams(
+                    (int)(25*getResources().getDisplayMetrics().density),(int)(25*getResources().getDisplayMetrics().density));
+            cp.setMargins(0,pad/3,pad/3,0);
+            swatches.addView(chip,cp);
         }
-        scroll.addView(swatches); root.addView(scroll);
-        android.widget.LinearLayout actions=new android.widget.LinearLayout(requireContext());
-        actions.setOrientation(android.widget.LinearLayout.HORIZONTAL);
-        Button draw=new Button(requireContext()); draw.setText("Custom drawing"); draw.setAllCaps(false);
-        draw.setOnClickListener(v->{startActivity(new Intent(requireContext(),OrynSettingsActivity.class));
-            Toast.makeText(requireContext(),"Settings → Game → Custom Cursor Drawing",Toast.LENGTH_LONG).show();});
-        Button reset=new Button(requireContext()); reset.setText("Reset"); reset.setAllCaps(false);
-        reset.setOnClickListener(v->{prefs.edit().remove("oryn_custom_cursor_color").remove("oryn_custom_cursor_shape").remove("oryn_custom_cursor_drawing").apply();
-            Toast.makeText(requireContext(),"Cursor reset",Toast.LENGTH_SHORT).show(); showCursorStudio();});
-        actions.addView(draw,new android.widget.LinearLayout.LayoutParams(0,-2,1));
-        actions.addView(reset,new android.widget.LinearLayout.LayoutParams(0,-2,1));
-        android.widget.LinearLayout.LayoutParams ap=new android.widget.LinearLayout.LayoutParams(-1,-2); ap.topMargin=pad/2; root.addView(actions,ap);
-        new AlertDialog.Builder(requireContext()).setTitle("Cursor Studio").setView(root).setPositiveButton("Done",null).show();
+        android.widget.HorizontalScrollView colorScroll=new android.widget.HorizontalScrollView(requireContext());
+        colorScroll.setHorizontalScrollBarEnabled(false);
+        colorScroll.addView(swatches);
+        root.addView(colorScroll);
+
+        TextView note = new TextView(requireContext());
+        note.setText("Tip: Crosshair is best for aiming; Circle gives a clean minimal pointer.");
+        note.setTextColor(0xFF9EB3D2); note.setTextSize(12);
+        android.widget.LinearLayout.LayoutParams noteParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
+        noteParams.topMargin=pad/2; root.addView(note,noteParams);
+
+        Button reset=new Button(requireContext()); reset.setText("Reset cursor"); reset.setAllCaps(false);
+        reset.setOnClickListener(v->{
+            prefs.edit().remove("oryn_custom_cursor_color").putString("oryn_custom_cursor_shape","Crosshair")
+                    .putString("oryn_custom_cursor_drawing","").apply();
+            Toast.makeText(requireContext(),"Cursor reset to default crosshair",Toast.LENGTH_SHORT).show();
+            showCursorStudio();
+        });
+        android.widget.LinearLayout.LayoutParams rp=new android.widget.LinearLayout.LayoutParams(-1,-2);
+        rp.topMargin=pad/3; root.addView(reset,rp);
+        new AlertDialog.Builder(requireContext()).setTitle("✦ Cursor Studio").setView(root)
+                .setPositiveButton("Save & close",(dialog,which)->{
+                    prefs.edit().putInt("oryn_custom_cursor_color",selectedColor[0])
+                            .putString("oryn_custom_cursor_shape",selectedShape[0]).apply();
+                    Toast.makeText(requireContext(),"Cursor settings saved",Toast.LENGTH_SHORT).show();
+                }).setNegativeButton("Cancel",null).show();
     }
 
-    /** Offline quick-help panel; it does not claim to be a cloud generative AI. */
+    /** Launcher-only conversational helper. This is an offline assistant, not a general-purpose AI. */
     private void showOrynAssistant() {
-        android.widget.LinearLayout panel=new android.widget.LinearLayout(requireContext());
-        panel.setOrientation(android.widget.LinearLayout.VERTICAL);
-        int pad=(int)(16*getResources().getDisplayMetrics().density); panel.setPadding(pad,pad,pad,pad);
+        final android.content.SharedPreferences prefs =
+                android.preference.PreferenceManager.getDefaultSharedPreferences(requireContext());
+        final int pad=(int)(14*getResources().getDisplayMetrics().density);
+        android.widget.LinearLayout shell=new android.widget.LinearLayout(requireContext());
+        shell.setOrientation(android.widget.LinearLayout.VERTICAL);
+        shell.setPadding(pad,pad,pad,pad);
+        shell.setBackgroundColor(0xFF081321);
+
         TextView intro=new TextView(requireContext());
-        intro.setText("Hey! I'm Oryn Assistant. Choose a topic for quick launcher help.");
-        intro.setTextColor(0xFFEAF3FF); intro.setTextSize(14); panel.addView(intro);
-        String[] topics={"Improve FPS","Fix launch crash","Cursor help","Skin not showing","Install mods"};
-        String[] answers={
-          "Open Settings → Game → Video & Render. Try a lower resolution scale and enable Oryn FPS Boost if available. Change one option at a time.",
-          "Open Settings → Advanced → Oryn Crash Viewer. Check the latest error and verify the Java runtime matches your Minecraft version.",
-          "Tap the mouse icon on the home top bar. Choose a cursor shape and one of the side-by-side colour swatches.",
-          "Check that the skin is enabled in Oryn Cosmetics, apply it, then restart the game. Some servers can override skins.",
-          "Open Downloads and use mods that match both your Minecraft version and mod loader."
+        intro.setText("Hey! I'm Oryn Assistant ✦\nAsk me anything about OrynLauncher—settings, FPS, crashes, skins, mods or controls.");
+        intro.setTextColor(0xFFEAF3FF); intro.setTextSize(14);
+        shell.addView(intro);
+
+        android.widget.ScrollView historyScroll=new android.widget.ScrollView(requireContext());
+        android.widget.LinearLayout history=new android.widget.LinearLayout(requireContext());
+        history.setOrientation(android.widget.LinearLayout.VERTICAL);
+        history.setPadding(0,pad/2,0,pad/2);
+        historyScroll.setFillViewport(true);
+        historyScroll.addView(history);
+        shell.addView(historyScroll,new android.widget.LinearLayout.LayoutParams(-1,0,1));
+
+        android.widget.LinearLayout composer=new android.widget.LinearLayout(requireContext());
+        composer.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        composer.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.widget.EditText input=new android.widget.EditText(requireContext());
+        input.setSingleLine(true); input.setHint("Ask about the launcher…");
+        input.setTextColor(0xFFFFFFFF); input.setHintTextColor(0xFF90A4BE);
+        input.setPadding(pad/2,pad/3,pad/2,pad/3);
+        input.setBackgroundColor(0xFF14243A);
+        composer.addView(input,new android.widget.LinearLayout.LayoutParams(0,
+                (int)(48*getResources().getDisplayMetrics().density),1));
+        Button send=new Button(requireContext()); send.setText("Send"); send.setAllCaps(false);
+        composer.addView(send,new android.widget.LinearLayout.LayoutParams(-2,-2));
+        android.widget.LinearLayout.LayoutParams composerParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
+        composerParams.topMargin=pad/2; shell.addView(composer,composerParams);
+
+        final AlertDialog dialog=new AlertDialog.Builder(requireContext()).setTitle("✦ Oryn Assistant")
+                .setView(shell).setNegativeButton("Close",null).create();
+
+        android.view.View.OnClickListener sender=v->{
+            String question=input.getText().toString().trim();
+            if(question.isEmpty()) return;
+            addAssistantBubble(history,question,true,pad);
+            String answer=answerOrynLauncherQuestion(question,prefs);
+            addAssistantBubble(history,answer,false,pad);
+            input.setText("");
+            historyScroll.post(()->historyScroll.fullScroll(View.FOCUS_DOWN));
         };
-        for(int i=0;i<topics.length;i++){
-            final String answer=answers[i]; Button b=new Button(requireContext()); b.setText(topics[i]); b.setAllCaps(false);
-            b.setOnClickListener(v->new AlertDialog.Builder(requireContext()).setTitle("Oryn Assistant").setMessage(answer).setPositiveButton("Got it",null).show());
-            android.widget.LinearLayout.LayoutParams bp=new android.widget.LinearLayout.LayoutParams(-1,-2); bp.topMargin=pad/4; panel.addView(b,bp);
+        send.setOnClickListener(sender);
+        input.setOnEditorActionListener((v,actionId,event)->{
+            sender.onClick(send);
+            return true;
+        });
+
+        String[] prompts={"Improve FPS","Fix a crash","Skin not showing"};
+        android.widget.LinearLayout quick=new android.widget.LinearLayout(requireContext());
+        quick.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        for(String prompt:prompts){
+            Button b=new Button(requireContext()); b.setText(prompt); b.setAllCaps(false); b.setTextSize(10);
+            b.setOnClickListener(v->{input.setText(prompt); sender.onClick(send);});
+            quick.addView(b,new android.widget.LinearLayout.LayoutParams(0,-2,1));
         }
-        new AlertDialog.Builder(requireContext()).setTitle("✦ Oryn Assistant").setView(panel).setNegativeButton("Close",null).show();
+        android.widget.LinearLayout.LayoutParams quickParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
+        quickParams.topMargin=pad/3; shell.addView(quick,quickParams);
+        dialog.setOnShowListener(d->{
+            int maxHeight=(int)(getResources().getDisplayMetrics().heightPixels*0.72f);
+            if(dialog.getWindow()!=null) dialog.getWindow().setLayout(
+                    (int)(getResources().getDisplayMetrics().widthPixels*0.88f),Math.min(maxHeight,(int)(520*getResources().getDisplayMetrics().density)));
+            addAssistantBubble(history,"Hi! I'm here for OrynLauncher only. What's going on?",false,pad);
+        });
+        dialog.show();
+    }
+
+    private void addAssistantBubble(android.widget.LinearLayout history,String text,boolean user,int pad) {
+        TextView bubble=new TextView(requireContext());
+        bubble.setText((user?"YOU  ·  ":"ORYN AI  ·  ")+text);
+        bubble.setTextColor(user?0xFFFFFFFF:0xFFD8E7FA);
+        bubble.setTextSize(13);
+        bubble.setPadding(pad/2,pad/3,pad/2,pad/3);
+        android.graphics.drawable.GradientDrawable bg=new android.graphics.drawable.GradientDrawable();
+        bg.setColor(user?0xFF183D63:0xFF132238);
+        bg.setCornerRadius(12*getResources().getDisplayMetrics().density);
+        bubble.setBackground(bg);
+        android.widget.LinearLayout.LayoutParams lp=new android.widget.LinearLayout.LayoutParams(-1,-2);
+        lp.bottomMargin=pad/3;
+        history.addView(bubble,lp);
+    }
+
+    private String answerOrynLauncherQuestion(String question,android.content.SharedPreferences prefs) {
+        String q=question.toLowerCase(java.util.Locale.ROOT);
+        if(q.matches(".*\\b(hi|hello|hey|sup|yo)\\b.*"))
+            return "Hey! 👋 Tell me what you need help with in OrynLauncher. I can help with settings, FPS, crashes, accounts, skins, mods, downloads and controls.";
+        if(q.contains("fps")||q.contains("lag")||q.contains("slow")||q.contains("performance"))
+            return "Let's tune performance: open Settings → Game → Video & Render. Try lowering resolution scale first, then test the game. Close background apps and use a Minecraft-compatible renderer. Change one setting at a time so you can undo anything that makes it worse.";
+        if(q.contains("crash")||q.contains("close")||q.contains("launch fail")||q.contains("won't launch")||q.contains("not launch"))
+            return "Open the launcher Crash Viewer and copy the latest error. Check that the selected Java runtime matches your Minecraft version, then temporarily disable recently added mods. Send me the first error line and Minecraft version and I'll help narrow it down.";
+        if(q.contains("skin")||q.contains("cape")||q.contains("steve")||q.contains("alex"))
+            return "Open Oryn Cosmetics, choose your skin or cape, apply/save it, then restart the game. If Steve/Alex still appears, tell me whether it happens in single-player, multiplayer, or both, plus your Minecraft version.";
+        if(q.contains("mod")||q.contains("fabric")||q.contains("forge")||q.contains("install"))
+            return "Use the launcher Downloads/Mod installer and make sure each mod matches the exact Minecraft version and loader (Fabric/Forge/NeoForge). Add one mod at a time if the game crashes, so the conflicting mod is easier to find.";
+        if(q.contains("cursor")||q.contains("crosshair")||q.contains("mouse"))
+            return "Tap the mouse icon on the home screen to open Cursor Studio. Choose Crosshair, Circle or Arrow, pick a colour, check the live preview beside the shape selector, then tap Save & close.";
+        if(q.contains("account")||q.contains("microsoft")||q.contains("login")||q.contains("sign in"))
+            return "Tap Manage Account on the home screen to add or switch your launcher account. If sign-in fails, check your connection and share the exact message shown—never share your password or access code.";
+        if(q.contains("download")||q.contains("file")||q.contains("folder"))
+            return "Use the Downloads or Files buttons on the home screen to find launcher downloads. If a file won't install, tell me its extension, Minecraft version and loader.";
+        if(q.contains("control")||q.contains("touch"))
+            return "Open Settings → Game → Control Layout to adjust your touch controls. You can also use the in-game control editor if it's available for your current profile.";
+        if(q.contains("setting")||q.contains("video")||q.contains("render")||q.contains("resolution"))
+            return "Open Settings and choose Game → Video & Render for graphics-related options. Tell me which setting you're looking for and I'll guide you through it.";
+        if(q.contains("help")||q.contains("what can you do")||q.contains("who are you"))
+            return "I'm Oryn Assistant, focused only on OrynLauncher. I can guide you through launcher settings, performance, crash logs, accounts, skins/capes, mods, downloads, controls and cursor customization. I'm an offline helper, so I don't have live internet or general ChatGPT abilities.";
+        return "I can help with OrynLauncher only. Tell me which part you're using and what happens—e.g. Settings, FPS, crash, account, skin/cape, mods, downloads, controls or cursor. If there's an error, paste its exact text (but not passwords or login codes).";
     }
 
     /**
