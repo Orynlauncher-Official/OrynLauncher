@@ -249,6 +249,21 @@ public class MainMenuFragment extends Fragment {
         root.setPadding(pad,pad,pad,pad);
         root.setBackgroundColor(0xFF0B1423);
 
+        android.widget.LinearLayout cursorHeader = new android.widget.LinearLayout(requireContext());
+        cursorHeader.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        cursorHeader.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView cursorTitle = new TextView(requireContext());
+        cursorTitle.setText("ORYN  /  CURSOR STUDIO");
+        cursorTitle.setTextColor(0xFFFFFFFF);
+        cursorTitle.setTextSize(20);
+        cursorTitle.setTypeface(null,android.graphics.Typeface.BOLD);
+        cursorHeader.addView(cursorTitle,new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        Button cursorClose = new Button(requireContext());
+        cursorClose.setText("✕");
+        cursorClose.setAllCaps(false);
+        cursorHeader.addView(cursorClose,new android.widget.LinearLayout.LayoutParams(-2,-2));
+        root.addView(cursorHeader);
+
         TextView subtitle = new TextView(requireContext());
         subtitle.setText("Customize your in-game pointer. Preview updates instantly.");
         subtitle.setTextColor(0xFFB8C9E5);
@@ -382,17 +397,30 @@ public class MainMenuFragment extends Fragment {
         });
         android.widget.LinearLayout.LayoutParams rp=new android.widget.LinearLayout.LayoutParams(-1,-2);
         rp.topMargin=pad/3; root.addView(reset,rp);
-        final AlertDialog cursorDialog = new AlertDialog.Builder(requireContext()).setTitle("✦ Cursor Studio").setView(root)
-                .setPositiveButton("Save & close",(dialog,which)->{
-                    prefs.edit().putInt("oryn_custom_cursor_color",selectedColor[0])
-                            .putString("oryn_custom_cursor_shape",selectedShape[0]).apply();
-                    Toast.makeText(requireContext(),"Cursor settings saved",Toast.LENGTH_SHORT).show();
-                }).setNegativeButton("Cancel",null).create();
+        Button saveCursor = new Button(requireContext());
+        saveCursor.setText("SAVE CURSOR SETTINGS");
+        saveCursor.setAllCaps(false);
+        saveCursor.setTextColor(0xFFFFFFFF);
+        saveCursor.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF1976D2));
+        android.widget.LinearLayout.LayoutParams saveParams = new android.widget.LinearLayout.LayoutParams(-1,-2);
+        saveParams.topMargin=pad;
+        root.addView(saveCursor,saveParams);
+        final AlertDialog cursorDialog = new AlertDialog.Builder(requireContext()).setView(root).create();
+        cursorClose.setOnClickListener(v -> cursorDialog.dismiss());
+        saveCursor.setOnClickListener(v -> {
+            prefs.edit().putInt("oryn_custom_cursor_color",selectedColor[0])
+                    .putString("oryn_custom_cursor_shape",selectedShape[0]).apply();
+            Toast.makeText(requireContext(),"Cursor settings saved",Toast.LENGTH_SHORT).show();
+            cursorDialog.dismiss();
+        });
         cursorDialog.setOnShowListener(d -> {
             if (cursorDialog.getWindow() != null) {
+                cursorDialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                cursorDialog.getWindow().setDimAmount(0f);
                 cursorDialog.getWindow().setLayout(
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                         android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+                cursorDialog.getWindow().setGravity(android.view.Gravity.CENTER);
             }
         });
         cursorDialog.show();
@@ -407,6 +435,31 @@ public class MainMenuFragment extends Fragment {
         shell.setOrientation(android.widget.LinearLayout.VERTICAL);
         shell.setPadding(pad,pad,pad,pad);
         shell.setBackgroundColor(0xFF081321);
+
+        android.widget.LinearLayout assistantHeader=new android.widget.LinearLayout(requireContext());
+        assistantHeader.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        assistantHeader.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        android.widget.LinearLayout brandStack=new android.widget.LinearLayout(requireContext());
+        brandStack.setOrientation(android.widget.LinearLayout.VERTICAL);
+        TextView brand=new TextView(requireContext());
+        brand.setText("ORYN AI");
+        brand.setTextColor(0xFFFFFFFF); brand.setTextSize(22);
+        brand.setTypeface(null,android.graphics.Typeface.BOLD);
+        TextView status=new TextView(requireContext());
+        status.setText("LAUNCHER SUPPORT  ·  OFFLINE");
+        status.setTextColor(0xFF55D6C2); status.setTextSize(10);
+        brandStack.addView(brand); brandStack.addView(status);
+        assistantHeader.addView(brandStack,new android.widget.LinearLayout.LayoutParams(0,-2,1));
+        Button assistantClose=new Button(requireContext());
+        assistantClose.setText("✕"); assistantClose.setAllCaps(false);
+        assistantHeader.addView(assistantClose,new android.widget.LinearLayout.LayoutParams(-2,-2));
+        shell.addView(assistantHeader);
+
+        View divider=new View(requireContext());
+        divider.setBackgroundColor(0xFF24364D);
+        android.widget.LinearLayout.LayoutParams dividerParams=new android.widget.LinearLayout.LayoutParams(-1,(int)(1*getResources().getDisplayMetrics().density));
+        dividerParams.topMargin=pad/2; dividerParams.bottomMargin=pad/2;
+        shell.addView(divider,dividerParams);
 
         TextView intro=new TextView(requireContext());
         intro.setText("Hey! I'm Oryn Assistant ✦\nAsk me anything about OrynLauncher—settings, FPS, crashes, skins, mods or controls.");
@@ -436,8 +489,8 @@ public class MainMenuFragment extends Fragment {
         android.widget.LinearLayout.LayoutParams composerParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
         composerParams.topMargin=pad/2; shell.addView(composer,composerParams);
 
-        final AlertDialog dialog=new AlertDialog.Builder(requireContext()).setTitle("✦ Oryn Assistant")
-                .setView(shell).setNegativeButton("Close",null).create();
+        final AlertDialog dialog=new AlertDialog.Builder(requireContext()).setView(shell).create();
+        assistantClose.setOnClickListener(v -> dialog.dismiss());
 
         android.view.View.OnClickListener sender=v->{
             String question=input.getText().toString().trim();
@@ -465,9 +518,14 @@ public class MainMenuFragment extends Fragment {
         android.widget.LinearLayout.LayoutParams quickParams=new android.widget.LinearLayout.LayoutParams(-1,-2);
         quickParams.topMargin=pad/3; shell.addView(quick,quickParams);
         dialog.setOnShowListener(d->{
-            if(dialog.getWindow()!=null) dialog.getWindow().setLayout(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+            if(dialog.getWindow()!=null) {
+                dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+                dialog.getWindow().setDimAmount(0f);
+                dialog.getWindow().setLayout(
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.view.ViewGroup.LayoutParams.MATCH_PARENT);
+                dialog.getWindow().setGravity(android.view.Gravity.CENTER);
+            }
             addAssistantBubble(history,"Hi! I'm here for OrynLauncher only. What's going on?",false,pad);
         });
         dialog.show();
