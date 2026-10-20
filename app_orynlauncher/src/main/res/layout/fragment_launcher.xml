@@ -277,28 +277,6 @@
 
         <!-- Utility icons -->
         <ImageButton
-            android:id="@+id/oryn_cursor_home_button"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="6dp"
-            android:src="@drawable/ic_px_mouse"
-            android:contentDescription="Cursor Studio"
-            android:background="@drawable/oryn_account_pill"
-            android:padding="8dp"
-            android:scaleType="fitCenter"
-            android:stateListAnimator="@animator/oryn_motion_bounce" />
-        <ImageButton
-            android:id="@+id/oryn_ai_assistant_button"
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:layout_marginEnd="6dp"
-            android:src="@drawable/ic_px_dynamic"
-            android:contentDescription="Oryn Assistant"
-            android:background="@drawable/oryn_account_pill"
-            android:padding="8dp"
-            android:scaleType="fitCenter"
-            android:stateListAnimator="@animator/oryn_motion_bounce" />
-        <ImageButton
             android:id="@+id/custom_control_button"
             android:layout_width="36dp"
             android:layout_height="36dp"
