@@ -132,7 +132,7 @@
             android:gravity="center"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:text="◇  Versions"
+            android:text="◇  Instances"
             android:textColor="#FFFFFF"
             android:textSize="13sp"/>
         <TextView
@@ -141,7 +141,7 @@
             android:gravity="center"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:text="▱  Modpacks"
+            android:text="♧  Cosmetics"
             android:textColor="#FFFFFF"
             android:textSize="13sp"/>
         <TextView
@@ -303,7 +303,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="PLAY YOUR OWN STORY  •  WINTER WORLDS"
+                android:text="Play. Customize. Explore."
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"/>
             <Button
@@ -497,7 +497,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="RESOURCE LIBRARY"
+                        android:text="CUSTOM MODPACKS"
                         android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
@@ -505,7 +505,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Mods, Resource Packs, Shaders"
+                        android:text="Explore curated modpacks and play your way."
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"/>
                 </LinearLayout>
@@ -549,7 +549,7 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="INSTALLATION MANAGER"
+                        android:text="NEW FEATURES"
                         android:textColor="#FFFFFF"
                         android:textSize="16sp"
                         android:textStyle="bold"/>
@@ -557,7 +557,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Manage Versions, Installations, Modpacks"
+                        android:text="Discover a smoother, faster launcher."
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"/>
                 </LinearLayout>
