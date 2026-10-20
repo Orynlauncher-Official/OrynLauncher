@@ -378,7 +378,7 @@
         </LinearLayout>
         <View android:id="@+id/oryn_selected_instance_name" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
     <View android:id="@+id/oryn_instance_version" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
-    <View android:id="@+id/oryn_open_store_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <Button android:id="@+id/oryn_open_store_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" android:text="" />
     <View android:id="@+id/oryn_play_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
     <View android:id="@+id/oryn_community_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
     <View android:id="@+id/oryn_top_bar" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
