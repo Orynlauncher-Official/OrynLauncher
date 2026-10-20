@@ -4,6 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Canvas;
+import android.view.MotionEvent;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -357,6 +361,103 @@ public class OrynSettingsActivity extends BaseActivity {
         Button controls = textButton("Open Controls");
         controls.setOnClickListener(v -> startActivity(new Intent(this, CustomControlsActivity.class)));
         addSetting("Game Controls", "Configure the existing in-game control layout", controls);
+
+        Button video = textButton("Open Video & Render");
+        video.setOnClickListener(v -> startActivity(preferenceIntent("video")));
+        addSetting("Video & Render", "Graphics, render distance, resolution and FPS optimization", video);
+
+        addGap();
+        section("Cursor Optimization", R.drawable.ic_px_sliders);
+        android.content.SharedPreferences cursorPrefs =
+                android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        Spinner shape = spinner(new String[]{"Arrow", "Crosshair", "Circle"},
+                Math.max(0, java.util.Arrays.asList("Arrow", "Crosshair", "Circle")
+                        .indexOf(cursorPrefs.getString("oryn_custom_cursor_shape", "Arrow"))));
+        shape.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(android.widget.AdapterView<?> parent, View view, int position, long id) {
+                cursorPrefs.edit().putString("oryn_custom_cursor_shape",
+                        parent.getItemAtPosition(position).toString()).putString("oryn_custom_cursor_drawing", "").apply();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+        addSetting("Cursor Style", "Choose the in-game mouse cursor shape", shape);
+
+        Button color = textButton("Choose Color");
+        color.setOnClickListener(v -> {
+            String[] names = {"White", "Cyan", "Blue", "Purple", "Pink", "Red", "Green", "Yellow"};
+            int[] colors = {Color.WHITE, Color.CYAN, Color.BLUE, 0xFFAA66FF, 0xFFFF66AA, Color.RED, Color.GREEN, Color.YELLOW};
+            new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Cursor Color")
+                    .setItems(names, (dialog, which) -> {
+                        cursorPrefs.edit().putInt("oryn_custom_cursor_color", colors[which])
+                                .putString("oryn_custom_cursor_drawing", "").apply();
+                        Toast.makeText(this, "Cursor color saved", Toast.LENGTH_SHORT).show();
+                    }).show();
+        });
+        addSetting("Cursor Color", "Set the color used by the custom game cursor", color);
+
+        Button draw = textButton("Draw Cursor");
+        draw.setOnClickListener(v -> showCursorDrawingDialog());
+        addSetting("Custom Cursor Drawing", "Draw a simple cursor shape with your finger", draw);
+
+        Button resetCursor = textButton("Reset");
+        resetCursor.setOnClickListener(v -> {
+            cursorPrefs.edit().remove("oryn_custom_cursor_color")
+                    .remove("oryn_custom_cursor_shape").remove("oryn_custom_cursor_drawing").apply();
+            Toast.makeText(this, "Cursor settings reset", Toast.LENGTH_SHORT).show();
+        });
+        addSetting("Reset Cursor", "Restore the default cursor appearance", resetCursor);
+    }
+
+    private void showCursorDrawingDialog() {
+        final android.content.SharedPreferences prefs =
+                android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        final StringBuilder points = new StringBuilder();
+        final Path path = new Path();
+        final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paint.setColor(prefs.getInt("oryn_custom_cursor_color", Color.WHITE));
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dp(3));
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        View pad = new View(this) {
+            @Override protected void onDraw(Canvas canvas) {
+                canvas.drawColor(Color.rgb(12, 18, 28));
+                paint.setColor(prefs.getInt("oryn_custom_cursor_color", Color.WHITE));
+                canvas.drawPath(path, paint);
+            }
+            @Override public boolean onTouchEvent(MotionEvent event) {
+                float x = event.getX(), y = event.getY();
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    path.moveTo(x, y);
+                    if (points.length() > 0) points.append(";");
+                    points.append(x * 0.15f).append(",").append(y * 0.15f);
+                    invalidate();
+                    return true;
+                } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+                    path.lineTo(x, y);
+                    if (points.length() > 0) points.append(";");
+                    points.append(x * 0.15f).append(",").append(y * 0.15f);
+                    invalidate();
+                    return true;
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    performClick();
+                    return true;
+                }
+                return true;
+            }
+            @Override public boolean performClick() { super.performClick(); return true; }
+        };
+        pad.setBackground(bg(PANEL, 12));
+        new androidx.appcompat.app.AlertDialog.Builder(this).setTitle("Draw Your Cursor")
+                .setMessage("Draw a small shape in the box. Save to use it in-game.")
+                .setView(pad, dp(12), dp(8), dp(12), dp(8))
+                .setNegativeButton("Cancel", null)
+                .setPositiveButton("Save", (d, w) -> {
+                    if (points.length() > 0) {
+                        prefs.edit().putString("oryn_custom_cursor_drawing", points.toString()).apply();
+                        Toast.makeText(this, "Custom cursor saved", Toast.LENGTH_SHORT).show();
+                    }
+                }).show();
     }
 
     private void showStorage() {
