@@ -394,7 +394,8 @@ public class LauncherActivity extends BaseActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        dismissOrynLaunchSplash();
+        // Keep the Play-triggered Oryn loading overlay visible while the game download/launch continues.
+        // Dismissing it here reveals the legacy loading UI again.
         OrynDiscordPresence.setBrowsing();
         ContextExecutor.setActivity(this);
         InstanceInstaller.postInstallCheck(this);
