@@ -167,7 +167,7 @@ public final class OrynIntroView extends View {
         float reveal = smooth(3.2f, 4.15f, t);
         if (reveal <= 0f) return;
         // The logo block is explicitly constrained by both dimensions.
-        float u = Math.min(h * 0.9f, w * 0.7f);
+        float u = Math.min(h * 0.8f, w * 0.7f);
         float scale = 0.88f + 0.12f * smooth(3.2f, 4.6f, t);
         float radius = u * 0.2f;
         float ringWidth = u * 0.067f;
@@ -192,8 +192,8 @@ public final class OrynIntroView extends View {
         textPaint.setShader(new LinearGradient(0, u * 0.02f, 0, u * 0.4f,
                 new int[]{Color.WHITE, Color.rgb(135, 135, 140)}, null, Shader.TileMode.CLAMP));
         textPaint.setAlpha((int) (255 * reveal));
-        drawFixedWidthText(c, "ORYN", u * 0.60f, u * 0.62f, 0.055f);
-        drawFixedWidthText(c, "LAUNCHER", u * 0.78f, u * 0.62f, 0.025f);
+        drawFixedWidthText(c, "ORYN", u * 0.25f, u * 0.62f, 0.055f);
+        drawFixedWidthText(c, "LAUNCHER", u * 0.42f, u * 0.62f, 0.025f);
         c.restore();
     }
 
