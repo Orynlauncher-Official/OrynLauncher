@@ -656,10 +656,13 @@
             android:paddingEnd="8dp"
             android:background="@drawable/oryn_account_pill">
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_oryn_user"
-                android:contentDescription="Account" />
+                android:id="@+id/oryn_manage_account_skin_avatar"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/oryn_account_pill"
+                android:clipToOutline="true"
+                android:scaleType="centerCrop"
+                android:contentDescription="Minecraft skin" />
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
