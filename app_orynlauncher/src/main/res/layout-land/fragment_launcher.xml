@@ -210,6 +210,11 @@
                 android:src="@drawable/orynlauncher_snow_hero"
                 android:scaleType="centerCrop"
                 android:contentDescription="Minecraft landscape preview"/>
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/oryn_hero_scrim"
+                android:importantForAccessibility="no" />
             
             <TextView
                 android:layout_width="wrap_content"
@@ -265,14 +270,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="PROFILE"
+                        android:text="ORYNLAUNCHER PLUS"
                         android:textColor="#FFFFFF"
                         android:textSize="10sp"/>
                     <TextView
                         android:id="@+id/oryn_home_account_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Minecraft account"
+                        android:text="Account"
                         android:textColor="#FFFFFF"
                         android:textSize="12sp"
                         android:maxLines="1"
@@ -296,7 +301,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="A quieter world. A brighter adventure."
+                android:text="Ready to play"
                 android:textColor="#FFFFFF"
                 android:textSize="13sp"/>
             <TextView
@@ -352,7 +357,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="46dp"
                     android:layout_marginTop="26dp"
-                    android:text="1.12.2"
+                    android:text="Selected version"
                     android:textColor="#FFFFFF"
                     android:textSize="12sp"/>
                 <com.kdt.mcgui.mcVersionSpinner
@@ -443,7 +448,7 @@
             android:layout_marginTop="6dp"
             android:padding="12dp"
             android:background="@drawable/oryn_version_badge"
-            android:text="Library   •   Files   •   Settings"
+            android:text="Explore and customize your Minecraft setup."
             android:textColor="#FFFFFF"
             android:textSize="12sp"/>
         
