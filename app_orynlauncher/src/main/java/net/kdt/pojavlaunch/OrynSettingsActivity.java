@@ -365,7 +365,7 @@ public class OrynSettingsActivity extends BaseActivity {
         Button video = textButton("Open Video & Render");
         video.setOnClickListener(v -> startActivity(preferenceIntent("video")));
         addSetting("Video & Render", "Graphics, render distance, resolution and FPS optimization", video);
-
+    }
 
     private void showStorage() {
         clear("Storage", "Manage launcher files and downloads");
