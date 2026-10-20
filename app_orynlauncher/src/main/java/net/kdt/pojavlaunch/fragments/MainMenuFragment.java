@@ -162,7 +162,7 @@ public class MainMenuFragment extends Fragment {
             });
         }
 
-        if (mDiscordButton != null) mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), getString(R.string.social_media_invite)));
+        if (mDiscordButton != null) mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/cpcBKkESm3"));
         if (mCustomControlButton != null) mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
         if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynSettingsActivity.class)));
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
