@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment;
 import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceExperimentalFragment;
 import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceJavaFragment;
 import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceRecorderFragment;
+import net.kdt.pojavlaunch.prefs.screens.LauncherPreferenceVideoFragment;
 
 /**
  * Hosts the existing preference fragments from Oryn Settings.
@@ -42,6 +43,9 @@ public class OrynPreferenceHostActivity extends BaseActivity {
             } else if ("experimental".equals(screen)) {
                 fragment = new LauncherPreferenceExperimentalFragment();
                 title = "Experimental Settings";
+            } else if ("video".equals(screen)) {
+                fragment = new LauncherPreferenceVideoFragment();
+                title = "Video & Render";
             } else {
                 finish();
                 return;
