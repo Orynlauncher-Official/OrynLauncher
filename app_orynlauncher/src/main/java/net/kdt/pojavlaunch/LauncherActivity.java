@@ -66,7 +66,6 @@ public class LauncherActivity extends BaseActivity {
     private FragmentContainerView mFragmentView;
     private ImageButton mSettingsButton;
     private View mOrynBrand;
-    private View mAccountHeader;
     private ProgressLayout mProgressLayout;
     private ProgressServiceKeeper mProgressServiceKeeper;
     private View mOrynLaunchSplash;
@@ -99,7 +98,6 @@ public class LauncherActivity extends BaseActivity {
 
             // The landscape home layout has its own brand in its top bar; hide the legacy activity brand to prevent duplicate overlapping titles.
             if (mOrynBrand != null) mOrynBrand.setVisibility(View.GONE);
-            if (mAccountHeader != null) mAccountHeader.setVisibility(isHome ? View.VISIBLE : View.GONE);
 
             // Re-apply the selected Oryn theme whenever a fragment becomes active.
             // This is required because fragment views are created after LauncherActivity.onCreate().
@@ -556,7 +554,6 @@ public class LauncherActivity extends BaseActivity {
         mFragmentView = findViewById(R.id.container_fragment);
         mSettingsButton = findViewById(R.id.setting_button);
         mOrynBrand = findViewById(R.id.oryn_brand);
-        mAccountHeader = findViewById(R.id.oryn_account_header);
         mProgressLayout = findViewById(R.id.progress_layout);
 
         View discordButton = findViewById(R.id.oryn_discord_button);
