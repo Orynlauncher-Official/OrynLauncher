@@ -381,6 +381,11 @@
     <View android:id="@+id/oryn_open_store_button" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
     <View android:id="@+id/oryn_play_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
     <View android:id="@+id/oryn_community_row" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_top_bar" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_footer" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_manage_account" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_update_card" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
+    <View android:id="@+id/oryn_skin_card" android:layout_width="1dp" android:layout_height="1dp" android:visibility="gone" />
 </androidx.constraintlayout.widget.ConstraintLayout>
 
     <!-- Right instances panel -->
