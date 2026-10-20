@@ -66,6 +66,19 @@ public class MainMenuFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        // Wire the two home tools first, so later profile/skin initialization cannot prevent clicks.
+        ImageButton cursorHomeButton = view.findViewById(R.id.oryn_cursor_home_button);
+        ImageButton aiAssistantButton = view.findViewById(R.id.oryn_ai_assistant_button);
+        if (cursorHomeButton != null) {
+            cursorHomeButton.setClickable(true);
+            cursorHomeButton.setFocusable(true);
+            cursorHomeButton.setOnClickListener(v -> showCursorStudio());
+        }
+        if (aiAssistantButton != null) {
+            aiAssistantButton.setClickable(true);
+            aiAssistantButton.setFocusable(true);
+            aiAssistantButton.setOnClickListener(v -> showOrynAssistant());
+        }
         View mDiscordButton = view.findViewById(R.id.social_media_button);
         ImageButton mCustomControlButton = view.findViewById(R.id.custom_control_button);
         ImageButton mInstallJarButton = view.findViewById(R.id.install_jar_button);
@@ -164,10 +177,6 @@ public class MainMenuFragment extends Fragment {
 
         if (mDiscordButton != null) mDiscordButton.setOnClickListener(v -> Tools.openURL(requireActivity(), "https://discord.gg/cpcBKkESm3"));
         if (mCustomControlButton != null) mCustomControlButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), CustomControlsActivity.class)));
-        ImageButton cursorHomeButton = view.findViewById(R.id.oryn_cursor_home_button);
-        ImageButton aiAssistantButton = view.findViewById(R.id.oryn_ai_assistant_button);
-        if (cursorHomeButton != null) cursorHomeButton.setOnClickListener(v -> showCursorStudio());
-        if (aiAssistantButton != null) aiAssistantButton.setOnClickListener(v -> showOrynAssistant());
 
         if (mInstallJarButton != null) mInstallJarButton.setOnClickListener(v -> startActivity(new Intent(requireContext(), OrynSettingsActivity.class)));
         if (mEditProfileButton != null && mVersionSpinner != null) mEditProfileButton.setOnClickListener(v -> mVersionSpinner.openProfileEditor(requireActivity()));
