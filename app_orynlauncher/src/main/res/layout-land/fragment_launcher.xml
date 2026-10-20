@@ -242,8 +242,12 @@
                 android:contentDescription="Select Minecraft instance" />
         </FrameLayout>
 
-        <!-- Premium edition badge -->
+        <!-- Premium edition badge opens the Plus purchase information dialog -->
         <LinearLayout
+            android:id="@+id/oryn_premium_edition_button"
+            android:clickable="true"
+            android:focusable="true"
+            android:contentDescription="View OrynLauncher Plus 1.1 Edition"
             android:layout_width="wrap_content"
             android:layout_height="38dp"
             android:layout_marginStart="10dp"
