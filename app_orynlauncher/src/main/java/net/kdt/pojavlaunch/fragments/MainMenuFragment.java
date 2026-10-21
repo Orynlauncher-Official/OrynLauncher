@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -94,7 +95,7 @@ public class MainMenuFragment extends Fragment {
         }
 
         // The Manage Account row replaces the removed top-right account header.
-        View manageAccountRow = view.findViewById(R.id.oryn_manage_account);
+        ViewGroup manageAccountRow = view.findViewById(R.id.oryn_manage_account);
         if (manageAccountRow != null) {
             manageAccountRow.setClickable(true);
             manageAccountRow.setFocusable(true);
