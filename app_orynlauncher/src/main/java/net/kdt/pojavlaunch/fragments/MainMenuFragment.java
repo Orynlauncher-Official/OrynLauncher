@@ -98,9 +98,19 @@ public class MainMenuFragment extends Fragment {
         if (manageAccountRow != null) {
             manageAccountRow.setClickable(true);
             manageAccountRow.setFocusable(true);
-            manageAccountRow.setOnClickListener(v ->
+            View savedAccountsScroll = view.findViewById(R.id.oryn_saved_accounts_scroll);
+            View accountChevron = manageAccountRow.getChildAt(manageAccountRow.getChildCount() - 1);
+            manageAccountRow.setOnClickListener(v -> {
+                if (savedAccountsScroll == null) {
                     Tools.swapFragment(requireActivity(), SelectAuthFragment.class,
-                            SelectAuthFragment.TAG, null));
+                            SelectAuthFragment.TAG, null);
+                    return;
+                }
+                boolean opening = savedAccountsScroll.getVisibility() != View.VISIBLE;
+                savedAccountsScroll.setVisibility(opening ? View.VISIBLE : View.GONE);
+                if (accountChevron != null) accountChevron.animate().rotation(opening ? 90f : 0f).setDuration(160).start();
+                if (opening) renderSavedAccounts(view);
+            });
         }
 
         renderSavedAccounts(view);
@@ -232,6 +242,19 @@ public class MainMenuFragment extends Fragment {
         LinearLayout accountList = root.findViewById(R.id.oryn_saved_accounts_list);
         if (accountList == null || !isAdded()) return;
         accountList.removeAllViews();
+
+        // Keep account creation inside the expandable account menu.
+        TextView addAccount = new TextView(requireContext());
+        addAccount.setText("+  Add account");
+        addAccount.setTextColor(0xFFFFFFFF);
+        addAccount.setTextSize(11);
+        addAccount.setPadding(10, 8, 10, 8);
+        addAccount.setBackgroundResource(R.drawable.oryn_account_pill);
+        addAccount.setClickable(true);
+        addAccount.setOnClickListener(v -> Tools.swapFragment(requireActivity(),
+                SelectAuthFragment.class, SelectAuthFragment.TAG, null));
+        accountList.addView(addAccount, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
         final java.util.List<Account> savedAccounts;
         try {
@@ -367,7 +390,13 @@ public class MainMenuFragment extends Fragment {
      */
     private void loadCurrentAccountSkin(View root) {
         ImageView manageAccountAvatar = root.findViewById(R.id.oryn_manage_account_skin_avatar);
+        TextView accountNameView = root.findViewById(R.id.oryn_manage_account_name);
         if (manageAccountAvatar == null) return;
+        Account selectedAccount = Accounts.getCurrent();
+        if (accountNameView != null) {
+            accountNameView.setText(selectedAccount != null && Tools.isValidString(selectedAccount.username)
+                    ? selectedAccount.username : "Manage Account");
+        }
 
         // Set Steve immediately so an empty/local account never leaves the paper/user icon.
         Bitmap defaultFace = loadOrynDefaultSteveFace();
@@ -420,6 +449,11 @@ public class MainMenuFragment extends Fragment {
             activity.runOnUiThread(() -> {
                 if (finalFace != null) {
                     if (manageAccountAvatar != null) manageAccountAvatar.setImageBitmap(finalFace);
+                }
+                if (accountNameView != null) {
+                    Account active = Accounts.getCurrent();
+                    accountNameView.setText(active != null && Tools.isValidString(active.username)
+                            ? active.username : "Manage Account");
                 }
             });
         });
