@@ -618,6 +618,7 @@
                 android:scaleType="centerCrop"
                 android:contentDescription="Minecraft skin" />
             <TextView
+                android:id="@+id/oryn_manage_account_name"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -635,6 +636,7 @@
         <!-- Saved accounts appear directly below Manage Account. The list is scrollable when many accounts exist. -->
         <ScrollView
             android:id="@+id/oryn_saved_accounts_scroll"
+            android:visibility="gone"
             android:layout_width="match_parent"
             android:layout_height="76dp"
             android:layout_marginTop="5dp"
