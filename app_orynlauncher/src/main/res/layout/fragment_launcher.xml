@@ -632,6 +632,23 @@
                 android:contentDescription="Open" />
         </LinearLayout>
 
+        <!-- Saved accounts appear directly below Manage Account. The list is scrollable when many accounts exist. -->
+        <ScrollView
+            android:id="@+id/oryn_saved_accounts_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="76dp"
+            android:layout_marginTop="5dp"
+            android:fillViewport="true"
+            android:overScrollMode="ifContentScrolls"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:id="@+id/oryn_saved_accounts_list"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
         <!-- Version / Build / Status -->
         <LinearLayout
             android:layout_width="match_parent"
