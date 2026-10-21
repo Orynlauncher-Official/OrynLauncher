@@ -135,3 +135,5 @@ jobs:
           releaseFiles: out/app-gplay.aab
           track: internal
           inAppUpdatePriority: 5
+
+# Rebuild trigger: account switcher changes on OrynLauncherPlus.
