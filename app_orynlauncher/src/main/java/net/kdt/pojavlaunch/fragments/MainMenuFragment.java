@@ -43,6 +43,7 @@ import net.kdt.pojavlaunch.instances.DisplayInstance;
 import net.kdt.pojavlaunch.instances.Instance;
 import net.kdt.pojavlaunch.instances.Instances;
 import net.kdt.pojavlaunch.progresskeeper.ProgressKeeper;
+import net.kdt.pojavlaunch.prefs.LauncherPreferences;
 import net.kdt.pojavlaunch.utils.FileUtils;
 import net.kdt.pojavlaunch.authenticator.accounts.Account;
 import net.kdt.pojavlaunch.authenticator.accounts.Accounts;
@@ -101,6 +102,8 @@ public class MainMenuFragment extends Fragment {
                     Tools.swapFragment(requireActivity(), SelectAuthFragment.class,
                             SelectAuthFragment.TAG, null));
         }
+
+        renderSavedAccounts(view);
 
         ImageButton mEditProfileButton = view.findViewById(R.id.edit_profile_button);
         Button mPlayButton = view.findViewById(R.id.play_button);
@@ -220,6 +223,143 @@ public class MainMenuFragment extends Fragment {
 
 
 
+
+    /**
+     * Render every persisted account beneath Manage Account. Tap to switch accounts;
+     * long-press to remove an account after confirmation.
+     */
+    private void renderSavedAccounts(View root) {
+        LinearLayout accountList = root.findViewById(R.id.oryn_saved_accounts_list);
+        if (accountList == null || !isAdded()) return;
+        accountList.removeAllViews();
+
+        final java.util.List<Account> savedAccounts;
+        try {
+            savedAccounts = Accounts.load().accounts;
+        } catch (java.io.IOException | RuntimeException error) {
+            TextView failed = new TextView(requireContext());
+            failed.setText("Accounts unavailable");
+            failed.setTextColor(0xFFFF8080);
+            failed.setTextSize(10);
+            failed.setPadding(8, 6, 8, 6);
+            accountList.addView(failed);
+            android.util.Log.e("OrynAccountsUI", "Could not load saved accounts", error);
+            return;
+        }
+
+        if (savedAccounts.isEmpty()) {
+            TextView empty = new TextView(requireContext());
+            empty.setText("No accounts added yet");
+            empty.setTextColor(0xFFADB9D0);
+            empty.setTextSize(10);
+            empty.setPadding(8, 7, 8, 7);
+            accountList.addView(empty);
+            return;
+        }
+
+        Account selected = Accounts.getCurrent();
+        String selectedFile = selected != null && selected.mSaveLocation != null
+                ? selected.mSaveLocation.getName() : "";
+
+        for (Account account : savedAccounts) {
+            LinearLayout row = new LinearLayout(requireContext());
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setPadding(7, 4, 7, 4);
+            row.setMinimumHeight((int) (36 * getResources().getDisplayMetrics().density));
+            boolean isSelected = account.mSaveLocation != null
+                    && account.mSaveLocation.getName().equals(selectedFile);
+            row.setBackgroundResource(isSelected ? R.drawable.oryn_pill : R.drawable.oryn_account_pill);
+            row.setClickable(true);
+            row.setFocusable(true);
+
+            ImageView avatar = new ImageView(requireContext());
+            int avatarSize = (int) (25 * getResources().getDisplayMetrics().density);
+            LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(avatarSize, avatarSize);
+            avatar.setLayoutParams(avatarParams);
+            avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            Bitmap fallbackFace = loadOrynDefaultSteveFace();
+            if (fallbackFace != null) avatar.setImageBitmap(fallbackFace);
+            Bitmap accountFace = account.getSkinFace();
+            if (accountFace != null) avatar.setImageBitmap(accountFace);
+            avatar.setContentDescription(account.username + " skin");
+            row.addView(avatar);
+
+            TextView name = new TextView(requireContext());
+            name.setText(Tools.isValidString(account.username) ? account.username : "Unknown account");
+            name.setTextColor(0xFFFFFFFF);
+            name.setTextSize(11);
+            name.setSingleLine(true);
+            name.setEllipsize(android.text.TextUtils.TruncateAt.END);
+            name.setPadding((int) (8 * getResources().getDisplayMetrics().density), 0, 4, 0);
+            name.setLayoutParams(new LinearLayout.LayoutParams(0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+            row.addView(name);
+
+            TextView state = new TextView(requireContext());
+            state.setText(isSelected ? "ACTIVE" : "SELECT");
+            state.setTextColor(isSelected ? 0xFFBFC8FF : 0xFFADB9D0);
+            state.setTextSize(8);
+            state.setSingleLine(true);
+            row.addView(state);
+
+            row.setOnClickListener(v -> {
+                try {
+                    Accounts.setCurrent(account);
+                    ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+                    renderSavedAccounts(root);
+                    loadCurrentAccountSkin(root);
+                    Toast.makeText(requireContext(), "Switched to " + account.username,
+                            Toast.LENGTH_SHORT).show();
+                } catch (RuntimeException error) {
+                    Toast.makeText(requireContext(), "Could not switch account",
+                            Toast.LENGTH_LONG).show();
+                    android.util.Log.e("OrynAccountsUI", "Account switch failed", error);
+                }
+            });
+
+            row.setOnLongClickListener(v -> {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Remove account?")
+                        .setMessage("Remove " + account.username + " from this launcher?")
+                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Remove", (dialog, which) -> {
+                            try {
+                                Account current = Accounts.getCurrent();
+                                boolean removingCurrent = current != null
+                                        && current.mSaveLocation != null
+                                        && account.mSaveLocation != null
+                                        && current.mSaveLocation.equals(account.mSaveLocation);
+                                Accounts.delete(account);
+                                java.util.List<Account> remaining = Accounts.load().accounts;
+                                if (removingCurrent) {
+                                    if (!remaining.isEmpty()) {
+                                        Accounts.setCurrent(remaining.get(0));
+                                    } else {
+                                        LauncherPreferences.DEFAULT_PREF.edit()
+                                                .remove("selected_account_file").apply();
+                                    }
+                                }
+                                ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
+                                renderSavedAccounts(root);
+                                loadCurrentAccountSkin(root);
+                                Toast.makeText(requireContext(), "Account removed",
+                                        Toast.LENGTH_SHORT).show();
+                            } catch (Exception error) {
+                                Toast.makeText(requireContext(), "Could not remove account",
+                                        Toast.LENGTH_LONG).show();
+                                android.util.Log.e("OrynAccountsUI", "Account removal failed", error);
+                            }
+                        })
+                        .show();
+                return true;
+            });
+
+            accountList.addView(row, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
+    }
 
     /**
      * Display the selected Minecraft account's actual skin head in the home profile card.
@@ -371,7 +511,10 @@ public class MainMenuFragment extends Fragment {
         ExtraCore.setValue(ExtraConstants.REFRESH_ACCOUNT_SPINNER, true);
         // Cosmetics Activity returns here after Apply; refresh both home avatars immediately.
         View root = getView();
-        if (root != null) loadCurrentAccountSkin(root);
+        if (root != null) {
+            loadCurrentAccountSkin(root);
+            renderSavedAccounts(root);
+        }
     }
 
     private void runInstallerWithConfirmation() {
