@@ -555,6 +555,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
 
     @Override
     protected void onDestroy() {
+        if (mOrynTurboOverlay != null) { mOrynTurboOverlay.destroy(); mOrynTurboOverlay = null; }
         super.onDestroy();
         ContextExecutor.clearActivity();
     }
