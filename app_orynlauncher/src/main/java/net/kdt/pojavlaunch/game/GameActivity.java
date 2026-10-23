@@ -17,6 +17,12 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.res.Configuration;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.content.ContentValues;
+import android.net.Uri;
+import android.provider.MediaStore;
+import android.view.PixelCopy;
+import java.io.OutputStream;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -117,6 +123,7 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     private GameService.LocalBinder mServiceBinder;
 
     private QuickSettingSideDialog mQuickSettingSideDialog;
+    private OrynTurboOverlay mOrynTurboOverlay;
 
     public static int mForcedPanningHeight = 0;
     public static int mImeHeight = 0;
@@ -322,6 +329,24 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
                         });
                         return;
                     }
+                    if (mOrynTurboOverlay == null) {
+                        mOrynTurboOverlay = new OrynTurboOverlay(this, new OrynTurboOverlay.Actions() {
+                            @Override public void onModeChanged(int mode) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                    getWindow().setSustainedPerformanceMode(mode == OrynTurboOverlay.PERFORMANCE);
+                                }
+                                Toast.makeText(GameActivity.this,
+                                        mode == OrynTurboOverlay.PERFORMANCE ? "Oryn Turbo: Performance mode applied" :
+                                        mode == OrynTurboOverlay.BATTERY_SAVER ? "Oryn Turbo: Battery saver selected; Android manages power limits" :
+                                        "Oryn Turbo: Balanced mode applied", Toast.LENGTH_SHORT).show();
+                            }
+                            @Override public void onScreenshot() { captureOrynTurboScreenshot(); }
+                            @Override public void onRecording() { toggleGameRecording(); }
+                            @Override public void onPerformanceSettings() { openQuickSettings(); }
+                        });
+                    }
+                    final OrynTurboOverlay turbo = mOrynTurboOverlay;
+                    Tools.MAIN_HANDLER.postDelayed(() -> { if (!isFinishing() && turbo != null) turbo.show(); }, 900L);
                     runCraft(version, classpath);
                 }catch (Throwable e){
                     Tools.showErrorRemote(e);
@@ -445,6 +470,47 @@ public class GameActivity extends BaseActivity implements ControlButtonMenuListe
     protected void onStop() {
         PLATFORM.setVisible(false);
         super.onStop();
+    }
+
+    private void captureOrynTurboScreenshot() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            Toast.makeText(this, "Use Android's screenshot shortcut on this Android version.", Toast.LENGTH_LONG).show();
+            return;
+        }
+        final int width = getWindow().getDecorView().getWidth();
+        final int height = getWindow().getDecorView().getHeight();
+        if (width <= 0 || height <= 0) {
+            Toast.makeText(this, "Game screen is not ready for a screenshot.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        PixelCopy.request(getWindow(), bitmap, result -> {
+            if (result != PixelCopy.SUCCESS) {
+                bitmap.recycle();
+                Toast.makeText(this, "Screenshot failed (" + result + ").", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            OutputStream output = null;
+            try {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, "OrynTurbo-" + System.currentTimeMillis() + ".png");
+                values.put(MediaStore.Images.Media.MIME_TYPE, "image/png");
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/OrynTurbo");
+                Uri uri = getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IOException("Could not create screenshot file");
+                output = getContentResolver().openOutputStream(uri);
+                if (output == null) throw new IOException("Could not open screenshot file");
+                bitmap.compress(Bitmap.CompressFormat.PNG, 100, output);
+                output.flush();
+                Toast.makeText(this, "Screenshot saved to Pictures/OrynTurbo.", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                Log.e("OrynTurbo", "Screenshot save failed", e);
+                Toast.makeText(this, "Could not save screenshot.", Toast.LENGTH_SHORT).show();
+            } finally {
+                try { if (output != null) output.close(); } catch (IOException ignored) { }
+                bitmap.recycle();
+            }
+        }, Tools.MAIN_HANDLER);
     }
 
     private void toggleGameRecording() {
