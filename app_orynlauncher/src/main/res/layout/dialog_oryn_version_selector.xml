@@ -74,7 +74,7 @@
                 android:childDivider="#252D35"
                 android:groupIndicator="@null"
                 android:cacheColorHint="#00000000"
-                android:scrollbarThumbVertical="@color/minebutton_color" />
+                />
         </LinearLayout>
 
         <View
