@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#101216"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ORYNLAUNCHER V6"
+            android:textColor="#55D7E8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.12" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Minecraft Version"
+            android:textColor="#F4F6F8"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginTop="3dp" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#29323A" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:paddingTop="12dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="2.15"
+            android:orientation="vertical"
+            android:background="#171B21"
+            android:padding="6dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="VERSIONS"
+                android:textColor="#8E9AA6"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingStart="8dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
+
+            <ExpandableListView
+                android:id="@+id/oryn_version_list"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:background="#171B21"
+                android:divider="#29323A"
+                android:dividerHeight="1dp"
+                android:childDivider="#252D35"
+                android:groupIndicator="@null"
+                android:cacheColorHint="#00000000"
+                android:scrollbarThumbVertical="@color/minebutton_color" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginHorizontal="10dp"
+            android:background="#29323A" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:padding="4dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="FIND A VERSION"
+                android:textColor="#8E9AA6"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:paddingBottom="8dp" />
+
+            <EditText
+                android:id="@+id/oryn_version_search"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="#1B222A"
+                android:hint="Search version..."
+                android:singleLine="true"
+                android:inputType="text"
+                android:paddingHorizontal="12dp"
+                android:textColor="#F4F6F8"
+                android:textColorHint="#74818D"
+                android:textSize="13sp"
+                android:drawablePadding="8dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="top"
+                android:paddingTop="12dp"
+                android:text="Choose Release, Snapshot, Beta or Alpha from the list."
+                android:textColor="#8995A1"
+                android:textSize="11sp" />
+
+            <Button
+                android:id="@+id/oryn_version_return"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:backgroundTint="#263E49"
+                android:text="RETURN"
+                android:textAllCaps="true"
+                android:textColor="#65D8E8"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>
