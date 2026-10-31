@@ -19,6 +19,20 @@ jobs:
         with:
           submodules: true
 
+      - name: Restore native dependency submodules
+        run: |
+          set -e
+          rm -rf glfw sdl mojoexec
+          git clone https://github.com/MojoLauncher/glfw.git glfw
+          git -C glfw checkout 7900e19fd2dbcad5abb4affc3b9d56c27e164c59
+          git clone https://github.com/MojoLauncher/MojoSDL.git sdl
+          git -C sdl checkout b81efe99684acc5ec7e0ed94d941ac8e1c89bd42
+          git clone https://github.com/MojoLauncher/mojoexec.git mojoexec
+          git -C mojoexec checkout 27790c525c3f572d9611bfa05c532014be367ca0
+          test -f glfw/jni_bindings/build.gradle
+          test -f sdl/jni_bindings/build.gradle
+          test -f mojoexec/CMakeLists.txt
+
       - name: Get LTW
         uses: dawidd6/action-download-artifact@v6
         continue-on-error: true
